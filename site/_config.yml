@@ -1,0 +1,27 @@
+title: ember
+tagline: Give your agent a gut feeling.
+description: >-
+  A local gut feeling for coding agents. ember runs Cloudflare's Clef model on
+  your Apple Silicon Mac and answers typed judgment questions as calibrated
+  probabilities. It advises; the agent decides.
+url: "https://shapeandshare.github.io"
+github: "https://github.com/shapeandshare/ember"
+
+# `baseurl` is intentionally absent: CI passes --baseurl explicitly and every
+# internal link uses relative_url. See the org pattern (darkharbour spec 059).
+
+collections:
+  docs:
+    output: true
+    permalink: /docs/:name/
+
+defaults:
+  - scope:
+      type: docs
+    values:
+      layout: doc
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md
