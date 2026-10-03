@@ -9,7 +9,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from . import config, models, opencode_config, opencode_plugin, paths, process
+from . import agent_kit, config, models, opencode_config, opencode_plugin, paths, process
 
 
 def _emit(obj: object) -> None:
@@ -154,8 +154,25 @@ def cmd_init(args: argparse.Namespace) -> int:
     if args.opencode:
         plugin = opencode_plugin.install(command, f"http://{host}:{port}", scope=scope)
         print(f"installed opencode plugin: {plugin}")
+        skill = agent_kit.install_skill("opencode", scope, Path.cwd())
+        print(f"installed {agent_kit.SKILL_NAME} skill: {skill}")
     print(f"  command: {command}")
     print("restart opencode to pick up changes")
+    return 0
+
+
+def cmd_agents_install(args: argparse.Namespace) -> int:
+    scope = "global" if args.global_ else "project"
+    path = agent_kit.install_skill(args.agent, scope, Path.cwd())
+    print(f"installed {agent_kit.SKILL_NAME} skill for {args.agent}: {path}")
+    return 0
+
+
+def cmd_agents_show(args: argparse.Namespace) -> int:
+    text = {"instructions": agent_kit.instructions, "skill": agent_kit.skill, "snippet": agent_kit.snippet}[
+        args.what
+    ]()
+    sys.stdout.write(text if text.endswith("\n") else text + "\n")
     return 0
 
 
@@ -273,10 +290,20 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("init", help="register the MCP server with opencode")
     p.add_argument("--global", dest="global_", action="store_true")
-    p.add_argument("--opencode", action="store_true", help="install the local opencode plugin")
+    p.add_argument("--opencode", action="store_true", help="install the local opencode plugin and skill")
     p.add_argument("--no-autostart", action="store_true")
     _add_server_flags(p)
     p.set_defaults(func=cmd_init)
+
+    agents = sub.add_parser("agents", help="onboard coding agents to use the decide tool")
+    asub = agents.add_subparsers(dest="agents_command", required=True)
+    p = asub.add_parser("install", help=f"install the {agent_kit.SKILL_NAME} skill for an agent")
+    p.add_argument("--agent", choices=agent_kit.AGENTS, default="opencode")
+    p.add_argument("--global", dest="global_", action="store_true")
+    p.set_defaults(func=cmd_agents_install)
+    p = asub.add_parser("show", help="print part of the onboarding kit")
+    p.add_argument("what", choices=["instructions", "skill", "snippet"])
+    p.set_defaults(func=cmd_agents_show)
 
     p = sub.add_parser("uninstall", help="stop the server and remove local state")
     p.add_argument("--purge-models", action="store_true")

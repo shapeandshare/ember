@@ -9,3 +9,4 @@ logs/
 .pytest_cache/
 /opencode.json
 /.opencode/plugins/clef.js
+/.opencode/skills/clef-decide/
