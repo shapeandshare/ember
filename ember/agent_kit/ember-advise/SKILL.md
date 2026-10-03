@@ -224,7 +224,10 @@ your project, measure them, and keep each set fixed once your checks depend on i
 Run it when the evidence is a screenshot, diagram, chart, or video clip rather than text.
 Attach pixels as base64 `data:image/png;base64,...` (or `data:image/jpeg;...` or
 `data:image/webp;...`) URIs in `images`; for a video attach each frame as a list inside
-`videos`. The model scores all questions jointly with the attached pixels.
+`videos`. The model scores the questions jointly with the attached pixels.
+
+Each visual recipe is a fixed question set, calibrated as a whole, so send the ids of one
+recipe together and keep them exactly as shown. For an image, `dominant_colour` asks:
 
 ```json
 {"state": "Review the attached screenshot.",
@@ -232,16 +235,22 @@ Attach pixels as base64 `data:image/png;base64,...` (or `data:image/jpeg;...` or
  "questions": {
    "dominant_colour": {"type": "choice",
      "instructions": "What is the dominant colour in the image?",
-     "criteria": {"red": "Mostly red or warm-red",
-                  "green": "Mostly green",
-                  "blue": "Mostly blue",
-                  "mixed": "No single colour clearly dominates"}},
-   "alert_level": {"type": "score",
-     "instructions": "How severe is the status indicator shown?",
-     "criteria": ["No alert (calm green)", "Low (yellow)",
-                  "Medium (orange)", "High (red)"]},
+     "criteria": {"red": "The image is mostly red or warm-red tones",
+                  "green": "The image is mostly green tones",
+                  "blue": "The image is mostly blue tones",
+                  "mixed": "No single colour clearly dominates"}}}}
+```
+
+`dominant_red` (`noul`: "Is the image predominantly red?") and `alert_level` (`score`:
+"No alert (calm green)" through "High (red)") are separate image recipes; ask each on its
+own. For a video, pass a list of frames and use `colour_changed`:
+
+```json
+{"state": "Review the attached two-frame clip.",
+ "videos": [["data:image/png;base64,<frame1>", "data:image/png;base64,<frame2>"]],
+ "questions": {
    "colour_changed": {"type": "noul",
-     "instructions": "Did the dominant colour change between frame 1 and frame 2?",
+     "instructions": "The frames are from a two-frame video clip. Did the dominant colour change between frame 1 and frame 2?",
      "criteria": {"true": "The dominant colour is different in the two frames",
                   "false": "The dominant colour is the same in both frames"}}}}
 ```
