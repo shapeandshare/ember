@@ -1,6 +1,6 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-02 (project vault; product renamed to ember to match the mascot; table-stakes tooling; design doc; community docs)
+**Last updated**: 2026-10-02 (project vault; product renamed to ember to match the mascot; table-stakes tooling; design doc; community docs; Prometheus metrics)
 
 ## What this repo is
 
@@ -273,6 +273,10 @@ MUST pass the constitution check.
 
 ## Recent Changes
 
+- 2026-10-02: Prometheus metrics: the model server exposes `GET /metrics` with
+  `ember_advise_requests_total{status}`, `ember_advise_latency_seconds`,
+  `ember_advise_input_tokens_total`, `ember_advise_output_tokens_total`, and
+  `ember_model_info{model,device,dtype}`; `prometheus-client` is a pinned dependency.
 - 2026-10-02: project vault on the wellspring pattern: `vault/` (hub `vault/ember.md`,
   tag vocabulary, templates), the `vault` MCP server (`@bitbonsai/mcpvault@0.12.4`) in
   `.opencode/opencode.json`, `make vault-audit` (`scripts/vault_audit.py`, also run by the
