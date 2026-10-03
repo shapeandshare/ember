@@ -81,8 +81,10 @@ all code, all command output, all tool call payloads, and all file paths.
 ### Format
 
 ASCII box-and-arrow diagrams are the default for inline documentation. They are
-diffable, render everywhere, and match the existing call-path diagram in the
-README. Use them for architecture, call paths, and data flow.
+diffable and render everywhere. Use them for architecture, call paths, and data
+flow. The README's architecture call path is the exception: it is a hand-authored
+SVG plate (`assets/diagrams/call-path-light.svg` and `call-path-dark.svg`),
+referenced with `<picture>` so the website renders it as a figure.
 
 ```
 component-a ──────────────────► component-b
@@ -130,7 +132,7 @@ top-level sections without updating this document.
 ```
 1.  Title / one-line description
 2.  Badges row
-3.  Why it's built this way (architecture rationale + ASCII call-path diagram)
+3.  Why it's built this way (architecture rationale + call-path SVG plate)
 4.  Verified (benchmark table: model load time, warm inference, tool call result)
 5.  Layout (directory tree)
 6.  Install
@@ -152,7 +154,7 @@ technical reference, not a marketing page.
 ### Section conventions
 
 - **Why it's built this way** explains the architectural split (MCP server /
-  HTTP server / model) and includes the ASCII call-path diagram. This section
+  HTTP server / model) and includes the call-path SVG plate. This section
   answers "why not just point opencode at the model directly."
 - **Verified** contains a pipe table with measured numbers from a real run on
   the reference hardware (M4 Max / 128 GB). Numbers must come from actual
@@ -269,8 +271,9 @@ and its output together, use `text`.
 
 ## 11. Architecture Diagram Style
 
-The canonical call-path diagram is ASCII box-and-arrow, matching the README's
-existing diagram:
+The canonical call-path diagram is the SVG plate
+(`assets/diagrams/call-path-light.svg` and `call-path-dark.svg`). The ASCII below
+is its text fallback — keep the two in step:
 
 ```
 agent ──tools/call advise──► ember-mcp (stdio, mcp_server.py)

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 456" role="img" aria-labelledby="cp-title cp-desc">
+  <title id="cp-title">ember call path</title>
+  <desc id="cp-desc">A coding agent calls ember_advise over MCP into ember-mcp, which starts the ember model server over HTTP; the server runs Cloudflare's Clef-Flash on MPS.</desc>
+  <defs>
+    <marker id="cp-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#FFC24D"/>
+    </marker>
+  </defs>
+  <style>
+    .box { fill: #2A2030; stroke: #98658F; stroke-width: 1.5; }
+    .t { fill: #FFF8EB; font-family: system-ui, -apple-system, sans-serif; font-size: 15px; font-weight: 600; }
+    .s { fill: #D8BFCB; font-family: system-ui, -apple-system, sans-serif; font-size: 13px; }
+    .flow { fill: none; stroke: #FFC24D; stroke-width: 1.6; marker-end: url(#cp-arrow); }
+    .lbl { fill: #FFC24D; font-family: system-ui, -apple-system, sans-serif; font-size: 12.5px; font-weight: 600; }
+    .note { fill: #D8BFCB; font-family: system-ui, -apple-system, sans-serif; font-size: 12px; }
+  </style>
+
+  <rect class="box" x="210" y="24" width="340" height="60" rx="12"/>
+  <text class="t" x="380" y="59" text-anchor="middle">coding agent</text>
+
+  <path class="flow" d="M380 84V132"/>
+  <text class="lbl" x="400" y="103">MCP tool: ember_advise</text>
+  <text class="note" x="400" y="121">instructions + ember://guide</text>
+
+  <rect class="box" x="210" y="140" width="340" height="60" rx="12"/>
+  <text class="t" x="380" y="165" text-anchor="middle">ember-mcp</text>
+  <text class="s" x="380" y="185" text-anchor="middle">stdio · starts instantly</text>
+
+  <path class="flow" d="M380 200V248"/>
+  <text class="lbl" x="400" y="227">starts the server on first call</text>
+
+  <rect class="box" x="210" y="256" width="340" height="60" rx="12"/>
+  <text class="t" x="380" y="281" text-anchor="middle">ember model server</text>
+  <text class="s" x="380" y="301" text-anchor="middle">HTTP · stays warm</text>
+
+  <path class="flow" d="M380 316V364"/>
+
+  <rect class="box" x="210" y="372" width="340" height="60" rx="12"/>
+  <text class="t" x="380" y="397" text-anchor="middle">Clef-Flash on MPS</text>
+  <text class="s" x="380" y="417" text-anchor="middle">fp16</text>
+</svg>

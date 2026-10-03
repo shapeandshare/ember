@@ -17,14 +17,10 @@ Clef is a decision model, not a chat model: it takes a `state` plus a schema of 
 questions and returns one probability per option, with no text generation. So ember
 plugs into agents as a **tool**, while their reasoning stays on their normal LLM:
 
-```
-coding agent ──(MCP tool: ember_advise)──► ember-mcp (stdio, starts instantly)
-                                             │  instructions + ember://guide
-                                             ▼  starts the server on first call
-                                    ember model server (HTTP, stays warm)
-                                             ▼
-                                    Clef-Flash on MPS (fp16)
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/call-path-dark.svg">
+  <img src="assets/diagrams/call-path-light.svg" width="760" alt="ember call path: a coding agent calls the advise tool over MCP into ember-mcp (stdio, starts instantly), which starts the ember model server on the first call; the server stays warm and runs Cloudflare's Clef-Flash on MPS in fp16.">
+</picture>
 
 - The **model server** (`ember/server.py`) loads the model once and stays warm across
   agent sessions.
