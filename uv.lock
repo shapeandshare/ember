@@ -477,7 +477,7 @@ requires-dist = [
     { name = "accelerate", specifier = ">=1.15,<2" },
     { name = "fastapi", specifier = ">=0.142,<1" },
     { name = "httpx", specifier = ">=0.28,<1" },
-    { name = "huggingface-hub", specifier = ">=1.33,<2" },
+    { name = "huggingface-hub", specifier = ">=1.33,<3" },
     { name = "mcp", specifier = ">=2.3,<3" },
     { name = "pillow", specifier = ">=12,<13" },
     { name = "prometheus-client", specifier = ">=0.21,<1" },
