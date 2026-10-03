@@ -1,7 +1,7 @@
 {
-  "name": "opencode-gut-feeling",
+  "name": "opencode-ember-advise",
   "version": "0.1.0",
-  "description": "Register the local gut-feeling MCP server (the advise tool) with opencode.",
+  "description": "Register the local ember MCP server (the advise tool) with opencode.",
   "type": "module",
   "main": "index.js",
   "exports": {
@@ -9,7 +9,7 @@
   },
   "license": "MIT",
   "keywords": [
-    "gut-feeling",
+    "ember",
     "opencode",
     "opencode-plugin",
     "mcp"
