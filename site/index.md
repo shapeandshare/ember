@@ -4,8 +4,8 @@ title: ember
 description: A local gut feeling for coding agents. ember runs Cloudflare's Clef model on your Apple Silicon Mac and answers typed judgment questions as calibrated probabilities.
 ---
 <picture class="hero-art">
-  <source media="(prefers-color-scheme: dark)" srcset="{{ '/assets/brand/hero-dark.svg' | relative_url }}">
-  <img src="{{ '/assets/brand/hero-light.svg' | relative_url }}" alt="ember — a curled plum mascot hugging a glowing tummy.">
+  <source media="(prefers-color-scheme: dark)" srcset="{{ '/assets/brand/svg/ember-dark.svg' | relative_url }}">
+  <img src="{{ '/assets/brand/svg/ember-light.svg' | relative_url }}" alt="ember — a curled plum mascot hugging a glowing tummy." width="200" height="200">
 </picture>
 
 # Give your agent a gut feeling.
