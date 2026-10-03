@@ -1,4 +1,22 @@
 <!--
+SYNC IMPACT REPORT — Ember Rename Amendment
+Version change: 1.1.1 → 1.1.2 (PATCH: product renamed to match the mascot, no principle change)
+Date: 2026-10-02
+Modified principles:
+  - Articles I, III, VIII — names updated (`ember-mcp`, `ember://guide` resource,
+    `ember-advise` skill, `ember/` package)
+Added sections: none (the naming bullet in Additional Constraints now marks "gut feeling"
+  as flavor text and names the `gut` distribution)
+Removed sections: none
+Templates / docs propagated:
+  - ✅ AGENTS.md (Naming section; names throughout)
+  - ✅ README.md, CONTRIBUTING.md, DESIGN.md, SECURITY.md, SUPPORT.md (names, repository URLs)
+  - ✅ ember/agent_kit/ (instructions, skill, snippet)
+  - ✅ assets/brand/ (banner wordmark, titles, `--ember-*` tokens) and provenance.json
+Follow-up TODOs: none (repository renamed to shapeandshare/ember; distribution is `gut`
+  because `ember` is taken on PyPI)
+-->
+<!--
 SYNC IMPACT REPORT — Naming Consolidation Amendment
 Version change: 1.1.0 → 1.1.1 (PATCH: names and clarifications, no principle change)
 Date: 2026-10-02
@@ -57,15 +75,15 @@ Templates / docs propagated:
   - ⚠ .specify/templates/*.md (no change — the generic Constitution Check gate applies as-is)
 Follow-up TODOs: none
 -->
-# gut-feeling Constitution
+# ember Constitution
 
 ## Core Principles
 
 ### Article I — Local-First and Private
 
-Inference MUST run on the user's machine. The decision path (`gut-feeling-mcp` → HTTP server →
+Inference MUST run on the user's machine. The decision path (`ember-mcp` → HTTP server →
 model) MUST NOT send `state`, questions, or answers over the network; the only network access is
-the explicit, user-initiated weight download (`gut-feeling model pull`, `make download`). Model
+the explicit, user-initiated weight download (`ember model pull`, `make download`). Model
 weights MUST stay in the Hugging Face cache or a user-chosen directory, and MUST NOT be
 redistributed from this repository.
 
@@ -86,10 +104,10 @@ control flow.
 ### Article III — Agent-Legible Contract
 
 For consumers' agents, the tool name, input schema, field descriptions, MCP
-`initialize.instructions`, the `gut-feeling://guide` resource, the `gut-feeling-advise` skill, and the
+`initialize.instructions`, the `ember://guide` resource, the `ember-advise` skill, and the
 AGENTS.md snippet are the entire manual. Therefore:
 
-- §3.1 All agent-facing guidance MUST live in `gut_feeling/agent_kit/` and be delivered from
+- §3.1 All agent-facing guidance MUST live in `ember/agent_kit/` and be delivered from
   there; no channel may carry a divergent copy.
 - §3.2 `instructions.md` MUST stay within 2048 bytes; the skill MUST satisfy the Agent Skills
   frontmatter contract (`name` matching its directory, `description` ≤ 1024 characters).
@@ -133,15 +151,15 @@ check where integration changes), not inferred from reading code.
 
 **Applicability**: Effective 2026-10-02. Fully applies; no migration debt.
 
-All Python source in `gut_feeling/` MUST pass the following gates before a commit reaches
+All Python source in `ember/` MUST pass the following gates before a commit reaches
 `main`:
 
 - **Formatting**: `ruff format` (line length 88, double quotes). Run via `make format`.
 - **Linting**: `ruff check` with rule sets E, F, I, N, W, UP, B, S, PT, RUF.
   Run via `make lint`.
-- **Type checking**: `mypy --strict` targeting `gut_feeling/`. Run via `make typecheck`.
-- **Security**: `bandit -r gut_feeling/`. Run via `make security`.
-- **Compile**: `python -m compileall -q gut_feeling scripts tests`. Run via `make compile`.
+- **Type checking**: `mypy --strict` targeting `ember/`. Run via `make typecheck`.
+- **Security**: `bandit -r ember/`. Run via `make security`.
+- **Compile**: `python -m compileall -q ember scripts tests`. Run via `make compile`.
 - **Unit tests**: `pytest -m "not model"`. Run via `make test-fast`.
 
 The composite gate `make pr-ready` runs all of the above in order. It MUST pass before opening
@@ -161,15 +179,17 @@ be lowered to make a failing run pass.
 
 ## Additional Constraints
 
-- The product name is **gut-feeling** in every artifact: distribution `gut-feeling`, package
-  `gut_feeling`, MCP server `gut-feeling` with the `advise` tool, skill `gut-feeling-advise`,
-  resource `gut-feeling://guide`, and environment variables `GUT_FEELING_*`. "Clef" MUST refer
-  only to Cloudflare's upstream model. gut-feeling advises; agents decide.
+- The product name is **ember**, after the Ember mascot, in every artifact: package `ember`,
+  MCP server `ember` with the `advise` tool, skill `ember-advise`, resource `ember://guide`,
+  environment variables `EMBER_*`, and repository `shapeandshare/ember`. The one exception
+  is the distribution, `gut`, because `ember` is taken on PyPI. "Gut feeling" phrasing, such
+  as the tagline, is flavor text, not a name. "Clef" MUST refer only to Cloudflare's
+  upstream model. ember advises; agents decide.
 - Python 3.12 managed by uv (consumers install with `uv tool install --python 3.12`); console
-  scripts `gut-feeling`, `gut`, and `gut-feeling-mcp` are the supported entry points.
+  scripts `ember`, `gut`, and `ember-mcp` are the supported entry points.
 - `stdout` of the MCP process is the JSON-RPC wire; diagnostics MUST go to stderr.
-- Per-machine generated files (`opencode.json`, `.opencode/plugins/gut-feeling.js`,
-  `.opencode/skills/gut-feeling-advise/`) MUST NOT be committed.
+- Per-machine generated files (`opencode.json`, `.opencode/plugins/ember.js`,
+  `.opencode/skills/ember-advise/`) MUST NOT be committed.
 - Repository code is MIT-licensed; the upstream Clef weights and `joint_schema_model.py` remain
   Apache-2.0 and are downloaded at runtime, never vendored.
 
@@ -198,4 +218,4 @@ be lowered to make a failing run pass.
 - Reviews MUST check changes against the Articles, with special attention to Article III
   (agent contract) and Article V (pins).
 
-**Version**: 1.1.1 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-02
+**Version**: 1.1.2 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-02
