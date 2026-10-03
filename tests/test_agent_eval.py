@@ -88,12 +88,17 @@ def test_environment_isolates_the_session(
     monkeypatch.setenv("OPENCODE_CONFIG", "/real/config.json")
     monkeypatch.setenv("EMBER_SERVER_URL", "http://leak")
     monkeypatch.setenv("XDG_CONFIG_HOME", "/real/xdg")
+    monkeypatch.setenv("GH_TOKEN", "ghp_secret")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "aws_secret")
     fake = sandbox.Sandbox(tmp_path, tmp_path / "home", tmp_path / "repo")
     env = opencode.environment(fake, {"OPENROUTER_API_KEY": "k"})
     assert env["HOME"] == str(tmp_path / "home")
     assert env["XDG_CONFIG_HOME"].startswith(str(tmp_path / "home"))
     assert "OPENCODE_CONFIG" not in env
     assert "EMBER_SERVER_URL" not in env
+    assert "GH_TOKEN" not in env
+    assert "AWS_SECRET_ACCESS_KEY" not in env
+    assert "PATH" in env
     assert env["OPENROUTER_API_KEY"] == "k"
     argv = opencode.command("opencode", "openrouter/x/y", fake, "hi", "t")
     assert {"--pure", "--format", "json"} <= set(argv)
@@ -227,6 +232,34 @@ def test_answer_check_needs_exactly_the_gold_option() -> None:
         "storage",
         "api",
     }
+
+
+def test_mutating_shell_commands_count_as_acting() -> None:
+    """Before-acting must see edits made through the allowed bash tool."""
+    for command in (
+        "git commit -am wip",
+        "sed -i 's/a/b/' src/x.py",
+        "echo hi > out.txt",
+        "python -c \"open('x','w').write('y')\"",
+        "mv a b",
+    ):
+        assert judge._mutates_bash(command), command
+    for command in ("git status --short", "ls -la", "grep -r foo src"):
+        assert not judge._mutates_bash(command), command
+
+
+def test_kit_decision_reads_answers_across_calls() -> None:
+    """A recipe split across calls must be decided from all calls, not the last."""
+
+    def call(output: dict) -> ToolCall:
+        return ToolCall(0, "ember_advise", {}, json.dumps(output), "completed")
+
+    risk = call({"answers": {"risk": {"type": "score", "score": 2.6}}})
+    other = call({"answers": {"needs_review": {"type": "noul", "noul": 0.1}}})
+    assert judge.kit_decision("change_risk", judge.answers(other)) == "commit"
+    merged = judge.merged_answers([risk, other])
+    assert set(merged) == {"risk", "needs_review"}
+    assert judge.kit_decision("change_risk", merged) == "stop"
 
 
 def test_summary_pairs_conditions_against_no_ember() -> None:

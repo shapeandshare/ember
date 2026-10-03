@@ -26,7 +26,22 @@ from typing import Any
 
 from .sandbox import Sandbox, git_env
 
-DROP_PREFIXES = ("OPENCODE", "EMBER_", "XDG_")
+# The child inherits only these; everything else (tokens, cloud credentials,
+# agent sockets) stays out of a session that can run `bash`.
+ALLOWED_ENV = (
+    "PATH",
+    "USER",
+    "LOGNAME",
+    "SHELL",
+    "TERM",
+    "TMPDIR",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LC_MESSAGES",
+    "TZ",
+)
 PROVIDER_KEYS = {"openrouter": "OPENROUTER_API_KEY", "anthropic": "ANTHROPIC_API_KEY"}
 AUTH_FILE = Path.home() / ".local" / "share" / "opencode" / "auth.json"
 
@@ -109,11 +124,17 @@ def provider_env(model: str) -> dict[str, str]:
 
 
 def environment(sandbox: Sandbox, keys: dict[str, str]) -> dict[str, str]:
-    """Return the child environment: the user's minus opencode/ember/XDG state."""
+    """Return a minimal child environment: named non-secret vars plus overrides.
+
+    Sessions may run ``bash``, so the child must not inherit the user's
+    environment wholesale: only ``ALLOWED_ENV`` passes through, with a private
+    HOME, XDG directories, git overrides, and the provider key added.
+    """
     home = sandbox.home
-    env = {k: v for k, v in os.environ.items() if not k.startswith(DROP_PREFIXES)}
+    env = {name: os.environ[name] for name in ALLOWED_ENV if name in os.environ}
     env.update(git_env(home))
     env.update(
+        HOME=str(home),
         XDG_CONFIG_HOME=str(home / ".config"),
         XDG_DATA_HOME=str(home / ".local" / "share"),
         XDG_CACHE_HOME=str(home / ".cache"),

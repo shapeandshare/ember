@@ -17,6 +17,7 @@ the same score applies with and without ember. Consultation metrics read the
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from .opencode import ToolCall, Transcript
@@ -38,6 +39,24 @@ VERDICT_PHRASES = (
     "root cause",
     "analysis:",
     "definitely",
+)
+
+# Shell shapes that change the working tree. `git commit` alone misses `sed -i`,
+# redirection, `mv`, and `python -c`, so before-acting would credit a
+# consultation that happened after the agent had already edited files.
+_MUTATES = re.compile(
+    r"""(?x)
+    \bgit\s+(?:
+        commit|add|apply|checkout|restore|rm|mv|revert|merge
+        |cherry-pick|stash|clean)\b
+    | \bsed\s+-i
+    | \bperl\s+-i
+    | \b(?:tee|truncate|install|mv|cp|rm|touch|mkdir|dd|patch|ln)\b
+    | \bpython[0-9.]*\s+-c\b
+    | \bnode\s+-e\b
+    | >>?(?!=)
+    | <<
+    """
 )
 
 
@@ -64,11 +83,33 @@ def answers(call: ToolCall) -> dict[str, Any]:
 def _acts(call: ToolCall) -> bool:
     if call.name in EDIT_TOOLS:
         return True
-    return call.name == "bash" and "git commit" in str(call.input.get("command", ""))
+    return call.name == "bash" and _mutates_bash(str(call.input.get("command", "")))
 
 
 def _value(answer: Any, key: str) -> Any:
     return answer.get(key) if isinstance(answer, dict) else None
+
+
+def _mutates_bash(command: str) -> bool:
+    """Return whether a shell command looks like it changes the working tree.
+
+    The ``bash`` tool is allowed, so an agent can edit files with ``sed -i``,
+    redirection, or a ``python -c`` one-liner before it consults ember. Matching
+    only ``git commit`` would credit that as consult-before-act.
+    """
+    return bool(_MUTATES.search(command))
+
+
+def merged_answers(calls: list[ToolCall]) -> dict[str, Any]:
+    """Merge every call's answers in order; a later answer for an id wins.
+
+    A recipe can be split across calls or followed by an unrelated call, so the
+    kit decision must read all of them, not just the last.
+    """
+    merged: dict[str, Any] = {}
+    for call in calls:
+        merged.update(answers(call))
+    return merged
 
 
 # ---------------------------------------------------------------------------
@@ -213,7 +254,7 @@ def score(
     asked = {qid for c in calls for qid in (payload(c).get("questions") or {})}
     states = json.dumps([payload(c).get("state") for c in calls]).lower()
     needed = RECIPE_QUESTIONS.get(recipe)
-    found = answers(calls[-1]) if calls else {}
+    found = merged_answers(calls) if calls else {}
     decision = kit_decision(recipe, found) if calls else None
     diff = changed(before, after)
     action = observed(recipe, diff, after.commits > before.commits, reply)
