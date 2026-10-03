@@ -198,8 +198,9 @@ ember/
   opencode_config.py opencode_plugin.py   # opencode integration
   agent_kit/          # what agents read: instructions, ember-advise skill, AGENTS snippet
 packages/opencode-plugin/   # npm-ready opencode plugin source
-scripts/              # MPS smoke test, MCP end-to-end check
+scripts/              # MPS smoke test, MCP end-to-end check, provenance and vault audits
 tests/                # pytest suite (unit + model-backed, host-isolated)
+vault/                # project memory (Obsidian): decisions, discoveries, session logs
 .specify/             # spec-kit; memory/constitution.md governs this repo
 AGENTS.md CLAUDE.md   # guidelines for agents working on this repo
 Makefile              # contributor lifecycle (wraps the CLI)
@@ -213,7 +214,9 @@ make opencode     # this checkout's opencode plugin and skill
 
 `opencode.json`, `.opencode/plugins/ember.js`, and `.opencode/skills/ember-advise/`
 embed this clone's absolute paths or copy packaged files, so they are gitignored — regenerate
-them with `make init` / `make opencode` after cloning.
+them with `make init` / `make opencode` after cloning. `.opencode/opencode.json` is shared and
+committed: it registers the `vault` MCP server that agents use to read and write `vault/`
+(launch opencode from the repository root).
 
 ### Make targets
 
@@ -230,6 +233,7 @@ them with `make init` / `make opencode` after cloning.
 | `make compile` / `make check` | Byte-compile / compile + unit tests |
 | `make ci` | `bootstrap` + `check` + `test-strict` |
 | `make doctor` | `ember doctor` |
+| `make vault-audit` | Check `vault/` notes: frontmatter, tags, wikilinks, code-refs, orphans |
 | `make clean` / `make clean-model` | Caches and build output / weights (`EMBER_FORCE=1` skips the prompt) |
 
 Make re-syncs the environment automatically when `pyproject.toml` or `uv.lock` changes.
