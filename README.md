@@ -270,4 +270,6 @@ self-hosted Apple Silicon runner.
 
 ## License
 
-Apache-2.0 (see `LICENSE`), matching the upstream Clef weights.
+MIT (see `LICENSE`). The Clef model weights and Cloudflare's
+`joint_schema_model.py` are Apache-2.0; they are downloaded from Hugging Face at
+runtime, not redistributed here.
