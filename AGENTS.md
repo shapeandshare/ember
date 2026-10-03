@@ -55,6 +55,9 @@ after changing brand assets. Do not invent missing provenance or license facts.
 | Dependency ranges | `pyproject.toml` + `uv.lock` |
 | Lifecycle commands | `Makefile` (contributors), `ember` CLI (users) |
 | User documentation | `README.md` |
+| Dependency licenses | `THIRD_PARTY_NOTICES.md` |
+| Tested versions and limits | `COMPATIBILITY.md` |
+| Intended and excluded uses | `RESPONSIBLE_USE.md` |
 | Development memory (decisions, discoveries, session logs) | `vault/` (hub `vault/ember.md`) |
 | Verification | `tests/`, `.github/workflows/ci.yml` |
 
