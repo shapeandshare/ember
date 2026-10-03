@@ -2,7 +2,7 @@
 
 Weights live in HuggingFace's cache by default so they are shared with other HF
 tools. A source checkout's ``.models/<dir>`` wins if present (dev convenience),
-and ``GUT_FEELING_MODEL_DIR`` overrides everything.
+and ``EMBER_MODEL_DIR`` overrides everything.
 """
 
 from __future__ import annotations
@@ -65,11 +65,11 @@ def _dev_dir(spec: ModelSpec) -> Path:
 def resolve_dir(name: str | None = None, *, override: bool = True) -> Path | None:
     """Return the local directory to run a model from, or None if it is not present.
 
-    ``GUT_FEELING_MODEL_DIR`` (when ``override`` is true) names the directory for the
+    ``EMBER_MODEL_DIR`` (when ``override`` is true) names the directory for the
     model being run; otherwise a checkout's ``.models/<dir>`` wins, then the HF cache.
     """
     spec = get(name)
-    env_dir = os.environ.get("GUT_FEELING_MODEL_DIR")
+    env_dir = os.environ.get("EMBER_MODEL_DIR")
     if override and env_dir:
         path = Path(env_dir)
         return path if path.is_dir() else None

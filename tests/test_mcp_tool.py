@@ -12,7 +12,7 @@ import json
 import time
 
 import pytest
-from gut_feeling import agent_kit
+from ember import agent_kit
 from mcp import ClientSession
 from mcp.client.stdio import stdio_client
 
@@ -92,13 +92,13 @@ def test_mcp_autostart_reports_a_missing_model_quickly(tmp_path) -> None:
     params = mcp_stdin_params(
         f"http://127.0.0.1:{free_port()}",
         autostart="1",
-        GUT_FEELING_MODEL_DIR=str(tmp_path / "missing"),
-        GUT_FEELING_STATE_DIR=str(tmp_path / "state"),
+        EMBER_MODEL_DIR=str(tmp_path / "missing"),
+        EMBER_STATE_DIR=str(tmp_path / "state"),
     )
     started = time.time()
     result = asyncio.run(_call_advise(params))
     assert result.is_error is True
-    assert "gut-feeling model pull" in result.content[0].text
+    assert "ember model pull" in result.content[0].text
     assert time.time() - started < 30
 
 
@@ -108,7 +108,7 @@ def test_mcp_autostart_launches_server_on_configured_port(tmp_path) -> None:
     params = mcp_stdin_params(
         f"http://127.0.0.1:{free_port()}",
         autostart="1",
-        GUT_FEELING_STATE_DIR=str(tmp_path),
+        EMBER_STATE_DIR=str(tmp_path),
     )
     try:
         result = asyncio.run(_call_advise(params))
@@ -120,7 +120,7 @@ def test_mcp_autostart_launches_server_on_configured_port(tmp_path) -> None:
 
 
 def test_mcp_advertises_instructions_and_guide_resource() -> None:
-    """Agents learn the tool from initialize.instructions and the gut-feeling://guide
+    """Agents learn the tool from initialize.instructions and the ember://guide
     resource, neither of which needs the model server."""
     params = mcp_stdin_params(f"http://127.0.0.1:{free_port()}", autostart="0")
 
@@ -133,7 +133,7 @@ def test_mcp_advertises_instructions_and_guide_resource() -> None:
                 return init, resources, guide
 
     init, resources, guide = asyncio.run(run())
-    assert init.server_info.name == "gut-feeling"
+    assert init.server_info.name == "ember"
     assert init.instructions == agent_kit.instructions()
     assert agent_kit.GUIDE_URI in {
         str(resource.uri) for resource in resources.resources

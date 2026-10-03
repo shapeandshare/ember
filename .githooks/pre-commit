@@ -18,8 +18,8 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
 # Require the venv to exist; run `make sync` first if it doesn't.
-if [[ ! -x ".venv/bin/gut-feeling" ]]; then
-    echo "pre-commit: .venv/bin/gut-feeling not found — run 'make sync' first" >&2
+if [[ ! -x ".venv/bin/ember" ]]; then
+    echo "pre-commit: .venv/bin/ember not found — run 'make sync' first" >&2
     exit 1
 fi
 

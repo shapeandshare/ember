@@ -15,19 +15,19 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.2.0
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --locked
       - run: make check
       - run: uv build
       - name: Install the wheel as a uv tool and smoke the CLI
         run: |
-          uv tool install --python 3.12 dist/gut_feeling-*.whl
+          uv tool install --python 3.12 dist/gut-*.whl
           bin="$(uv tool dir --bin)"
-          "$bin/gut-feeling" --help
+          "$bin/ember" --help
           "$bin/gut" --help
-          "$bin/gut-feeling" model list
-          "$bin/gut-feeling" agents show instructions | head -1
-          test -x "$bin/gut-feeling-mcp"
+          "$bin/ember" model list
+          "$bin/ember" agents show instructions | head -1
+          test -x "$bin/ember-mcp"
 
   model:
     name: model-backed tests (self-hosted Apple Silicon)
@@ -35,7 +35,7 @@ jobs:
     runs-on: [self-hosted, macOS, ARM64]
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.2.0
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --locked
       - run: make download
       - run: make test-strict

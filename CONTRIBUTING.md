@@ -1,6 +1,6 @@
-# Contributing to gut-feeling
+# Contributing to ember
 
-gut-feeling is a local MCP server that exposes Cloudflare's Clef decision model to coding
+ember is a local MCP server that exposes Cloudflare's Clef decision model to coding
 agents. It runs on Apple Silicon (MPS), ships as a uv tool, and integrates with opencode and
 Claude Code via a single `advise` tool. Contributions are welcome.
 
@@ -30,8 +30,8 @@ operationalizes it. Where the two conflict, the constitution wins.
 You'll need macOS on Apple Silicon, Python 3.12 (managed by uv), and Git.
 
 ```bash
-git clone https://github.com/shapeandshare/gut-feeling
-cd gut-feeling
+git clone https://github.com/shapeandshare/ember
+cd ember
 make bootstrap    # deps + model weights + opencode.json + readiness check
 make check        # fast gate: compile + unit tests, no model load
 ```
@@ -110,8 +110,8 @@ A few non-negotiable rules that tooling doesn't fully enforce:
 
 - **stdout is the MCP wire.** In `mcp_server.py`, log to stderr only. Never `print` to stdout.
 - **Never pass `device_map={"": "mps"}`** to a model loader. It segfaults. Load on CPU, then
-  call `.to("mps")`. See `gut_feeling/runtime.py` for the canonical pattern.
-- **`opencode.json` and `.opencode/plugins/gut.js` are per-machine.** They are gitignored.
+  call `.to("mps")`. See `ember/runtime.py` for the canonical pattern.
+- **`opencode.json` and `.opencode/plugins/ember.js` are per-machine.** They are gitignored.
   Never commit them.
 
 ---
@@ -201,12 +201,12 @@ require matching README and test updates in the same PR.
 
 | Artifact | Location | Constraint |
 | --- | --- | --- |
-| Tool name | `gut_feeling/mcp_server.py` | Must stay `gut-feeling_advise` (opencode) / `advise` (MCP) |
-| Input schema | `gut_feeling/mcp_server.py` | Input wrapped in `input`; do not flatten |
-| MCP instructions | `gut_feeling/agent_kit/instructions.md` | Must stay ≤ 2048 bytes |
-| Guide resource | `gut_feeling/agent_kit/gut-feeling-advise/SKILL.md` | Delivered as `gut-feeling://guide` |
-| Skill name | `gut_feeling/agent_kit/gut-feeling-advise/` | Must stay `gut-feeling-advise` |
-| AGENTS.md snippet | `gut_feeling/agent_kit/AGENTS.snippet.md` | Shown by `gut agents show snippet` |
+| Tool name | `ember/mcp_server.py` | Must stay `ember_advise` (opencode) / `advise` (MCP) |
+| Input schema | `ember/mcp_server.py` | Input wrapped in `input`; do not flatten |
+| MCP instructions | `ember/agent_kit/instructions.md` | Must stay ≤ 2048 bytes |
+| Guide resource | `ember/agent_kit/ember-advise/SKILL.md` | Delivered as `ember://guide` |
+| Skill name | `ember/agent_kit/ember-advise/` | Must stay `ember-advise` |
+| AGENTS.md snippet | `ember/agent_kit/AGENTS.snippet.md` | Shown by `ember agents show snippet` |
 
 **Observed thresholds** in the kit (e.g., calibration numbers, example probabilities) must come
 from real model output. Re-measure them whenever the model revision or a recipe schema changes.
@@ -242,8 +242,8 @@ Agents may open PRs against this repository under these conditions:
 
 - The PR description must identify the agent system that generated it.
 - The agent must have run `make pr-ready` and `make test` before opening the PR.
-- The agent must use `gut-feeling_advise` (via the local MCP server) for triage and risk-gate
-  decisions, following the recipes in `gut_feeling/agent_kit/gut-feeling-advise/SKILL.md`.
+- The agent must use `ember_advise` (via the local MCP server) for triage and risk-gate
+  decisions, following the recipes in `ember/agent_kit/ember-advise/SKILL.md`.
 - The PR must not be bulk-generated, untested, or in conflict with the constitution.
 
 PRs that violate these conditions will be closed without review.
@@ -272,7 +272,15 @@ Before marking a PR ready for review:
 Issue templates live at `.github/ISSUE_TEMPLATE/`. Use the appropriate template for bug
 reports, feature requests, and agent contract proposals.
 
-For questions and usage help, use [GitHub Discussions](https://github.com/shapeandshare/gut-feeling/discussions)
+For questions and usage help, use [GitHub Discussions](https://github.com/shapeandshare/ember/discussions)
 rather than Issues.
 
 For security vulnerabilities, see [SECURITY.md](SECURITY.md). Do not open a public issue.
+
+## Material provenance
+
+For new artwork, copied text, templates, or dependencies, document the source and
+license evidence in [provenance.json](provenance.json) and follow
+[PROVENANCE.md](PROVENANCE.md). Disclose AI generation and keep actual prompts
+when available. Never substitute an assumed license for missing evidence.
+Run `python3 scripts/check_provenance.py` after changing brand assets.

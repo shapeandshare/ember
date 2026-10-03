@@ -1,4 +1,4 @@
-"""MPS smoke test: load Clef-Flash via the gut-feeling runtime and answer a request.
+"""MPS smoke test: load Clef-Flash via the ember runtime and answer a request.
 
 Usage:
     .venv/bin/python -u scripts/smoke_mps.py
@@ -18,7 +18,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 import torch  # noqa: E402
-from gut_feeling.runtime import DEFAULT_MODEL_DIR, load_clef  # noqa: E402
+from ember.runtime import DEFAULT_MODEL_DIR, load_clef  # noqa: E402
 
 
 def main() -> int:

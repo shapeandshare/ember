@@ -1,1 +1,1 @@
-"""gut-feeling test suite."""
+"""ember test suite."""

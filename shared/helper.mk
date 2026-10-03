@@ -20,6 +20,6 @@ YELLOW := \033[33m
 .PHONY: help
 
 help: ## Show this help
-	@printf "$(CYAN)gut-feeling — make targets$(RESET)\n\n"
+	@printf "$(CYAN)ember — make targets$(RESET)\n\n"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-	@printf "\n$(YELLOW)env:$(RESET)  host=$(GUT_FEELING_HOST)  port=$(GUT_FEELING_PORT)  device=$(GUT_FEELING_DEVICE)\n"
+	@printf "\n$(YELLOW)env:$(RESET)  host=$(EMBER_HOST)  port=$(EMBER_PORT)  device=$(EMBER_DEVICE)\n"

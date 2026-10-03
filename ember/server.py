@@ -1,12 +1,12 @@
-"""gut-feeling model server: loads the model once and serves the Jev/SystemOne API.
+"""ember model server: loads the model once and serves the Jev/SystemOne API.
 
-The MCP server (``gut_feeling.mcp_server``) talks to this process over HTTP, so the MCP
+The MCP server (``ember.mcp_server``) talks to this process over HTTP, so the MCP
 handshake stays instant and the model stays warm across agent sessions.
 
-Run:  gut-feeling serve        (or: python -m gut_feeling.server)
-Env:  GUT_FEELING_HOST (127.0.0.1), GUT_FEELING_PORT (8765),
-      GUT_FEELING_DEVICE (auto|mps|cpu), GUT_FEELING_MAX_LENGTH (16384),
-      GUT_FEELING_MODEL_DIR (default: the pinned model)
+Run:  ember serve        (or: python -m ember.server)
+Env:  EMBER_HOST (127.0.0.1), EMBER_PORT (8765),
+      EMBER_DEVICE (auto|mps|cpu), EMBER_MAX_LENGTH (16384),
+      EMBER_MODEL_DIR (default: the pinned model)
 """
 
 from __future__ import annotations
@@ -33,8 +33,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     model_dir = models.resolve_dir(name)
     if model_dir is None:
         raise RuntimeError(
-            f"model {name!r} not found (check GUT_FEELING_MODEL_DIR); "
-            f"run: gut-feeling model pull {name}"
+            f"model {name!r} not found (check EMBER_MODEL_DIR); "
+            f"run: ember model pull {name}"
         )
     _ENGINE = Engine(
         model_dir,
@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         _ENGINE = None
 
 
-app = FastAPI(title="gut-feeling", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="ember", version="0.1.0", lifespan=lifespan)
 
 
 class AdviseRequest(BaseModel):

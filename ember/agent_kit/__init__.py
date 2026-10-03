@@ -1,7 +1,7 @@
 """Consumer onboarding kit: what coding agents read to use the `advise` tool well.
 
 One source of truth, delivered three ways: MCP `initialize.instructions`, the
-`gut-feeling://guide` resource plus the installable `gut-feeling-advise` skill,
+`ember://guide` resource plus the installable `ember-advise` skill,
 and an AGENTS.md snippet.
 """
 
@@ -10,8 +10,8 @@ from __future__ import annotations
 from importlib.resources import files
 from pathlib import Path
 
-SKILL_NAME = "gut-feeling-advise"
-GUIDE_URI = "gut-feeling://guide"
+SKILL_NAME = "ember-advise"
+GUIDE_URI = "ember://guide"
 
 _SKILL_ROOTS: dict[str, tuple[str, str]] = {
     "opencode": (".opencode/skills", ".config/opencode/skills"),

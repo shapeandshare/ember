@@ -11,7 +11,7 @@
   },
   "creative_process": {
     "human_role": "Project owner supplied concept direction, requested iterations and selected Ember.",
-    "assistant_role": "Codex wrote prompts, SVG redraws, theme variants, banners and palette code.",
+    "assistant_role": "Codex wrote prompts, SVG redraws, theme variants, banners and palette code. The Sisyphus agent (opencode) later renamed product-name text in the banners, SVG titles, preview pages, and CSS tokens to ember at the owner's request.",
     "raster_tool": "OpenAI built-in imagegen",
     "model_version": "not exposed by tool",
     "seed": "not exposed by tool",
@@ -258,9 +258,9 @@
     },
     {
       "path": "assets/brand/hero-dark.svg",
-      "sha256": "6835dd460c60fdda2a0a3835b3da1d5b8e2fb417901803deec75305422d72bf8",
+      "sha256": "d0356288c8628f10e27ed9de1172e568781088e7f3f078b1563e5c593c629df0",
       "kind": "ai_assisted_code",
-      "tool": "Codex; embedded vector mascot, SVG text and color swatches; background removed on user request",
+      "tool": "Codex; embedded vector mascot, SVG text and color swatches; background removed on user request; wordmark, title, and description renamed to ember by the Sisyphus agent (opencode) on user request, 2026-10-02",
       "parents": [
         "assets/brand/svg/ember-dark.svg"
       ],
@@ -273,9 +273,9 @@
     },
     {
       "path": "assets/brand/hero-light.svg",
-      "sha256": "ea89ab6430a673bb67153e728761b38a1ef0ed6c881173415f229905794179e6",
+      "sha256": "2fdca0208bff5879ce84e043a82666d289e8e275482f4f82edf6feaec7a24a2e",
       "kind": "ai_assisted_code",
-      "tool": "Codex; embedded vector mascot, SVG text and color swatches; background removed on user request",
+      "tool": "Codex; embedded vector mascot, SVG text and color swatches; background removed on user request; wordmark, title, and description renamed to ember by the Sisyphus agent (opencode) on user request, 2026-10-02",
       "parents": [
         "assets/brand/svg/ember-light.svg"
       ],
@@ -372,9 +372,9 @@
     },
     {
       "path": "assets/brand/preview.html",
-      "sha256": "0e378e542397389002285ddce055da8d5b41ecc3631c22ef117cbadd7b510df7",
+      "sha256": "96be11df2496f75f450aafaba36fdcb54cb3c6044d3aef564c56c41f0a5c49ab",
       "kind": "ai_assisted_code",
-      "tool": "Codex; authored SVG paths, CSS, or HTML",
+      "tool": "Codex; authored SVG paths, CSS, or HTML; brand-name text and token references renamed to ember by the Sisyphus agent (opencode) on user request, 2026-10-02",
       "parents": [],
       "prompt_path": null,
       "prompt_status": "not_applicable",
@@ -385,9 +385,9 @@
     },
     {
       "path": "assets/brand/svg/ember-auto.svg",
-      "sha256": "3b796b113443582f6d146fd333ca28500f77dbb44f123cc19018439d16d7d975",
+      "sha256": "9298b0e0654b38ba90d08c9d5be564636c7fd2a053306e0c9413d9450d62f0bd",
       "kind": "ai_assisted_code",
-      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing)",
+      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing); title shortened to the mascot name by the Sisyphus agent (opencode) on user request, 2026-10-02",
       "parents": [
         "assets/brand/mascots/ember-v1.png"
       ],
@@ -400,9 +400,9 @@
     },
     {
       "path": "assets/brand/svg/ember-dark.svg",
-      "sha256": "eeb76bd36997510eaf5e878d1790dc8af6a4f48007dcaf7b308d1bc62a24ea3a",
+      "sha256": "ab2da770b302f8276bc2d078d357e0d0ec555d2ce668aeb8d50348eb5ccc1988",
       "kind": "ai_assisted_code",
-      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing)",
+      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing); title shortened to the mascot name by the Sisyphus agent (opencode) on user request, 2026-10-02",
       "parents": [
         "assets/brand/mascots/ember-v1.png"
       ],
@@ -415,9 +415,9 @@
     },
     {
       "path": "assets/brand/svg/ember-light.svg",
-      "sha256": "192516ebb385fc4b25100f8a913f08946732da27cd3778d2f5f2dcefdbbd3887",
+      "sha256": "7d96b608b38bd349eb80182acec0782c0a51c110effe66d5dbfe2302bae0868d",
       "kind": "ai_assisted_code",
-      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing)",
+      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing); title shortened to the mascot name by the Sisyphus agent (opencode) on user request, 2026-10-02",
       "parents": [
         "assets/brand/mascots/ember-v1.png"
       ],
@@ -430,9 +430,9 @@
     },
     {
       "path": "assets/brand/svg/float-auto.svg",
-      "sha256": "ba59927387104de27d23dd81c748fb99d733d0b8748a64f8165829cb2b162d95",
+      "sha256": "615a5e3b1edeb8a91f81c25307c11b7913e4f8ec4257219955187a33f3eac438",
       "kind": "ai_assisted_code",
-      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing)",
+      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing); title shortened to the mascot name by the Sisyphus agent (opencode) on user request, 2026-10-02",
       "parents": [
         "assets/brand/mascots/float-v1.png"
       ],
@@ -445,9 +445,9 @@
     },
     {
       "path": "assets/brand/svg/float-dark.svg",
-      "sha256": "2668452413c9d20f717f88aa598134365be5bb6c96607eae7450d527f50ca5ea",
+      "sha256": "3a897505b3de2e8e1a3839abd190f307c349eb07e6cff9ad4e4f3335a47a90e2",
       "kind": "ai_assisted_code",
-      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing)",
+      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing); title shortened to the mascot name by the Sisyphus agent (opencode) on user request, 2026-10-02",
       "parents": [
         "assets/brand/mascots/float-v1.png"
       ],
@@ -460,9 +460,9 @@
     },
     {
       "path": "assets/brand/svg/float-light.svg",
-      "sha256": "b7237ce1330b6cade97e8cd33ec5788db512e8894dddf48161c608eba34e09a4",
+      "sha256": "01594e0d9834ce5262932c025aeaacfc734983c58bdca8ce6774b85e7d573877",
       "kind": "ai_assisted_code",
-      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing)",
+      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing); title shortened to the mascot name by the Sisyphus agent (opencode) on user request, 2026-10-02",
       "parents": [
         "assets/brand/mascots/float-v1.png"
       ],
@@ -475,9 +475,9 @@
     },
     {
       "path": "assets/brand/svg/mellow-auto.svg",
-      "sha256": "22551e2cbaed4a7e25874ed16fd4669adc87048f72c2e85e6977da2e99937d6e",
+      "sha256": "ccbc25303cf706c77df57429a0738f3e56d9667154fe631391e48c35e0d9c0ce",
       "kind": "ai_assisted_code",
-      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing)",
+      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing); title shortened to the mascot name by the Sisyphus agent (opencode) on user request, 2026-10-02",
       "parents": [
         "assets/brand/mascots/mellow-v1.png"
       ],
@@ -490,9 +490,9 @@
     },
     {
       "path": "assets/brand/svg/mellow-dark.svg",
-      "sha256": "a13564d06279aeaa1142b2fe2d97ec4f1b224e78a7923aa17c2c0fe2a05444ac",
+      "sha256": "cf251be00d0580236a6b5d902c19a1d2882b7010ed20755fad5f99b5d5c4e492",
       "kind": "ai_assisted_code",
-      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing)",
+      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing); title shortened to the mascot name by the Sisyphus agent (opencode) on user request, 2026-10-02",
       "parents": [
         "assets/brand/mascots/mellow-v1.png"
       ],
@@ -505,9 +505,9 @@
     },
     {
       "path": "assets/brand/svg/mellow-light.svg",
-      "sha256": "3f3225892ecf8329e101ad0e977af0aafd574d7279b6541fb5e2901039c6ff1e",
+      "sha256": "1ffffc0b17ff5d01c24b96778b8578cb4e46988e3849d0e6add41e1bdb35902f",
       "kind": "ai_assisted_code",
-      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing)",
+      "tool": "Codex; hand-authored Bezier paths and theme edits (not automatic tracing); title shortened to the mascot name by the Sisyphus agent (opencode) on user request, 2026-10-02",
       "parents": [
         "assets/brand/mascots/mellow-v1.png"
       ],
@@ -520,9 +520,9 @@
     },
     {
       "path": "assets/brand/svg/preview.html",
-      "sha256": "4534b3d585577e93e9ffbf1672722c7ef7564c4d974ddfe1770d2e0b55b9964e",
+      "sha256": "05986592558811e07fe365816f95dcb6a251f473d466d7fc76dbf95ecb025bfd",
       "kind": "ai_assisted_code",
-      "tool": "Codex; authored SVG paths, CSS, or HTML",
+      "tool": "Codex; authored SVG paths, CSS, or HTML; brand-name text renamed to ember by the Sisyphus agent (opencode) on user request, 2026-10-02",
       "parents": [],
       "prompt_path": null,
       "prompt_status": "not_applicable",
@@ -533,9 +533,9 @@
     },
     {
       "path": "assets/brand/tokens.css",
-      "sha256": "9aa55372da8e4ff4af9c4567b6c987349d836efc4e3ce5ab99c9829423838225",
+      "sha256": "ae8c48535653bc8d7bafcc284e855cffdf2b216fa4c64c44da5330d6cb4bd79b",
       "kind": "ai_assisted_code",
-      "tool": "Codex; authored SVG paths, CSS, or HTML",
+      "tool": "Codex; authored SVG paths, CSS, or HTML; comment and --ember-* token names renamed by the Sisyphus agent (opencode) on user request, 2026-10-02",
       "parents": [
         "assets/brand/svg/ember-light.svg",
         "assets/brand/svg/ember-dark.svg"
@@ -549,7 +549,7 @@
     },
     {
       "path": "packages/opencode-plugin/assets/hero-dark.svg",
-      "sha256": "6835dd460c60fdda2a0a3835b3da1d5b8e2fb417901803deec75305422d72bf8",
+      "sha256": "d0356288c8628f10e27ed9de1172e568781088e7f3f078b1563e5c593c629df0",
       "kind": "byte_copy",
       "tool": "File copy",
       "parents": [
@@ -562,7 +562,7 @@
     },
     {
       "path": "packages/opencode-plugin/assets/hero-light.svg",
-      "sha256": "ea89ab6430a673bb67153e728761b38a1ef0ed6c881173415f229905794179e6",
+      "sha256": "2fdca0208bff5879ce84e043a82666d289e8e275482f4f82edf6feaec7a24a2e",
       "kind": "byte_copy",
       "tool": "File copy",
       "parents": [
@@ -687,13 +687,13 @@
     },
     {
       "id": "project-repository",
-      "url": "https://github.com/shapeandshare/gut-feeling",
+      "url": "https://github.com/shapeandshare/ember",
       "checked_on": "2026-10-02",
       "timezone": "America/Los_Angeles",
-      "method": "web.run open; content inspection",
-      "status": "fetch_failed",
-      "final_url": "https://github.com/shapeandshare/gut-feeling",
-      "evidence": "Web tool cache miss; URL independently matches local Git origin and pyproject.toml."
+      "method": "gh api (authenticated); repository metadata inspection",
+      "status": "metadata_verified",
+      "final_url": "https://github.com/shapeandshare/ember",
+      "evidence": "Renamed from shapeandshare/gut-feeling on 2026-10-02. The authenticated GitHub API returned shapeandshare/ember (private), and the old name resolves to it. URL matches the local Git origin and pyproject.toml."
     },
     {
       "id": "contributor-covenant",
@@ -734,6 +734,26 @@
       "status": "content_verified",
       "final_url": "https://github.com/EthicalSource/contributor_covenant/blob/release/LICENSE.md",
       "evidence": "Current repository license is Hippocratic 3.0. Not assumed to establish the historical 2.1 document license."
+    },
+    {
+      "id": "wellspring-repository",
+      "url": "https://github.com/shapeandshare/wellspring",
+      "checked_on": "2026-10-02",
+      "timezone": "America/Los_Angeles",
+      "method": "gh api (authenticated); repository metadata inspection",
+      "status": "metadata_verified",
+      "final_url": "https://github.com/shapeandshare/wellspring",
+      "evidence": "Public repository; GitHub reports license MIT and commit dca5685dbf4b03ba295e71a4a895c1d0475d1203, the local ../wellspring checkout the vault scaffolding was adapted from. Its LICENSE reads MIT, Copyright (c) 2026 Josh Burt."
+    },
+    {
+      "id": "mcpvault",
+      "url": "https://registry.npmjs.org/@bitbonsai%2fmcpvault",
+      "checked_on": "2026-10-02",
+      "timezone": "America/Los_Angeles",
+      "method": "npm registry API; package metadata inspection",
+      "status": "metadata_verified",
+      "final_url": "https://registry.npmjs.org/@bitbonsai%2fmcpvault",
+      "evidence": "Version 0.12.4 (published 2026-07-23) declares license MIT and repository github.com/bitbonsai/mcpvault; latest is 0.16.0. The vault MCP server runs it through npx; it is not bundled. Upstream license text not retrieved."
     }
   ],
   "models": [
@@ -825,11 +845,31 @@
       "license": "NOASSERTION",
       "license_status": "Historical document license unresolved; current repository license not applied retroactively.",
       "modifications": "Project-specific enforcement and contact details; existing attribution retained."
+    },
+    {
+      "name": "Vault scaffolding adapted from wellspring",
+      "paths": [
+        "vault/_meta/tags.md",
+        "vault/_meta/templates/decision.md",
+        "vault/_meta/templates/discovery.md",
+        "vault/_meta/templates/moc.md",
+        "vault/_meta/templates/reference.md",
+        "vault/_meta/templates/session-log.md",
+        ".opencode/commands/vault-health.md",
+        "scripts/vault_audit.py"
+      ],
+      "source_reference": "wellspring-repository",
+      "declared_local_version": null,
+      "version_evidence": "git rev-parse HEAD in the local ../wellspring checkout",
+      "upstream_license": "MIT, Copyright (c) 2026 Josh Burt",
+      "license_reference": "wellspring-repository",
+      "exact_import_revision": "dca5685dbf4b03ba295e71a4a895c1d0475d1203",
+      "modifications": "Templates and the vault-health command adapted to ember paths, the [[ember]] hub, and status kept as a tag; the tag vocabulary keeps wellspring's three axes with ember domains. scripts/vault_audit.py is a rewrite by the Sisyphus agent (opencode) that keeps wellspring's checks and adds a type/tag consistency check."
     }
   ],
   "dependencies": {
     "lockfile": "uv.lock",
-    "lockfile_sha256": "63ea9098f8b0740cf4806c61deaa0ad55d4dfd3b1a40beb39b616a72e4dc16a3",
+    "lockfile_sha256": "f97407c32ae9499b193cebf741897434a7ac59f580f880e89083d4bbf3d4aaad",
     "inventory": [
       {
         "name": "accelerate",

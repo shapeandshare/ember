@@ -7,7 +7,7 @@
 Report vulnerabilities privately via one of these channels:
 
 - **GitHub Security Advisories**: go to Settings → Security → Advisories → New draft security
-  advisory on the [gut-feeling repository](https://github.com/shapeandshare/gut-feeling).
+  advisory on the [GitHub repository](https://github.com/shapeandshare/ember).
 - **Email**: contact the maintainer at @shapeandshare directly.
 
 Include as much detail as you can: the affected component, a description of the issue, steps
@@ -31,15 +31,15 @@ channel. Response times may be longer around public holidays.
 
 The following areas are in scope for security reports:
 
-- **`gut_feeling/server.py`**: FastAPI HTTP endpoint bound to `127.0.0.1:8765`. Potential
+- **`ember/server.py`**: FastAPI HTTP endpoint bound to `127.0.0.1:8765`. Potential
   issues include request-validation bypasses, denial-of-service via malformed payloads, or
   unintended exposure of the endpoint beyond localhost.
-- **`gut_feeling/mcp_server.py`**: MCP stdio boundary between the agent and the HTTP server.
+- **`ember/mcp_server.py`**: MCP stdio boundary between the agent and the HTTP server.
   Potential issues include prompt-injection via malformed `state` or `questions` fields, or
   tool-schema confusion that causes an agent to misuse the `advise` tool.
-- **`gut_feeling/process.py`**: PID-file lifecycle management. Potential issues include
+- **`ember/process.py`**: PID-file lifecycle management. Potential issues include
   TOCTOU races on the pidfile, privilege-escalation risks, or stale-pidfile attacks.
-- **`gut_feeling/cli.py`**: CLI command handling. Potential issues include unsafe subprocess
+- **`ember/cli.py`**: CLI command handling. Potential issues include unsafe subprocess
   invocation patterns or argument-injection vulnerabilities.
 - **Dependency vulnerabilities** in the pinned ranges declared in `pyproject.toml` and
   `uv.lock`, particularly in `torch`, `transformers`, `fastapi`, `uvicorn`, and `mcp`.
@@ -59,7 +59,7 @@ The HTTP server binds to `127.0.0.1` by default and is intended for local use on
 **must not** be exposed to external networks. There is no authentication layer on the HTTP
 endpoint; the security boundary is the loopback interface.
 
-If you deploy gut-feeling in an environment where the loopback interface is shared (e.g., a
+If you deploy ember in an environment where the loopback interface is shared (e.g., a
 multi-user server or a container with a shared network namespace), you are responsible for
 adding appropriate access controls. This configuration is not supported and is outside the
 intended threat model.

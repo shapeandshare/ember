@@ -10,7 +10,7 @@ labels: bug
 
 ## Environment
 
-<!-- Output of `make doctor` or `gut-feeling doctor` -->
+<!-- Output of `make doctor` or `ember doctor` -->
 
 ```
 ```

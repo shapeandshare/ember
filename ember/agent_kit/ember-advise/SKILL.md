@@ -1,12 +1,12 @@
 ---
-name: gut-feeling-advise
-description: Playbook for the gut-feeling_advise MCP tool, a local advisor that returns calibrated probabilities. Use when classifying user intent, triaging errors or failing tests, routing work, checking yes/no gates (needs review, safe to retry, specific enough to act), scoring risk, severity, or effort, or weighing approaches; and when designing questions for gut-feeling or interpreting its probabilities.
+name: ember-advise
+description: Playbook for the ember_advise MCP tool, a local advisor that returns calibrated probabilities. Use when classifying user intent, triaging errors or failing tests, routing work, checking yes/no gates (needs review, safe to retry, specific enough to act), scoring risk, severity, or effort, or weighing approaches; and when designing questions for ember or interpreting its probabilities.
 ---
 
-# gut-feeling-advise
+# ember-advise
 
-gut-feeling is a little buddy for judgment calls. Its `advise` tool (opencode:
-`gut-feeling_advise`; Claude Code: `mcp__gut-feeling__advise`) runs Cloudflare's Clef-Flash
+ember is a little buddy for judgment calls. Its `advise` tool (opencode:
+`ember_advise`; Claude Code: `mcp__ember__advise`) runs Cloudflare's Clef-Flash
 model locally: you describe a situation in `state`, ask typed questions, and it radiates a
 feeling about every option as a calibrated probability. It never writes prose and never
 decides for you — it advises, you decide.
@@ -21,7 +21,7 @@ decides for you — it advises, you decide.
 
 ## When to consult it
 
-Reach for `gut-feeling_advise` at **decision points** where you would otherwise guess or
+Reach for `ember_advise` at **decision points** where you would otherwise guess or
 apply an unexamined heuristic:
 
 | Decision point | Question type | Example id |
@@ -73,7 +73,7 @@ The response also carries `usage.input_tokens` and `latency_ms`.
 
 ## Asking well
 
-1. **Put all evidence in `state` — and only evidence.** gut-feeling sees nothing else. Prefer
+1. **Put all evidence in `state` — and only evidence.** ember sees nothing else. Prefer
    structured JSON with labeled fields (`{"test": ..., "output": ..., "diff_summary": ...}`)
    and trim logs to the relevant lines; inputs are capped at 16,384 tokens. Don't write your
    own verdict into `state` ("this is an infrastructure issue"): it gets echoed back and you
@@ -109,7 +109,7 @@ Starting thresholds, calibrated from observed outputs — tune them per decision
 - **Don't re-ask.** Identical requests get identical answers. Change the evidence or the
   question instead.
 - **It advises; you decide.** When you have strong contrary evidence, override it and say why.
-- **Name the signal.** Quote what you relied on, e.g. `gut-feeling: failure_kind=environment (0.84)`.
+- **Name the signal.** Quote what you relied on, e.g. `ember: failure_kind=environment (0.84)`.
 
 ## Recipes
 
@@ -214,8 +214,8 @@ your project, measure them, and keep each set fixed once your checks depend on i
 ## Operations
 
 - **The first call is slow.** The model server starts on demand and loads in ~5–15 s; later
-  calls take ~1 s. Pre-warm it with `gut-feeling start`.
-- **"model … is not pulled"** means the weights are missing: run `gut-feeling model pull`.
-- **"not reachable … GUT_FEELING_AUTOSTART=0"** means the server is off; run
-  `gut-feeling start`. For anything else, run `gut-feeling doctor` and `gut-feeling logs`.
-- **`gut-feeling status`** prints the engine (device, dtype, model) when the server is up.
+  calls take ~1 s. Pre-warm it with `ember start`.
+- **"model … is not pulled"** means the weights are missing: run `ember model pull`.
+- **"not reachable … EMBER_AUTOSTART=0"** means the server is off; run
+  `ember start`. For anything else, run `ember doctor` and `ember logs`.
+- **`ember status`** prints the engine (device, dtype, model) when the server is up.
