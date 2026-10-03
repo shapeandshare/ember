@@ -114,6 +114,29 @@ A few non-negotiable rules that tooling doesn't fully enforce:
 - **`opencode.json` and `.opencode/plugins/ember.js` are per-machine.** They are gitignored.
   Never commit them.
 
+Beyond the tooling, `ember/` follows the Python conventions in
+`.specify/memory/constitution.md` **Article X** (adapted from the sibling repositories). They
+apply to new and modified code; existing violations are tracked as migration debt in Article X
+§10.18 and must not grow.
+
+| Concern | Convention |
+| --- | --- |
+| Package ownership | Bare `__init__.py` markers (no imports/re-exports), except the root and `agent_kit` which define a small public API; none in data-only dirs |
+| File shape | One primary class per file; modules `snake_case.py` named after their class |
+| Sizing | ≤ 400 lines/module; evaluate splitting at six peer modules; ≤ 2 levels of nesting |
+| Imports | Top of file only; exceptions: `TYPE_CHECKING` (`# cycle:`), optional-dep `try/except ImportError`, the runtime model import, `# import-placement:allow`; relative inside the package |
+| Typing | `mypy --strict`; coded + commented suppressions only; no `cast()`/`Any` escape hatches; `from __future__ import annotations`; PEP 604 unions |
+| Enums | `Enum`/`StrEnum`/`IntEnum` for fixed value sets — never magic strings or dict mappings; `Literal[...]` only for published-schema fields |
+| Data models | Pydantic v2 `BaseModel` for boundary data; internal frozen dataclasses allowed |
+| Interfaces & DI | `typing.Protocol` over `abc.ABC`; constructor injection; no service locators or dependency-plumbing singletons (private lazy caches allowed) |
+| Docstrings | NumPy-style on modules, classes, and public functions (enforced by ruff `D` on `ember/`) |
+| Comments | Explain why; solid `#` separators; tag every rule exception |
+| Errors | Typed exceptions; no bare `except:` or swallowed errors; explicit timeouts on network calls |
+| Logging | `logging.getLogger(__name__)` in library code; never `print` (stdout is the MCP wire) |
+| Concurrency | Sync inference behind the engine lock; async only at I/O boundaries with structured concurrency |
+| Entry points | One composition root per subsystem; ember deliberately has no application-wide God class |
+| Writes | Idempotent and guarded; `.tmp` + `os.replace()` for files that could clobber |
+
 ---
 
 ## Commit messages

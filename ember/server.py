@@ -67,6 +67,23 @@ MODEL_INFO = Gauge(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Load the model once at startup and tear it down at shutdown.
+
+    Parameters
+    ----------
+    app : FastAPI
+        The FastAPI application this lifespan is bound to.
+
+    Yields
+    ------
+    None
+        Control, while the global ``_ENGINE`` is loaded.
+
+    Raises
+    ------
+    RuntimeError
+        If the configured model is not found on disk.
+    """
     global _ENGINE
     name = config.resolve("model")
     model_dir = models.resolve_dir(name)
@@ -118,6 +135,8 @@ async def observe_advise(
 
 
 class AdviseRequest(BaseModel):
+    """Request body for ``POST /v1/systemone``."""
+
     model: str = "clef-flash"
     state: Any = Field(description="Any string or JSON value describing the situation.")
     questions: dict[str, Any] = Field(description="Mapping of question ID to question.")
@@ -139,6 +158,14 @@ class AdviseRequest(BaseModel):
 
 @app.get("/health")
 def health() -> dict[str, Any]:
+    """Report whether the model is loaded, and by which pid.
+
+    Returns
+    -------
+    dict[str, Any]
+        ``status`` (``"ok"`` or ``"loading"``), ``pid``, and ``engine``
+        (the loaded ``Engine.describe()`` output, or ``None``).
+    """
     return {
         "status": "ok" if _ENGINE is not None else "loading",
         "pid": os.getpid(),
@@ -154,6 +181,24 @@ def metrics() -> Response:
 
 @app.post("/v1/systemone")
 def systemone_endpoint(req: AdviseRequest) -> dict[str, Any]:
+    """Run an advise request against the loaded model and record metrics.
+
+    Parameters
+    ----------
+    req : AdviseRequest
+        The parsed request body.
+
+    Returns
+    -------
+    dict[str, Any]
+        The SystemOne response body, with a ``latency_ms`` field added.
+
+    Raises
+    ------
+    HTTPException
+        503 if the model has not finished loading; 422 if ``req`` contains
+        malformed questions or media.
+    """
     if _ENGINE is None:
         raise HTTPException(status_code=503, detail="model not loaded yet")
     started = time.time()
@@ -176,6 +221,7 @@ def systemone_endpoint(req: AdviseRequest) -> dict[str, Any]:
 
 
 def main() -> None:
+    """Run the model server in the foreground with uvicorn."""
     import uvicorn
 
     uvicorn.run(

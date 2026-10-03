@@ -43,11 +43,23 @@ _JOINT_MODULE: Any = None
 
 
 def model_max_length(model_dir: str | os.PathLike[str] = DEFAULT_MODEL_DIR) -> int:
-    """The backbone's declared context window (``max_length``), from config.json.
+    """Resolve the backbone's declared context window from config.json.
 
     ``0`` in the config means "the model's own maximum"; this resolves it. The
     value is read from the pinned snapshot, so it tracks a model revision bump
     instead of a hardcoded number.
+
+    Parameters
+    ----------
+    model_dir : str | os.PathLike[str], optional
+        Directory containing the model's ``config.json``. Defaults to
+        ``DEFAULT_MODEL_DIR``.
+
+    Returns
+    -------
+    int
+        The resolved ``max_position_embeddings`` value, or
+        ``FALLBACK_MAX_LENGTH`` if it cannot be read or is non-positive.
     """
     try:
         config = json.loads((Path(model_dir) / "config.json").read_text())
@@ -70,19 +82,45 @@ def joint_module(model_dir: Path) -> Any:
         path = str(model_dir.resolve())
         if path not in sys.path:
             sys.path.insert(0, path)
-        import joint_schema_model  # type: ignore
+        # import-placement:allow - joint_schema_model ships in the model snapshot.
+        import joint_schema_model  # type: ignore[import-not-found]
 
         _JOINT_MODULE = joint_schema_model
     return _JOINT_MODULE
 
 
 def pick_device(requested: str | None = None) -> str:
+    """Resolve the compute device to run on.
+
+    Parameters
+    ----------
+    requested : str | None, optional
+        ``"mps"``, ``"cpu"``, or ``"auto"``/``None`` to detect automatically.
+
+    Returns
+    -------
+    str
+        ``requested`` if given and not ``"auto"``; otherwise ``"mps"`` when
+        available, else ``"cpu"``.
+    """
     if requested and requested != "auto":
         return requested
     return "mps" if torch.backends.mps.is_available() else "cpu"
 
 
 def pick_dtype(device: str) -> torch.dtype:
+    """Resolve the floating-point dtype to load the model in.
+
+    Parameters
+    ----------
+    device : str
+        The compute device, as returned by ``pick_device``.
+
+    Returns
+    -------
+    torch.dtype
+        ``torch.float16`` on MPS, ``torch.float32`` otherwise.
+    """
     return torch.float16 if device == "mps" else torch.float32
 
 
@@ -198,6 +236,13 @@ class Engine:
         return response
 
     def describe(self) -> dict[str, Any]:
+        """Return a summary of this engine's loaded configuration.
+
+        Returns
+        -------
+        dict[str, Any]
+            ``device``, ``dtype``, ``model_dir``, and ``max_length``.
+        """
         return {
             "device": self.device,
             "dtype": str(self.dtype).replace("torch.", ""),

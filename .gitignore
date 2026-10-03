@@ -15,3 +15,4 @@ logs/
 .omo/
 vault/.obsidian/
 vault/.trash/
+/results/

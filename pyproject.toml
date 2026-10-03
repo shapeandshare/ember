@@ -58,6 +58,7 @@ dev = [
 testpaths = ["tests"]
 markers = [
     "model: loads the Clef model (slow; needs MPS or CPU)",
+    "evals: calibration eval suite — positive and negative recipe cases (implies model)",
 ]
 addopts = "-q"
 filterwarnings = [
@@ -70,11 +71,16 @@ target-version = "py312"
 src = ["ember"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "N", "W", "UP", "B", "S", "PT", "RUF"]
+select = ["E", "F", "I", "N", "W", "UP", "B", "S", "PT", "RUF", "D"]
 ignore = ["S101"]  # assert is fine in tests
 
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S105", "S106"]
+# Article X's docstring rule applies to `ember/`; tests and scripts are exempt.
+"tests/**" = ["S101", "S105", "S106", "D"]
+"scripts/**" = ["D"]
 
 [tool.ruff.format]
 quote-style = "double"

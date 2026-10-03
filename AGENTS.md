@@ -55,6 +55,9 @@ after changing brand assets. Do not invent missing provenance or license facts.
 | Dependency ranges | `pyproject.toml` + `uv.lock` |
 | Lifecycle commands | `Makefile` (contributors), `ember` CLI (users) |
 | User documentation | `README.md` |
+| Dependency licenses | `THIRD_PARTY_NOTICES.md` |
+| Tested versions and limits | `COMPATIBILITY.md` |
+| Intended and excluded uses | `RESPONSIBLE_USE.md` |
 | Development memory (decisions, discoveries, session logs) | `vault/` (hub `vault/ember.md`) |
 | Verification | `tests/`, `.github/workflows/ci.yml` |
 
@@ -120,6 +123,8 @@ vault/                # project memory (Obsidian): decisions, discoveries, sessi
 | `make smoke` / `make mcp-check` | Direct MPS inference / MCP protocol end-to-end |
 | `make doctor` | Environment, model, and server readiness |
 | `make vault-audit` | Audit `vault/` notes: frontmatter, tags, wikilinks, code-refs, orphans |
+| `make eval-run` / `make eval-export` | Model benchmark (`evals/clef-flash.jsonl`) / reviewer report bundle |
+| `make eval-agent` / `make eval-agent-smoke` | Agent-in-the-loop eval through opencode (opt-in; spends provider credit) |
 | `.venv/bin/ember …` or `.venv/bin/gut …` | Primary CLI, built from this checkout |
 
 ## Architecture (call path)
@@ -239,6 +244,39 @@ All tool configuration lives in `pyproject.toml` — no separate config files.
 
 Run `make pr-ready` before every PR: formats, lints, type-checks, security-scans, compiles, and runs unit tests.
 
+## Python conventions
+
+`ember/` follows the Python conventions in `.specify/memory/constitution.md` **Article X**.
+Article VIII's tooling is the floor; these are the rules tooling does not fully enforce. The
+highlights:
+
+- **Package ownership** — every owned package level has an `__init__.py`; markers are bare
+  (no imports, no re-exports), except the root and an API-only sub-package such as
+  `ember/agent_kit/`, which may define a small public API; data-only directories have none.
+- **One class per file**; modules are `snake_case.py`, named after their primary class.
+- **Sizing** — ≤ 400 lines per module; split by responsibility rather than compress.
+- **Imports at the top** — the only exceptions are a `TYPE_CHECKING` cycle guard tagged
+  `# cycle:`, an optional-dependency `try/except ImportError`, the runtime `joint_schema_model`
+  import, or a justified `# import-placement:allow`. Relative imports inside `ember/`; absolute
+  `ember.` imports only from outside the package. Never import through an `__init__` re-export.
+- **Typing** — `mypy --strict`; no bare `# type: ignore` (an error code and a comment are
+  required), no `cast()`/`Any` used to silence the checker; `from __future__ import
+  annotations` everywhere; PEP 604 unions.
+- **Enums over magic strings** (`Literal` only for published-schema fields), and **Pydantic
+  `BaseModel` over `@dataclass`** for data that crosses a boundary (an internal frozen
+  dataclass is fine).
+- **Protocols over ABCs**; constructor injection; no service locators or dependency-plumbing
+  module singletons — a private lazy cache for the engine or runtime module is allowed.
+- **NumPy-style docstrings** on every module, class, and public function.
+- **Comments explain why**; section separators are solid `#` lines.
+- **Idempotent, atomic writes** — write a sibling `.tmp` then `os.replace()`.
+- **No single God class** — each subsystem has one composition root (`Engine.advise`,
+  `process.start`, `mcp_server.main`, `cli.main`); that split is the seam.
+
+These apply to new and modified code. Existing violations are recorded as migration debt in
+Article X §10.18 and MUST NOT grow — pay a file's debt down when you next touch it, and do not
+reformat untouched files just to satisfy Article X.
+
 ## What to watch out for
 
 - **Never pass `device_map={"": "mps"}`** — it segfaults. `runtime.load_clef` loads on CPU and
@@ -270,6 +308,24 @@ Run `make pr-ready` before every PR: formats, lints, type-checks, security-scans
   Apple Silicon VMs (the server OOMs on MPS). Run `make test` locally for model-affecting
   changes. See `vault/discoveries/2026-10-03-self-hosted-vms-cannot-hold-the-model.md`.
 - **Pushing `.github/workflows/` changes over HTTPS** needs a gh token with the `workflow` scope.
+- **Workflows run untrusted code.** A fork's pull request runs its own copy of the workflows,
+  so: pin every `uses:` to a full commit SHA with a `# vX.Y.Z` comment (Dependabot bumps
+  both); start from `permissions: {}` and grant per job; set `persist-credentials: false` on
+  checkout; never use `pull_request_target`, `workflow_run`, or a self-hosted runner; never
+  reference org secrets. The `zizmor` job in `ci` enforces this; run
+  `uvx zizmor@1.30.1 .github/` before pushing workflow changes. See
+  `vault/decisions/2026-10-03-harden-github-before-going-public.md`.
+- **The agent eval is the only code that launches opencode.** `ember eval agent`
+  (`scripts/run_agent_evals.py`, `evals/agent/`) runs `opencode run --pure` in a temporary
+  sandbox with a private HOME and XDG dirs and no port (constitution Article IV). Keep it out of
+  `tests/`; its unit tests (`tests/test_agent_eval.py`) use scripted transcripts. Benchmark
+  gold labels and agent-scenario checks are frozen before runs; see
+  `vault/decisions/2026-10-03-freeze-benchmark-labels-before-runs.md`.
+- **Article X is prospective.** It binds new and modified code, not the existing tree; don't
+  reformat untouched files to satisfy it. See the migration-debt list in Article X §10.18.
+- **Article X docstrings are enforced.** ruff `D` with `convention = "numpy"` runs over
+  `ember/` (tests and scripts are exempt) and `ember/py.typed` ships, so keep new public
+  modules, classes, and functions documented or `make lint` fails.
 
 ## Speckit integration
 

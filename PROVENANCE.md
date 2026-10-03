@@ -21,6 +21,8 @@ source code is original. Git history, upstream notices and individual package
 licenses remain relevant evidence. Dependency artifact URLs and metadata URLs are
 **not** marked checked merely because they appear in the lockfile.
 
+The code-dependency license summary is in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ## Brand creation and lineage
 
 The project owner provided creative direction, reviewed iterations, and selected

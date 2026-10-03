@@ -528,3 +528,8 @@ When editing any documentation file:
 [provenance.json](provenance.json) records brand asset hashes and lineage, model
 sources, dependency evidence, and dated external URL checks. Update it when
 changing brand materials; run `python3 scripts/check_provenance.py`.
+
+Related root documents: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) summarizes code
+dependency licenses, [COMPATIBILITY.md](COMPATIBILITY.md) records tested models and
+versions, and [RESPONSIBLE_USE.md](RESPONSIBLE_USE.md) states the intended and excluded
+uses.

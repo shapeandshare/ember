@@ -7,6 +7,10 @@ updates:
       day: monday
       time: "08:00"
       timezone: America/Los_Angeles
+    # Wait a week before proposing a new release: compromised versions are usually
+    # caught and yanked within days. Security updates are never delayed.
+    cooldown:
+      default-days: 7
     groups:
       ml-deps:
         patterns: ["torch*", "torchvision*", "transformers*", "accelerate*", "safetensors*", "huggingface*"]
@@ -36,3 +40,5 @@ updates:
       day: monday
       time: "08:00"
       timezone: America/Los_Angeles
+    cooldown:
+      default-days: 7

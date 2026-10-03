@@ -49,6 +49,18 @@ def _apply_server_env(args: argparse.Namespace) -> None:
 # server lifecycle
 # --------------------------------------------------------------------------- #
 def cmd_serve(args: argparse.Namespace) -> int:
+    """Run the model server in the foreground (``ember serve``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses the server flags.
+
+    Returns
+    -------
+    int
+        Always ``0`` (the process exits when the server stops).
+    """
     _apply_server_env(args)
     from . import server
 
@@ -57,12 +69,37 @@ def cmd_serve(args: argparse.Namespace) -> int:
 
 
 def cmd_start(args: argparse.Namespace) -> int:
+    """Start the model server in the background (``ember start``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses the server flags.
+
+    Returns
+    -------
+    int
+        Always ``0``.
+    """
     pid = process.start(args.model, args.host, args.port, args.device)
     print(f"ember server ready (pid {pid})")
     return 0
 
 
 def cmd_stop(args: argparse.Namespace) -> int:
+    """Stop the server started by ``ember start`` (``ember stop``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses the server flags.
+
+    Returns
+    -------
+    int
+        ``0`` if stopped or already not running; ``1`` if a server is up
+        but was not started by ``ember start``.
+    """
     host, port = _host_port(args)
     if process.stop(host, port):
         print("stopped")
@@ -80,12 +117,36 @@ def cmd_stop(args: argparse.Namespace) -> int:
 
 
 def cmd_restart(args: argparse.Namespace) -> int:
+    """Restart the background model server (``ember restart``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses the server flags.
+
+    Returns
+    -------
+    int
+        Always ``0``.
+    """
     pid = process.restart(args.model, args.host, args.port, args.device)
     print(f"ember server restarted (pid {pid})")
     return 0
 
 
 def cmd_status(args: argparse.Namespace) -> int:
+    """Print server health (``ember status``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses the server flags.
+
+    Returns
+    -------
+    int
+        ``0`` if running, ``1`` if stopped.
+    """
     info = process.health(*_host_port(args))
     if info is None:
         print("not running")
@@ -95,6 +156,18 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 
 def cmd_logs(args: argparse.Namespace) -> int:
+    """Follow the model server log (``ember logs``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses ``args.lines`` for the initial tail size.
+
+    Returns
+    -------
+    int
+        ``1`` if no log file exists yet; otherwise runs until interrupted.
+    """
     log = paths.server_log_path()
     if not log.exists():
         print(f"no log yet at {log}")
@@ -112,6 +185,19 @@ def cmd_logs(args: argparse.Namespace) -> int:
 
 
 def cmd_mcp(args: argparse.Namespace) -> int:
+    """Run the MCP stdio server (``ember mcp``); agents launch this.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses the server flags to set env vars for the
+        MCP server before it starts.
+
+    Returns
+    -------
+    int
+        Always ``0`` (the process exits when the MCP client disconnects).
+    """
     if args.host or args.port:
         host, port = _host_port(args)
         os.environ["EMBER_SERVER_URL"] = f"http://{host}:{port}"
@@ -129,17 +215,53 @@ def cmd_mcp(args: argparse.Namespace) -> int:
 # model lifecycle
 # --------------------------------------------------------------------------- #
 def cmd_model_pull(args: argparse.Namespace) -> int:
+    """Download a model's pinned weights (``ember model pull``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses ``args.name`` and ``args.allow_low_disk``.
+
+    Returns
+    -------
+    int
+        Always ``0``.
+    """
     path = models.pull(args.name, allow_low_disk=args.allow_low_disk)
     print(f"{args.name or models.DEFAULT} ready at {path}")
     return 0
 
 
 def cmd_model_list(_: argparse.Namespace) -> int:
+    """List models and where they are cached (``ember model list``).
+
+    Parameters
+    ----------
+    _ : argparse.Namespace
+        Parsed CLI arguments (unused).
+
+    Returns
+    -------
+    int
+        Always ``0``.
+    """
     _emit(models.list_models())
     return 0
 
 
 def cmd_model_path(args: argparse.Namespace) -> int:
+    """Print the directory a model runs from (``ember model path``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses ``args.name``.
+
+    Returns
+    -------
+    int
+        ``0`` if the model is pulled, ``1`` otherwise.
+    """
     resolved = models.resolve_dir(args.name)
     if resolved is None:
         print("not pulled")
@@ -149,6 +271,18 @@ def cmd_model_path(args: argparse.Namespace) -> int:
 
 
 def cmd_model_rm(args: argparse.Namespace) -> int:
+    """Delete a model's local files (``ember model rm``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses ``args.name`` and ``args.yes``.
+
+    Returns
+    -------
+    int
+        ``0`` if removed; ``1`` if the confirmation prompt was declined.
+    """
     if not args.yes:
         answer = (
             input(f"Remove model {args.name or models.DEFAULT}? [y/N] ").strip().lower()
@@ -164,16 +298,53 @@ def cmd_model_rm(args: argparse.Namespace) -> int:
 # config, opencode, agents
 # --------------------------------------------------------------------------- #
 def cmd_config_path(_: argparse.Namespace) -> int:
+    """Print the config file path (``ember config path``).
+
+    Parameters
+    ----------
+    _ : argparse.Namespace
+        Parsed CLI arguments (unused).
+
+    Returns
+    -------
+    int
+        Always ``0``.
+    """
     print(paths.config_path())
     return 0
 
 
 def cmd_config_show(_: argparse.Namespace) -> int:
+    """Print the effective config (``ember config show``).
+
+    Parameters
+    ----------
+    _ : argparse.Namespace
+        Parsed CLI arguments (unused).
+
+    Returns
+    -------
+    int
+        Always ``0``.
+    """
     _emit(config.load())
     return 0
 
 
 def cmd_init(args: argparse.Namespace) -> int:
+    """Register the MCP server with opencode (``ember init``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses the server flags plus ``args.global_``,
+        ``args.opencode``, and ``args.no_autostart``.
+
+    Returns
+    -------
+    int
+        Always ``0``.
+    """
     host, port = _host_port(args)
     autostart = "0" if args.no_autostart else "1"
     scope = "global" if args.global_ else "project"
@@ -195,6 +366,18 @@ def cmd_init(args: argparse.Namespace) -> int:
 
 
 def cmd_agents_install(args: argparse.Namespace) -> int:
+    """Install the onboarding skill for an agent (``ember agents install``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses ``args.agent`` and ``args.global_``.
+
+    Returns
+    -------
+    int
+        Always ``0``.
+    """
     scope = "global" if args.global_ else "project"
     path = agent_kit.install_skill(args.agent, scope, Path.cwd())
     print(f"installed {agent_kit.SKILL_NAME} skill for {args.agent}: {path}")
@@ -202,6 +385,19 @@ def cmd_agents_install(args: argparse.Namespace) -> int:
 
 
 def cmd_agents_show(args: argparse.Namespace) -> int:
+    """Print part of the onboarding kit (``ember agents show``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses ``args.what`` (``"instructions"``,
+        ``"skill"``, or ``"snippet"``).
+
+    Returns
+    -------
+    int
+        Always ``0``.
+    """
     text = {
         "instructions": agent_kit.instructions,
         "skill": agent_kit.skill,
@@ -215,6 +411,18 @@ def cmd_agents_show(args: argparse.Namespace) -> int:
 # doctor, uninstall
 # --------------------------------------------------------------------------- #
 def cmd_doctor(_: argparse.Namespace) -> int:
+    """Check platform, dependencies, model, and server (``ember doctor``).
+
+    Parameters
+    ----------
+    _ : argparse.Namespace
+        Parsed CLI arguments (unused).
+
+    Returns
+    -------
+    int
+        ``0`` if every check passed, ``1`` otherwise.
+    """
     ok = True
 
     def check(label: str, good: bool, detail: str) -> None:
@@ -289,6 +497,18 @@ def cmd_doctor(_: argparse.Namespace) -> int:
 
 
 def cmd_uninstall(args: argparse.Namespace) -> int:
+    """Stop the server and remove global installs (``ember uninstall``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses ``args.purge_models``.
+
+    Returns
+    -------
+    int
+        Always ``0``.
+    """
     if process.stop():
         print("stopped the model server")
     if args.purge_models:
@@ -324,6 +544,123 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
 
 
 # --------------------------------------------------------------------------- #
+# eval
+# --------------------------------------------------------------------------- #
+_EVAL_CHECKOUT_ERROR = (
+    "the `ember eval` commands require a repository checkout: `scripts/` is not "
+    "part of the installed package. Run from a clone, or use `make eval-run` / "
+    "`make eval-report`."
+)
+
+
+def cmd_eval_run(args: argparse.Namespace) -> int:
+    """Run the eval dataset against a live server (``ember eval run``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses ``args.server``, ``args.split``,
+        ``args.category``, ``args.dry_run``, and ``args.dataset``.
+
+    Returns
+    -------
+    int
+        Exit code from ``run_evals``.
+    """
+    try:
+        from scripts.run_evals import DEFAULT_SERVER, run_evals
+    except ImportError as exc:
+        raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
+
+    return run_evals(
+        args.server or os.environ.get("EMBER_SERVER_URL", DEFAULT_SERVER),
+        split=args.split,
+        category=args.category,
+        dry_run=args.dry_run,
+        dataset_path=Path(args.dataset),
+    )
+
+
+def cmd_eval_report(args: argparse.Namespace) -> int:
+    """Render a results JSON as a table (``ember eval report``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses ``args.results_file``, ``args.format``,
+        and ``args.compare``.
+
+    Returns
+    -------
+    int
+        Exit code from ``report_evals.main``.
+    """
+    try:
+        from scripts.report_evals import main as report_main
+    except ImportError as exc:
+        raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
+
+    argv: list[str] = []
+    if args.results_file:
+        argv.append(str(args.results_file))
+    if args.format:
+        argv += ["--format", args.format]
+    if args.compare:
+        argv += ["--compare"] + [str(p) for p in args.compare]
+    return report_main(argv)
+
+
+def cmd_eval_export(args: argparse.Namespace) -> int:
+    """Write the reviewer report bundle (``ember eval export``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses ``args.results_file``, ``args.out``, and
+        ``args.agent``.
+
+    Returns
+    -------
+    int
+        Exit code from ``report_evals.main``.
+    """
+    try:
+        from scripts.report_evals import main as report_main
+    except ImportError as exc:
+        raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
+
+    argv = ["--export"]
+    if args.results_file:
+        argv.append(str(args.results_file))
+    if args.out:
+        argv += ["--out", str(args.out)]
+    if args.agent:
+        argv += ["--agent", str(args.agent)]
+    return report_main(argv)
+
+
+def cmd_eval_agent(args: argparse.Namespace) -> int:
+    """Run the agent-in-the-loop eval through opencode (``ember eval agent``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; ``args.agent_args`` pass through to
+        ``scripts/run_agent_evals.py`` unchanged (try ``ember eval agent --help``).
+
+    Returns
+    -------
+    int
+        Exit code from ``run_agent_evals.main``.
+    """
+    try:
+        from scripts.run_agent_evals import main as agent_main
+    except ImportError as exc:
+        raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
+    return agent_main(list(args.agent_args))
+
+
+# --------------------------------------------------------------------------- #
 # parser
 # --------------------------------------------------------------------------- #
 def _add_server_flags(parser: argparse.ArgumentParser) -> None:
@@ -334,6 +671,13 @@ def _add_server_flags(parser: argparse.ArgumentParser) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the ``ember`` command's argument parser.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        The fully configured parser, with all subcommands registered.
+    """
     parser = argparse.ArgumentParser(
         prog="ember",
         description=(
@@ -426,11 +770,109 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--purge-models", action="store_true")
     p.set_defaults(func=cmd_uninstall)
 
+    eval_cmd = sub.add_parser("eval", help="calibration eval suite")
+    esub = eval_cmd.add_subparsers(dest="eval_command", required=True)
+
+    p = esub.add_parser("run", help="run the eval dataset against a live server")
+    p.add_argument(
+        "--server",
+        default=None,
+        help="model server URL (default: EMBER_SERVER_URL or http://127.0.0.1:8765)",
+    )
+    p.add_argument(
+        "--split",
+        choices=["dev", "test"],
+        default=None,
+        help="only items from this split (default: all)",
+    )
+    p.add_argument("--category", default=None, help="only items from this category")
+    p.add_argument(
+        "--dataset",
+        default=str(Path(__file__).resolve().parents[1] / "evals" / "clef-flash.jsonl"),
+        help="path to JSONL eval dataset",
+    )
+    p.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="print items without hitting the server",
+    )
+    p.set_defaults(func=cmd_eval_run)
+
+    p = esub.add_parser("report", help="render a results JSON as a Markdown table")
+    p.add_argument(
+        "results_file",
+        nargs="?",
+        default=None,
+        help="path to *_results.json (default: most recent in results/)",
+    )
+    p.add_argument(
+        "--format",
+        choices=["markdown", "json"],
+        default="markdown",
+    )
+    p.add_argument(
+        "--compare",
+        nargs=2,
+        metavar=("RUN_A", "RUN_B"),
+        default=None,
+        help="compare two results files side-by-side",
+    )
+    p.set_defaults(func=cmd_eval_report)
+
+    p = esub.add_parser(
+        "export",
+        help="write a reviewer bundle: Markdown and HTML report, figures, raw data",
+    )
+    p.add_argument(
+        "results_file",
+        nargs="?",
+        default=None,
+        help="path to *_results.json (default: most recent in results/)",
+    )
+    p.add_argument(
+        "--out",
+        default=None,
+        help="bundle directory (default: results/<run_id>_report/)",
+    )
+    p.add_argument(
+        "--agent",
+        default=None,
+        help="attach an agent-in-the-loop run: an agent_*_results.json, or 'latest'",
+    )
+    p.set_defaults(func=cmd_eval_export)
+
+    p = esub.add_parser(
+        "agent",
+        add_help=False,
+        help="agent-in-the-loop eval: opencode on scripted scenarios (opt-in, "
+        "uses provider API credit)",
+    )
+    p.add_argument("agent_args", nargs=argparse.REMAINDER)
+    p.set_defaults(func=cmd_eval_agent)
+
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    """Parse arguments and dispatch to the selected subcommand.
+
+    Parameters
+    ----------
+    argv : list[str] | None, optional
+        Argument vector to parse; defaults to ``sys.argv[1:]`` via argparse.
+
+    Returns
+    -------
+    int
+        The subcommand's exit code, ``130`` on ``KeyboardInterrupt``, or
+        ``1`` on a ``RuntimeError``/``KeyError``.
+    """
+    parser = build_parser()
+    args, extra = parser.parse_known_args(argv)
+    if extra and getattr(args, "func", None) is not cmd_eval_agent:
+        parser.error(f"unrecognized arguments: {' '.join(extra)}")
+    if extra:
+        args.agent_args = [*extra, *args.agent_args]
     try:
         code: int = args.func(args)
         return code

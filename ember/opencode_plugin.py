@@ -37,6 +37,23 @@ export const EmberPlugin = async () => ({
 
 
 def render(command: list[str], server_url: str, autostart: str = "1") -> str:
+    """Render the opencode plugin's JavaScript source.
+
+    Parameters
+    ----------
+    command : list[str]
+        Argv used to launch the MCP server.
+    server_url : str
+        Value for the ``EMBER_SERVER_URL`` environment variable.
+    autostart : str, optional
+        Value for the ``EMBER_AUTOSTART`` environment variable. Defaults to
+        ``"1"``.
+
+    Returns
+    -------
+    str
+        The rendered plugin source, ready to write to disk.
+    """
     environment = {
         "EMBER_SERVER_URL": server_url,
         "EMBER_AUTOSTART": autostart,
@@ -50,6 +67,22 @@ def render(command: list[str], server_url: str, autostart: str = "1") -> str:
 
 
 def plugin_dir(scope: str, project_root: Path | None = None) -> Path:
+    """Return the directory the opencode plugin is installed into.
+
+    Parameters
+    ----------
+    scope : str
+        ``"global"`` for the user's opencode config directory, otherwise a
+        project-local install.
+    project_root : Path | None, optional
+        Root to install under when ``scope`` is not ``"global"``; defaults
+        to the current working directory.
+
+    Returns
+    -------
+    Path
+        The plugin directory for the given scope.
+    """
     if scope == "global":
         return Path.home() / ".config" / "opencode" / "plugins"
     root = project_root or Path.cwd()
@@ -62,6 +95,25 @@ def install(
     scope: str = "project",
     project_root: Path | None = None,
 ) -> Path:
+    """Render and write the opencode plugin file.
+
+    Parameters
+    ----------
+    command : list[str]
+        Argv used to launch the MCP server.
+    server_url : str
+        Value for the ``EMBER_SERVER_URL`` environment variable.
+    scope : str, optional
+        ``"project"`` (default) or ``"global"``.
+    project_root : Path | None, optional
+        Root to install under when ``scope`` is ``"project"``; defaults to
+        the current working directory.
+
+    Returns
+    -------
+    Path
+        The plugin file path written to.
+    """
     directory = plugin_dir(scope, project_root)
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / PLUGIN_FILENAME

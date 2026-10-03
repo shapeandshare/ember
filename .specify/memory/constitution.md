@@ -1,4 +1,43 @@
 <!--
+SYNC IMPACT REPORT — Agent Evaluation Clarification
+Version change: 1.3.0 → 1.3.1 (PATCH: clarification, no principle change)
+Date: 2026-10-03
+Modified principles:
+  - Article IV — clarifies that the opt-in agent evaluation (`ember eval agent`) may launch the
+    opencode CLI inside an isolated sandbox; tests still MUST NOT. Approved by the maintainer.
+Added sections: none
+Removed sections: none
+Templates / docs propagated:
+  - ✅ AGENTS.md (commands, watch-outs), README.md (Benchmark section)
+  - ✅ vault/decisions/2026-10-03-measure-ember-through-the-agent.md
+Follow-up TODOs: none
+-->
+<!--
+SYNC IMPACT REPORT — Python Conventions Amendment
+Version change: 1.2.0 → 1.3.0 (MINOR: new Article X)
+Date: 2026-10-03
+Modified principles:
+  - Article VIII — unchanged; Article X refines it and defers to it where silent
+Added sections:
+  - Article X — Python Conventions
+Removed sections: none
+Migration debt:
+  - Recorded inline as Article X §10.18; existing violations MUST NOT grow. One-class-per-file,
+    no-loose-functions, and the 400-line ceiling remain prospective and tracked. NumPy
+    docstrings (ruff `D`) and `ember/py.typed` are wired in this change and now enforced for
+    `ember/`.
+Templates / docs propagated:
+  - ✅ AGENTS.md (new "Python conventions" section; watch-outs; truth table unchanged)
+  - ✅ CONTRIBUTING.md (Code style section expanded with the same rules)
+  - ✅ pyproject.toml ([tool.ruff.lint] selects `D`, `[tool.ruff.lint.pydocstyle]` numpy;
+    tests/scripts exempt), ember/py.typed (zero-byte PEP 561 marker)
+  - ✅ ember/ docstrings brought to NumPy compliance (66 → 0)
+  - ✅ vault/decisions/2026-10-03-adopt-peer-python-conventions.md, vault/ember.md (hub link)
+Follow-up TODOs:
+  - Split `ember/cli.py` (788 lines) by responsibility to meet the Article X ceiling
+  - Pay down one-class-per-file / no-loose-functions debt as files are next touched
+-->
+<!--
 SYNC IMPACT REPORT — Project Memory Vault Amendment
 Version change: 1.1.2 → 1.2.0 (MINOR: new Article IX)
 Date: 2026-10-02
@@ -139,7 +178,10 @@ The model server SHALL start on demand (lazy autostart) and stay warm; nothing m
 login or boot unless the user opts in. Tooling MUST only start, signal, or stop processes it
 launched itself (tracked by PID) and MUST NOT kill by port or by pattern. Tests MUST bind random
 free ports, MUST NOT use the default port 8765, and MUST NOT invoke the opencode CLI or modify
-global opencode configuration.
+global opencode configuration. The opt-in agent evaluation (`ember eval agent`) is not a test:
+it MAY launch the opencode CLI only inside a temporary sandbox with a private HOME and XDG
+directories and no TCP port, MUST stop only the processes it launched, and MUST NOT run as part
+of `make check`, `make test`, or CI.
 
 Rationale: users run several opencode instances and their own servers on the same host.
 
@@ -218,6 +260,97 @@ Rationale: without a vault, decisions and hard-won constraints live only in comm
 and chat sessions. The sibling repositories (anvil, darkharbour, wellspring) keep the same
 kind of vault, and agents read it through the `vault` MCP server.
 
+### Article X — Python Conventions
+
+**Applicability**: Effective 2026-10-03. Applies to new and modified code under `ember/`.
+Existing violations are enumerated under §10.18 and MUST NOT increase. These rules refine
+Article VIII; where they are silent, Article VIII governs. They are adapted from the peer
+repositories' constitutions (anvil, wellspring, sonarqube-standalone, darkfactory,
+infrastructure, k8s.platform) harvested on 2026-10-03.
+
+- §10.1 **Package ownership.** Every fully-owned package level carries an `__init__.py`.
+  Package markers are bare and docstring-only: no imports, and no re-exports of symbols
+  defined in sibling modules. Two exceptions: the package root `ember/__init__.py` MAY carry
+  the module docstring and `__version__`; and a sub-package whose entire purpose is a small
+  public API (`ember/agent_kit/`) MAY define that API directly in its `__init__.py`. Data-only
+  directories MUST NOT contain an `__init__.py`.
+- §10.2 **One class per file.** A source file declares at most one primary class. A tightly
+  coupled exception class raised only by that primary class MAY share its file.
+- §10.3 **Sizing.** A module SHOULD NOT exceed 400 physical lines; reaching the ceiling is a
+  design signal to split by responsibility — never delete docstrings, compress code, or
+  suppress a check to comply. Evaluate decomposition when a package level reaches six peer
+  modules, and keep nesting to at most two levels below the package root.
+- §10.4 **Naming.** Modules are `snake_case.py`, named after their primary class when one
+  exists. Classes are `PascalCase` with a subsystem suffix (`…Server`, `…Engine`, `…Client`,
+  `…Error`). Constants are `UPPER_CASE`; private names start with `_`.
+- §10.5 **Imports.** All imports live at the top of the file. Four exceptions only: a
+  `TYPE_CHECKING` import that breaks a genuine runtime cycle, carrying a `# cycle:` comment; a
+  `try`/`except ImportError` guard for an optional dependency, naming `ImportError`
+  explicitly; an import of a module that ships outside this package and is loadable only after
+  adjusting `sys.path` (the model snapshot's `joint_schema_model`), carrying an
+  `# import-placement:allow` comment; and a last-resort `# import-placement:allow` with a
+  justification. Internal `ember` modules MUST NOT be lazy-imported. Inside `ember/`, use
+  relative imports; absolute `ember.` imports are valid only from outside the package
+  (`tests/`, `scripts/`). Never import a symbol through an `__init__` re-export — import the
+  defining module.
+- §10.6 **Typing.** Article VIII's `mypy --strict` is the floor. A type suppression MUST carry
+  a specific error code and a comment explaining why (`# type: ignore[arg-type]  - reason`);
+  bare `# type: ignore`, `cast()` used to silence the checker, and `Any` used as an escape
+  hatch are prohibited. Every module starts with `from __future__ import annotations`; never
+  write string-literal forward references; prefer PEP 604 unions (`str | None`) over
+  `typing.Optional`/`Dict`/`List`.
+- §10.7 **Enums over magic strings.** A value drawn from a fixed, known set is an `Enum`
+  (`StrEnum`/`IntEnum`), not a bare string constant or ad-hoc dict mapping. A Pydantic
+  `Literal[...]` is permitted when the field is part of a published schema (for example the
+  `advise` question `type`).
+- §10.8 **Data models.** Structured data that crosses a boundary (HTTP, MCP, config, on-disk)
+  uses a Pydantic v2 `BaseModel`; an internal value object that never crosses one MAY be a
+  `@dataclass(frozen=True)` (for example the model registry's `ModelSpec`).
+- §10.9 **Interfaces and dependencies.** Interfaces are `typing.Protocol`, never `abc.ABC`.
+  Dependencies are constructor-injected. Service locators, and module-level singletons or
+  mutable state used as general dependency plumbing, are prohibited. A private, module-owned
+  lazy cache for a process-wide resource — the loaded engine (`server._ENGINE`) or the runtime
+  module (`runtime._JOINT_MODULE`) — is permitted and is not public API. A test double replaces
+  a boundary you own, never the unit under test.
+- §10.10 **Docstrings.** Every module, class, and public function carries a NumPy-style
+  docstring; a class documents its constructor parameters in `__init__`. One-line docstrings
+  are acceptable only for trivial properties. Enforced by ruff `D` with
+  `convention = "numpy"` over `ember/`; tests and scripts are exempt.
+- §10.11 **Comments.** Comments explain why, not what. Section separators use solid `#` lines,
+  never dashed rules. Every rule exception carries a machine-readable tag (`# cycle:`,
+  `# import-placement:allow`).
+- §10.12 **Error handling.** Raise typed exceptions; bare `except:` and swallowed errors are
+  prohibited. Outbound network calls set an explicit timeout.
+- §10.13 **Logging.** Library code logs through `logging.getLogger(__name__)` and never calls
+  `print`; entry points render user output. In `mcp_server.py`, stdout remains the JSON-RPC
+  wire (Additional Constraints).
+- §10.14 **Concurrency.** Model inference is synchronous behind the engine lock and MUST NOT
+  be made async. Async is used only at I/O boundaries and MUST use structured concurrency;
+  fire-and-forget tasks are prohibited.
+- §10.15 **Entry points, not a God class.** Each subsystem exposes one composition root
+  (`Engine.advise`, `process.start`, `mcp_server.main`, `cli.main`). ember deliberately does
+  not adopt a single application-wide façade (God Class): the MCP / HTTP / CLI split is the
+  seam, and each root wires only its own subsystem.
+- §10.16 **Client SDKs.** Any typed Python client for the model server follows a
+  transport → sub-client → facade layering with one shared transport and lazy sub-clients; the
+  server's request/response schema (`ember/server.py`) remains the source of truth.
+- §10.17 **Idempotent, atomic operations.** State-writing commands are safe to re-run and
+  existence-guarded; a file write that could clobber another writes a sibling `.tmp` first and
+  installs it with `os.replace()`.
+- §10.18 **Migration debt.** Known existing violations, tracked here and never increased:
+  `ember/cli.py` is 788 lines, over the 400-line ceiling, and defers its `server`/`mcp_server`
+  imports into commands to keep startup light (an unsanctioned exception to §10.5);
+  `ember/mcp_server.py` declares two classes; and most modules are function-oriented rather
+  than one-class-per-file. NumPy docstrings (ruff `D`) and the `py.typed` marker are now
+  enforced. Each remaining item is paid down as its file is next touched — splitting
+  `ember/cli.py` is the priority.
+
+Rationale: ember's sibling repositories converge on these conventions, and adopting them keeps
+agent-written changes consistent across the family. Where ember's runtime differs — synchronous
+MPS inference, an MCP / HTTP / CLI seam, and deliberately function-oriented modules — the rule
+is scoped or the divergence recorded, so this constitution stays truthful about what the code
+actually does.
+
 ## Additional Constraints
 
 - The product name is **ember**, after the Ember mascot, in every artifact: package `ember`,
@@ -259,4 +392,4 @@ kind of vault, and agents read it through the `vault` MCP server.
 - Reviews MUST check changes against the Articles, with special attention to Article III
   (agent contract) and Article V (pins).
 
-**Version**: 1.2.0 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-02
+**Version**: 1.3.1 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-03

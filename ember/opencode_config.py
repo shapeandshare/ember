@@ -13,10 +13,29 @@ SCHEMA = "https://opencode.ai/config.json"
 
 
 def global_config_path() -> Path:
+    """Return the user-global opencode config path.
+
+    Returns
+    -------
+    Path
+        ``~/.config/opencode/opencode.json``.
+    """
     return Path.home() / ".config" / "opencode" / "opencode.json"
 
 
 def project_config_path(root: Path) -> Path:
+    """Return the project-local opencode config path.
+
+    Parameters
+    ----------
+    root : Path
+        Project root directory.
+
+    Returns
+    -------
+    Path
+        ``<root>/opencode.json``.
+    """
     return root / "opencode.json"
 
 
@@ -29,6 +48,23 @@ def mcp_command() -> list[str]:
 
 
 def build_entry(host: str, port: int, autostart: str) -> dict[str, Any]:
+    """Build the ``mcp.ember`` entry for an opencode config file.
+
+    Parameters
+    ----------
+    host : str
+        Model server host for ``EMBER_SERVER_URL``.
+    port : int
+        Model server port for ``EMBER_SERVER_URL``.
+    autostart : str
+        Value for ``EMBER_AUTOSTART`` (``"1"`` or ``"0"``).
+
+    Returns
+    -------
+    dict[str, Any]
+        The ``mcp.ember`` entry, with ``PATH`` set when available in the
+        current environment.
+    """
     entry: dict[str, Any] = {
         "type": "local",
         "command": mcp_command(),
@@ -47,6 +83,27 @@ def build_entry(host: str, port: int, autostart: str) -> dict[str, Any]:
 
 
 def write(path: Path, host: str, port: int, autostart: str) -> Path:
+    """Merge the ``mcp.ember`` entry into an opencode config file.
+
+    Preserves any other existing keys in ``path``; creates the file and its
+    parent directories if they do not exist.
+
+    Parameters
+    ----------
+    path : Path
+        Config file to read and overwrite.
+    host : str
+        Model server host for ``EMBER_SERVER_URL``.
+    port : int
+        Model server port for ``EMBER_SERVER_URL``.
+    autostart : str
+        Value for ``EMBER_AUTOSTART`` (``"1"`` or ``"0"``).
+
+    Returns
+    -------
+    Path
+        ``path``, after writing.
+    """
     existing: dict[str, Any] = {}
     if path.exists():
         try:

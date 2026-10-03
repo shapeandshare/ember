@@ -3,8 +3,11 @@
 # STATUS: STUB — not yet enabled.
 # Pre-requisites before enabling:
 #   1. Configure commitizen bump workflow and confirm CHANGELOG.md generation
-#   2. Add a BUMP_PAT secret (GitHub PAT with repo + workflow scopes) for auto-merge
-#   3. Configure PyPI trusted publishing or token (PYPI_TOKEN secret) if publishing to PyPI
+#   2. Push the bump commit and tag before the release step, authenticating only that
+#      step (this job's GITHUB_TOKEN, or a GitHub App token if the main ruleset blocks
+#      it); never a personal access token, which outlives the run and the repository
+#   3. If publishing to PyPI, use trusted publishing (OIDC, `id-token: write`) from a
+#      protected `release` environment; never a long-lived or org-wide PyPI token
 #   4. Test the full bump -> tag -> release flow manually first
 #
 name: Release
@@ -12,20 +15,30 @@ name: Release
 on:
   workflow_dispatch:   # manual trigger only
 
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false   # never cancel a release halfway through
+
 jobs:
   release:
     name: Cut release
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write   # create the GitHub release and upload its assets
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          token: ${{ secrets.BUMP_PAT || github.token }}
+          persist-credentials: false
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
-          enable-cache: true
+          enable-cache: false   # a release build must not restore CI cache state
 
       - name: Install dependencies
         run: uv sync --locked --all-groups
@@ -36,8 +49,12 @@ jobs:
       - name: Build wheel
         run: uv build
 
+      # The preinstalled gh CLI instead of a third-party release action, so no extra
+      # code runs with this job's write token. --verify-tag refuses to create the tag
+      # on the remote when the bump tag was not pushed (prerequisite 2).
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
-        with:
-          files: dist/*
-          generate_release_notes: false
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$(git describe --tags --abbrev=0)"
+          gh release create "$tag" dist/* --verify-tag --title "$tag" --notes ""

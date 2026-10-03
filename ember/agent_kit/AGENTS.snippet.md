@@ -17,3 +17,6 @@ Project policy for consulting ember (edit to fit):
 - Before committing or pushing, run the change-risk check; stop and request review when
   `needs_review` is at least 0.80 or `risk` is at least 2.0 of 3.
 - Quote the signal you relied on, e.g. `ember: needs_review P=0.93`.
+- When evidence is visual (screenshot, chart, diagram), attach pixels as base64 `images`
+  and use the `dominant_colour`, `alert_level`, and `colour_changed` question ids from the
+  visual evidence recipe.
