@@ -53,9 +53,15 @@ On a MacBook Pro **M4 Max / 128 GB**, torch 2.14.1, transformers 5.18.0, mcp 2.3
 
 ## Install (Apple Silicon)
 
-Requires macOS on Apple Silicon. The weights (~18 GB) download into Hugging Face's shared
-cache (`~/.cache/huggingface`); config, state, and logs live in
-`~/Library/Application Support/ember`.
+### Requirements
+
+- **Apple Silicon Mac** (M-series) on macOS. Intel Macs and NVIDIA/CUDA are out of scope.
+- **Unified memory** above the model's size: 32 GB or more for `flash` (9B), 64 GB or more
+  for `full` (27B). Only 128 GB has been verified.
+- **Disk**: about 18 GiB for `flash` or 55 GiB for `full`, in Hugging Face's shared cache
+  (`~/.cache/huggingface`). Config, state, and logs live in
+  `~/Library/Application Support/ember`.
+- **Python 3.12**, managed by uv.
 
 ```bash
 uv tool install --python 3.12 "gut @ git+https://github.com/shapeandshare/ember"
@@ -77,6 +83,14 @@ it starts on the first tool call (or with `ember start`).
 Everything is pinned for reproducibility: `flash` to the commit verified on MPS (`17f0b0a`),
 `full` to its release commit (`2f3de3d`, not yet verified locally), and torch/torchvision to
 the tested minor series. Set `EMBER_MODEL_DIR` to run another weights directory.
+
+### Cloud
+
+ember is Apple-Silicon-first. In the cloud, run it on an Apple Silicon host with the memory
+above, or on any host with the CPU fallback (`EMBER_DEVICE=cpu` — float32, roughly twice the
+memory, much slower). NVIDIA/CUDA is out of scope. The HTTP server binds to loopback with no
+authentication, so exposing it beyond the host needs your own access controls. See
+[COMPATIBILITY.md](COMPATIBILITY.md) and [SECURITY.md](SECURITY.md).
 
 ## Agent onboarding
 
