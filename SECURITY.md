@@ -4,11 +4,10 @@
 
 **Do not open a public GitHub issue for a security vulnerability.**
 
-Report vulnerabilities privately via one of these channels:
-
-- **GitHub Security Advisories**: go to Settings → Security → Advisories → New draft security
-  advisory on the [GitHub repository](https://github.com/shapeandshare/ember).
-- **Email**: contact the maintainer at @shapeandshare directly.
+Report vulnerabilities privately through GitHub's
+[private vulnerability reporting](https://github.com/shapeandshare/ember/security/advisories/new):
+open the repository's **Security** tab and choose **Report a vulnerability**. Only you and
+the maintainers can see the report.
 
 Include as much detail as you can: the affected component, a description of the issue, steps
 to reproduce, and your assessment of impact. A minimal proof-of-concept is helpful but not
@@ -43,6 +42,9 @@ The following areas are in scope for security reports:
   invocation patterns or argument-injection vulnerabilities.
 - **Dependency vulnerabilities** in the pinned ranges declared in `pyproject.toml` and
   `uv.lock`, particularly in `torch`, `transformers`, `fastapi`, `uvicorn`, and `mcp`.
+- **CI and release workflows** (`.github/workflows/`): for example, a way for a pull request
+  from a fork to obtain a write token or a secret, or to run code outside a GitHub-hosted
+  runner.
 
 ### Out of scope
 
