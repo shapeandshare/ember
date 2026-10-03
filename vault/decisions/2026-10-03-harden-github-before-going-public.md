@@ -56,8 +56,8 @@ repository and organization settings below are applied in order.
 ## Consequences
 
 - `uvx zizmor@1.30.1 .github/` must stay clean under the regular and pedantic personas.
-- Constitution quality gate 3 still offers `make test-strict` "on a self-hosted Apple
-  Silicon runner"; amend it to a maintainer's machine when the repository goes public.
+- Constitution quality gate 3 names a maintainer's Apple Silicon machine for the
+  model-backed suite (1.3.2); this repository never uses a self-hosted runner.
 - Settings live outside the repository files. Apply them in order; each must read back
   as set.
 
@@ -68,8 +68,9 @@ repository and organization settings below are applied in order.
 | Applied 2026-10-03 | Tag ruleset `release-tags`: `v*` tags cannot be deleted or moved; immutable releases on | repo admin |
 | Done 2026-10-03 | The runner group holding the self-hosted runners does not allow public repositories (narrowing its repository access is optional) | org owner |
 | Done 2026-10-03 | Organization secrets are scoped to the repositories that use them; this repository receives no credentials | org owner |
-| After the workflow change merges | Actions allow-list: GitHub-owned plus `astral-sh/setup-uv` and `zizmorcore/zizmor-action`; SHA pinning required; `workflow security (zizmor)` becomes a required check | repo admin |
-| Right after going public | Fork pull request workflows need approval for all external contributors; secret scanning with push protection; private vulnerability reporting; CodeQL default setup; drop the README's private-repository install note | repo admin |
+| Applied 2026-10-03 | Actions allow-list: GitHub-owned plus `astral-sh/setup-uv` and `zizmorcore/zizmor-action`; SHA pinning required; `workflow security (zizmor)` a required check | repo admin |
+| Applied 2026-10-03 | Fork pull request workflows need approval for all external contributors; private vulnerability reporting | repo admin |
+| Blocked 2026-10-03 | Secret scanning with push protection, and CodeQL default setup: the enforced org code-security configuration `shapeandshare-org-config-1` disables them; an org owner must enable them there or attach this repository to the `GitHub recommended` configuration | org owner |
 
 ```bash
 R=repos/shapeandshare/ember

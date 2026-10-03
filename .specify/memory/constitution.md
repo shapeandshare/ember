@@ -1,4 +1,19 @@
 <!--
+SYNC IMPACT REPORT — Public Repository Clarification
+Version change: 1.3.1 → 1.3.2 (PATCH: clarification, no principle change)
+Date: 2026-10-03
+Modified principles:
+  - Development Workflow & Quality Gates — gate 3 names a maintainer's Apple Silicon machine
+    for the model-backed suite; the repository is public and never uses a self-hosted runner.
+    No requirement changes.
+Added sections: none
+Removed sections: none
+Templates / docs propagated:
+  - ✅ README.md (public install note; `test-strict` no longer "for CI")
+  - ✅ vault/decisions/2026-10-03-harden-github-before-going-public.md
+Follow-up TODOs: none
+-->
+<!--
 SYNC IMPACT REPORT — Agent Evaluation Clarification
 Version change: 1.3.0 → 1.3.1 (PATCH: clarification, no principle change)
 Date: 2026-10-03
@@ -374,8 +389,8 @@ actually does.
 2. Commit atomically with Conventional Commits subjects; tests land in the same commit as the
    code they cover.
 3. Gate every commit on `make check`; gate PRs on `make pr-ready`; gate merges on CI plus
-   `make test` (or `make test-strict` on a self-hosted Apple Silicon runner) for
-   model-affecting changes.
+   `make test` for model-affecting changes, run on a maintainer's Apple Silicon machine
+   (`make test-strict` fails instead of skipping when weights are missing).
 4. Keep `AGENTS.md`, `README.md`, and the agent kit consistent with each other and with this
    constitution in the same change.
 
@@ -392,4 +407,4 @@ actually does.
 - Reviews MUST check changes against the Articles, with special attention to Article III
   (agent contract) and Article V (pins).
 
-**Version**: 1.3.1 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-03
+**Version**: 1.3.2 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-03

@@ -72,9 +72,8 @@ ember init --opencode     # register with opencode: config, plugin, and skill
 Keep `--python 3.12`: uv otherwise picks your newest interpreter, which the pinned
 torch/transformers stack is not tested on.
 
-The repository is private, so installers need read access plus git credentials: run
-`gh auth setup-git` once for HTTPS, or install from
-`git+ssh://git@github.com/shapeandshare/ember` with SSH keys.
+The repository is public, so the install above needs no credentials. To use SSH instead,
+install from `git+ssh://git@github.com/shapeandshare/ember`.
 
 Restart opencode and the agent gains `ember_advise`. The model server stays **lazy** —
 it starts on the first tool call (or with `ember start`).
@@ -271,7 +270,7 @@ Make re-syncs the environment automatically when `pyproject.toml` or `uv.lock` c
 make test         # full suite (~30 s, loads the model once)
 make test-fast    # unit tests only, no model load (~12 s)
 make check        # compile + test-fast
-make test-strict  # full suite; FAILS (not skips) if weights are missing — for CI
+make test-strict  # full suite; fails (not skips) if weights are missing
 make ci           # bootstrap + check + test-strict
 ```
 
