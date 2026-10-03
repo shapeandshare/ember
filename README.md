@@ -1,5 +1,3 @@
-# ember
-
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/brand/hero-dark.svg">
   <img src="assets/brand/hero-light.svg" alt="ember — Ember hugs its glowing tummy. Give your agent a gut feeling." width="1200">
