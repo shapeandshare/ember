@@ -57,4 +57,12 @@ jobs:
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --locked
       - run: make download
+      - name: Check model memory
+        run: |
+          mem_gib=$(( $(sysctl -n hw.memsize) / 1073741824 ))
+          echo "runner memory: ${mem_gib} GiB, cpus: $(sysctl -n hw.ncpu)"
+          if [ "${mem_gib}" -lt 24 ]; then
+            echo "::error::The model-backed job needs >= 24 GiB RAM; this runner has ${mem_gib} GiB. Increase [tart] memory in gh-runner-standalone/macos/config.toml."
+            exit 1
+          fi
       - run: make test-strict
