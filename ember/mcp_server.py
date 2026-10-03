@@ -28,7 +28,7 @@ from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from pydantic import BaseModel, Field
 
-from ember import agent_kit, process
+from . import agent_kit, process
 
 # stdout is the JSON-RPC wire; log to stderr only.
 logging.basicConfig(
@@ -55,6 +55,13 @@ mcp = MCPServer("ember", instructions=agent_kit.instructions())
     mime_type="text/markdown",
 )
 def guide() -> str:
+    """Return the full ``ember-advise`` playbook for the ``ember://guide`` resource.
+
+    Returns
+    -------
+    str
+        The skill's ``SKILL.md`` content.
+    """
     return agent_kit.skill()
 
 
@@ -79,6 +86,8 @@ class Question(BaseModel):
 
 
 class AdviseInput(BaseModel):
+    """Input schema for the ``advise`` tool (wrapped in an ``input`` field)."""
+
     state: Any = Field(
         description=(
             "The situation to read: a string or any JSON object/array. "
@@ -173,6 +182,7 @@ def advise(input: AdviseInput) -> dict[str, Any]:
 
 
 def main() -> None:
+    """Run the MCP stdio server; blocks until the client disconnects."""
     log.info(
         "ember MCP server starting (server_url=%s, autostart=%s)",
         SERVER_URL,

@@ -23,6 +23,14 @@ DEFAULTS: dict[str, Any] = {
 
 
 def load() -> dict[str, Any]:
+    """Load the config file, merged over the defaults.
+
+    Returns
+    -------
+    dict[str, Any]
+        ``DEFAULTS`` overridden by any keys present in the config file. A
+        malformed config file is ignored and the defaults are returned as-is.
+    """
     config = dict(DEFAULTS)
     path = paths.config_path()
     if path.exists():
@@ -34,6 +42,18 @@ def load() -> dict[str, Any]:
 
 
 def save(config: dict[str, Any]) -> Path:
+    """Write a config dict to the config file as JSON.
+
+    Parameters
+    ----------
+    config : dict[str, Any]
+        The full config to persist.
+
+    Returns
+    -------
+    Path
+        The config file path written to.
+    """
     path = paths.config_path()
     path.write_text(json.dumps(config, indent=2) + "\n")
     return path

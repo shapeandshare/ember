@@ -26,20 +26,61 @@ def _read(*parts: str) -> str:
 
 
 def instructions() -> str:
+    """Return the MCP ``initialize.instructions`` text.
+
+    Returns
+    -------
+    str
+        The contents of ``instructions.md``, stripped of surrounding
+        whitespace.
+    """
     return _read("instructions.md").strip()
 
 
 def skill() -> str:
+    """Return the ``ember-advise`` skill's ``SKILL.md`` content.
+
+    Returns
+    -------
+    str
+        The full playbook served as ``ember://guide`` and installed as a skill.
+    """
     return _read(SKILL_NAME, "SKILL.md")
 
 
 def snippet() -> str:
+    """Return the AGENTS.md / CLAUDE.md policy snippet.
+
+    Returns
+    -------
+    str
+        The contents of ``AGENTS.snippet.md``.
+    """
     return _read("AGENTS.snippet.md")
 
 
 def skill_path(
     agent: str, scope: str = "project", project_root: Path | None = None
 ) -> Path:
+    """Return where the ``ember-advise`` skill would be installed for an agent.
+
+    Parameters
+    ----------
+    agent : str
+        One of the keys in ``_SKILL_ROOTS`` (``"opencode"``, ``"claude"``,
+        ``"codex"``).
+    scope : str, optional
+        ``"project"`` (default) for a project-local install, or ``"global"``
+        for the user's home directory.
+    project_root : Path | None, optional
+        Root to install under when ``scope`` is ``"project"``; defaults to
+        the current working directory.
+
+    Returns
+    -------
+    Path
+        The ``SKILL.md`` path for the given agent and scope.
+    """
     project_rel, home_rel = _SKILL_ROOTS[agent]
     base = (
         Path.home() / home_rel
@@ -52,6 +93,23 @@ def skill_path(
 def install_skill(
     agent: str = "opencode", scope: str = "project", project_root: Path | None = None
 ) -> Path:
+    """Write the ``ember-advise`` skill to disk for an agent.
+
+    Parameters
+    ----------
+    agent : str, optional
+        One of the keys in ``_SKILL_ROOTS``. Defaults to ``"opencode"``.
+    scope : str, optional
+        ``"project"`` (default) or ``"global"``.
+    project_root : Path | None, optional
+        Root to install under when ``scope`` is ``"project"``; defaults to
+        the current working directory.
+
+    Returns
+    -------
+    Path
+        The ``SKILL.md`` path written to.
+    """
     path = skill_path(agent, scope, project_root)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(skill(), encoding="utf-8")

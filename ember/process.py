@@ -22,6 +22,23 @@ from . import config, models, paths
 
 
 def health(host: str, port: int, timeout: float = 2.0) -> dict[str, Any] | None:
+    """Query the model server's ``/health`` endpoint.
+
+    Parameters
+    ----------
+    host : str
+        Model server host.
+    port : int
+        Model server port.
+    timeout : float, optional
+        Request timeout in seconds. Defaults to ``2.0``.
+
+    Returns
+    -------
+    dict[str, Any] | None
+        The parsed JSON health body, or ``None`` if the request fails or
+        returns a non-200 status.
+    """
     try:
         resp = httpx.get(f"http://{host}:{port}/health", timeout=timeout)
         if resp.status_code != 200:
@@ -33,6 +50,20 @@ def health(host: str, port: int, timeout: float = 2.0) -> dict[str, Any] | None:
 
 
 def is_up(host: str, port: int) -> bool:
+    """Return whether the model server answers ``/health`` at ``host:port``.
+
+    Parameters
+    ----------
+    host : str
+        Model server host.
+    port : int
+        Model server port.
+
+    Returns
+    -------
+    bool
+        ``True`` if ``health`` returns a body, ``False`` otherwise.
+    """
     return health(host, port) is not None
 
 
@@ -60,7 +91,22 @@ def _is_ember_server(pid: int) -> bool:
 
 
 def tracked_pid(host: str, port: int) -> int | None:
-    """The pid recorded by ``start``, if that process is still an ember server."""
+    """Return the pid recorded by ``start``, if it is still an ember server.
+
+    Parameters
+    ----------
+    host : str
+        Model server host, used to cross-check the pid against ``/health``.
+    port : int
+        Model server port, used to cross-check the pid against ``/health``.
+
+    Returns
+    -------
+    int | None
+        The tracked pid, or ``None`` if there is no pid file, the recorded
+        process is gone or is not an ember server, or a running server at
+        ``host:port`` reports a different pid.
+    """
     pid_file = paths.pid_path()
     try:
         pid = int(pid_file.read_text().strip())
@@ -112,6 +158,38 @@ def start(
     device: str | None = None,
     timeout: float = 300.0,
 ) -> int:
+    """Start the model server if it is not already running, and wait for it.
+
+    Every start path (``ember start``, ``ember restart``, and MCP autostart)
+    goes through this function, so they share model resolution, the pid
+    file, and the log.
+
+    Parameters
+    ----------
+    model : str | None, optional
+        Model name to run; defaults to the resolved config value.
+    host : str | None, optional
+        Host to bind; defaults to the resolved config value.
+    port : int | None, optional
+        Port to bind; defaults to the resolved config value.
+    device : str | None, optional
+        Device to run on (``"auto"``, ``"mps"``, or ``"cpu"``); defaults to
+        the resolved config value.
+    timeout : float, optional
+        Seconds to wait for the server to become healthy. Defaults to
+        ``300.0``.
+
+    Returns
+    -------
+    int
+        The model server's pid, whether newly spawned or already running.
+
+    Raises
+    ------
+    RuntimeError
+        If the model is not pulled, the server process exits during
+        startup, or it does not become healthy within ``timeout``.
+    """
     host = host or config.resolve("host")
     port = int(port or config.resolve("port"))
     device = device or config.resolve("device")
@@ -146,6 +224,29 @@ def start(
 def stop(
     host: str | None = None, port: int | None = None, timeout: float = 15.0
 ) -> bool:
+    """Stop the model server tracked by the pid file, if it is running.
+
+    Signals only the pid recorded by ``start``, after confirming it is
+    still an ember server; it never kills by port or by process pattern.
+
+    Parameters
+    ----------
+    host : str | None, optional
+        Host used to cross-check the tracked pid; defaults to the resolved
+        config value.
+    port : int | None, optional
+        Port used to cross-check the tracked pid; defaults to the resolved
+        config value.
+    timeout : float, optional
+        Seconds to wait for a graceful shutdown before sending
+        ``SIGKILL``. Defaults to ``15.0``.
+
+    Returns
+    -------
+    bool
+        ``True`` if a tracked server was signaled, ``False`` if none was
+        running.
+    """
     host = host or config.resolve("host")
     port = int(port or config.resolve("port"))
     pid = tracked_pid(host, port)
@@ -167,5 +268,23 @@ def restart(
     port: int | None = None,
     device: str | None = None,
 ) -> int:
+    """Stop the model server, then start it again.
+
+    Parameters
+    ----------
+    model : str | None, optional
+        Model name to run; defaults to the resolved config value.
+    host : str | None, optional
+        Host to bind; defaults to the resolved config value.
+    port : int | None, optional
+        Port to bind; defaults to the resolved config value.
+    device : str | None, optional
+        Device to run on; defaults to the resolved config value.
+
+    Returns
+    -------
+    int
+        The restarted model server's pid.
+    """
     stop(host, port)
     return start(model, host, port, device)

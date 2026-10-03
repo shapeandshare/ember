@@ -18,6 +18,24 @@ from . import paths
 
 @dataclass(frozen=True)
 class ModelSpec:
+    """A pinned Clef model's registry entry.
+
+    Attributes
+    ----------
+    name : str
+        Short key used in the CLI and config (e.g. ``"flash"``).
+    repo : str
+        Hugging Face Hub repo id (e.g. ``"Cloudflare/clef-flash"``).
+    dir_name : str
+        Directory name under a checkout's ``.models/``.
+    params : str
+        Human-readable parameter count (e.g. ``"9B"``).
+    approx_bytes : int
+        Approximate on-disk size of the pulled weights, in bytes.
+    revision : str
+        Pinned Hugging Face Hub commit hash.
+    """
+
     name: str
     repo: str
     dir_name: str
@@ -48,6 +66,23 @@ DEFAULT = "flash"
 
 
 def get(name: str | None) -> ModelSpec:
+    """Look up a model's registry entry by name.
+
+    Parameters
+    ----------
+    name : str | None
+        Model key (case-insensitive); ``None`` resolves to ``DEFAULT``.
+
+    Returns
+    -------
+    ModelSpec
+        The matching registry entry.
+
+    Raises
+    ------
+    KeyError
+        If ``name`` does not match any key in ``REGISTRY``.
+    """
     key = (name or DEFAULT).lower()
     if key not in REGISTRY:
         raise KeyError(f"unknown model {name!r}; choose from {', '.join(REGISTRY)}")
@@ -114,6 +149,19 @@ def pull(name: str | None = None, allow_low_disk: bool = False) -> Path:
 
 
 def size_on_disk(path: Path) -> int:
+    """Sum the byte size of every regular file under a directory, recursively.
+
+    Parameters
+    ----------
+    path : Path
+        Directory to walk.
+
+    Returns
+    -------
+    int
+        Total size in bytes of all regular files under ``path``. Files that
+        raise ``OSError`` while being stat'd are skipped.
+    """
     total = 0
     for file in path.rglob("*"):
         try:
@@ -125,6 +173,14 @@ def size_on_disk(path: Path) -> int:
 
 
 def list_models() -> list[dict[str, Any]]:
+    """List every registered model with its cache status and size.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        One row per entry in ``REGISTRY``, with ``name``, ``repo``,
+        ``params``, ``default``, ``cached``, ``path``, and ``bytes`` keys.
+    """
     rows = []
     for name, spec in REGISTRY.items():
         path = resolve_dir(name, override=False)
