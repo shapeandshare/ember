@@ -27,6 +27,9 @@ dependencies = [
     "httpx>=0.28,<1",
 ]
 
+[project.urls]
+Repository = "https://github.com/shapeandshare/gut-feeling"
+
 [project.scripts]
 clef = "clef_local.cli:main"
 clef-mcp = "clef_local.mcp_server:main"
