@@ -1,13 +1,22 @@
 {
-  "name": "opencode-clever",
+  "name": "opencode-gut-feeling",
   "version": "0.1.0",
-  "description": "Register the local Clef decision-model MCP server with opencode.",
+  "description": "Register the local gut-feeling MCP server (the advise tool) with opencode.",
   "type": "module",
   "main": "index.js",
   "exports": {
     ".": "./index.js"
   },
   "license": "MIT",
-  "keywords": ["opencode", "opencode-plugin", "mcp", "clef"],
-  "files": ["index.js", "README.md"]
+  "keywords": [
+    "gut-feeling",
+    "opencode",
+    "opencode-plugin",
+    "mcp"
+  ],
+  "files": [
+    "index.js",
+    "README.md",
+    "assets/"
+  ]
 }
