@@ -7,7 +7,9 @@ nothing touches the real project, user config, or running servers.
 
 from __future__ import annotations
 
+import argparse
 import json
+import sys
 
 import pytest
 from ember import (
@@ -100,3 +102,21 @@ def test_uninstall_removes_global_installs_and_keeps_other_config(sandbox):
     remaining = json.loads(global_config.read_text())
     assert remaining["model"] == "keep-me"
     assert "ember" not in remaining["mcp"]
+
+
+def test_eval_commands_require_a_checkout(monkeypatch):
+    monkeypatch.setitem(sys.modules, "scripts", None)
+    args = argparse.Namespace(
+        server=None,
+        split=None,
+        category=None,
+        dry_run=True,
+        dataset="unused",
+        results_file=None,
+        format="markdown",
+        compare=None,
+    )
+    with pytest.raises(RuntimeError, match="require a repository checkout"):
+        cli.cmd_eval_run(args)
+    with pytest.raises(RuntimeError, match="require a repository checkout"):
+        cli.cmd_eval_report(args)
