@@ -7,6 +7,7 @@ derived from the numbers, never written by hand.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -92,6 +93,25 @@ summary: per model and condition, paired change against no ember"""
 def short(model: str) -> str:
     """Return a model id without its provider prefix."""
     return model.split("/")[-1]
+
+
+def _scenarios(config: dict[str, Any]) -> dict[str, Any]:
+    """Return the scenario definitions a run used, keyed by id.
+
+    The run stores its own snapshot (and a hash), so a later report describes
+    what was actually evaluated even if ``SCENARIOS`` has since changed. Runs
+    recorded before snapshots existed fall back to the current definitions.
+    """
+    snapshot = config.get("scenarios_snapshot")
+    if not snapshot:
+        return {s["id"]: s for s in SCENARIOS}
+    digest = hashlib.sha256(
+        json.dumps(snapshot, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    expected = config.get("scenario_hash")
+    if expected and digest != expected:
+        raise ValueError("scenario snapshot does not match its recorded hash")
+    return {s["id"]: s for s in snapshot}
 
 
 def _pct(value: float) -> str:
@@ -219,7 +239,7 @@ def build(results_path: Path) -> Record:
     for record in records:
         if record["valid"] and record["consulted"]:
             asked[record["recipe"]].update(record["asked"])
-    scenarios = {s["id"]: s for s in SCENARIOS}
+    scenarios = _scenarios(config)
     report: Record = {
         "config": config,
         "summary": summary,

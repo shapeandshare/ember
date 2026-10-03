@@ -9,7 +9,10 @@ Usage
     python scripts/run_evals.py --dry-run            # list items, send nothing
 
 Writes ``results/<model>_<timestamp>_trace.jsonl`` (one scored line per item)
-and ``results/<model>_<timestamp>_results.json`` (run config plus summary).
+and ``results/<model>_<timestamp>_results.json`` (run config plus summary). It
+also copies the exact dataset it scored to
+``results/<model>_<timestamp>_dataset.jsonl``, so a report reflects the bytes
+that were run even after the checkout's dataset changes.
 Render the summary with ``scripts/report_evals.py`` or ``ember eval report``.
 """
 
@@ -21,6 +24,7 @@ import importlib.metadata
 import json
 import os
 import platform
+import shutil
 import subprocess
 import sys
 import time
@@ -185,6 +189,8 @@ def run_evals(
     RESULTS_DIR.mkdir(exist_ok=True)
     trace_path = RESULTS_DIR / f"{run_id}_trace.jsonl"
     results_path = RESULTS_DIR / f"{run_id}_results.json"
+    dataset_snapshot = RESULTS_DIR / f"{run_id}_dataset.jsonl"
+    shutil.copyfile(dataset_path, dataset_snapshot)
 
     results: list[dict[str, Any]] = []
     latencies: list[float] = []
@@ -232,6 +238,7 @@ def run_evals(
         "host": _host(),
         "server": server,
         "dataset": dataset_path.name,
+        "dataset_file": dataset_snapshot.name,
         "dataset_sha256": hashlib.sha256(dataset_path.read_bytes()).hexdigest(),
         "trace": trace_path.name,
         "split": split,

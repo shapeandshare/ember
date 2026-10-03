@@ -49,13 +49,14 @@ def export(
     out = out_dir or results_path.with_name(f"{meta['run_id']}_report")
     markdown, figures = render_markdown.render(report)
     shutil.rmtree(out / "figures", ignore_errors=True)
+    shutil.rmtree(out / "data", ignore_errors=True)
     for name, svg in figures.items():
         _write(out / "figures" / name, svg)
     _write(out / "report.md", markdown)
     _write(out / "report.html", render_html.render(report))
     _copy(results_path, out / "data" / "results.json")
     _copy(results_path.with_name(meta["trace_file"]), out / "data" / "trace.jsonl")
-    dataset = analysis.EVALS_DIR / meta["dataset"]["name"]
+    dataset = analysis.dataset_for(results_path, meta["dataset"])
     if dataset.exists():
         _copy(dataset, out / "data" / "dataset.jsonl")
     if agent_path is not None:

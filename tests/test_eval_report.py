@@ -253,6 +253,24 @@ def test_untrusted_dataset_text_is_escaped(report: dict) -> None:
     assert "<script>alert(1)" not in outside_fences
 
 
+def test_code_spans_and_fences_cannot_be_closed_early() -> None:
+    from evals.markup import md_code, md_fence
+
+    def fence(text: str) -> int:
+        length = 0
+        while length < len(text) and text[length] == "`":
+            length += 1
+        return length
+
+    def longest(value: str) -> int:
+        return max((len(run) for run in re.findall(r"`+", value)), default=0)
+
+    for value in ("plain", "a`b", "a``b", "````", "x `` y"):
+        assert fence(md_code(value)) > longest(value), value
+    for value in ("```\ncode\n```", "~~~~", "a`b"):
+        assert fence(md_fence(value)) > longest(value), value
+
+
 def _agent_run(directory: Path) -> Path:
     """Write a scripted agent-in-the-loop results file and its trace."""
     from evals.agent import summary
@@ -300,6 +318,32 @@ def _agent_run(directory: Path) -> Path:
         "conditions": ["none", "full"],
         "trials": 2,
         "scenarios": [s["id"] for s in SCENARIOS[:6]],
+        "scenarios_snapshot": [
+            {
+                "id": s["id"],
+                "recipe": s["recipe"],
+                "gold_action": s["gold_action"],
+                "rationale": s["rationale"],
+                "prompt": s["prompt"],
+            }
+            for s in SCENARIOS[:6]
+        ],
+        "scenario_hash": hashlib.sha256(
+            json.dumps(
+                [
+                    {
+                        "id": s["id"],
+                        "recipe": s["recipe"],
+                        "gold_action": s["gold_action"],
+                        "rationale": s["rationale"],
+                        "prompt": s["prompt"],
+                    }
+                    for s in SCENARIOS[:6]
+                ],
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest(),
         "trace": trace.name,
     }
     results = directory / "agent_20261003T000000Z_results.json"

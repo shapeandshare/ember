@@ -34,6 +34,22 @@ def _read_jsonl(path: Path) -> list[Record]:
     return [json.loads(line) for line in lines if line.strip()]
 
 
+def dataset_for(results_path: Path, dataset: Mapping[str, Any]) -> Path:
+    """Resolve the dataset a run scored.
+
+    Prefer the snapshot stored beside the run (``dataset_file``), so a report
+    reflects the bytes actually scored even if the checkout's dataset changed;
+    fall back to the dataset in this checkout for runs recorded before
+    snapshots existed.
+    """
+    recorded = dataset.get("file")
+    if recorded:
+        beside = results_path.with_name(str(recorded))
+        if beside.exists():
+            return beside
+    return EVALS_DIR / str(dataset["name"])
+
+
 def _pct(value: float) -> str:
     return f"{value * 100:.1f}%"
 
@@ -691,7 +707,9 @@ def build(results_path: Path, *, dataset_path: Path | None = None) -> Record:
         "_results.json", "_trace.jsonl"
     )
     trace = _read_jsonl(results_path.with_name(trace_name))
-    dataset_path = dataset_path or EVALS_DIR / config["dataset"]
+    dataset_path = dataset_path or dataset_for(
+        results_path, {"name": config["dataset"], "file": config.get("dataset_file")}
+    )
     dataset_sha = (
         hashlib.sha256(dataset_path.read_bytes()).hexdigest()
         if dataset_path.exists()
@@ -738,6 +756,7 @@ def build(results_path: Path, *, dataset_path: Path | None = None) -> Record:
             "server": config.get("server"),
             "dataset": {
                 "name": config["dataset"],
+                "file": dataset_path.name,
                 "sha256": config["dataset_sha256"],
                 "current_sha256": dataset_sha,
                 "matches": dataset_sha == config["dataset_sha256"],

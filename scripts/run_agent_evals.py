@@ -20,6 +20,7 @@ Writes ``results/agent_<timestamp>_trace.jsonl`` and ``..._results.json``.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -227,6 +228,21 @@ def main(argv: list[str] | None = None) -> int:
         args.models, args.conditions = previous["models"], previous["conditions"]
         wanted = set(previous["scenarios"])
         scenarios = [s for s in SCENARIOS if s["id"] in wanted]
+        snapshot = previous.get("scenarios_snapshot")
+        if snapshot:
+            current = {s["id"]: s for s in SCENARIOS}
+            changed = [
+                s["id"]
+                for s in snapshot
+                if s["id"] not in current
+                or current[s["id"]]["prompt"] != s["prompt"]
+                or current[s["id"]]["gold_action"] != s["gold_action"]
+            ]
+            if changed:
+                raise SystemExit(
+                    "error: scenarios changed since the run being resumed: "
+                    + ", ".join(changed)
+                )
         trials, resumed_from = previous["trials"], previous["run_id"]
     else:
         scenarios = _select(args.scenarios, args.smoke)
@@ -288,6 +304,16 @@ def main(argv: list[str] | None = None) -> int:
                 f"{record['seconds']:>5.0f}s ${record['cost']:.4f}",
                 flush=True,
             )
+    scenario_snapshot = [
+        {
+            "id": s["id"],
+            "recipe": s["recipe"],
+            "gold_action": s["gold_action"],
+            "rationale": s["rationale"],
+            "prompt": s["prompt"],
+        }
+        for s in scenarios
+    ]
     config = {
         "run_id": run_id,
         "timestamp": stamp,
@@ -301,6 +327,12 @@ def main(argv: list[str] | None = None) -> int:
         "condition_labels": {c: sandbox.CONDITION_LABELS[c] for c in args.conditions},
         "trials": trials,
         "scenarios": [s["id"] for s in scenarios],
+        "scenarios_snapshot": scenario_snapshot,
+        "scenario_hash": hashlib.sha256(
+            json.dumps(scenario_snapshot, sort_keys=True, separators=(",", ":")).encode(
+                "utf-8"
+            )
+        ).hexdigest(),
         "parallel": args.parallel,
         "timeout": args.timeout,
         "trace": trace_path.name,
