@@ -15,6 +15,7 @@ Tagline: **Give your agent a gut feeling.**
 | Detailed illustration, cream background | [ember-v1.png](mascots/ember-v1.png) |
 | README/banner, light | [hero-light.svg](hero-light.svg) |
 | README/banner, dark | [hero-dark.svg](hero-dark.svg) |
+| Link preview / social card, 1200x630 | [og-image.png](og-image.png) |
 | Reusable light/dark colors | [tokens.css](tokens.css) |
 | Brand preview | [preview.html](preview.html) |
 
