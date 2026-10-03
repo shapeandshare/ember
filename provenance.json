@@ -287,6 +287,21 @@
       "generation_seed": null
     },
     {
+      "path": "assets/brand/og-image.png",
+      "sha256": "966afcba17fc4dcf439d5b362bb860dfbd2cd7b121a0c9b0d37b4766c72ad475",
+      "kind": "derived_raster",
+      "tool": "Headless Chromium (Playwright) rendering an HTML/CSS composition of assets/brand/svg/ember-light.svg and assets/brand/tokens.css",
+      "parents": [
+        "assets/brand/svg/ember-light.svg"
+      ],
+      "prompt_path": null,
+      "prompt_status": "not_applicable",
+      "license_status": "repository_MIT_default; no separate asset license declared",
+      "evidence": "Generated from the light mascot and palette; 1200x630 link-preview card",
+      "generation_model": null,
+      "generation_seed": null
+    },
+    {
       "path": "assets/brand/mascots/ember-v1.png",
       "sha256": "3413af3cae5cab5274d9ff2c4c8455b6ff7d04b759d0070046abd02560f20591",
       "kind": "ai_generated_raster",
@@ -869,7 +884,7 @@
   ],
   "dependencies": {
     "lockfile": "uv.lock",
-    "lockfile_sha256": "f97407c32ae9499b193cebf741897434a7ac59f580f880e89083d4bbf3d4aaad",
+    "lockfile_sha256": "d18696ccc9d4fb69ef6d03f27b0a238a8eb9b22f21f12c6602a165285184c5ea",
     "inventory": [
       {
         "name": "accelerate",

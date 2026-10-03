@@ -36,6 +36,7 @@ ASSETS = (
     "assets/brand/tokens.css",
     "assets/brand/hero-light.svg",
     "assets/brand/hero-dark.svg",
+    "assets/brand/og-image.png",
     "assets/brand/svg/ember-light.svg",
     "assets/brand/svg/ember-dark.svg",
     "assets/brand/svg/ember-auto.svg",
