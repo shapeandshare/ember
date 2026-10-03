@@ -172,13 +172,4 @@ hr { border: none; border-top: 1px solid var(--ember-border); margin: 2rem 0; }
 
 /* --- benchmark report (rendered natively from benchmark/<run-id>/) ------ */
 .benchmark { min-width: 0; }
-.benchmark-index { padding-top: 2rem; }
-.benchmark-index-title { margin-top: 0; }
-.report-index { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
-.report-index a {
-  display: flex; gap: 0.75rem; align-items: center;
-  padding: 0.6rem 0.85rem; border: 1px solid var(--ember-border);
-  border-radius: 10px; color: var(--ember-text); font-weight: 500;
-}
-.report-index a:hover { border-color: var(--ember-accent); text-decoration: none; }
 .docs-nav .nav-num { display: inline-block; min-width: 1.4em; color: var(--ember-muted); font-variant-numeric: tabular-nums; }

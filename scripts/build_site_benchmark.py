@@ -71,22 +71,6 @@ def build() -> int:
 
     sections = render_html.section_html(model)
 
-    links = "".join(
-        f"<li><a href=\"{{{{ '/results/{anchor}/' | relative_url }}}}\">"
-        f'<span class="sec-num">{number}</span><span>{label}</span></a></li>'
-        for anchor, number, label, _ in sections
-    )
-    index_body = (
-        f"{render_html.hero(model)}"
-        '<div class="wrap benchmark-index"><h2 class="benchmark-index-title">'
-        "Sections</h2>"
-        f'<ol class="report-index">{links}</ol></div>'
-    )
-    (OUT / "index.md").write_text(
-        _page("benchmark-index", f"{title} · {run_id}", "/results/", index_body),
-        encoding="utf-8",
-    )
-
     for anchor, number, section_title, html in sections:
         (OUT / f"{anchor}.md").write_text(
             _page(

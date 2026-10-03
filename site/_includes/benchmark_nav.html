@@ -1,5 +1,5 @@
 <nav class="docs-nav" aria-label="Benchmark report">
-  <a class="docs-nav-home" href="{{ '/results/' | relative_url }}">Benchmark report</a>
+  <span class="docs-nav-home">Benchmark report</span>
   <ul>
     {%- for s in site.data.benchmark.sections %}
     {%- assign surl = '/results/' | append: s.anchor | append: '/' %}

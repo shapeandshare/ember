@@ -6,7 +6,8 @@
     </a>
     <nav class="site-nav" aria-label="Primary">
       <a href="{{ '/docs/' | relative_url }}">Docs</a>
-      <a href="{{ '/results/' | relative_url }}">Benchmark</a>
+      {%- assign bench_home = site.data.benchmark.sections[0].anchor | default: "summary" %}
+      <a href="{{ '/results/' | append: bench_home | append: '/' | relative_url }}">Benchmark</a>
       <a href="{{ site.github }}">GitHub</a>
     </nav>
   </div>
