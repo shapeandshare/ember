@@ -219,6 +219,36 @@ Run it before committing, pushing, or merging.
 The routing and effort recipes are templates: replace their option sets with ones that describe
 your project, measure them, and keep each set fixed once your checks depend on it.
 
+### Visual evidence
+
+Run it when the evidence is a screenshot, diagram, chart, or video clip rather than text.
+Attach pixels as base64 `data:image/png;base64,...` (or `data:image/jpeg;...` or
+`data:image/webp;...`) URIs in `images`; for a video attach each frame as a list inside
+`videos`. The model scores all questions jointly with the attached pixels.
+
+```json
+{"state": "Review the attached screenshot.",
+ "images": ["data:image/png;base64,<b64>"],
+ "questions": {
+   "dominant_colour": {"type": "choice",
+     "instructions": "What is the dominant colour in the image?",
+     "criteria": {"red": "Mostly red or warm-red",
+                  "green": "Mostly green",
+                  "blue": "Mostly blue",
+                  "mixed": "No single colour clearly dominates"}},
+   "alert_level": {"type": "score",
+     "instructions": "How severe is the status indicator shown?",
+     "criteria": ["No alert (calm green)", "Low (yellow)",
+                  "Medium (orange)", "High (red)"]},
+   "colour_changed": {"type": "noul",
+     "instructions": "Did the dominant colour change between frame 1 and frame 2?",
+     "criteria": {"true": "The dominant colour is different in the two frames",
+                  "false": "The dominant colour is the same in both frames"}}}}
+```
+
+Use the question ids exactly as shown; ember is calibrated on them. Remote URLs and local
+paths are rejected: encode pixels as `data:` URIs.
+
 ## Operations
 
 - **The first call is slow.** The model server starts on demand and loads in ~5–15 s; later
