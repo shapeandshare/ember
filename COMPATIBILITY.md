@@ -20,6 +20,47 @@ pull the weights with `ember model pull`.
 > ~19 GB fp16 `flash` model does not fit the hosted runners either, so model-backed tests
 > run locally only.
 
+## Hardware requirements
+
+ember runs Cloudflare's Clef model on Apple Silicon. The model has to fit in unified memory,
+and that is the binding constraint — not CPU speed.
+
+| Model | Parameters | On disk (fp16) | Weight in memory | Unified memory | Verified |
+| --- | --- | --- | --- | --- | --- |
+| `flash` | 9B | about 18 GiB | float16 | 32 GB or more | 128 GB (M4 Max) |
+| `full` | 27B | about 55 GiB | float16 | 64 GB or more | not yet |
+
+- **Apple Silicon Mac (M-series) on macOS**, arm64. Intel Macs and NVIDIA/CUDA are out of
+  scope (Article VI).
+- **Unified memory** must exceed the weights with headroom for activations and the KV cache.
+  An 8 GiB host fails to load `flash` with an MPS out-of-memory error at the ~9 GiB allocator
+  cap. 32 GB or more is the practical floor for `flash`.
+- **Disk**: the weights above in Hugging Face's shared cache, plus a few GiB for the app and
+  cache metadata.
+- **Python 3.12** (uv); no other runtime.
+- More GPU cores (Max, Ultra) load and answer faster; the same memory rule applies.
+
+## Running in the cloud
+
+ember is Apple-Silicon-first, so cloud means one of:
+
+- **An Apple Silicon host** (a cloud Mac) with the unified memory above. This is the tested
+  MPS path.
+- **Any host via the CPU fallback**, with `EMBER_DEVICE=cpu`. It loads in float32, so plan for
+  roughly twice the memory (`flash` about 36 GiB, `full` about 110 GiB) and much slower
+  inference. Image and video inputs are expected to work, only slower.
+- **NVIDIA/CUDA is out of scope** (Article VI). On a CUDA host, ember falls back to CPU.
+
+Two cloud caveats:
+
+- **The model server has no authentication and binds to `127.0.0.1`.** Exposing it beyond the
+  host is outside the supported threat model; add your own access controls — a private
+  network, an authenticating reverse proxy, or a firewall — if you do. See
+  [`SECURITY.md`](SECURITY.md).
+- **Inference stays local by design.** In the cloud, "local" is the host you provide: nothing
+  in ember sends `state`, questions, or answers to shapeandshare. The privacy note in
+  [`RESPONSIBLE_USE.md`](RESPONSIBLE_USE.md) then applies to that host, including its logs.
+
 ## Tested stack
 
 | Component | Version | Notes |
