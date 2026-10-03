@@ -5,7 +5,7 @@ handshake stays instant and the model stays warm across agent sessions.
 
 Run:  ember serve        (or: python -m ember.server)
 Env:  EMBER_HOST (127.0.0.1), EMBER_PORT (8765),
-      EMBER_DEVICE (auto|mps|cpu), EMBER_MAX_LENGTH (16384),
+      EMBER_DEVICE (auto|mps|cpu), EMBER_MAX_LENGTH (0 = the model's maximum),
       EMBER_MODEL_DIR (default: the pinned model)
 """
 
@@ -13,17 +13,56 @@ from __future__ import annotations
 
 import os
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    CollectorRegistry,
+    Counter,
+    Gauge,
+    Histogram,
+    generate_latest,
+)
 from pydantic import BaseModel, Field
 
 from . import config, models
 from .runtime import Engine
 
 _ENGINE: Engine | None = None
+
+REGISTRY = CollectorRegistry()
+
+ADVISE_REQUESTS = Counter(
+    "ember_advise_requests_total",
+    "advise requests by HTTP status.",
+    ["status"],
+    registry=REGISTRY,
+)
+ADVISE_LATENCY = Histogram(
+    "ember_advise_latency_seconds",
+    "advise request latency in seconds.",
+    ["status"],
+    registry=REGISTRY,
+)
+ADVISE_INPUT_TOKENS = Counter(
+    "ember_advise_input_tokens_total",
+    "Input tokens processed by advise.",
+    registry=REGISTRY,
+)
+ADVISE_OUTPUT_TOKENS = Counter(
+    "ember_advise_output_tokens_total",
+    "Output tokens produced by advise.",
+    registry=REGISTRY,
+)
+MODEL_INFO = Gauge(
+    "ember_model_info",
+    "Metadata for the loaded model (value is always 1).",
+    ["model", "device", "dtype"],
+    registry=REGISTRY,
+)
 
 
 @asynccontextmanager
@@ -36,24 +75,66 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             f"model {name!r} not found (check EMBER_MODEL_DIR); "
             f"run: ember model pull {name}"
         )
+    raw_length = int(config.resolve("max_length"))
     _ENGINE = Engine(
         model_dir,
         device=config.resolve("device"),
-        max_length=int(config.resolve("max_length")),
+        max_length=raw_length if raw_length > 0 else None,
     )
+    MODEL_INFO.clear()
+    MODEL_INFO.labels(
+        model=name,
+        device=_ENGINE.device,
+        dtype=str(_ENGINE.dtype).replace("torch.", ""),
+    ).set(1)
     try:
         yield
     finally:
         _ENGINE = None
+        MODEL_INFO.clear()
 
 
 app = FastAPI(title="ember", version="0.1.0", lifespan=lifespan)
+
+
+@app.middleware("http")
+async def observe_advise(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    """Count and time every /v1/systemone request, whatever its outcome."""
+    if request.url.path != "/v1/systemone":
+        return await call_next(request)
+    started = time.time()
+    try:
+        response = await call_next(request)
+    except Exception:
+        ADVISE_REQUESTS.labels(status="500").inc()
+        ADVISE_LATENCY.labels(status="500").observe(time.time() - started)
+        raise
+    status = str(response.status_code)
+    ADVISE_REQUESTS.labels(status=status).inc()
+    ADVISE_LATENCY.labels(status=status).observe(time.time() - started)
+    return response
 
 
 class AdviseRequest(BaseModel):
     model: str = "clef-flash"
     state: Any = Field(description="Any string or JSON value describing the situation.")
     questions: dict[str, Any] = Field(description="Mapping of question ID to question.")
+    images: list[str | dict[str, Any]] | None = Field(
+        default=None,
+        description=(
+            "Images as data: URIs or {content_type, base64} objects. "
+            "Remote URLs and local paths are rejected."
+        ),
+    )
+    videos: list[list[str | dict[str, Any]]] | None = Field(
+        default=None,
+        description="Videos, each a list of frame refs in the images format.",
+    )
+    media_kwargs: dict[str, Any] | None = Field(
+        default=None, description="Optional image/video processor arguments."
+    )
 
 
 @app.get("/health")
@@ -65,15 +146,31 @@ def health() -> dict[str, Any]:
     }
 
 
+@app.get("/metrics")
+def metrics() -> Response:
+    """Prometheus exposition of ember's own metrics."""
+    return Response(content=generate_latest(REGISTRY), media_type=CONTENT_TYPE_LATEST)
+
+
 @app.post("/v1/systemone")
 def systemone_endpoint(req: AdviseRequest) -> dict[str, Any]:
     if _ENGINE is None:
         raise HTTPException(status_code=503, detail="model not loaded yet")
     started = time.time()
     try:
-        result = _ENGINE.advise(req.state, req.questions, model_name=req.model)
-    except ValueError as exc:  # malformed questions, rejected by Clef's own validation
+        result = _ENGINE.advise(
+            req.state,
+            req.questions,
+            model_name=req.model,
+            images=req.images,
+            videos=req.videos,
+            media_kwargs=req.media_kwargs,
+        )
+    except ValueError as exc:  # malformed questions or media
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+    usage = result.get("usage") or {}
+    ADVISE_INPUT_TOKENS.inc(int(usage.get("input_tokens", 0) or 0))
+    ADVISE_OUTPUT_TOKENS.inc(int(usage.get("output_tokens", 0) or 0))
     result["latency_ms"] = round((time.time() - started) * 1000, 1)
     return result
 

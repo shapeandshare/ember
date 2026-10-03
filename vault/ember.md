@@ -24,6 +24,7 @@ Session-level decisions with their context and consequences.
 - [[2026-10-02-rename-the-product-to-ember]]
 - [[2026-10-02-publish-as-gut-and-opencode-ember-advise]]
 - [[2026-10-02-adopt-a-governed-project-vault]]
+- [[2026-10-02-expose-prometheus-metrics-on-the-server]]
 
 ### Discoveries
 
@@ -31,12 +32,15 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 
 - [[2026-10-02-ember-names-are-taken-on-pypi-and-npm]]
 - [[2026-10-02-opencode-merges-the-dot-opencode-config]]
+- [[2026-10-02-media-refs-are-data-uris-not-host-paths]]
 
 ### Sessions
 
 Append-only session logs, never pruned.
 
 - [[2026-10-02-ember-rename-and-vault-bootstrap]]
+- [[2026-10-02-full-context-and-vision]]
+- [[2026-10-02-prometheus-metrics]]
 
 ## Reference
 

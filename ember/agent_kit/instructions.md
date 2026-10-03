@@ -5,7 +5,7 @@ Consult it at bounded decision points: what the user is asking for, why somethin
 Don't ask it to write text or code, explain, do math, or judge facts that are not in the evidence you pass.
 
 Asking well:
-- Put ALL evidence in `state` (a string or structured JSON). It sees nothing else.
+- Put ALL evidence in `state` (a string or structured JSON); attach images or video frames as base64 data URIs in `images`/`videos`. It sees only what you pass.
 - Pass raw evidence, not your conclusion: a verdict written into `state` gets echoed back.
 - Make options mutually exclusive with crisp descriptions; add an "unclear" option when the space is open.
 - Batch related questions in one call (same cost). Keep a fixed question set per decision type: questions are weighed jointly.
