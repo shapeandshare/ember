@@ -308,6 +308,13 @@ reformat untouched files just to satisfy Article X.
   Apple Silicon VMs (the server OOMs on MPS). Run `make test` locally for model-affecting
   changes. See `vault/discoveries/2026-10-03-self-hosted-vms-cannot-hold-the-model.md`.
 - **Pushing `.github/workflows/` changes over HTTPS** needs a gh token with the `workflow` scope.
+- **Workflows run untrusted code.** A fork's pull request runs its own copy of the workflows,
+  so: pin every `uses:` to a full commit SHA with a `# vX.Y.Z` comment (Dependabot bumps
+  both); start from `permissions: {}` and grant per job; set `persist-credentials: false` on
+  checkout; never use `pull_request_target`, `workflow_run`, or a self-hosted runner; never
+  reference org secrets. The `zizmor` job in `ci` enforces this; run
+  `uvx zizmor@1.30.1 .github/` before pushing workflow changes. See
+  `vault/decisions/2026-10-03-harden-github-before-going-public.md`.
 - **The agent eval is the only code that launches opencode.** `ember eval agent`
   (`scripts/run_agent_evals.py`, `evals/agent/`) runs `opencode run --pure` in a temporary
   sandbox with a private HOME and XDG dirs and no port (constitution Article IV). Keep it out of
