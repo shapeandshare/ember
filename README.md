@@ -51,6 +51,7 @@ clef_local/
   config.py           # config with flag > env > file > default precedence
   opencode_config.py  # write/merge the mcp.clef entry
   opencode_plugin.py  # install the local opencode plugin
+  agent_kit/          # what agents read: MCP instructions, clef-decide skill, AGENTS snippet
 packages/opencode-plugin/   # publishable opencode plugin source (npm-ready)
 scripts/
   clef-server.sh      # dev server lifecycle (bash)
@@ -58,6 +59,8 @@ scripts/
   test_mcp_client.py  # MCP protocol end-to-end test
   doctor.sh           # readiness report (bash)
 tests/                # pytest suite (see "Tests" below)
+.specify/             # spec-kit; memory/constitution.md governs this repo
+AGENTS.md CLAUDE.md   # contributor-agent guidelines (CLAUDE.md imports AGENTS.md)
 Makefile          # dev lifecycle commands (run `make help`)
 opencode.json     # generated per machine by `clef init` / `make init` (gitignored)
 pyproject.toml    # package + deps (installs `clef` and `clef-mcp`)
@@ -104,9 +107,48 @@ clef model pull [flash|full]     # flash = 9B (default), full = 27B
 clef model list | path [name] | rm [name]
 
 # opencode
-clef init --opencode [--global]  # install the local opencode plugin
+clef init --opencode [--global]  # install the local opencode plugin + clef-decide skill
 clef init                        # or just write the mcp.clef config entry
+
+# agent onboarding
+clef agents install [--agent opencode|claude|codex] [--global]
+clef agents show instructions|skill|snippet
 ```
+
+## Agent onboarding
+
+Installing the tool is half the job; the other half is making agents **want** to call it at
+the right moments and act on its answers sensibly. `clef_local/agent_kit/` ships that guidance
+through every channel each agent actually reads:
+
+| Channel | opencode | Claude Code | Codex CLI | How you get it |
+| --- | --- | --- | --- | --- |
+| MCP server instructions (when to use, how to ask, how to act) | ✅ in the system prompt | ✅ (2 KB cap) | — | built in, nothing to do |
+| `clef://guide` resource (full playbook) | ✅ via `read_mcp_resource` | ✅ | — | built in |
+| `clef-decide` skill (playbook, loaded on demand) | ✅ | ✅ | ✅ | `clef agents install --agent <agent>` |
+| AGENTS.md / CLAUDE.md policy block | ✅ | ✅ (CLAUDE.md) | ✅ | `clef agents show snippet >> AGENTS.md` |
+
+```bash
+clef init --opencode                  # opencode: plugin + skill in one step
+clef agents install --agent claude    # .claude/skills/clef-decide/SKILL.md
+clef agents install --agent codex     # .agents/skills/... (opencode reads this too)
+clef agents show snippet >> AGENTS.md # then edit the project decision policy
+```
+
+The skill is a playbook, not a reference card: decision points worth gating, copy-paste
+schemas for intent and readiness, failure triage, change risk, routing, and effort; and
+starting confidence thresholds calibrated from observed model output (re-measured whenever the
+pinned model revision changes). The snippet ends with a **project decision policy** — edit it
+to wire Clef into your own workflow, e.g. "score change risk before every push".
+
+Agent-specific notes:
+
+- opencode reads skills from `.opencode/skills`, `.claude/skills`, and `.agents/skills`, so
+  install one copy per project to avoid duplicate listings.
+- Claude Code names the tool `mcp__clef__decide`; register the server there with
+  `claude mcp add clef -- clef-mcp`.
+- Codex CLI support for MCP server instructions and resources is unconfirmed, so rely on the
+  skill and the AGENTS.md snippet there.
 
 ## Development setup
 
