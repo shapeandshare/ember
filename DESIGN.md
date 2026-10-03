@@ -1,6 +1,6 @@
 # Design System
 
-This document is the source of truth for how `gut-feeling` looks, is documented,
+This document is the source of truth for how `ember` looks, is documented,
 and is structured. It governs documentation conventions, visual language,
 architectural diagram style, code and prose standards, and contributor workflow.
 It is not a user guide.
@@ -13,7 +13,7 @@ updated to match.
 
 ## 1. Project Identity
 
-`gut-feeling` (package: `gut_feeling`) is a local, private decision oracle for
+`ember` (package: `ember`) is a local, private decision oracle for
 coding agents. It runs Cloudflare's Clef decision model on Apple Silicon via MPS
 and exposes it as a single MCP tool. It produces calibrated probabilities, not
 prose. There is no cloud path, no text generation, and no opinion.
@@ -30,11 +30,12 @@ boundary between "typed decision output" and "text generation."
 
 ## 2. Mascot and Color Palette
 
-**Ember is the primary Gut Feeling mascot**: a curled plum creature embracing a
-warm glowing tummy. Use `assets/brand/svg/ember-light.svg` on light surfaces and
-`ember-dark.svg` on dark surfaces. Both have transparent backgrounds; `ember-auto.svg`
-follows system theme. Detailed illustration: `assets/brand/mascots/ember-v1.png`.
-Mellow and Float are retained alternate concepts, not the primary identity.
+**Ember is the primary mascot** and the product's namesake: a curled plum
+creature embracing a warm glowing tummy. Use `assets/brand/svg/ember-light.svg`
+on light surfaces and `ember-dark.svg` on dark surfaces. Both have transparent
+backgrounds; `ember-auto.svg` follows system theme. Detailed illustration:
+`assets/brand/mascots/ember-v1.png`. Mellow and Float are retained alternate
+concepts, not the primary identity.
 
 The brand asset guide is `assets/brand/README.md`; reusable semantic CSS tokens live
 in `assets/brand/tokens.css`. README banners use `assets/brand/hero-{light,dark}.svg`.
@@ -252,7 +253,7 @@ and its output together, use `text`.
 ## 10. Documentation Language
 
 - **Imperative mood** for instructions: "Run `make bootstrap`", "Set
-  `GUT_FEELING_PORT`", "Restart opencode."
+  `EMBER_PORT`", "Restart opencode."
 - **Declarative** for descriptions: "The MCP server starts the HTTP server on
   first use", "Weights are pinned to a Hugging Face commit SHA."
 - **Plain English.** Avoid: "just", "simply", "easily", "leverage", "utilize",
@@ -272,8 +273,8 @@ The canonical call-path diagram is ASCII box-and-arrow, matching the README's
 existing diagram:
 
 ```
-agent ──tools/call advise──► gut-feeling-mcp (stdio, mcp_server.py)
-                               │  initialize.instructions + gut-feeling://guide
+agent ──tools/call advise──► ember-mcp (stdio, mcp_server.py)
+                               │  initialize.instructions + ember://guide
                                ▼  lazy autostart of a PID-tracked child
                      HTTP POST /v1/systemone (server.py)
                                │
@@ -335,7 +336,7 @@ The what is in the subject and the diff.
 - The description references the spec (`.specify/`) or the issue it addresses.
 - Every PR that changes the runtime, servers, CLI, or agent kit must include
   passing `make test` output or a CI link.
-- Agent-kit changes (anything under `gut_feeling/agent_kit/`) are public-API
+- Agent-kit changes (anything under `ember/agent_kit/`) are public-API
   changes. The PR description must note what downstream agents will see differently
   and confirm that `instructions.md` stays within 2048 bytes.
 - Do not merge with failing CI.
@@ -345,7 +346,7 @@ The what is in the subject and the diff.
 ## 14. Makefile Conventions
 
 The root `Makefile` is a thin orchestrator. It defines variables, declares
-`.PHONY` targets, and delegates to the `gut-feeling` CLI for server lifecycle
+`.PHONY` targets, and delegates to the `ember` CLI for server lifecycle
 operations. It does not contain business logic.
 
 ### Target documentation
@@ -365,8 +366,8 @@ This pattern is shared across sibling repos. Keep it intact.
 
 Environment variable overrides use `?=` so callers can override from the shell.
 Variables that must be exported to child processes use `export`. The three
-server-configuration variables (`GUT_FEELING_HOST`, `GUT_FEELING_PORT`,
-`GUT_FEELING_DEVICE`) are always exported.
+server-configuration variables (`EMBER_HOST`, `EMBER_PORT`,
+`EMBER_DEVICE`) are always exported.
 
 ### Target groups
 
@@ -417,7 +418,7 @@ upstream `joint_schema_model.py` allows.
 
 ### Security
 
-`bandit` runs on the `gut_feeling/` package. The MCP server and HTTP server
+`bandit` runs on the `ember/` package. The MCP server and HTTP server
 are the primary attack surface: they accept external input and pass it to the
 model. Any `bandit` finding in those modules is a blocker.
 
@@ -430,12 +431,12 @@ never moves down. New code without tests fails the gate.
 
 ## 16. Configuration Location
 
-All persistent configuration lives in `~/Library/Application Support/gut-feeling`
-on macOS (resolved by `gut_feeling/paths.py`). The server binds to
+All persistent configuration lives in `~/Library/Application Support/ember`
+on macOS (resolved by `ember/paths.py`). The server binds to
 `127.0.0.1:8765` by default. Both are overridable via environment variables
-(`GUT_FEELING_HOST`, `GUT_FEELING_PORT`).
+(`EMBER_HOST`, `EMBER_PORT`).
 
-Per-machine generated files (`opencode.json`, `.opencode/plugins/gut-feeling.js`)
+Per-machine generated files (`opencode.json`, `.opencode/plugins/ember.js`)
 embed absolute paths and are gitignored. Regenerate them with `make init` or
 `make opencode` after cloning. Never commit them.
 
@@ -446,18 +447,18 @@ dependency range requires green model-backed tests.
 
 ## 17. Agent Kit Conventions
 
-`gut_feeling/agent_kit/` is the single source of truth for everything a
+`ember/agent_kit/` is the single source of truth for everything a
 consumer's agent reads. The three delivery channels are:
 
 | File                          | Delivered as                    | Constraint                  |
 |-------------------------------|---------------------------------|-----------------------------|
 | `instructions.md`             | MCP `initialize.instructions`   | Must stay within 2048 bytes |
-| `gut-feeling-advise/SKILL.md` | MCP resource `gut://guide`; skill via `gut agents install` | Skill name must match directory |
-| `AGENTS.snippet.md`           | `gut agents show snippet`       | No constraint on size       |
+| `ember-advise/SKILL.md`       | MCP resource `ember://guide`; skill via `ember agents install` | Skill name must match directory |
+| `AGENTS.snippet.md`           | `ember agents show snippet`     | No constraint on size       |
 
 Rules:
 
-- The skill name must stay `gut-feeling-advise` and match its directory name.
+- The skill name must stay `ember-advise` and match its directory name.
 - Thresholds and "Observed" numbers in the kit must come from real model output.
   Re-measure them when the pinned model revision changes or when a recipe schema
   changes. Questions are scored jointly; changing one question changes all scores.
@@ -519,6 +520,7 @@ When editing any documentation file:
 | Date       | Change                                                        |
 |------------|---------------------------------------------------------------|
 | 2026-10-02 | Initial design system: palette, typography, diagram style, README structure, badges, callouts, tables, code blocks, language, architecture diagrams, commits, PRs, Makefile, tooling, config, agent kit, testing, maintenance checklist |
+| 2026-10-02 | Product renamed to `ember` to match the mascot; "gut feeling" stays as flavor text |
 
 ## Material provenance
 

@@ -1,32 +1,37 @@
-# AGENTS.md — gut-feeling
+# AGENTS.md — ember
 
-**Last updated**: 2026-10-02 (table-stakes tooling; design doc; community docs; naming consolidated on gut-feeling)
+**Last updated**: 2026-10-02 (product renamed to ember to match the mascot; table-stakes tooling; design doc; community docs)
 
 ## What this repo is
 
-`gut-feeling` runs Cloudflare's Clef decision models locally on Apple Silicon (MPS) and
-exposes them to coding agents as one advisory MCP tool, `advise` (opencode: `gut-feeling_advise`; Claude
-Code: `mcp__gut-feeling__advise`). An agent sends a `state` plus typed questions and gets calibrated
-probabilities back — no prose. It ships as a uv tool (`gut-feeling`, `gut-feeling-mcp`), a
-local opencode plugin, and an **agent onboarding kit** that teaches consumers' agents to use
-the tool well.
+`ember` runs Cloudflare's Clef decision models locally on Apple Silicon (MPS) and
+exposes them to coding agents as one advisory MCP tool, `advise` (opencode: `ember_advise`; Claude
+Code: `mcp__ember__advise`). An agent sends a `state` plus typed questions and gets calibrated
+probabilities back — no prose. It ships as the `gut` uv tool (commands `ember`, `gut`,
+`ember-mcp`), a local opencode plugin, and an **agent onboarding kit** that teaches consumers'
+agents to use the tool well.
 
 `.specify/memory/constitution.md` governs this repo. This file operationalizes it; where the
 two conflict, the constitution wins and this file MUST be updated.
 
 ## Naming
 
-The product is **gut-feeling**, everywhere. gut-feeling *advises*; the agent decides — keep
-that voice in user-facing text.
+The product is **ember**, named after the Ember mascot. Only the distribution differs: it is
+`gut`, because `ember` is taken on PyPI. ember *advises*; the agent decides — keep that voice
+in user-facing text.
+
+"Gut feeling" is flavor text, not a name. Keep the tagline *Give your agent a gut feeling.*,
+"a local gut feeling for coding agents", and the `gut` CLI alias as they are.
 
 | Thing | Name |
 | --- | --- |
-| Distribution, repository, app dir | `gut-feeling` |
-| Python package | `gut_feeling` |
-| CLI | `gut-feeling` (alias `gut`); MCP command `gut-feeling-mcp` |
-| MCP server / tool | `gut-feeling` / `advise` (opencode `gut-feeling_advise`, Claude Code `mcp__gut-feeling__advise`) |
-| Skill / MCP resource | `gut-feeling-advise` / `gut-feeling://guide` |
-| Environment variables | `GUT_FEELING_*` |
+| Distribution (PyPI, `uv tool`) | `gut` |
+| Python package, app dir | `ember` |
+| CLI | `ember` (alias `gut`); MCP command `ember-mcp` |
+| MCP server / tool | `ember` / `advise` (opencode `ember_advise`, Claude Code `mcp__ember__advise`) |
+| Skill / MCP resource | `ember-advise` / `ember://guide` |
+| Environment variables | `EMBER_*` |
+| GitHub repository | `shapeandshare/ember` |
 
 "Clef" refers only to Cloudflare's upstream model and its artifacts (`Cloudflare/clef-flash`,
 `.models/clef-flash`, `joint_schema_model.py`, `load_clef`). Never use it for this product.
@@ -45,25 +50,25 @@ after changing brand assets. Do not invent missing provenance or license facts.
 | Topic | Source of truth |
 | --- | --- |
 | Principles and gates | `.specify/memory/constitution.md` |
-| Agent-facing contract (tool schema, instructions, guide, skill, snippet) | `gut_feeling/mcp_server.py`, `gut_feeling/agent_kit/` |
-| Model revisions | `REGISTRY` in `gut_feeling/models.py` |
+| Agent-facing contract (tool schema, instructions, guide, skill, snippet) | `ember/mcp_server.py`, `ember/agent_kit/` |
+| Model revisions | `REGISTRY` in `ember/models.py` |
 | Dependency ranges | `pyproject.toml` + `uv.lock` |
-| Lifecycle commands | `Makefile` (contributors), `gut-feeling` CLI (users) |
+| Lifecycle commands | `Makefile` (contributors), `ember` CLI (users) |
 | User documentation | `README.md` |
 | Verification | `tests/`, `.github/workflows/ci.yml` |
 
 ## Project structure
 
 ```
-gut_feeling/
+ember/
   runtime.py          # MPS-safe loader (CPU load → .to("mps")) + Engine
   server.py           # FastAPI: POST /v1/systemone, GET /health (reports pid)
-  mcp_server.py       # MCP stdio server: advise tool, instructions, gut-feeling://guide resource
+  mcp_server.py       # MCP stdio server: advise tool, instructions, ember://guide resource
   agent_kit/          # consumer onboarding kit (single source of truth)
     instructions.md   #   MCP initialize.instructions (≤ 2 KB)
-    gut-feeling-advise/      #   installable skill + gut-feeling://guide content
+    ember-advise/     #   installable skill + ember://guide content
     AGENTS.snippet.md #   block consumers paste into their AGENTS.md / CLAUDE.md
-  cli.py              # `gut-feeling` / `gut` command: lifecycle, models, doctor, init, agents
+  cli.py              # `ember` / `gut` command: lifecycle, models, doctor, init, agents
   process.py          # warm-server lifecycle (pidfile + HTTP health)
   models.py           # pinned model registry + pull/list/rm
   paths.py config.py  # platform dirs, config precedence
@@ -84,11 +89,11 @@ tests/                # pytest suite (unit + model-backed, host-isolated)
 ## Runtime environment
 
 - macOS on Apple Silicon (arm64); Python 3.12 managed by uv (`.python-version`).
-- torch MPS backend in fp16; CPU fallback in fp32 (`GUT_FEELING_DEVICE=cpu`).
+- torch MPS backend in fp16; CPU fallback in fp32 (`EMBER_DEVICE=cpu`).
 - Weights: contributor clones use `.models/clef-flash` (`make download`, pinned); installed tools
-  use the shared Hugging Face cache (`gut-feeling model pull`, pinned).
+  use the shared Hugging Face cache (`ember model pull`, pinned).
 - Model server: `127.0.0.1:8765` by default; config and state live in
-  `~/Library/Application Support/gut-feeling`.
+  `~/Library/Application Support/ember`.
 
 ## Commands
 
@@ -108,13 +113,13 @@ tests/                # pytest suite (unit + model-backed, host-isolated)
 | `make init` / `make opencode` | Regenerate `opencode.json` / install the local plugin and skill |
 | `make smoke` / `make mcp-check` | Direct MPS inference / MCP protocol end-to-end |
 | `make doctor` | Environment, model, and server readiness |
-| `.venv/bin/gut-feeling …` or `.venv/bin/gut …` | Primary CLI, built from this checkout |
+| `.venv/bin/ember …` or `.venv/bin/gut …` | Primary CLI, built from this checkout |
 
 ## Architecture (call path)
 
 ```
-agent ──tools/call advise──► gut-feeling-mcp (stdio, mcp_server.py)
-                               │  initialize.instructions + resource gut-feeling://guide (agent_kit)
+agent ──tools/call advise──► ember-mcp (stdio, mcp_server.py)
+                               │  initialize.instructions + resource ember://guide (agent_kit)
                                ▼  lazy autostart through process.start (pid-tracked)
                      HTTP POST /v1/systemone (server.py)
                                ▼
@@ -124,7 +129,7 @@ agent ──tools/call advise──► gut-feeling-mcp (stdio, mcp_server.py)
 ```
 
 - The MCP process never imports torch; startup stays instant.
-- Every start path (`gut-feeling start`, `make start`, MCP autostart) goes through
+- Every start path (`ember start`, `make start`, MCP autostart) goes through
   `process.start`: one model resolution, one pid file, one log.
 - The model loads once per server process; a lock serializes MPS inference.
 - `joint_schema_model.py` comes from the pinned Hugging Face snapshot and is imported from the
@@ -134,22 +139,22 @@ agent ──tools/call advise──► gut-feeling-mcp (stdio, mcp_server.py)
 
 | Server | Transport | Tool | Agent guidance | Notes |
 | --- | --- | --- | --- | --- |
-| `gut-feeling` | stdio (`gut-feeling-mcp`, or `python -m gut_feeling.mcp_server`) | `advise`; input wrapped in `input` | `initialize.instructions` + resource `gut-feeling://guide` | Starts the HTTP server lazily unless `GUT_FEELING_AUTOSTART=0` |
+| `ember` | stdio (`ember-mcp`, or `python -m ember.mcp_server`) | `advise`; input wrapped in `input` | `initialize.instructions` + resource `ember://guide` | Starts the HTTP server lazily unless `EMBER_AUTOSTART=0` |
 
 ## Agent onboarding kit
 
-`gut_feeling/agent_kit/` is the single source for everything a consumer's agent reads:
+`ember/agent_kit/` is the single source for everything a consumer's agent reads:
 
 | File | Delivered as | Reaches |
 | --- | --- | --- |
 | `instructions.md` | MCP `initialize.instructions` | opencode and Claude Code, automatically |
-| `gut-feeling-advise/SKILL.md` | MCP resource `gut-feeling://guide`; skill via `gut-feeling agents install` and `gut-feeling init --opencode` | opencode, Claude Code, Codex |
-| `AGENTS.snippet.md` | `gut-feeling agents show snippet` | any agent that reads AGENTS.md or CLAUDE.md |
+| `ember-advise/SKILL.md` | MCP resource `ember://guide`; skill via `ember agents install` and `ember init --opencode` | opencode, Claude Code, Codex |
+| `AGENTS.snippet.md` | `ember agents show snippet` | any agent that reads AGENTS.md or CLAUDE.md |
 
 Rules for changing it:
 
 - `instructions.md` MUST stay ≤ 2048 bytes (Claude Code truncates longer instructions).
-- The skill name MUST stay `gut-feeling-advise` and match its directory.
+- The skill name MUST stay `ember-advise` and match its directory.
 - Thresholds and "Observed" numbers MUST come from real model output. Re-measure them when the
   model revision or a recipe schema changes — questions are scored jointly.
 - The tool name, input schema, and kit text are public API: change them together with the
@@ -166,7 +171,7 @@ Rules for changing it:
 5. **Keep pins honest.** Bump model revisions or dependency ranges only with model-backed tests
    and re-measured kit numbers.
 6. **Smallest correct change.** Atomic commits with plain, imperative English subjects.
-7. **Dogfood.** When `gut-feeling_advise` is available, consult it with the kit's recipes for
+7. **Dogfood.** When `ember_advise` is available, consult it with the kit's recipes for
    this repo's own triage and risk checks.
 
 ## Tooling
@@ -189,12 +194,12 @@ Run `make pr-ready` before every PR: formats, lints, type-checks, security-scans
 - **Never pass `device_map={"": "mps"}`** — it segfaults. `runtime.load_clef` loads on CPU and
   moves the module to MPS; keep it that way.
 - **stdout is the MCP wire.** Log to stderr only in `mcp_server.py`; never `print`.
-- **`opencode.json`, `.opencode/plugins/gut-feeling.js`, and `.opencode/skills/gut-feeling-advise/` are per-machine** (absolute paths and the
+- **`opencode.json`, `.opencode/plugins/ember.js`, and `.opencode/skills/ember-advise/` are per-machine** (absolute paths and the
   installer's `PATH`). They are gitignored; regenerate them, never commit them.
 - **The `advise` input is wrapped in `input`.** mcp v2 does not flatten a single model parameter.
 - **Raise `ToolError` for failures the agent should read.** mcp v2 reports any other exception
   as a bare "Error executing tool advise", hiding the actionable message.
-- **`stop` signals only the recorded pid**, after confirming it is still a gut-feeling server.
+- **`stop` signals only the recorded pid**, after confirming it is still an ember server.
   Never kill by port or process pattern (constitution Article IV).
 - **torch and torchvision are pinned to the tested minor series** because MPS behavior is
   version-sensitive; widening the range is a constitution-governed change.
@@ -212,10 +217,16 @@ MUST pass the constitution check.
 
 - Python 3.12, uv, torch 2.14 (MPS), transformers 5.18, FastAPI + uvicorn, mcp 2.3
   (`MCPServer`), huggingface-hub 1.33; ruff, mypy (strict), bandit, pytest-cov, commitizen;
-  `gut-feeling`/`gut` CLI; JavaScript opencode plugin (V1 `config` hook).
+  `ember`/`gut` CLI; JavaScript opencode plugin (V1 `config` hook).
 
 ## Recent Changes
 
+- 2026-10-02: product renamed from gut-feeling to ember to match the mascot: package, CLI
+  (`gut` alias kept), MCP server and tool (`ember_advise`), `ember-advise` skill,
+  `ember://guide`, `EMBER_*`, app dir, and `--ember-*` CSS tokens; distribution `gut`
+  (`ember` is taken on PyPI); repository renamed to `shapeandshare/ember`; npm plugin
+  package `opencode-ember-advise` (`opencode-ember` is taken on npm); "gut feeling" flavor
+  text unchanged; constitution v1.1.2.
 - 2026-10-02: naming consolidated on gut-feeling (`advise` tool, `gut-feeling-advise` skill,
   `gut-feeling://guide`, `GUT_FEELING_*`, `gut` alias); MCP autostart now shares
   `process.start` (fixes model resolution for installed tools); actionable MCP errors; doctor

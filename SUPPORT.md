@@ -2,8 +2,8 @@
 
 ## Getting help
 
-- **Bugs and feature requests**: open an issue on [GitHub Issues](https://github.com/shapeandshare/gut-feeling/issues).
-- **Questions and usage help**: start a thread in [GitHub Discussions](https://github.com/shapeandshare/gut-feeling/discussions).
+- **Bugs and feature requests**: open an issue on [GitHub Issues](https://github.com/shapeandshare/ember/issues).
+- **Questions and usage help**: start a thread in [GitHub Discussions](https://github.com/shapeandshare/ember/discussions).
 
 Please use the right channel. Questions filed as issues will be redirected to Discussions.
 
@@ -25,9 +25,9 @@ A useful bug report includes:
 
 - The full output of `make doctor`
 - The complete error message or stack trace
-- The exact `make` target or `gut-feeling` / `gut` CLI command that triggered the issue
+- The exact `make` target or `ember` / `gut` CLI command that triggered the issue
 - Your macOS version and chip (e.g., M2 Pro)
-- Whether the issue is reproducible with `GUT_FEELING_DEVICE=cpu`
+- Whether the issue is reproducible with `EMBER_DEVICE=cpu`
 
 Without `make doctor` output, diagnosing environment-specific issues is slow. Please include
 it even if the problem seems unrelated to the environment.
@@ -37,7 +37,7 @@ it even if the problem seems unrelated to the environment.
 Agents filing issues must:
 
 - Identify which agent system generated the report (e.g., "Filed by opencode using the
-  gut-feeling MCP server").
+  ember MCP server").
 - Confirm that `make doctor` output was checked and include it in the report.
 - Confirm the issue is not a pre-existing known caveat documented in README.md Troubleshooting.
 
@@ -51,7 +51,7 @@ Some things are outside the scope of this project's support:
 - **Upstream Clef model behavior**: if the model's probability outputs seem wrong for a given
   input, that's a model-level concern. Report it to Cloudflare or the Hugging Face repository.
 - **Third-party tool configuration**: issues with your opencode setup, Claude Code MCP
-  configuration, or other agent tooling that aren't specific to gut-feeling.
+  configuration, or other agent tooling that aren't specific to ember.
 - **Questions already answered in README.md Troubleshooting**: check there first.
 
 For security vulnerabilities, see [SECURITY.md](SECURITY.md). Do not open a public issue.
