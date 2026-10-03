@@ -11,7 +11,7 @@ QUESTIONS = {"urgent": {"type": "noul", "instructions": "Is this urgent?"}}
 
 METRIC_NAMES = (
     "ember_advise_requests_total",
-    "ember_advise_latency_seconds_count",
+    "ember_advise_latency_seconds",
     "ember_advise_input_tokens_total",
     "ember_advise_output_tokens_total",
     "ember_model_info",
@@ -50,6 +50,42 @@ def test_metrics_endpoint_is_exposed_without_the_model():
         assert name in resp.text, f"{name} missing from /metrics"
 
 
+def test_unloaded_engine_requests_are_counted():
+    from ember import server
+    from fastapi.testclient import TestClient
+
+    client = TestClient(server.app)
+    resp = client.post(
+        "/v1/systemone",
+        json={"state": "x", "questions": {"urgent": {"type": "noul"}}},
+    )
+    assert resp.status_code == 503
+    text = client.get("/metrics").text
+    assert _total(text, "ember_advise_requests_total", status="503") >= 1
+
+
+def test_unexpected_errors_are_counted(monkeypatch):
+    from ember import server
+    from fastapi.testclient import TestClient
+
+    class ExplodingEngine:
+        device = "cpu"
+        dtype = "float32"
+
+        def advise(self, *args: object, **kwargs: object) -> dict:
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(server, "_ENGINE", ExplodingEngine())
+    client = TestClient(server.app, raise_server_exceptions=False)
+    resp = client.post(
+        "/v1/systemone",
+        json={"state": "x", "questions": {"urgent": {"type": "noul"}}},
+    )
+    assert resp.status_code == 500
+    text = client.get("/metrics").text
+    assert _total(text, "ember_advise_requests_total", status="500") >= 1
+
+
 @pytest.mark.model
 def test_advise_updates_metrics(base_url: str) -> None:
     before = _metrics(base_url)
@@ -63,7 +99,7 @@ def test_advise_updates_metrics(base_url: str) -> None:
 
     ok = _total(after, "ember_advise_requests_total", status="200")
     assert ok >= _total(before, "ember_advise_requests_total", status="200") + 1
-    assert _total(after, "ember_advise_latency_seconds_count") > 0
+    assert _total(after, "ember_advise_latency_seconds_count", status="200") > 0
     assert _total(after, "ember_advise_input_tokens_total") > 0
     assert _total(after, "ember_model_info") == 1.0
 
@@ -74,6 +110,21 @@ def test_validation_errors_are_counted(base_url: str) -> None:
     resp = httpx.post(
         f"{base_url}/v1/systemone",
         json={"state": STATE, "questions": {"bogus": {"type": "nonsense"}}},
+        timeout=30.0,
+    )
+    assert resp.status_code == 422
+    after = _metrics(base_url)
+    counted = _total(after, "ember_advise_requests_total", status="422")
+    assert counted >= _total(before, "ember_advise_requests_total", status="422") + 1
+
+
+@pytest.mark.model
+def test_schema_validation_errors_are_counted(base_url: str) -> None:
+    """A body FastAPI rejects before the handler is still an advise request."""
+    before = _metrics(base_url)
+    resp = httpx.post(
+        f"{base_url}/v1/systemone",
+        json={"state": STATE, "questions": "not-a-mapping"},
         timeout=30.0,
     )
     assert resp.status_code == 422

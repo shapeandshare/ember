@@ -191,8 +191,8 @@ While the model server is running it exposes Prometheus metrics at
 
 | Metric | Type | Meaning |
 | --- | --- | --- |
-| `ember_advise_requests_total{status}` | counter | advise requests by HTTP status (`200`, `422`, `503`) |
-| `ember_advise_latency_seconds` | histogram | advise serving latency |
+| `ember_advise_requests_total{status}` | counter | advise requests by HTTP status (`200`, `422`, `503`, `500`) |
+| `ember_advise_latency_seconds` | histogram | advise request latency by status |
 | `ember_advise_input_tokens_total` | counter | input tokens processed |
 | `ember_advise_output_tokens_total` | counter | output tokens produced |
 | `ember_model_info{model,device,dtype}` | gauge | `1` while a model is loaded |

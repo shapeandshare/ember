@@ -31,8 +31,9 @@ signal that the server is healthy and being used.
 - Export `ember_advise_requests_total{status}`, `ember_advise_latency_seconds`,
   `ember_advise_input_tokens_total`, `ember_advise_output_tokens_total`, and
   `ember_model_info{model,device,dtype}`.
-- Instrument the `/v1/systemone` handler only; `/health` and `/metrics` are cheap and are
-  intentionally not counted.
+- Instrument `/v1/systemone` in an HTTP middleware so every request is counted and timed
+  by status — including schema-validation 422s, 503s, and 500s; `/health` and `/metrics`
+  are cheap and are intentionally not counted.
 
 ## Consequences
 

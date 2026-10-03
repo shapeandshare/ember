@@ -13,11 +13,11 @@ from __future__ import annotations
 
 import os
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
     Counter,
@@ -40,6 +40,7 @@ ADVISE_REQUESTS = Counter(
 ADVISE_LATENCY = Histogram(
     "ember_advise_latency_seconds",
     "advise request latency in seconds.",
+    ["status"],
 )
 ADVISE_INPUT_TOKENS = Counter(
     "ember_advise_input_tokens_total",
@@ -86,6 +87,26 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(title="ember", version="0.1.0", lifespan=lifespan)
 
 
+@app.middleware("http")
+async def observe_advise(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    """Count and time every /v1/systemone request, whatever its outcome."""
+    if request.url.path != "/v1/systemone":
+        return await call_next(request)
+    started = time.time()
+    try:
+        response = await call_next(request)
+    except Exception:
+        ADVISE_REQUESTS.labels(status="500").inc()
+        ADVISE_LATENCY.labels(status="500").observe(time.time() - started)
+        raise
+    status = str(response.status_code)
+    ADVISE_REQUESTS.labels(status=status).inc()
+    ADVISE_LATENCY.labels(status=status).observe(time.time() - started)
+    return response
+
+
 class AdviseRequest(BaseModel):
     model: str = "clef-flash"
     state: Any = Field(description="Any string or JSON value describing the situation.")
@@ -110,24 +131,16 @@ def metrics() -> Response:
 @app.post("/v1/systemone")
 def systemone_endpoint(req: AdviseRequest) -> dict[str, Any]:
     if _ENGINE is None:
-        ADVISE_REQUESTS.labels(status="503").inc()
         raise HTTPException(status_code=503, detail="model not loaded yet")
     started = time.time()
     try:
         result = _ENGINE.advise(req.state, req.questions, model_name=req.model)
     except ValueError as exc:  # malformed questions, rejected by Clef's own validation
-        ADVISE_REQUESTS.labels(status="422").inc()
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    except Exception:
-        ADVISE_REQUESTS.labels(status="500").inc()
-        raise
-    elapsed = time.time() - started
-    ADVISE_LATENCY.observe(elapsed)
     usage = result.get("usage") or {}
     ADVISE_INPUT_TOKENS.inc(int(usage.get("input_tokens", 0) or 0))
     ADVISE_OUTPUT_TOKENS.inc(int(usage.get("output_tokens", 0) or 0))
-    ADVISE_REQUESTS.labels(status="200").inc()
-    result["latency_ms"] = round(elapsed * 1000, 1)
+    result["latency_ms"] = round((time.time() - started) * 1000, 1)
     return result
 
 
