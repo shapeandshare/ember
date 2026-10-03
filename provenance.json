@@ -734,6 +734,26 @@
       "status": "content_verified",
       "final_url": "https://github.com/EthicalSource/contributor_covenant/blob/release/LICENSE.md",
       "evidence": "Current repository license is Hippocratic 3.0. Not assumed to establish the historical 2.1 document license."
+    },
+    {
+      "id": "wellspring-repository",
+      "url": "https://github.com/shapeandshare/wellspring",
+      "checked_on": "2026-10-02",
+      "timezone": "America/Los_Angeles",
+      "method": "gh api (authenticated); repository metadata inspection",
+      "status": "metadata_verified",
+      "final_url": "https://github.com/shapeandshare/wellspring",
+      "evidence": "Public repository; GitHub reports license MIT and commit dca5685dbf4b03ba295e71a4a895c1d0475d1203, the local ../wellspring checkout the vault scaffolding was adapted from. Its LICENSE reads MIT, Copyright (c) 2026 Josh Burt."
+    },
+    {
+      "id": "mcpvault",
+      "url": "https://registry.npmjs.org/@bitbonsai%2fmcpvault",
+      "checked_on": "2026-10-02",
+      "timezone": "America/Los_Angeles",
+      "method": "npm registry API; package metadata inspection",
+      "status": "metadata_verified",
+      "final_url": "https://registry.npmjs.org/@bitbonsai%2fmcpvault",
+      "evidence": "Version 0.12.4 (published 2026-07-23) declares license MIT and repository github.com/bitbonsai/mcpvault; latest is 0.16.0. The vault MCP server runs it through npx; it is not bundled. Upstream license text not retrieved."
     }
   ],
   "models": [
@@ -825,6 +845,26 @@
       "license": "NOASSERTION",
       "license_status": "Historical document license unresolved; current repository license not applied retroactively.",
       "modifications": "Project-specific enforcement and contact details; existing attribution retained."
+    },
+    {
+      "name": "Vault scaffolding adapted from wellspring",
+      "paths": [
+        "vault/_meta/tags.md",
+        "vault/_meta/templates/decision.md",
+        "vault/_meta/templates/discovery.md",
+        "vault/_meta/templates/moc.md",
+        "vault/_meta/templates/reference.md",
+        "vault/_meta/templates/session-log.md",
+        ".opencode/commands/vault-health.md",
+        "scripts/vault_audit.py"
+      ],
+      "source_reference": "wellspring-repository",
+      "declared_local_version": null,
+      "version_evidence": "git rev-parse HEAD in the local ../wellspring checkout",
+      "upstream_license": "MIT, Copyright (c) 2026 Josh Burt",
+      "license_reference": "wellspring-repository",
+      "exact_import_revision": "dca5685dbf4b03ba295e71a4a895c1d0475d1203",
+      "modifications": "Templates and the vault-health command adapted to ember paths, the [[ember]] hub, and status kept as a tag; the tag vocabulary keeps wellspring's three axes with ember domains. scripts/vault_audit.py is a rewrite by the Sisyphus agent (opencode) that keeps wellspring's checks and adds a type/tag consistency check."
     }
   ],
   "dependencies": {

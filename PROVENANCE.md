@@ -83,9 +83,16 @@ are bundled. Lettering inside generated concept PNGs is generated imagery.
   The historical document license has not been verified. The current upstream
   repository license was inspected but is not assumed to apply retroactively to
   the 2.1 text. This material is not represented as original MIT project prose.
+- **Vault scaffolding:** the note templates, the tag vocabulary layout, and the
+  `/vault-health` command are adapted from the sibling
+  [wellspring](https://github.com/shapeandshare/wellspring) repository (MIT, copyright
+  2026 Josh Burt) at the commit recorded in the JSON. `scripts/vault_audit.py` is a
+  rewrite that keeps wellspring's checks.
 - **Dependencies and CI actions:** retain their own licenses. Installed metadata
   in the JSON is an observation, not independent verification of license scope.
-  A package absent from the environment has an explicit unverified status.
+  A package absent from the environment has an explicit unverified status. The
+  `vault` MCP server (`@bitbonsai/mcpvault`, MIT per its npm metadata) runs through
+  npx and is not bundled.
 
 Keep third-party license and attribution notices with any redistributed materials.
 This inventory does not replace their actual licenses or required notices.
@@ -110,6 +117,8 @@ invented when the retrieval tool did not expose one.
 | Contributor Covenant 2.1 page and FAQ | Retrieved; origin attribution confirmed |
 | Contributor Covenant standalone license page | Fetch failed |
 | Contributor Covenant current repository LICENSE | Retrieved; historical 2.1 scope remains unresolved |
+| wellspring repository | Metadata verified through the authenticated GitHub API; MIT declared |
+| `@bitbonsai/mcpvault` npm package | Registry metadata inspected; MIT declared for 0.12.4 |
 
 Exact URLs, redirects, evidence summaries, dates and individual outcomes are in
 `external_references` in the JSON. Other external URLs are unverified unless a
