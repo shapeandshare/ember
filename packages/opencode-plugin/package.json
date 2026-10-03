@@ -1,0 +1,13 @@
+{
+  "name": "opencode-clever",
+  "version": "0.1.0",
+  "description": "Register the local Clef decision-model MCP server with opencode.",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "license": "Apache-2.0",
+  "keywords": ["opencode", "opencode-plugin", "mcp", "clef"],
+  "files": ["index.js", "README.md"]
+}
