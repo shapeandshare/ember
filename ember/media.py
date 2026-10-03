@@ -25,8 +25,10 @@ from PIL import Image
 #: Cloudflare's hosted schema accepts these image types only.
 ALLOWED_CONTENT_TYPES = frozenset({"image/png", "image/jpeg", "image/webp"})
 
-#: Upper bound on decoded frames across all videos, to bound MPS memory.
+#: Upper bounds that keep a single request from exhausting memory on MPS.
+MAX_IMAGES = 32
 MAX_VIDEO_FRAMES = 64
+MAX_IMAGE_PIXELS = 178_956_970  # Pillow's default, enforced before decode
 
 #: A JSON media reference: a data URI string or a {content_type, base64} object.
 MediaRef = str | dict[str, Any]
@@ -35,7 +37,13 @@ MediaRef = str | dict[str, Any]
 def _decode_bytes(raw: bytes, source: str) -> Image.Image:
     try:
         image = Image.open(io.BytesIO(raw))
+        if image.width * image.height > MAX_IMAGE_PIXELS:
+            raise ValueError(
+                f"{source} is too large: {image.width}x{image.height} pixels"
+            )
         image.load()
+    except ValueError:
+        raise
     except Exception as exc:
         raise ValueError(f"could not decode image from {source}: {exc}") from exc
     return image.convert("RGB")
@@ -61,20 +69,33 @@ def decode_ref(ref: MediaRef) -> Image.Image:
             raise ValueError("an image object requires a string 'base64' field")
         return _decode_base64(payload, f"a {content_type} object")
     if isinstance(ref, str):
-        if ref.startswith("data:"):
-            header, _, payload = ref.partition(",")
-            if ";base64" not in header or not payload:
-                raise ValueError("a data URI must be base64-encoded")
-            return _decode_base64(payload, "a data URI")
-        raise ValueError(
-            "an image ref must be a data: URI or a {content_type, base64} object; "
-            "remote URLs and local paths are not accepted"
-        )
+        if ref[:5].lower() != "data:":
+            raise ValueError(
+                "an image ref must be a data: URI or a {content_type, base64} object; "
+                "remote URLs and local paths are not accepted"
+            )
+        meta, _, payload = ref.partition(",")
+        segments = meta[5:].split(";")
+        mime = segments[0].strip().lower()
+        if mime not in ALLOWED_CONTENT_TYPES:
+            allowed = ", ".join(sorted(ALLOWED_CONTENT_TYPES))
+            raise ValueError(f"data URI content type must be one of: {allowed}")
+        if segments[-1].strip().lower() != "base64":
+            raise ValueError("a data URI must be base64-encoded")
+        if not payload:
+            raise ValueError("a data URI must include a base64 payload")
+        return _decode_base64(payload, "a data URI")
     raise ValueError(f"unsupported image ref of type {type(ref).__name__}")
 
 
-def decode_images(refs: list[MediaRef]) -> list[Image.Image]:
-    """Decode a list of image refs, preserving order."""
+def decode_images(
+    refs: list[MediaRef], max_images: int = MAX_IMAGES
+) -> list[Image.Image]:
+    """Decode a list of image refs, preserving order and enforcing a count cap."""
+    if len(refs) > max_images:
+        raise ValueError(
+            f"too many images: {len(refs)} exceeds the {max_images} image cap"
+        )
     return [decode_ref(ref) for ref in refs]
 
 

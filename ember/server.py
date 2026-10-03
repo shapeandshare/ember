@@ -36,10 +36,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             f"model {name!r} not found (check EMBER_MODEL_DIR); "
             f"run: ember model pull {name}"
         )
+    raw_length = int(config.resolve("max_length"))
     _ENGINE = Engine(
         model_dir,
         device=config.resolve("device"),
-        max_length=int(config.resolve("max_length")),
+        max_length=raw_length if raw_length > 0 else None,
     )
     try:
         yield

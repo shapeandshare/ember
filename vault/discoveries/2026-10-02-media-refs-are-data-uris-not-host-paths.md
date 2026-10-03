@@ -43,9 +43,10 @@ agent-supplied ref can never make the warm model server read a host file or fetc
 ## Relevance
 
 - `ember/media.py` decodes `data:` URIs and `{content_type, base64}` objects and raises
-  `ValueError` for anything else, which the HTTP server reports as 422.
-- Video frames are decoded to PIL before Clef's processor sees them; total frames are capped
-  to bound MPS memory.
+  `ValueError` for anything else, which the HTTP server reports as 422. The png/jpeg/webp
+  allowlist is enforced on both forms, and image count and video-frame totals are capped to
+  bound MPS memory.
+- Video frames are decoded to PIL before Clef's processor sees them.
 - Decoding runs only in the model-server process (`Engine.advise`); `mcp_server` forwards
   strings so it stays free of torch and PIL.
 

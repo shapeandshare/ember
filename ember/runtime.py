@@ -36,6 +36,9 @@ DEFAULT_MODEL_DIR = REPO_ROOT / ".models" / "clef-flash"
 #: Used only if a model's config.json has no max_position_embeddings.
 FALLBACK_MAX_LENGTH = 32768
 
+#: Keys the Clef encoder sets itself; media_kwargs must not override them.
+RESERVED_MEDIA_KWARGS = frozenset({"text", "images", "videos", "return_tensors"})
+
 _JOINT_MODULE: Any = None
 
 
@@ -54,9 +57,10 @@ def model_max_length(model_dir: str | os.PathLike[str] = DEFAULT_MODEL_DIR) -> i
     text = text if isinstance(text, dict) else {}
     value = text.get("max_position_embeddings") or config.get("max_position_embeddings")
     try:
-        return int(value)
+        result = int(value)
     except (TypeError, ValueError):
         return FALLBACK_MAX_LENGTH
+    return result if result > 0 else FALLBACK_MAX_LENGTH
 
 
 def joint_module(model_dir: Path) -> Any:
@@ -147,7 +151,11 @@ class Engine:
         self.model_dir = Path(model_dir)
         self.device = pick_device(device)
         self.dtype = dtype or pick_dtype(self.device)
-        self.max_length = max_length or model_max_length(self.model_dir)
+        if max_length is not None and max_length <= 0:
+            raise ValueError("max_length must be a positive integer or None")
+        self.max_length = (
+            max_length if max_length is not None else model_max_length(self.model_dir)
+        )
         self.model, self.processor = load_clef(self.model_dir, self.device, self.dtype)
         self._lock = threading.Lock()
 
@@ -173,13 +181,19 @@ class Engine:
         if videos:
             request["videos"] = media.decode_videos(videos)
         if media_kwargs:
+            reserved = RESERVED_MEDIA_KWARGS.intersection(media_kwargs)
+            if reserved:
+                raise ValueError(
+                    "media_kwargs may not set reserved keys: "
+                    + ", ".join(sorted(reserved))
+                )
             request["media_kwargs"] = media_kwargs
         with self._lock:
             response: dict[str, Any] = js.systemone(
                 self.model,
                 self.processor,
                 request,
-                max_length=max_length or self.max_length,
+                max_length=self.max_length if max_length is None else max_length,
             )
         return response
 

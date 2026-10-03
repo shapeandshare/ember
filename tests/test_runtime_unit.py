@@ -79,6 +79,15 @@ def test_model_max_length_falls_back_without_a_config(tmp_path):
     assert runtime.model_max_length(tmp_path / "missing") == runtime.FALLBACK_MAX_LENGTH
 
 
+def test_model_max_length_falls_back_when_zero(tmp_path):
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text(
+        json.dumps({"text_config": {"max_position_embeddings": 0}})
+    )
+    assert runtime.model_max_length(model_dir) == runtime.FALLBACK_MAX_LENGTH
+
+
 def test_engine_max_length_defaults_to_the_model_maximum():
     default = (
         inspect.signature(runtime.Engine.__init__).parameters["max_length"].default

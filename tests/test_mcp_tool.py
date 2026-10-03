@@ -96,7 +96,7 @@ def test_mcp_advise_accepts_an_inline_image(base_url: str) -> None:
     assert result.is_error is False
     answer = _payload(result)["answers"]["red"]
     assert answer["type"] == "noul"
-    assert 0.0 <= answer["noul"] <= 1.0
+    assert answer["noul"] > 0.5, "the model should read the red swatch as red"
 
 
 @pytest.mark.model

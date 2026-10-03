@@ -155,10 +155,23 @@ def test_systemone_accepts_an_inline_image(base_url: str) -> None:
     assert resp.status_code == 200, resp.text
     answer = resp.json()["answers"]["red"]
     assert answer["type"] == "noul"
-    assert 0.0 <= answer["noul"] <= 1.0
+    assert answer["noul"] > 0.5, "the model should read the red swatch as red"
 
 
 @pytest.mark.model
 def test_invalid_media_ref_rejected(base_url: str) -> None:
     resp = _ask(base_url, images=["/etc/passwd"])
+    assert resp.status_code == 422
+
+
+@pytest.mark.model
+def test_disallowed_data_uri_content_type_rejected(base_url: str) -> None:
+    svg = "data:image/svg+xml;base64," + base64.b64encode(b"<svg/>").decode()
+    resp = _ask(base_url, images=[svg])
+    assert resp.status_code == 422
+
+
+@pytest.mark.model
+def test_reserved_media_kwargs_key_rejected(base_url: str) -> None:
+    resp = _ask(base_url, media_kwargs={"text": "override"})
     assert resp.status_code == 422

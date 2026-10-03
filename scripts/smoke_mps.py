@@ -18,7 +18,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 import torch  # noqa: E402
-from ember.runtime import DEFAULT_MODEL_DIR, load_clef  # noqa: E402
+from ember.runtime import DEFAULT_MODEL_DIR, load_clef, model_max_length  # noqa: E402
 
 
 def main() -> int:
@@ -66,7 +66,9 @@ def main() -> int:
 
     print("running inference ...")
     t1 = time.time()
-    response = systemone(model, processor, request)
+    response = systemone(
+        model, processor, request, max_length=model_max_length(DEFAULT_MODEL_DIR)
+    )
     tokens = response["usage"]["input_tokens"]
     print(f"inference {time.time() - t1:.2f}s | input_tokens={tokens}")
     print(json.dumps(response["answers"], indent=2))

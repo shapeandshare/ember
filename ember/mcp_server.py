@@ -82,7 +82,7 @@ class AdviseInput(BaseModel):
     state: Any = Field(
         description=(
             "The situation to read: a string or any JSON object/array. "
-            "ember sees nothing else."
+            "Attach images/videos separately when the evidence is visual."
         ),
     )
     questions: dict[str, Question] = Field(
@@ -136,11 +136,12 @@ def advise(input: AdviseInput) -> dict[str, Any]:
 
     ember (Cloudflare's Clef-Flash model, running locally) advises; you decide.
     Consult it at bounded decision points: intent, triage, routing, yes/no gates, and
-    risk, severity, or effort scores. It sees only `state`, so include every piece of
-    evidence the call depends on. Attach images or video frames as base64 data URIs in
-    `images`/`videos` when pixels are the evidence. For 'choice' the answer has the
-    leading option, its confidence, and full probabilities; for 'score' an expected
-    score over the ordered criteria; for 'noul' the probability the proposition is true.
+    risk, severity, or effort scores. It sees only what you pass, so include every
+    piece of evidence the call depends on and attach images or video frames as base64
+    `data:` URIs in `images`/`videos` when pixels are the evidence. For 'choice' the
+    answer has the leading option, its confidence, and full probabilities; for 'score'
+    an expected score over the ordered criteria; for 'noul' the probability the
+    proposition is true.
     """
     # Only ToolError messages reach the agent; anything else is reported generically.
     try:

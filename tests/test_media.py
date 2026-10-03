@@ -98,3 +98,44 @@ def test_decode_videos_enforces_the_frame_cap():
 def test_decode_videos_rejects_a_non_list_video():
     with pytest.raises(ValueError, match="non-empty list of frame refs"):
         media.decode_videos([_png_data_uri()])  # type: ignore[list-item]
+
+
+def test_decode_rejects_data_uri_with_disallowed_content_type():
+    svg = "data:image/svg+xml;base64," + base64.b64encode(b"<svg/>").decode()
+    with pytest.raises(ValueError, match="data URI content type must be one of"):
+        media.decode_ref(svg)
+
+
+def test_decode_rejects_data_uri_without_a_base64_marker():
+    payload = base64.b64encode(_png_bytes()).decode()
+    with pytest.raises(ValueError, match="must be base64-encoded"):
+        media.decode_ref(f"data:image/png,{payload}")
+
+
+def test_decode_rejects_a_malformed_base64_marker():
+    payload = base64.b64encode(_png_bytes()).decode()
+    with pytest.raises(ValueError, match="must be base64-encoded"):
+        media.decode_ref(f"data:image/png;base64extra,{payload}")
+
+
+def test_decode_rejects_a_data_uri_without_a_payload():
+    with pytest.raises(ValueError, match="must include a base64 payload"):
+        media.decode_ref("data:image/png;base64")
+
+
+def test_decode_rejects_a_non_string_base64_field():
+    with pytest.raises(ValueError, match="requires a string 'base64' field"):
+        media.decode_ref({"content_type": "image/png", "base64": 123})
+
+
+def test_decode_images_enforces_the_image_cap():
+    over_cap = [_png_data_uri()] * (media.MAX_IMAGES + 1)
+    with pytest.raises(ValueError, match="too many images"):
+        media.decode_images(over_cap)
+
+
+def test_decode_videos_enforces_the_cap_across_several_videos():
+    half = media.MAX_VIDEO_FRAMES // 2 + 1
+    videos = [[_png_data_uri()] * half, [_png_data_uri()] * half]
+    with pytest.raises(ValueError, match="too many video frames"):
+        media.decode_videos(videos)
