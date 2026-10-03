@@ -1,6 +1,6 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-02 (product renamed to ember to match the mascot; table-stakes tooling; design doc; community docs)
+**Last updated**: 2026-10-02 (project vault; product renamed to ember to match the mascot; table-stakes tooling; design doc; community docs)
 
 ## What this repo is
 
@@ -55,6 +55,7 @@ after changing brand assets. Do not invent missing provenance or license facts.
 | Dependency ranges | `pyproject.toml` + `uv.lock` |
 | Lifecycle commands | `Makefile` (contributors), `ember` CLI (users) |
 | User documentation | `README.md` |
+| Development memory (decisions, discoveries, session logs) | `vault/` (hub `vault/ember.md`) |
 | Verification | `tests/`, `.github/workflows/ci.yml` |
 
 ## Project structure
@@ -80,10 +81,15 @@ shared/               # Makefile domain modules (.mk files)
   testing.mk          #   test, test-fast, test-strict, test-cov, smoke, mcp-check
   server.mk           #   serve, start, stop, restart, status, logs, mcp, doctor
   release.mk          #   download, init, bootstrap, check, ci, clean
-scripts/              # MPS smoke test, MCP e2e check
+  vault.mk            #   vault-audit
+scripts/              # MPS smoke test, MCP e2e check, provenance and vault audits
 tests/                # pytest suite (unit + model-backed, host-isolated)
+vault/                # project memory (Obsidian): decisions, discoveries, sessions
+  ember.md            #   hub note; every note must be reachable from it
+  _meta/              #   tags.md (controlled vocabulary) and templates/
 .specify/             # spec-kit (constitution, templates, scripts)
-.opencode/commands/   # spec-kit slash commands
+.opencode/commands/   # spec-kit slash commands and /vault-health
+.opencode/opencode.json   # shared opencode config: the vault MCP server
 ```
 
 ## Runtime environment
@@ -113,6 +119,7 @@ tests/                # pytest suite (unit + model-backed, host-isolated)
 | `make init` / `make opencode` | Regenerate `opencode.json` / install the local plugin and skill |
 | `make smoke` / `make mcp-check` | Direct MPS inference / MCP protocol end-to-end |
 | `make doctor` | Environment, model, and server readiness |
+| `make vault-audit` | Audit `vault/` notes: frontmatter, tags, wikilinks, code-refs, orphans |
 | `.venv/bin/ember …` or `.venv/bin/gut …` | Primary CLI, built from this checkout |
 
 ## Architecture (call path)
@@ -173,6 +180,49 @@ Rules for changing it:
 6. **Smallest correct change.** Atomic commits with plain, imperative English subjects.
 7. **Dogfood.** When `ember_advise` is available, consult it with the kit's recipes for
    this repo's own triage and risk checks.
+8. **Use the vault.** Search `vault/` before non-trivial decisions, and write decisions
+   and discoveries back as they happen (see the vault protocol below).
+
+## Vault protocol
+
+`vault/` is this project's development memory (constitution Article IX): decisions,
+discoveries, and session logs. Read it before deciding, and write to it when you learn
+something durable, as it happens rather than at session end.
+
+opencode reaches it through the `vault` MCP server (`@bitbonsai/mcpvault`, registered in
+`.opencode/opencode.json`) as `vault_*` tools such as `vault_search_notes`,
+`vault_read_note`, and `vault_write_note`. **Launch opencode from the repository root**:
+the server resolves `vault` against the launch directory. Without the server, read and
+edit the files directly.
+
+### Searching (session start, and before any non-trivial decision)
+
+1. Open the hub `vault/ember.md` and follow its wikilinks, or search with
+   `vault_search_notes` or `grep -ril "<topic>" vault --include="*.md"`.
+2. Read frontmatter and summaries first; open full notes only for the best matches.
+3. Treat `status/draft` notes as unverified and `status/reviewed` ones as checked
+   against the code.
+4. If the vault has nothing, carry on: it speeds work up and never blocks it.
+5. If a note turns out wrong or stale, fix it or tag it `status/stale` in the same change.
+
+### Writing back
+
+| Finding | Folder | Template |
+| --- | --- | --- |
+| A decision and its reasons | `vault/decisions/` | `vault/_meta/templates/decision.md` |
+| A non-obvious constraint, gap, or conflict | `vault/discoveries/` | `vault/_meta/templates/discovery.md` |
+| What a session did (append-only, never pruned) | `vault/sessions/` | `vault/_meta/templates/session-log.md` |
+
+To add a note, copy its template, name it `YYYY-MM-DD-short-slug.md`, take tags from
+`vault/_meta/tags.md`, link the hub with `[[ember]]`, and list the note under the right
+heading in `vault/ember.md` so it stays reachable. Start at `status/draft`, and move to
+`status/reviewed` only after checking the note against the code. Never set
+`status/canonical`; that is a human decision.
+
+Don't write notes for routine changes or for facts already in `README.md`, `AGENTS.md`,
+`DESIGN.md`, or `PROVENANCE.md`; link to those instead. Run `make vault-audit` (or
+`/vault-health`) before calling vault work done, and keep notes in the same change as
+the work behind them.
 
 ## Tooling
 
@@ -196,6 +246,8 @@ Run `make pr-ready` before every PR: formats, lints, type-checks, security-scans
 - **stdout is the MCP wire.** Log to stderr only in `mcp_server.py`; never `print`.
 - **`opencode.json`, `.opencode/plugins/ember.js`, and `.opencode/skills/ember-advise/` are per-machine** (absolute paths and the
   installer's `PATH`). They are gitignored; regenerate them, never commit them.
+- **`.opencode/opencode.json` is shared and committed.** Put shared opencode settings (such
+  as the `vault` MCP server) there; opencode merges it with the per-machine root file.
 - **The `advise` input is wrapped in `input`.** mcp v2 does not flatten a single model parameter.
 - **Raise `ToolError` for failures the agent should read.** mcp v2 reports any other exception
   as a bare "Error executing tool advise", hiding the actionable message.
@@ -221,6 +273,10 @@ MUST pass the constitution check.
 
 ## Recent Changes
 
+- 2026-10-02: project vault on the wellspring pattern: `vault/` (hub `vault/ember.md`,
+  tag vocabulary, templates), the `vault` MCP server (`@bitbonsai/mcpvault@0.12.4`) in
+  `.opencode/opencode.json`, `make vault-audit` (`scripts/vault_audit.py`, also run by the
+  unit suite), `/vault-health`, and the vault protocol; constitution v1.2.0 (Article IX).
 - 2026-10-02: product renamed from gut-feeling to ember to match the mascot: package, CLI
   (`gut` alias kept), MCP server and tool (`ember_advise`), `ember-advise` skill,
   `ember://guide`, `EMBER_*`, app dir, and `--ember-*` CSS tokens; distribution `gut`
