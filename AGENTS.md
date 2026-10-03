@@ -60,6 +60,7 @@ after changing brand assets. Do not invent missing provenance or license facts.
 | Intended and excluded uses | `RESPONSIBLE_USE.md` |
 | Development memory (decisions, discoveries, session logs) | `vault/` (hub `vault/ember.md`) |
 | Verification | `tests/`, `.github/workflows/ci.yml` |
+| Site build and deploy | `scripts/build_site_docs.py`, `site/_data/docs.json`, `.github/workflows/deploy-site.yml` |
 
 ## Project structure
 
@@ -83,10 +84,12 @@ shared/               # Makefile domain modules (.mk files)
   python.mk           #   lint, format, typecheck, security, pr-ready
   testing.mk          #   test, test-fast, test-strict, test-cov, smoke, mcp-check
   server.mk           #   serve, start, stop, restart, status, logs, mcp, doctor
-  release.mk          #   download, init, bootstrap, check, ci, clean
-  vault.mk            #   vault-audit
-scripts/              # MPS smoke test, MCP e2e check, provenance and vault audits
+   release.mk          #   download, init, bootstrap, check, ci, clean
+   vault.mk            #   vault-audit
+   site.mk             #   site, site-serve (Jekyll Pages)
+scripts/              # MPS smoke test, MCP e2e check, site build, provenance/vault audits
 tests/                # pytest suite (unit + model-backed, host-isolated)
+site/                 # Jekyll GitHub Pages site (docs + brand assets generated at build)
 vault/                # project memory (Obsidian): decisions, discoveries, sessions
   ember.md            #   hub note; every note must be reachable from it
   _meta/              #   tags.md (controlled vocabulary) and templates/
@@ -125,6 +128,7 @@ vault/                # project memory (Obsidian): decisions, discoveries, sessi
 | `make vault-audit` | Audit `vault/` notes: frontmatter, tags, wikilinks, code-refs, orphans |
 | `make eval-run` / `make eval-export` | Model benchmark (`evals/clef-flash.jsonl`) / reviewer report bundle |
 | `make eval-agent` / `make eval-agent-smoke` | Agent-in-the-loop eval through opencode (opt-in; spends provider credit) |
+| `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000` (needs Docker) |
 | `.venv/bin/ember …` or `.venv/bin/gut …` | Primary CLI, built from this checkout |
 
 ## Architecture (call path)
@@ -315,6 +319,13 @@ reformat untouched files just to satisfy Article X.
   reference org secrets. The `zizmor` job in `ci` enforces this; run
   `uvx zizmor@1.30.1 .github/` before pushing workflow changes. See
   `vault/decisions/2026-10-03-harden-github-before-going-public.md`.
+- **The Pages site is generated at build.** `site/_docs/` and `site/assets/brand/` come from
+  `scripts/build_site_docs.py` (manifest in `site/_data/docs.json`), so they are gitignored and
+  must not be committed. To publish a page, add a manifest entry and run `make site`; never hand
+  a file into `site/_docs/`. The site is a project page under `/ember/`; keep `baseurl` out of
+  `_config.yml` and pass it in CI, and use `relative_url` for internal links.
+  `.github/workflows/deploy-site.yml` is SHA-pinned and `ruby/setup-ruby` is on the Actions
+  allow-list. See `vault/decisions/2026-10-03-publish-a-pages-site.md`.
 - **The agent eval is the only code that launches opencode.** `ember eval agent`
   (`scripts/run_agent_evals.py`, `evals/agent/`) runs `opencode run --pure` in a temporary
   sandbox with a private HOME and XDG dirs and no port (constitution Article IV). Keep it out of

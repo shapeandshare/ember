@@ -3,7 +3,7 @@
   <img src="assets/brand/hero-light.svg" alt="ember — Ember hugs its glowing tummy. Give your agent a gut feeling." width="1200">
 </picture>
 
-[Brand assets and palette](assets/brand/README.md) · [Provenance and licensing](PROVENANCE.md)
+[Brand assets and palette](assets/brand/README.md) · [Provenance and licensing](PROVENANCE.md) · [Project site](https://shapeandshare.github.io/ember/)
 
 **A local gut feeling for coding agents.** ember runs
 [Cloudflare's Clef-Flash](https://huggingface.co/Cloudflare/clef-flash) model on your Apple
@@ -260,6 +260,7 @@ committed: it registers the `vault` MCP server that agents use to read and write
 | `make ci` | `bootstrap` + `check` + `test-strict` |
 | `make doctor` | `ember doctor` |
 | `make vault-audit` | Check `vault/` notes: frontmatter, tags, wikilinks, code-refs, orphans |
+| `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000` (needs Docker) |
 | `make clean` / `make clean-model` | Caches and build output / weights (`EMBER_FORCE=1` skips the prompt) |
 
 Make re-syncs the environment automatically when `pyproject.toml` or `uv.lock` changes.
