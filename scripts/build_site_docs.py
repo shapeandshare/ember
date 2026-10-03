@@ -27,11 +27,11 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 SITE = REPO / "site"
 DOCS_OUT = SITE / "_docs"
-ASSETS_OUT = SITE / "assets" / "brand"
+ASSETS_OUT = SITE / "assets"
 BLOB = "https://github.com/shapeandshare/ember/blob/main"
 SCHEMES = ("#", "http://", "https://", "mailto:", "tel:", "data:")
 
-# Brand assets the site serves, copied from the repository's single source.
+# Assets the site serves, copied from the repository's single source.
 ASSETS = (
     "assets/brand/tokens.css",
     "assets/brand/hero-light.svg",
@@ -39,6 +39,8 @@ ASSETS = (
     "assets/brand/svg/ember-light.svg",
     "assets/brand/svg/ember-dark.svg",
     "assets/brand/svg/ember-auto.svg",
+    "assets/diagrams/call-path-light.svg",
+    "assets/diagrams/call-path-dark.svg",
 )
 
 _MD_LINK = re.compile(r"(!?\[[^\]]*\]\()([^)]+)(\))")
@@ -126,10 +128,10 @@ def main() -> int:
 
     for relative in ASSETS:
         source = REPO / relative
-        target = ASSETS_OUT / Path(relative).relative_to("assets/brand")
+        target = ASSETS_OUT / Path(relative).relative_to("assets")
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, target)
-    print(f"  assets {len(ASSETS)} files -> site/assets/brand/")
+    print(f"  assets {len(ASSETS)} files -> site/assets/")
     return 0
 
 

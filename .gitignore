@@ -22,6 +22,7 @@ vault/.trash/
 /site/.jekyll-cache/
 /site/_docs/
 /site/assets/brand/
+/site/assets/diagrams/
 /site/.gems/
 # Benchmark report: rendered at build time from benchmark/<run-id>/model.json.
 /site/results/
