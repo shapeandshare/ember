@@ -5,7 +5,7 @@ handshake stays instant and the model stays warm across agent sessions.
 
 Run:  ember serve        (or: python -m ember.server)
 Env:  EMBER_HOST (127.0.0.1), EMBER_PORT (8765),
-      EMBER_DEVICE (auto|mps|cpu), EMBER_MAX_LENGTH (16384),
+      EMBER_DEVICE (auto|mps|cpu), EMBER_MAX_LENGTH (0 = the model's maximum),
       EMBER_MODEL_DIR (default: the pinned model)
 """
 
@@ -54,6 +54,20 @@ class AdviseRequest(BaseModel):
     model: str = "clef-flash"
     state: Any = Field(description="Any string or JSON value describing the situation.")
     questions: dict[str, Any] = Field(description="Mapping of question ID to question.")
+    images: list[str | dict[str, Any]] | None = Field(
+        default=None,
+        description=(
+            "Images as data: URIs or {content_type, base64} objects. "
+            "Remote URLs and local paths are rejected."
+        ),
+    )
+    videos: list[list[str | dict[str, Any]]] | None = Field(
+        default=None,
+        description="Videos, each a list of frame refs in the images format.",
+    )
+    media_kwargs: dict[str, Any] | None = Field(
+        default=None, description="Optional image/video processor arguments."
+    )
 
 
 @app.get("/health")
@@ -71,8 +85,15 @@ def systemone_endpoint(req: AdviseRequest) -> dict[str, Any]:
         raise HTTPException(status_code=503, detail="model not loaded yet")
     started = time.time()
     try:
-        result = _ENGINE.advise(req.state, req.questions, model_name=req.model)
-    except ValueError as exc:  # malformed questions, rejected by Clef's own validation
+        result = _ENGINE.advise(
+            req.state,
+            req.questions,
+            model_name=req.model,
+            images=req.images,
+            videos=req.videos,
+            media_kwargs=req.media_kwargs,
+        )
+    except ValueError as exc:  # malformed questions or media
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     result["latency_ms"] = round((time.time() - started) * 1000, 1)
     return result

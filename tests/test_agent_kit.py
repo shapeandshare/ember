@@ -40,6 +40,11 @@ def test_snippet_points_agents_at_tool_skill_and_guide():
         assert needle in text
 
 
+def test_skill_and_snippet_document_media_inputs():
+    assert "images" in agent_kit.skill()
+    assert "images" in agent_kit.snippet()
+
+
 def test_skill_paths_per_agent_and_scope(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     expected = {

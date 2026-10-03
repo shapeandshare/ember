@@ -17,7 +17,8 @@ DEFAULTS: dict[str, Any] = {
     "host": "127.0.0.1",
     "port": 8765,
     "device": "auto",
-    "max_length": 16384,
+    # 0 means "the model's own maximum" (ember.runtime.model_max_length).
+    "max_length": 0,
 }
 
 

@@ -28,10 +28,35 @@ os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 
 import torch
 
+from . import media
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MODEL_DIR = REPO_ROOT / ".models" / "clef-flash"
 
+#: Used only if a model's config.json has no max_position_embeddings.
+FALLBACK_MAX_LENGTH = 32768
+
 _JOINT_MODULE: Any = None
+
+
+def model_max_length(model_dir: str | os.PathLike[str] = DEFAULT_MODEL_DIR) -> int:
+    """The backbone's declared context window (``max_length``), from config.json.
+
+    ``0`` in the config means "the model's own maximum"; this resolves it. The
+    value is read from the pinned snapshot, so it tracks a model revision bump
+    instead of a hardcoded number.
+    """
+    try:
+        config = json.loads((Path(model_dir) / "config.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        return FALLBACK_MAX_LENGTH
+    text = config.get("text_config")
+    text = text if isinstance(text, dict) else {}
+    value = text.get("max_position_embeddings") or config.get("max_position_embeddings")
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return FALLBACK_MAX_LENGTH
 
 
 def joint_module(model_dir: Path) -> Any:
@@ -117,12 +142,12 @@ class Engine:
         model_dir: str | os.PathLike[str] = DEFAULT_MODEL_DIR,
         device: str | None = None,
         dtype: torch.dtype | None = None,
-        max_length: int = 16384,
+        max_length: int | None = None,
     ) -> None:
         self.model_dir = Path(model_dir)
         self.device = pick_device(device)
         self.dtype = dtype or pick_dtype(self.device)
-        self.max_length = max_length
+        self.max_length = max_length or model_max_length(self.model_dir)
         self.model, self.processor = load_clef(self.model_dir, self.device, self.dtype)
         self._lock = threading.Lock()
 
@@ -132,10 +157,23 @@ class Engine:
         questions: dict[str, Any],
         model_name: str = "clef-flash",
         max_length: int | None = None,
+        images: list[media.MediaRef] | None = None,
+        videos: list[list[media.MediaRef]] | None = None,
+        media_kwargs: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Run a Jev/SystemOne request and return the SystemOne response body."""
         js = joint_module(self.model_dir)
-        request = {"model": model_name, "state": state, "questions": questions}
+        request: dict[str, Any] = {
+            "model": model_name,
+            "state": state,
+            "questions": questions,
+        }
+        if images:
+            request["images"] = media.decode_images(images)
+        if videos:
+            request["videos"] = media.decode_videos(videos)
+        if media_kwargs:
+            request["media_kwargs"] = media_kwargs
         with self._lock:
             response: dict[str, Any] = js.systemone(
                 self.model,

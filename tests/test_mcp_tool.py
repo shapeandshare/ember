@@ -8,6 +8,8 @@ All MCP servers here are spawned over stdio and never touch the opencode CLI.
 from __future__ import annotations
 
 import asyncio
+import base64
+import io
 import json
 import time
 
@@ -15,8 +17,16 @@ import pytest
 from ember import agent_kit
 from mcp import ClientSession
 from mcp.client.stdio import stdio_client
+from PIL import Image
 
 from tests.conftest import free_port, mcp_stdin_params, terminate_pid
+
+
+def _png_data_uri(color: tuple[int, int, int] = (220, 30, 30)) -> str:
+    buffer = io.BytesIO()
+    Image.new("RGB", (8, 8), color).save(buffer, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
+
 
 SAMPLE = {
     "input": {
@@ -63,6 +73,30 @@ def test_mcp_exposes_the_advise_tool(base_url: str) -> None:
     tools = asyncio.run(_list_tools(mcp_stdin_params(base_url)))
     advise = next(tool for tool in tools.tools if tool.name == "advise")
     assert advise.input_schema["properties"].get("input")
+    schema = json.dumps(advise.input_schema)
+    for field in ("images", "videos", "media_kwargs"):
+        assert field in schema, f"advise schema is missing {field}"
+
+
+@pytest.mark.model
+def test_mcp_advise_accepts_an_inline_image(base_url: str) -> None:
+    arguments = {
+        "input": {
+            "state": "Review the attached color swatch.",
+            "images": [_png_data_uri()],
+            "questions": {
+                "red": {
+                    "type": "noul",
+                    "instructions": "Is the image predominantly red?",
+                }
+            },
+        }
+    }
+    result = asyncio.run(_call_advise(mcp_stdin_params(base_url), arguments))
+    assert result.is_error is False
+    answer = _payload(result)["answers"]["red"]
+    assert answer["type"] == "noul"
+    assert 0.0 <= answer["noul"] <= 1.0
 
 
 @pytest.mark.model
