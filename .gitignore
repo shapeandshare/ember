@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.models/
+.cache/
+logs/
+*.log
+/dist/
+.pytest_cache/
+/opencode.json
+/.opencode/plugins/clef.js
