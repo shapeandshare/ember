@@ -106,7 +106,7 @@ invented when the retrieval tool did not expose one.
 | OpenCode official site | Retrieved; integration reference only |
 | MCP official introduction | Retrieved after redirect; protocol reference only |
 | Spec Kit project and current LICENSE | Retrieved; MIT / GitHub, Inc. observed |
-| Project GitHub repository | Fetch failed; URL matches local origin and package metadata |
+| Project GitHub repository | Renamed to shapeandshare/ember; verified through the authenticated GitHub API; the old URL redirects |
 | Contributor Covenant 2.1 page and FAQ | Retrieved; origin attribution confirmed |
 | Contributor Covenant standalone license page | Fetch failed |
 | Contributor Covenant current repository LICENSE | Retrieved; historical 2.1 scope remains unresolved |

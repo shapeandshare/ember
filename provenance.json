@@ -687,13 +687,13 @@
     },
     {
       "id": "project-repository",
-      "url": "https://github.com/shapeandshare/gut-feeling",
+      "url": "https://github.com/shapeandshare/ember",
       "checked_on": "2026-10-02",
       "timezone": "America/Los_Angeles",
-      "method": "web.run open; content inspection",
-      "status": "fetch_failed",
-      "final_url": "https://github.com/shapeandshare/gut-feeling",
-      "evidence": "Web tool cache miss; URL independently matches local Git origin and pyproject.toml."
+      "method": "gh api (authenticated); repository metadata inspection",
+      "status": "metadata_verified",
+      "final_url": "https://github.com/shapeandshare/ember",
+      "evidence": "Renamed from shapeandshare/gut-feeling on 2026-10-02. The authenticated GitHub API returned shapeandshare/ember (private), and the old name resolves to it. URL matches the local Git origin and pyproject.toml."
     },
     {
       "id": "contributor-covenant",
