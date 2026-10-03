@@ -255,6 +255,10 @@ Run `make pr-ready` before every PR: formats, lints, type-checks, security-scans
   Never kill by port or process pattern (constitution Article IV).
 - **torch and torchvision are pinned to the tested minor series** because MPS behavior is
   version-sensitive; widening the range is a constitution-governed change.
+- **Metric names and labels are public API** (`ember/server.py`): change
+  `ember_advise_*` / `ember_model_info` together with the README and `tests/test_metrics.py`.
+  Scraping uses the default prometheus registry, so standard `python_*`/`process_*` collectors
+  are exposed too.
 - **Hosted CI cannot hold the model.** Model-backed tests run locally or on a self-hosted
   Apple Silicon runner via `workflow_dispatch`.
 - **Pushing `.github/workflows/` changes over HTTPS** needs a gh token with the `workflow` scope.
