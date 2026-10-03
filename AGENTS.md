@@ -1,6 +1,6 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-02 (project vault; product renamed to ember to match the mascot; table-stakes tooling; design doc; community docs; full context window and vision inputs)
+**Last updated**: 2026-10-02 (project vault; product renamed to ember to match the mascot; table-stakes tooling; design doc; community docs; full context window and vision inputs; Prometheus metrics)
 
 ## What this repo is
 
@@ -261,6 +261,10 @@ Run `make pr-ready` before every PR: formats, lints, type-checks, security-scans
   frames need `torchcodec`, which we do not ship.
 - **`max_length` of `0` means "the model's maximum"** (`ember/config.py` → `Engine` →
   `runtime.model_max_length`). Do not reintroduce a hardcoded 16384 cap.
+- **Metric names and labels are public API** (`ember/server.py`): change
+  `ember_advise_*` / `ember_model_info` together with the README and `tests/test_metrics.py`.
+  They live in a dedicated `CollectorRegistry`, so only ember metrics are exposed — no
+  `python_*`/`process_*` collectors.
 - **Hosted CI cannot hold the model.** Model-backed tests run locally or on a self-hosted
   Apple Silicon runner via `workflow_dispatch`.
 - **Pushing `.github/workflows/` changes over HTTPS** needs a gh token with the `workflow` scope.
@@ -284,6 +288,10 @@ MUST pass the constitution check.
   `images`/`videos`/`media_kwargs` as base64 `data:` URIs or `{content_type, base64}` objects,
   decoded to PIL in `ember/media.py` (server-side only); MCP and HTTP schemas, the agent kit,
   README, and tests updated; vision verified end-to-end on MPS.
+- 2026-10-02: Prometheus metrics: the model server exposes `GET /metrics` with
+  `ember_advise_requests_total{status}`, `ember_advise_latency_seconds`,
+  `ember_advise_input_tokens_total`, `ember_advise_output_tokens_total`, and
+  `ember_model_info{model,device,dtype}`; `prometheus-client` is a pinned dependency.
 - 2026-10-02: project vault on the wellspring pattern: `vault/` (hub `vault/ember.md`,
   tag vocabulary, templates), the `vault` MCP server (`@bitbonsai/mcpvault@0.12.4`) in
   `.opencode/opencode.json`, `make vault-audit` (`scripts/vault_audit.py`, also run by the

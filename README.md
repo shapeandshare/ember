@@ -190,6 +190,24 @@ is JSON at `ember config path` (keys `model`, `host`, `port`, `device`, `max_len
 | `EMBER_START_TIMEOUT` | `300` | Seconds to wait for the model server to start |
 | `EMBER_STATE_DIR` | Application Support | Where the pid file and logs live |
 
+## Metrics
+
+While the model server is running it exposes Prometheus metrics at
+`http://127.0.0.1:8765/metrics` (the `EMBER_HOST`/`EMBER_PORT` address):
+
+| Metric | Type | Meaning |
+| --- | --- | --- |
+| `ember_advise_requests_total{status}` | counter | advise requests by HTTP status (`200`, `422`, `503`, `500`) |
+| `ember_advise_latency_seconds` | histogram | advise request latency by status |
+| `ember_advise_input_tokens_total` | counter | input tokens processed |
+| `ember_advise_output_tokens_total` | counter | output tokens produced |
+| `ember_model_info{model,device,dtype}` | gauge | `1` while a model is loaded |
+
+The endpoint binds to the same address as the rest of the API (loopback by default), so
+it is reachable only there unless you change `EMBER_HOST`. Ember's metrics live in a
+dedicated Prometheus registry, so the standard `python_*`/`process_*` collectors are not
+included — `/metrics` shows only the table above.
+
 ## Development
 
 ```
