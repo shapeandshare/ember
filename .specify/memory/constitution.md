@@ -1,4 +1,21 @@
 <!--
+SYNC IMPACT REPORT — Project Memory Vault Amendment
+Version change: 1.1.2 → 1.2.0 (MINOR: new Article IX)
+Date: 2026-10-02
+Modified principles: none
+Added sections:
+  - Article IX — Project Memory Vault
+Removed sections: none
+Templates / docs propagated:
+  - ✅ AGENTS.md (vault protocol; structure, commands, and watch-outs)
+  - ✅ README.md (layout and make targets)
+  - ✅ vault/ (hub, tag vocabulary, templates, first notes)
+  - ✅ scripts/vault_audit.py, tests/test_vault_audit.py, shared/vault.mk
+  - ✅ .opencode/opencode.json (vault MCP server), .opencode/commands/vault-health.md
+  - ✅ provenance.json, PROVENANCE.md (wellspring-adapted scaffolding, mcpvault)
+Follow-up TODOs: none
+-->
+<!--
 SYNC IMPACT REPORT — Ember Rename Amendment
 Version change: 1.1.1 → 1.1.2 (PATCH: product renamed to match the mascot, no principle change)
 Date: 2026-10-02
@@ -177,6 +194,30 @@ Coverage is tracked but not yet gated; the initial floor is 60% (`fail_under = 6
 `[tool.coverage.report]`). The floor MUST only move upward as the test suite grows; it MUST NOT
 be lowered to make a failing run pass.
 
+### Article IX — Project Memory Vault
+
+The vault at `vault/` is the governed memory of this project's own development: decisions,
+discoveries, and session logs. It complements `README.md`, `AGENTS.md`, `DESIGN.md`, and
+`PROVENANCE.md`, and never duplicates or overrides them.
+
+- §9.1 Every note outside `vault/_meta/` MUST carry frontmatter (`title`, `type`, `tags`,
+  `created`, `updated`) and use only tags listed in `vault/_meta/tags.md`: exactly one
+  `type/*` matching `type`, at least one `domain/*`, and at most one `status/*`. A new tag
+  is added to that file before it is used.
+- §9.2 Significant decisions and non-obvious discoveries MUST be written back as they occur,
+  in the same change as the work behind them. Session logs are append-only. Routine changes
+  and facts documented elsewhere MUST NOT get notes.
+- §9.3 Every note MUST be reachable by wikilinks from the hub `vault/ember.md`, and every
+  wikilink and `code-refs` path MUST resolve.
+- §9.4 Agent-written notes start at `status/draft` and MAY move to `status/reviewed` after
+  verification against the code. Only a human sets `status/canonical`.
+- §9.5 `make vault-audit` MUST pass before vault changes are complete; the unit suite runs
+  the same audit over the real vault.
+
+Rationale: without a vault, decisions and hard-won constraints live only in commit messages
+and chat sessions. The sibling repositories (anvil, darkharbour, wellspring) keep the same
+kind of vault, and agents read it through the `vault` MCP server.
+
 ## Additional Constraints
 
 - The product name is **ember**, after the Ember mascot, in every artifact: package `ember`,
@@ -218,4 +259,4 @@ be lowered to make a failing run pass.
 - Reviews MUST check changes against the Articles, with special attention to Article III
   (agent contract) and Article V (pins).
 
-**Version**: 1.1.2 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-02
+**Version**: 1.2.0 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-02
