@@ -1,1 +1,1 @@
-"""Clef-Flash local test suite."""
+"""gut-feeling test suite."""

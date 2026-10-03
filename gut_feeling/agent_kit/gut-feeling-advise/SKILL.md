@@ -1,28 +1,28 @@
 ---
-name: clef-decide
-description: Playbook for the clef_decide MCP tool, a local calibrated decision model. Use when classifying user intent, triaging errors or failing tests, routing work, gating actions with yes/no checks (needs review, safe to retry, specific enough to act), scoring risk, severity, or effort, or choosing between approaches; and when designing a decision schema or interpreting clef_decide probabilities.
+name: gut-feeling-advise
+description: Playbook for the gut-feeling_advise MCP tool, a local advisor that returns calibrated probabilities. Use when classifying user intent, triaging errors or failing tests, routing work, checking yes/no gates (needs review, safe to retry, specific enough to act), scoring risk, severity, or effort, or weighing approaches; and when designing questions for gut-feeling or interpreting its probabilities.
 ---
 
-# clef-decide
+# gut-feeling-advise
 
-`clef_decide` asks Cloudflare's Clef decision model, running locally, to answer typed
-questions about a `state` you provide. It returns a probability for every option, not
-prose. Treat it as a fast, calibrated, private second opinion inside your own reasoning.
+gut-feeling is a little buddy for judgment calls. Its `advise` tool (opencode:
+`gut-feeling_advise`; Claude Code: `mcp__gut-feeling__advise`) runs Cloudflare's Clef-Flash
+model locally: you describe a situation in `state`, ask typed questions, and it radiates a
+feeling about every option as a calibrated probability. It never writes prose and never
+decides for you — it advises, you decide.
 
 | Property | Value |
 | --- | --- |
 | Latency | ~1 s per call when warm (1–3 questions cost the same); ~5–15 s for the first call while the model loads |
-| Determinism | The same request always returns the same answer |
+| Determinism | The same request always gets the same feeling |
 | Privacy | Runs on this machine; `state` never leaves it |
 | Sees | Only `state` and your questions — no files, history, or web |
 | Returns | Calibrated probabilities over the options you define |
 
-In Claude Code the tool is named `mcp__clef__decide`.
+## When to consult it
 
-## When to use it
-
-Reach for `clef_decide` at **decision points** where you would otherwise guess or apply an
-unexamined heuristic:
+Reach for `gut-feeling_advise` at **decision points** where you would otherwise guess or
+apply an unexamined heuristic:
 
 | Decision point | Question type | Example id |
 | --- | --- | --- |
@@ -36,12 +36,12 @@ unexamined heuristic:
 | How much effort is this task? | `score` | `effort` |
 | Which approach fits the constraints? | `choice` | `approach` |
 
-## When not to use it
+## When not to
 
-- Writing code or prose, explaining, or summarizing — it produces probabilities, not text.
+- Writing code or prose, explaining, or summarizing — it returns probabilities, not text.
 - Multi-step reasoning, arithmetic, or anything that needs facts absent from `state`.
 - Questions a deterministic check answers better: run the test, grep the code, read the type.
-- As the sole authority for an irreversible or high-stakes action — combine it with your own
+- As the sole authority for an irreversible or high-stakes action — weigh it alongside your own
   judgment and the user's.
 
 ## Calling it
@@ -52,7 +52,7 @@ unexamined heuristic:
     "state": "<string or JSON with ALL the evidence>",
     "questions": {
       "<id>": {"type": "noul", "instructions": "<a proposition, phrased positively>"},
-      "<id>": {"type": "choice", "instructions": "<what to decide>",
+      "<id>": {"type": "choice", "instructions": "<what to weigh>",
                "criteria": {"<option_id>": "<description>"}},
       "<id>": {"type": "score", "instructions": "<what to rate>",
                "criteria": ["<lowest>", "<...>", "<highest>"]}
@@ -66,56 +66,56 @@ Each answer is keyed by question id:
 | Type | Answer fields |
 | --- | --- |
 | `noul` | `noul` = P(true) |
-| `choice` | `choice`, `confidence`, `probabilities` |
+| `choice` | `choice` (the leading option), `confidence`, `probabilities` |
 | `score` | `score` (expected index; 0 is the first criterion), `confidence` (top option), `legend`, `probabilities` |
 
 The response also carries `usage.input_tokens` and `latency_ms`.
 
-## Writing good questions
+## Asking well
 
-1. **Put all evidence in `state` — and only evidence.** The model sees nothing else. Prefer
+1. **Put all evidence in `state` — and only evidence.** gut-feeling sees nothing else. Prefer
    structured JSON with labeled fields (`{"test": ..., "output": ..., "diff_summary": ...}`)
    and trim logs to the relevant lines; inputs are capped at 16,384 tokens. Don't write your
-   own verdict into `state` ("this is an infrastructure issue"): the model echoes it back and
-   you lose the independent signal you called it for.
+   own verdict into `state` ("this is an infrastructure issue"): it gets echoed back and you
+   lose the independent read you asked for.
 2. **Ask exactly what you need.** Confidence is about the question asked, not about overall
    ambiguity. In testing, "update the thing" scored `intent=implement` at **0.96** but
    `specific_enough` at only **0.09**; a precise request scored **0.91**. If you need to know
    whether you can act, ask that.
 3. **Make options mutually exclusive and exhaustive**, each with a crisp description. When the
-   space is open, add an `unclear` or `other` option so the model is not forced into a wrong
+   space is open, add an `unclear` or `other` option so the answer is not forced into a wrong
    bucket.
 4. **Batch related questions.** One call with three questions costs the same as one with one.
-5. **Fix the schema per decision type.** Questions are scored jointly: changing a sibling
-   question moved one intent confidence from 0.65 to 0.57. Use the same question set every
-   time you gate the same kind of decision.
+5. **Fix the question set per decision type.** Questions are weighed jointly: changing a sibling
+   question moved one intent confidence from 0.65 to 0.57. Use the same set every time you
+   check the same kind of decision.
 6. **Keep option ids short and stable** (`logic_bug`, `needs_review`) and put the meaning in
    the descriptions.
 7. **Phrase `noul` questions as positive propositions** ("Is re-running likely to make it
    pass?"), and add `criteria: {"true": ..., "false": ...}` when the boundary needs defining.
 
-## Acting on answers
+## Reading the feeling
 
 Starting thresholds, calibrated from observed outputs — tune them per decision:
 
-| Type | Act | Act, but flag and verify | Gather evidence or ask the user |
+| Type | Trust it | Act, but flag and verify | Gather evidence or ask the user |
 | --- | --- | --- | --- |
 | `choice` | confidence ≥ 0.85 with a clear margin over the runner-up | 0.60–0.85 | below 0.60, or a top-two margin under 0.20 |
 | `noul` | P ≥ 0.80 (yes) or P ≤ 0.20 (no) | — | 0.20 < P < 0.80 |
-| `score` | gate on the expected `score`, e.g. ≥ 2.0 of 3 means escalate | — | `probabilities` split between distant levels |
+| `score` | read the expected `score`, e.g. ≥ 2.0 of 3 means escalate | — | `probabilities` split between distant levels |
 
 - **Don't threshold `score` on `confidence`.** The top option sat near 0.63 for both a trivial
   and a dangerous change, while their expected scores (0.75 vs 2.43 of 3) separated cleanly.
-- **Don't re-ask.** Identical requests return identical answers. Change the evidence or the
+- **Don't re-ask.** Identical requests get identical answers. Change the evidence or the
   question instead.
-- **It is a second opinion.** When you have strong contrary evidence, override it and say why.
-- **Show your work.** Name the signal in your reply, e.g. `clef: failure_kind=environment (0.84)`.
+- **It advises; you decide.** When you have strong contrary evidence, override it and say why.
+- **Name the signal.** Quote what you relied on, e.g. `gut-feeling: failure_kind=environment (0.84)`.
 
 ## Recipes
 
-Observed outputs come from clef-flash (revision `17f0b0a`) on an Apple M4 Max.
+Observed outputs come from Cloudflare's Clef-Flash (revision `17f0b0a`) on an Apple M4 Max.
 
-### Intent and readiness gate
+### Intent and readiness check
 
 Run it before changing files in response to a conversational request.
 
@@ -163,7 +163,7 @@ Run it before retrying or "fixing" a failing test or command.
 | `assert add(2, 2) == 4 … where 5 = add(2, 2)` | `logic_bug` 0.93, `retry` 0.05 | fix the code |
 | `TimeoutError after 5.0s; passed on 3 of last 5 CI runs` | `flaky` 0.89, `retry` 0.67 | retry, then stabilize the test |
 
-### Change-risk gate
+### Change-risk check
 
 Run it before committing, pushing, or merging.
 
@@ -208,13 +208,14 @@ Run it before committing, pushing, or merging.
                   "ask_user": "The trade-off needs a human decision"}}}}
 ```
 
-Replace these option sets with ones that describe your project, and keep each set fixed once
-your gates depend on it.
+The routing and effort recipes are templates: replace their option sets with ones that describe
+your project, measure them, and keep each set fixed once your checks depend on it.
 
 ## Operations
 
 - **The first call is slow.** The model server starts on demand and loads in ~5–15 s; later
-  calls take ~1 s. Pre-warm it with `clef start`.
-- **"not reachable … CLEF_AUTOSTART=0"** means the server is off; run `clef start`. For
-  anything else, run `clef doctor` and `clef logs`.
-- **`clef status`** prints the engine (device, dtype, model) when the server is up.
+  calls take ~1 s. Pre-warm it with `gut-feeling start`.
+- **"model … is not pulled"** means the weights are missing: run `gut-feeling model pull`.
+- **"not reachable … GUT_FEELING_AUTOSTART=0"** means the server is off; run
+  `gut-feeling start`. For anything else, run `gut-feeling doctor` and `gut-feeling logs`.
+- **`gut-feeling status`** prints the engine (device, dtype, model) when the server is up.

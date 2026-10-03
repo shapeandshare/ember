@@ -1,7 +1,8 @@
-"""CLI onboarding paths: `clef agents show|install` and `clef init --opencode`.
+"""CLI paths: onboarding (`agents`, `init --opencode`), lifecycle on an unused port,
+`doctor`, and `uninstall`.
 
-Every test runs in a temporary directory with HOME redirected, so nothing touches
-the real project or user config.
+Every test runs in a temporary directory with HOME and the state dir redirected, so
+nothing touches the real project, user config, or running servers.
 """
 
 from __future__ import annotations
@@ -9,20 +10,33 @@ from __future__ import annotations
 import json
 
 import pytest
+from gut_feeling import (
+    agent_kit,
+    cli,
+    models,
+    opencode_config,
+    opencode_plugin,
+    process,
+)
 
-from clef_local import agent_kit, cli
+from tests.conftest import free_port
 
 
 @pytest.fixture
 def sandbox(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("GUT_FEELING_STATE_DIR", str(tmp_path / "state"))
     return tmp_path
 
 
 @pytest.mark.parametrize(
     ("what", "loader"),
-    [("instructions", agent_kit.instructions), ("skill", agent_kit.skill), ("snippet", agent_kit.snippet)],
+    [
+        ("instructions", agent_kit.instructions),
+        ("skill", agent_kit.skill),
+        ("snippet", agent_kit.snippet),
+    ],
 )
 def test_agents_show_prints_the_kit(what, loader, capsys):
     assert cli.main(["agents", "show", what]) == 0
@@ -31,21 +45,62 @@ def test_agents_show_prints_the_kit(what, loader, capsys):
 
 @pytest.mark.parametrize(
     ("agent", "root"),
-    [("opencode", ".opencode/skills"), ("claude", ".claude/skills"), ("codex", ".agents/skills")],
+    [
+        ("opencode", ".opencode/skills"),
+        ("claude", ".claude/skills"),
+        ("codex", ".agents/skills"),
+    ],
 )
 def test_agents_install_writes_project_skill(sandbox, agent, root):
     assert cli.main(["agents", "install", "--agent", agent]) == 0
-    assert (sandbox / root / "clef-decide/SKILL.md").read_text() == agent_kit.skill()
+    assert (
+        sandbox / root / "gut-feeling-advise/SKILL.md"
+    ).read_text() == agent_kit.skill()
 
 
 def test_agents_install_global_targets_home(sandbox):
     assert cli.main(["agents", "install", "--agent", "opencode", "--global"]) == 0
-    assert (sandbox / "home/.config/opencode/skills/clef-decide/SKILL.md").exists()
+    assert (
+        sandbox / "home/.config/opencode/skills/gut-feeling-advise/SKILL.md"
+    ).exists()
 
 
 def test_init_opencode_registers_server_plugin_and_skill(sandbox):
     assert cli.main(["init", "--opencode"]) == 0
     config = json.loads((sandbox / "opencode.json").read_text())
-    assert config["mcp"]["clef"]["type"] == "local"
-    assert (sandbox / ".opencode/plugins/clef.js").exists()
-    assert (sandbox / ".opencode/skills/clef-decide/SKILL.md").read_text() == agent_kit.skill()
+    assert config["mcp"]["gut-feeling"]["type"] == "local"
+    assert (sandbox / ".opencode/plugins/gut-feeling.js").exists()
+    assert (
+        sandbox / ".opencode/skills/gut-feeling-advise/SKILL.md"
+    ).read_text() == agent_kit.skill()
+
+
+def test_status_and_stop_are_inert_on_an_unused_port(sandbox, capsys):
+    port = str(free_port())
+    assert cli.main(["status", "--port", port]) == 1
+    assert cli.main(["stop", "--port", port]) == 0
+    assert capsys.readouterr().out.splitlines() == ["not running", "not running"]
+
+
+def test_doctor_treats_a_stopped_server_as_information(sandbox, monkeypatch, capsys):
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
+    assert cli.main(["doctor"]) == 0
+    assert "[info] server: stopped" in capsys.readouterr().out
+
+
+def test_uninstall_removes_global_installs_and_keeps_other_config(sandbox):
+    assert cli.main(["init", "--opencode", "--global"]) == 0
+    global_config = opencode_config.global_config_path()
+    config = json.loads(global_config.read_text())
+    config["model"] = "keep-me"
+    global_config.write_text(json.dumps(config))
+
+    assert cli.main(["uninstall"]) == 0
+    assert not (
+        opencode_plugin.plugin_dir("global") / opencode_plugin.PLUGIN_FILENAME
+    ).exists()
+    assert not agent_kit.skill_path("opencode", "global").exists()
+    remaining = json.loads(global_config.read_text())
+    assert remaining["model"] == "keep-me"
+    assert "gut-feeling" not in remaining["mcp"]

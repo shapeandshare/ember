@@ -1,8 +1,8 @@
-"""Consumer onboarding kit: what coding agents read to use the `decide` tool well.
+"""Consumer onboarding kit: what coding agents read to use the `advise` tool well.
 
 One source of truth, delivered three ways: MCP `initialize.instructions`, the
-`clef://guide` MCP resource plus the installable `clef-decide` skill, and an
-AGENTS.md snippet.
+`gut-feeling://guide` resource plus the installable `gut-feeling-advise` skill,
+and an AGENTS.md snippet.
 """
 
 from __future__ import annotations
@@ -10,8 +10,8 @@ from __future__ import annotations
 from importlib.resources import files
 from pathlib import Path
 
-SKILL_NAME = "clef-decide"
-GUIDE_URI = "clef://guide"
+SKILL_NAME = "gut-feeling-advise"
+GUIDE_URI = "gut-feeling://guide"
 
 _SKILL_ROOTS: dict[str, tuple[str, str]] = {
     "opencode": (".opencode/skills", ".config/opencode/skills"),
@@ -37,13 +37,21 @@ def snippet() -> str:
     return _read("AGENTS.snippet.md")
 
 
-def skill_path(agent: str, scope: str = "project", project_root: Path | None = None) -> Path:
+def skill_path(
+    agent: str, scope: str = "project", project_root: Path | None = None
+) -> Path:
     project_rel, home_rel = _SKILL_ROOTS[agent]
-    base = Path.home() / home_rel if scope == "global" else (project_root or Path.cwd()) / project_rel
+    base = (
+        Path.home() / home_rel
+        if scope == "global"
+        else (project_root or Path.cwd()) / project_rel
+    )
     return base / SKILL_NAME / "SKILL.md"
 
 
-def install_skill(agent: str = "opencode", scope: str = "project", project_root: Path | None = None) -> Path:
+def install_skill(
+    agent: str = "opencode", scope: str = "project", project_root: Path | None = None
+) -> Path:
     path = skill_path(agent, scope, project_root)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(skill(), encoding="utf-8")

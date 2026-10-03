@@ -8,15 +8,14 @@ import json
 import os
 import re
 import subprocess
-import time
+import sys
 from pathlib import Path
 
+import gut_feeling.runtime as runtime
 import pytest
+from gut_feeling import models, opencode_config, paths, process
 
-from tests.conftest import REPO_ROOT, free_port, terminate_pid
-
-import clef_local.runtime as runtime  # noqa: E402
-from clef_local import models, opencode_config  # noqa: E402
+from tests.conftest import free_port
 
 
 # --------------------------------------------------------------------------- #
@@ -49,8 +48,10 @@ def test_load_clef_missing_dir_raises():
 def test_joint_module_exposes_expected_api():
     model_dir = runtime.DEFAULT_MODEL_DIR
     if not model_dir.is_dir():
-        if os.environ.get("CLEF_REQUIRE_MODEL") == "1":
-            pytest.fail(f"model dir not present: {model_dir} (CLEF_REQUIRE_MODEL=1)")
+        if os.environ.get("GUT_FEELING_REQUIRE_MODEL") == "1":
+            pytest.fail(
+                f"model dir not present: {model_dir} (GUT_FEELING_REQUIRE_MODEL=1)"
+            )
         pytest.skip("model dir not present")
     module = runtime.joint_module(model_dir)
     for attr in ("systemone", "load_release_model", "encode_record", "collate_records"):
@@ -60,15 +61,23 @@ def test_joint_module_exposes_expected_api():
 # --------------------------------------------------------------------------- #
 # MCP server helpers (imported without loading the model)
 # --------------------------------------------------------------------------- #
+def test_mcp_server_import_does_not_load_torch():
+    code = "import sys, gut_feeling.mcp_server; print('torch' in sys.modules)"
+    result = subprocess.run(  # noqa: S603 - this interpreter with a literal script
+        [sys.executable, "-c", code], capture_output=True, text=True, timeout=60
+    )
+    assert result.stdout.strip() == "False", result.stderr
+
+
 def test_mcp_server_ready_false_when_nothing_listening(monkeypatch):
-    from clef_local import mcp_server
+    from gut_feeling import mcp_server
 
     monkeypatch.setattr(mcp_server, "SERVER_URL", f"http://127.0.0.1:{free_port()}")
     assert mcp_server._server_ready() is False
 
 
 def test_ensure_server_raises_when_down_and_autostart_disabled(monkeypatch):
-    from clef_local import mcp_server
+    from gut_feeling import mcp_server
 
     monkeypatch.setattr(mcp_server, "SERVER_URL", f"http://127.0.0.1:{free_port()}")
     monkeypatch.setattr(mcp_server, "AUTOSTART", False)
@@ -76,44 +85,67 @@ def test_ensure_server_raises_when_down_and_autostart_disabled(monkeypatch):
         mcp_server._ensure_server()
 
 
-def test_start_server_honors_configured_port_and_records_pid(tmp_path, monkeypatch):
-    """Autostart must launch the child on the port in SERVER_URL and record its PID
-    so it can be stopped without touching unrelated processes."""
-    from clef_local import mcp_server
-
-    port = free_port()
-    pidfile = tmp_path / "server.pid"
-    monkeypatch.setattr(mcp_server, "SERVER_URL", f"http://127.0.0.1:{port}")
-    monkeypatch.setenv("CLEF_AUTOSTART_PIDFILE", str(pidfile))
-    monkeypatch.setenv("CLEF_SERVER_LOG", str(tmp_path / "server.log"))
-    # CPU keeps this lightweight; we kill it before inference anyway.
-    monkeypatch.setenv("CLEF_DEVICE", "cpu")
-
-    pid = mcp_server._start_server()
+# --------------------------------------------------------------------------- #
+# process lifecycle (state isolated under a temporary GUT_FEELING_STATE_DIR)
+# --------------------------------------------------------------------------- #
+def test_spawn_records_pid_and_log_in_state_dir(tmp_path, monkeypatch):
+    monkeypatch.setenv("GUT_FEELING_STATE_DIR", str(tmp_path / "state"))
+    proc = process.spawn(tmp_path / "no-model", "127.0.0.1", free_port(), "cpu")
     try:
-        assert isinstance(pid, int) and pid > 0
-        deadline = time.time() + 10
-        while time.time() < deadline and not pidfile.exists():
-            time.sleep(0.1)
-        assert pidfile.exists(), "autostart did not record a pidfile"
-        assert int(pidfile.read_text().strip()) == pid
-        os.kill(pid, 0)  # raises if not alive
+        assert paths.pid_path() == tmp_path / "state" / "server.pid"
+        assert int(paths.pid_path().read_text()) == proc.pid
+        assert paths.server_log_path().exists()
     finally:
-        terminate_pid(pid)
+        proc.terminate()
+        proc.wait(timeout=15)
+
+
+def test_tracked_pid_ignores_a_pid_that_is_not_a_gut_feeling_server(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("GUT_FEELING_STATE_DIR", str(tmp_path))
+    paths.pid_path().write_text(str(os.getpid()))
+    assert process.tracked_pid("127.0.0.1", free_port()) is None
+    assert not paths.pid_path().exists()
+
+
+def test_stop_without_a_tracked_server_signals_nothing(tmp_path, monkeypatch):
+    monkeypatch.setenv("GUT_FEELING_STATE_DIR", str(tmp_path))
+    assert process.stop("127.0.0.1", free_port()) is False
+
+
+def test_start_fails_fast_when_the_model_is_missing(tmp_path, monkeypatch):
+    monkeypatch.setenv("GUT_FEELING_STATE_DIR", str(tmp_path))
+    monkeypatch.setenv("GUT_FEELING_MODEL_DIR", str(tmp_path / "missing"))
+    with pytest.raises(RuntimeError, match="model pull"):
+        process.start(host="127.0.0.1", port=free_port(), timeout=5)
 
 
 # --------------------------------------------------------------------------- #
-# project configuration (no opencode CLI involved)
+# models and opencode configuration
 # --------------------------------------------------------------------------- #
 def test_model_revisions_are_pinned_commits():
     for spec in models.REGISTRY.values():
-        assert re.fullmatch(r"[0-9a-f]{40}", spec.revision), f"{spec.name} is not pinned"
+        assert re.fullmatch(r"[0-9a-f]{40}", spec.revision), (
+            f"{spec.name} is not pinned"
+        )
+
+
+def test_model_dir_override_applies_to_the_run_not_the_listing(tmp_path, monkeypatch):
+    monkeypatch.setenv("GUT_FEELING_MODEL_DIR", str(tmp_path))
+    assert models.resolve_dir("full") == tmp_path
+    assert models.resolve_dir("full", override=False) != tmp_path
 
 
 def test_opencode_config_write_merges_and_is_idempotent(tmp_path):
     target = tmp_path / "opencode.json"
     target.write_text(
-        json.dumps({"model": "keep-me", "mcp": {"other": {"type": "remote", "url": "http://x"}}})
+        json.dumps(
+            {
+                "model": "keep-me",
+                "mcp": {"other": {"type": "remote", "url": "http://x"}},
+            }
+        )
     )
 
     opencode_config.write(target, "127.0.0.1", 9999, "1")
@@ -121,29 +153,25 @@ def test_opencode_config_write_merges_and_is_idempotent(tmp_path):
     config = json.loads(first)
     assert config["model"] == "keep-me"
     assert "other" in config["mcp"]
-    entry = config["mcp"]["clef"]
-    assert entry["type"] == "local" and entry["enabled"] is True
+    entry = config["mcp"]["gut-feeling"]
+    assert entry["type"] == "local"
+    assert entry["enabled"] is True
     assert Path(entry["command"][0]).is_absolute()
-    assert entry["environment"]["CLEF_SERVER_URL"] == "http://127.0.0.1:9999"
+    assert entry["environment"]["GUT_FEELING_SERVER_URL"] == "http://127.0.0.1:9999"
 
     opencode_config.write(target, "127.0.0.1", 9999, "1")
     assert target.read_text() == first
 
 
-def test_management_script_status_is_inert_on_unused_port():
-    """`status` on a free port must report not running and never start/kill anything."""
-    script = REPO_ROOT / "scripts" / "clef-server.sh"
-    if not script.exists():
-        pytest.skip("management script missing")
-    port = free_port()
-    env = dict(os.environ, CLEF_PORT=str(port))
-    out = subprocess.run(
-        [str(script), "status"],
-        cwd=str(REPO_ROOT),
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    assert out.returncode == 0
-    assert "not running" in out.stdout.lower()
+def test_opencode_config_remove_drops_only_our_entry(tmp_path):
+    target = tmp_path / "opencode.json"
+    opencode_config.write(target, "127.0.0.1", 9999, "1")
+    config = json.loads(target.read_text())
+    config["mcp"]["other"] = {"type": "remote", "url": "http://x"}
+    target.write_text(json.dumps(config))
+
+    assert opencode_config.remove(target) is True
+    assert json.loads(target.read_text())["mcp"] == {
+        "other": {"type": "remote", "url": "http://x"}
+    }
+    assert opencode_config.remove(target) is False

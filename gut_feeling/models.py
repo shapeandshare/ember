@@ -2,7 +2,7 @@
 
 Weights live in HuggingFace's cache by default so they are shared with other HF
 tools. A source checkout's ``.models/<dir>`` wins if present (dev convenience),
-and ``CLEF_MODEL_DIR`` overrides everything.
+and ``GUT_FEELING_MODEL_DIR`` overrides everything.
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ import os
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from . import paths
 
@@ -27,11 +28,19 @@ class ModelSpec:
 
 REGISTRY: dict[str, ModelSpec] = {
     "flash": ModelSpec(
-        "flash", "Cloudflare/clef-flash", "clef-flash", "9B", 18 * 2**30,
+        "flash",
+        "Cloudflare/clef-flash",
+        "clef-flash",
+        "9B",
+        18 * 2**30,
         revision="17f0b0ad64efb65d273590632833508766b2aae6",
     ),
     "full": ModelSpec(
-        "full", "Cloudflare/clef", "clef", "27B", 55 * 2**30,
+        "full",
+        "Cloudflare/clef",
+        "clef",
+        "27B",
+        55 * 2**30,
         revision="2f3de3dd85f379784083b0814d997ab627200f0c",
     ),
 }
@@ -53,16 +62,16 @@ def _dev_dir(spec: ModelSpec) -> Path:
     return _repo_root() / ".models" / spec.dir_name
 
 
-def is_cached(name: str) -> bool:
-    return resolve_dir(name) is not None
+def resolve_dir(name: str | None = None, *, override: bool = True) -> Path | None:
+    """Return the local directory to run a model from, or None if it is not present.
 
-
-def resolve_dir(name: str | None = None) -> Path | None:
-    """Return the local directory of a pulled model, or None if not present."""
+    ``GUT_FEELING_MODEL_DIR`` (when ``override`` is true) names the directory for the
+    model being run; otherwise a checkout's ``.models/<dir>`` wins, then the HF cache.
+    """
     spec = get(name)
-    override = os.environ.get("CLEF_MODEL_DIR")
-    if override:
-        path = Path(override)
+    env_dir = os.environ.get("GUT_FEELING_MODEL_DIR")
+    if override and env_dir:
+        path = Path(env_dir)
         return path if path.is_dir() else None
     dev = _dev_dir(spec)
     if dev.is_dir():
@@ -70,7 +79,9 @@ def resolve_dir(name: str | None = None) -> Path | None:
     try:
         from huggingface_hub import snapshot_download
 
-        return Path(snapshot_download(spec.repo, revision=spec.revision, local_files_only=True))
+        return Path(
+            snapshot_download(spec.repo, revision=spec.revision, local_files_only=True)
+        )
     except Exception:
         return None
 
@@ -82,7 +93,8 @@ def _disk_ok(target: Path, required: int) -> tuple[bool, str]:
         return True, ""
     if free < required * 1.15:
         return False, (
-            f"low disk: need ~{required / 2**30:.0f} GB free, have {free / 2**30:.1f} GB"
+            f"low disk: need ~{required / 2**30:.0f} GB free, "
+            f"have {free / 2**30:.1f} GB"
         )
     return True, ""
 
@@ -90,6 +102,9 @@ def _disk_ok(target: Path, required: int) -> tuple[bool, str]:
 def pull(name: str | None = None, allow_low_disk: bool = False) -> Path:
     """Download (or verify) a model's pinned revision into the HF cache."""
     spec = get(name)
+    dev = _dev_dir(spec)
+    if dev.is_dir():
+        return dev
     from huggingface_hub import snapshot_download
 
     ok, message = _disk_ok(paths.hf_hub_cache(), spec.approx_bytes)
@@ -109,10 +124,10 @@ def size_on_disk(path: Path) -> int:
     return total
 
 
-def list_models() -> list[dict]:
+def list_models() -> list[dict[str, Any]]:
     rows = []
     for name, spec in REGISTRY.items():
-        path = resolve_dir(name)
+        path = resolve_dir(name, override=False)
         rows.append(
             {
                 "name": name,
@@ -139,7 +154,10 @@ def remove(name: str | None = None) -> str:
 
         cache = scan_cache_dir()
         revisions = [
-            rev.commit_hash for repo in cache.repos if repo.repo_id == spec.repo for rev in repo.revisions
+            rev.commit_hash
+            for repo in cache.repos
+            if repo.repo_id == spec.repo
+            for rev in repo.revisions
         ]
         if not revisions:
             return f"{spec.repo} is not cached"

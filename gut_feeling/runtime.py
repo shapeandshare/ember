@@ -1,4 +1,4 @@
-"""Clef-Flash runtime for Apple Silicon (MPS).
+"""gut-feeling runtime: loads Cloudflare's Clef-Flash model on Apple Silicon (MPS).
 
 Wraps Cloudflare's shipped ``joint_schema_model.py`` with a loader that works
 around a segfault seen when ``device_map={"": "mps"}`` is passed to
@@ -26,7 +26,7 @@ from typing import Any
 # Must be set before torch's dispatch tables are built.
 os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 
-import torch  # noqa: E402
+import torch
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MODEL_DIR = REPO_ROOT / ".models" / "clef-flash"
@@ -78,11 +78,14 @@ def load_clef(
     from safetensors.torch import load_file
     from transformers import AutoProcessor, Qwen3_5ForConditionalGeneration
 
-    # Load on CPU (device_map={"": "mps"} segfaults), then move.
-    backbone = Qwen3_5ForConditionalGeneration.from_pretrained(
+    # Load on CPU (device_map={"": "mps"} segfaults), then move. Both loads read a
+    # local snapshot already pinned at download time and never touch the Hub, which
+    # bandit's revision-pinning check (B615) cannot see.
+    backbone: Any = Qwen3_5ForConditionalGeneration.from_pretrained(  # nosec B615
         str(model_dir),
         dtype=dtype,
         device_map={"": "cpu"},
+        local_files_only=True,
     )
     backbone.config.use_cache = False
     if device != "cpu":
@@ -93,7 +96,9 @@ def load_clef(
     head.load_state_dict(load_file(model_dir / "joint_head.safetensors"), strict=True)
     head = head.to(device=device, dtype=dtype)
 
-    processor = AutoProcessor.from_pretrained(str(model_dir))
+    processor = AutoProcessor.from_pretrained(  # nosec B615
+        str(model_dir), local_files_only=True
+    )
     if getattr(processor.tokenizer, "pad_token_id", None) is None:
         processor.tokenizer.pad_token = processor.tokenizer.eos_token
 
@@ -101,8 +106,8 @@ def load_clef(
     return model, processor
 
 
-class ClefEngine:
-    """Holds a loaded Clef model and answers decision requests.
+class Engine:
+    """Holds the loaded model and answers advice requests.
 
     MPS inference is not thread-safe; all calls are serialized behind a lock.
     """
@@ -121,7 +126,7 @@ class ClefEngine:
         self.model, self.processor = load_clef(self.model_dir, self.device, self.dtype)
         self._lock = threading.Lock()
 
-    def decide(
+    def advise(
         self,
         state: Any,
         questions: dict[str, Any],
@@ -132,12 +137,13 @@ class ClefEngine:
         js = joint_module(self.model_dir)
         request = {"model": model_name, "state": state, "questions": questions}
         with self._lock:
-            return js.systemone(
+            response: dict[str, Any] = js.systemone(
                 self.model,
                 self.processor,
                 request,
                 max_length=max_length or self.max_length,
             )
+        return response
 
     def describe(self) -> dict[str, Any]:
         return {

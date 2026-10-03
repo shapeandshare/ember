@@ -1,4 +1,4 @@
-"""Shared fixtures for the Clef-Flash local test suite.
+"""Shared fixtures for the gut-feeling test suite.
 
 Isolation rules (important on a host with other opencode instances running):
   * Tests NEVER use the default port 8765; they bind a random free port.
@@ -9,6 +9,7 @@ Isolation rules (important on a host with other opencode instances running):
 
 from __future__ import annotations
 
+import contextlib
 import os
 import signal
 import socket
@@ -22,8 +23,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MODEL_DIR = REPO_ROOT / ".models" / "clef-flash"
-MCP_SCRIPT = REPO_ROOT / "clef_local" / "mcp_server.py"
-SERVER_TIMEOUT = float(os.environ.get("CLEF_TEST_START_TIMEOUT", "300"))
+SERVER_TIMEOUT = float(os.environ.get("GUT_FEELING_TEST_START_TIMEOUT", "300"))
 # Ports the test suite must never touch (the user's warm servers).
 PROTECTED_PORTS = {8765}
 
@@ -39,7 +39,7 @@ def free_port() -> int:
 
 
 def terminate_pid(pid: int, timeout: float = 10.0) -> None:
-    """Terminate exactly one process by PID (SIGTERM then SIGKILL). Never scans ports."""
+    """Terminate one process by PID (SIGTERM, then SIGKILL); never scans ports."""
     try:
         os.kill(pid, signal.SIGTERM)
     except ProcessLookupError:
@@ -64,15 +64,15 @@ def mcp_stdin_params(base_url: str, *, autostart: str = "0", **extra_env: str):
     env = dict(os.environ)
     env.update(
         {
-            "CLEF_SERVER_URL": base_url,
-            "CLEF_AUTOSTART": autostart,
+            "GUT_FEELING_SERVER_URL": base_url,
+            "GUT_FEELING_AUTOSTART": autostart,
             "PYTORCH_ENABLE_MPS_FALLBACK": "1",
         }
     )
     env.update({k: str(v) for k, v in extra_env.items()})
     return StdioServerParameters(
         command=sys.executable,
-        args=[str(MCP_SCRIPT)],
+        args=["-m", "gut_feeling.mcp_server"],
         cwd=str(REPO_ROOT),
         env=env,
     )
@@ -80,26 +80,28 @@ def mcp_stdin_params(base_url: str, *, autostart: str = "0", **extra_env: str):
 
 @pytest.fixture(scope="session")
 def base_url(tmp_path_factory) -> str:
-    """Start one isolated Clef HTTP server on a random port for the whole session."""
+    """Start one isolated gut-feeling server on a random port for the whole session."""
     if not MODEL_DIR.is_dir():
-        message = f"Clef-Flash weights not found at {MODEL_DIR}"
-        if os.environ.get("CLEF_REQUIRE_MODEL") == "1":
-            pytest.fail(f"{message} (CLEF_REQUIRE_MODEL=1: failing instead of skipping)")
+        message = f"Clef-Flash weights not found at {MODEL_DIR} (run: make download)"
+        if os.environ.get("GUT_FEELING_REQUIRE_MODEL") == "1":
+            pytest.fail(
+                f"{message} (GUT_FEELING_REQUIRE_MODEL=1: failing instead of skipping)"
+            )
         pytest.skip(message)
 
     port = free_port()
     env = dict(os.environ)
     env.update(
         {
-            "CLEF_HOST": "127.0.0.1",
-            "CLEF_PORT": str(port),
+            "GUT_FEELING_HOST": "127.0.0.1",
+            "GUT_FEELING_PORT": str(port),
             "PYTORCH_ENABLE_MPS_FALLBACK": "1",
         }
     )
-    log_path = tmp_path_factory.mktemp("clef-server") / "server.log"
+    log_path = tmp_path_factory.mktemp("gut-feeling-server") / "server.log"
     handle = open(log_path, "ab")
     proc = subprocess.Popen(
-        [sys.executable, "-m", "clef_local.server"],
+        [sys.executable, "-m", "gut_feeling.server"],
         cwd=str(REPO_ROOT),
         env=env,
         stdout=handle,
@@ -114,15 +116,15 @@ def base_url(tmp_path_factory) -> str:
                 raise RuntimeError(
                     f"test server exited early rc={proc.returncode}; see {log_path}"
                 )
-            try:
+            with contextlib.suppress(httpx.HTTPError):
                 resp = httpx.get(f"{url}/health", timeout=2.0)
                 if resp.status_code == 200 and resp.json().get("engine"):
                     break
-            except Exception:
-                pass
             time.sleep(1.0)
         else:
-            raise RuntimeError(f"test server not ready within {SERVER_TIMEOUT}s; see {log_path}")
+            raise RuntimeError(
+                f"test server not ready within {SERVER_TIMEOUT}s; see {log_path}"
+            )
         yield url
     finally:
         handle.close()

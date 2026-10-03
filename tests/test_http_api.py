@@ -7,7 +7,10 @@ from __future__ import annotations
 import httpx
 import pytest
 
-STATE = "Checkout is down for all customers; every request has returned HTTP 500 for the last hour."
+STATE = (
+    "Checkout is down for all customers; every request has returned HTTP 500 "
+    "for the last hour."
+)
 
 QUESTIONS = {
     "urgent": {"type": "noul", "instructions": "Is this support request urgent?"},
@@ -28,7 +31,7 @@ QUESTIONS = {
 }
 
 
-def _decide(base_url: str, *, state=STATE, questions=QUESTIONS) -> httpx.Response:
+def _ask(base_url: str, *, state=STATE, questions=QUESTIONS) -> httpx.Response:
     return httpx.post(
         f"{base_url}/v1/systemone",
         json={"model": "clef-flash", "state": state, "questions": questions},
@@ -42,6 +45,7 @@ def test_health_reports_accelerator_and_dtype(base_url: str) -> None:
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "ok"
+    assert body["pid"] > 0
     engine = body["engine"]
     assert engine["device"] in ("mps", "cpu")
     assert engine["dtype"] in ("float16", "float32")
@@ -49,8 +53,8 @@ def test_health_reports_accelerator_and_dtype(base_url: str) -> None:
 
 
 @pytest.mark.model
-def test_decide_covers_all_supported_question_types(base_url: str) -> None:
-    resp = _decide(base_url)
+def test_systemone_covers_all_supported_question_types(base_url: str) -> None:
+    resp = _ask(base_url)
     assert resp.status_code == 200, resp.text
     body = resp.json()
     answers = body["answers"]
@@ -80,7 +84,7 @@ def test_decide_covers_all_supported_question_types(base_url: str) -> None:
 
 @pytest.mark.model
 def test_probabilities_are_normalized(base_url: str) -> None:
-    resp = _decide(base_url)
+    resp = _ask(base_url)
     for qid, answer in resp.json()["answers"].items():
         if "probabilities" in answer:
             assert abs(sum(answer["probabilities"].values()) - 1.0) < 0.05, qid
@@ -88,19 +92,25 @@ def test_probabilities_are_normalized(base_url: str) -> None:
 
 @pytest.mark.model
 def test_invalid_question_type_rejected(base_url: str) -> None:
-    resp = _decide(base_url, questions={"bogus": {"type": "nonsense", "instructions": "?"}})
+    resp = _ask(
+        base_url, questions={"bogus": {"type": "nonsense", "instructions": "?"}}
+    )
     assert resp.status_code == 422
 
 
 @pytest.mark.model
 def test_choice_without_criteria_rejected(base_url: str) -> None:
-    resp = _decide(base_url, questions={"team": {"type": "choice", "instructions": "Which?"}})
+    resp = _ask(
+        base_url, questions={"team": {"type": "choice", "instructions": "Which?"}}
+    )
     assert resp.status_code == 422
 
 
 @pytest.mark.model
 def test_missing_state_rejected(base_url: str) -> None:
-    resp = httpx.post(f"{base_url}/v1/systemone", json={"questions": QUESTIONS}, timeout=30.0)
+    resp = httpx.post(
+        f"{base_url}/v1/systemone", json={"questions": QUESTIONS}, timeout=30.0
+    )
     assert resp.status_code == 422
 
 

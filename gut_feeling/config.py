@@ -1,6 +1,6 @@
 """JSON config with env-var and CLI-flag precedence.
 
-Precedence (highest first): CLI flag > CLEF_* env var > config file > default.
+Precedence (highest first): CLI flag > GUT_FEELING_* env var > config file > default.
 """
 
 from __future__ import annotations
@@ -42,7 +42,7 @@ def resolve(key: str, flag: Any = None, env: str | None = None) -> Any:
     """Resolve a setting with flag > env > config > default precedence."""
     if flag is not None:
         return flag
-    env_name = env or f"CLEF_{key.upper()}"
+    env_name = env or f"GUT_FEELING_{key.upper()}"
     if os.environ.get(env_name) not in (None, ""):
         value: Any = os.environ[env_name]
         default = DEFAULTS.get(key)

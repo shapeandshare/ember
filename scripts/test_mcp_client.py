@@ -1,7 +1,7 @@
-"""End-to-end MCP client test: initialize, list tools, call `decide`.
+"""End-to-end MCP check: initialize, list tools, and call `advise` like an agent would.
 
-This exercises the real opencode path: spawn clef_local/mcp_server.py over stdio,
-which auto-starts the warm HTTP server (loading the model) on first call.
+Spawns the gut-feeling MCP server over stdio against the local server on the default
+port, starting it (and loading the model) on first call if it is not already running.
 
 Usage:
     .venv/bin/python -u scripts/test_mcp_client.py
@@ -24,11 +24,11 @@ from mcp.client.stdio import StdioServerParameters, stdio_client  # noqa: E402
 
 async def main() -> int:
     env = dict(os.environ)
-    env.setdefault("CLEF_AUTOSTART", "1")
-    env.setdefault("CLEF_START_TIMEOUT", "300")
+    env.setdefault("GUT_FEELING_AUTOSTART", "1")
+    env.setdefault("GUT_FEELING_START_TIMEOUT", "300")
     params = StdioServerParameters(
         command=sys.executable,
-        args=[str(REPO_ROOT / "clef_local" / "mcp_server.py")],
+        args=["-m", "gut_feeling.mcp_server"],
         cwd=str(REPO_ROOT),
         env=env,
     )
@@ -38,27 +38,37 @@ async def main() -> int:
             tools = await session.list_tools()
             print("TOOLS:")
             for tool in tools.tools:
-                print(f"  - {tool.name}: {tool.description.splitlines()[0] if tool.description else ''}")
+                summary = tool.description.splitlines()[0] if tool.description else ""
+                print(f"  - {tool.name}: {summary}")
                 print(f"    inputSchema: {json.dumps(tool.input_schema)}")
 
             arguments = {
                 "input": {
-                    "state": "The login endpoint is returning 401 for all users after the latest deploy. Nobody can sign in.",
+                    "state": (
+                        "The login endpoint is returning 401 for all users after "
+                        "the latest deploy. Nobody can sign in."
+                    ),
                     "questions": {
                         "urgent": {"type": "noul", "instructions": "Is this urgent?"},
                         "team": {
                             "type": "choice",
                             "instructions": "Which team should handle this?",
-                            "criteria": {"auth": "Authentication/sessions", "frontend": "UI issues"},
+                            "criteria": {
+                                "auth": "Authentication/sessions",
+                                "frontend": "UI issues",
+                            },
                         },
                     },
                 }
             }
-            print("\nCALL decide ...")
-            result = await session.call_tool("decide", arguments)
+            print("\nCALL advise ...")
+            result = await session.call_tool("advise", arguments)
             print("is_error:", result.is_error)
             if result.structured_content is not None:
-                print("structured_content:", json.dumps(result.structured_content, indent=2))
+                print(
+                    "structured_content:",
+                    json.dumps(result.structured_content, indent=2),
+                )
             for block in result.content:
                 text = getattr(block, "text", None)
                 if text:

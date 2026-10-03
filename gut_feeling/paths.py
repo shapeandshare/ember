@@ -1,10 +1,9 @@
 """Platform-aware locations for config, state, logs, and the model cache.
 
-macOS: ``~/Library/Application Support/clef-local`` (config + state).
-Other: XDG (``$XDG_CONFIG_HOME`` / ``$XDG_STATE_HOME``).
-
-Model weights are left in HuggingFace's own cache so they are shared with any
-other HF-based tool the user already has (avoids re-downloading ~18 GB).
+macOS keeps config and state in ``~/Library/Application Support/gut-feeling``; other
+platforms use XDG directories. ``GUT_FEELING_STATE_DIR`` relocates state (pid file and
+logs), which keeps tests and side-by-side instances isolated. Model weights stay in
+Hugging Face's own cache so they are shared with other HF-based tools.
 """
 
 from __future__ import annotations
@@ -14,7 +13,7 @@ import platform
 import sys
 from pathlib import Path
 
-APP_NAME = "clef-local"
+APP_NAME = "gut-feeling"
 
 
 def is_apple_silicon() -> bool:
@@ -29,16 +28,24 @@ def config_dir() -> Path:
     if sys.platform == "darwin":
         path = _support_dir()
     else:
-        path = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / APP_NAME
+        path = (
+            Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / APP_NAME
+        )
     path.mkdir(parents=True, exist_ok=True)
     return path
 
 
 def state_dir() -> Path:
-    if sys.platform == "darwin":
+    override = os.environ.get("GUT_FEELING_STATE_DIR")
+    if override:
+        path = Path(override)
+    elif sys.platform == "darwin":
         path = _support_dir()
     else:
-        path = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state")) / APP_NAME
+        path = (
+            Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state"))
+            / APP_NAME
+        )
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -53,10 +60,6 @@ def config_path() -> Path:
     return config_dir() / "config.json"
 
 
-def state_path() -> Path:
-    return state_dir() / "state.json"
-
-
 def pid_path() -> Path:
     return state_dir() / "server.pid"
 
@@ -66,7 +69,6 @@ def server_log_path() -> Path:
 
 
 def hf_hub_cache() -> Path:
-    """Where huggingface_hub stores snapshots (its own default, unless overridden)."""
     if os.environ.get("HF_HUB_CACHE"):
         return Path(os.environ["HF_HUB_CACHE"])
     if os.environ.get("HF_HOME"):
