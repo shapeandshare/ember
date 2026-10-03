@@ -70,7 +70,7 @@ repository and organization settings below are applied in order.
 | Done 2026-10-03 | Organization secrets are scoped to the repositories that use them; this repository receives no credentials | org owner |
 | Applied 2026-10-03 | Actions allow-list: GitHub-owned plus `astral-sh/setup-uv` and `zizmorcore/zizmor-action`; SHA pinning required; `workflow security (zizmor)` a required check | repo admin |
 | Applied 2026-10-03 | Fork pull request workflows need approval for all external contributors; private vulnerability reporting | repo admin |
-| Blocked 2026-10-03 | Secret scanning with push protection, and CodeQL default setup: the enforced org code-security configuration `shapeandshare-org-config-1` disables them; an org owner must enable them there or attach this repository to the `GitHub recommended` configuration | org owner |
+| Resolved 2026-10-03 | Secret scanning with push protection and CodeQL default setup: this repository is attached to the `GitHub recommended` configuration (id 17); the other repositories on `shapeandshare-org-config-1` are unchanged | org owner |
 
 ```bash
 R=repos/shapeandshare/ember
