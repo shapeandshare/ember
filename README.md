@@ -5,7 +5,7 @@
   <img src="assets/brand/hero-light.svg" alt="gut-feeling — Ember hugs its glowing tummy. Give your agent a gut feeling." width="1200">
 </picture>
 
-[Brand assets and palette](assets/brand/README.md)
+[Brand assets and palette](assets/brand/README.md) · [Provenance and licensing](PROVENANCE.md)
 
 **A local gut feeling for coding agents.** gut-feeling runs
 [Cloudflare's Clef-Flash](https://huggingface.co/Cloudflare/clef-flash) model on your Apple

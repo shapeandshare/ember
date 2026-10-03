@@ -56,3 +56,7 @@ Do not edit the package copies independently.
 
 Typography is system-ui; illustrations may be expressive, but product copy stays
 precise and avoids promises of certainty. See [DESIGN.md](../../DESIGN.md).
+
+## Provenance and licensing
+
+See [the provenance guide](../../PROVENANCE.md) and [machine-readable inventory](../../provenance.json) for AI-generation disclosure, parent assets, hashes, saved prompts, license evidence, and URL-check results.

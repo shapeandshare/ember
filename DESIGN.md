@@ -519,3 +519,10 @@ When editing any documentation file:
 | Date       | Change                                                        |
 |------------|---------------------------------------------------------------|
 | 2026-10-02 | Initial design system: palette, typography, diagram style, README structure, badges, callouts, tables, code blocks, language, architecture diagrams, commits, PRs, Makefile, tooling, config, agent kit, testing, maintenance checklist |
+
+## Material provenance
+
+[PROVENANCE.md](PROVENANCE.md) explains material origins and license boundaries.
+[provenance.json](provenance.json) records brand asset hashes and lineage, model
+sources, dependency evidence, and dated external URL checks. Update it when
+changing brand materials; run `python3 scripts/check_provenance.py`.

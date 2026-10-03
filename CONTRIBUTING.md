@@ -276,3 +276,11 @@ For questions and usage help, use [GitHub Discussions](https://github.com/shapea
 rather than Issues.
 
 For security vulnerabilities, see [SECURITY.md](SECURITY.md). Do not open a public issue.
+
+## Material provenance
+
+For new artwork, copied text, templates, or dependencies, document the source and
+license evidence in [provenance.json](provenance.json) and follow
+[PROVENANCE.md](PROVENANCE.md). Disclose AI generation and keep actual prompts
+when available. Never substitute an assumed license for missing evidence.
+Run `python3 scripts/check_provenance.py` after changing brand assets.

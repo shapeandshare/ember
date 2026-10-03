@@ -36,6 +36,9 @@ that voice in user-facing text.
 Ember is the primary mascot. Use `assets/brand/README.md` for approved assets and
 `assets/brand/tokens.css` for light/dark palette tokens. Preserve the primary
 mascot choice; Mellow and Float are alternate concepts. `DESIGN.md` governs usage.
+Record material origins, prompts, licensing evidence and URL checks in
+`provenance.json`; see `PROVENANCE.md`. Run `python3 scripts/check_provenance.py`
+after changing brand assets. Do not invent missing provenance or license facts.
 
 ## Where truth lives
 
