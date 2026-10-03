@@ -27,6 +27,7 @@ from .blocks import (
     mark,
     num,
 )
+from .markup import figure_id
 from .sections_front import Built, Report, recipe_title
 
 TONES = {
@@ -44,7 +45,7 @@ def _signal(miss: Mapping[str, Any]) -> str:
 
 
 def _answer_figure(report: Report, miss: Mapping[str, Any]) -> Figure:
-    ident = f"miss-{miss['id']}-{miss['question']}".replace("_", "-")
+    ident = figure_id(f"miss-{miss['id']}-{miss['question']}")
     title = f"ember's answer for {miss['id']}, {miss['question']}"
     if miss["type"] == "noul":
         return Figure(

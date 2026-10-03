@@ -7,6 +7,7 @@ escape it with ``md_literal`` or ``html.escape``.
 
 from __future__ import annotations
 
+import hashlib
 import re
 from collections.abc import Mapping, Sequence
 from html import escape
@@ -59,13 +60,28 @@ def md_literal(value: str) -> str:
     return _MD_SPECIAL.sub(r"\\\1", value).replace("\n", "<br>")
 
 
+def figure_id(value: str) -> str:
+    """Return a safe ``[a-z0-9-]`` identifier for a figure filename and XML id.
+
+    Data-derived names become file names (``figures/<name>.svg``) and HTML/SVG
+    ids, so ``/``, ``..``, quotes, and whitespace must not survive. Sanitising is
+    not injective, so a short digest of the original keeps distinct inputs from
+    colliding.
+    """
+    cleaned = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    digest = hashlib.sha256(value.encode("utf-8")).hexdigest()[:6]
+    return f"{cleaned}-{digest}" if cleaned else f"figure-{digest}"
+
+
 def md_code(value: str) -> str:
-    """Wrap ``value`` in a code span that survives backticks inside it."""
-    fence = "``" if "`" in value else "`"
-    pad = " " if "`" in value else ""
+    """Wrap ``value`` in a code span that a backtick run inside it cannot close."""
+    longest = max((len(run) for run in re.findall(r"`+", value)), default=0)
+    fence = "`" * (longest + 1)
+    pad = " " if value[:1] == "`" or value[-1:] == "`" else ""
     return f"{fence}{pad}{value.replace('|', '&#124;')}{pad}{fence}"
 
 
 def md_fence(value: str) -> str:
     """Pick a code fence that the content cannot close early."""
-    return "~~~~" if "```" in value or "~~~" in value else "```"
+    longest = max((len(run) for run in re.findall(r"`+", value)), default=0)
+    return "`" * max(3, longest + 1)
