@@ -22,6 +22,7 @@ never duplicate.
 Session-level decisions with their context and consequences.
 
 - [[2026-10-02-rename-the-product-to-ember]]
+- [[2026-10-03-adopt-peer-python-conventions]]
 - [[2026-10-02-publish-as-gut-and-opencode-ember-advise]]
 - [[2026-10-02-adopt-a-governed-project-vault]]
 - [[2026-10-02-expose-prometheus-metrics-on-the-server]]
