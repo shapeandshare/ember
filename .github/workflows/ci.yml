@@ -15,7 +15,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.2.0
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --locked
       - run: make check
       - run: uv build
@@ -35,7 +35,7 @@ jobs:
     runs-on: [self-hosted, macOS, ARM64]
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.2.0
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --locked
       - run: make download
       - run: make test-strict
