@@ -1,0 +1,841 @@
+{
+  "config": {
+    "run_id": "clef-flash_20261003T203810Z",
+    "timestamp": "20261003T203810Z",
+    "git_hash": "cadc1ec",
+    "model": "clef-flash",
+    "model_spec": {
+      "name": "flash",
+      "repo": "Cloudflare/clef-flash",
+      "params": "9B",
+      "revision": "17f0b0ad64efb65d273590632833508766b2aae6"
+    },
+    "engine": {
+      "device": "mps",
+      "dtype": "float16",
+      "model_dir": "/Users/joshburt/Workbench/Repositories/ember/.models/clef-flash",
+      "max_length": 262144
+    },
+    "host": {
+      "platform": "macOS-26.6.2-arm64-arm-64bit",
+      "cpu": "Apple M4 Max",
+      "python": "3.12.11",
+      "packages": {
+        "gut": "0.1.0",
+        "torch": "2.14.1",
+        "transformers": "5.18.0",
+        "mcp": "2.3.0"
+      }
+    },
+    "server": "http://127.0.0.1:8765",
+    "dataset": "clef-flash.jsonl",
+    "dataset_sha256": "6a457f6badb7dd53b50a9ce04857d4d01e885d4718f3eb6db9db58658d9f923c",
+    "trace": "clef-flash_20261003T203810Z_trace.jsonl",
+    "split": null,
+    "category": null,
+    "n_items": 264,
+    "n_errors": 0,
+    "latency_ms": {
+      "mean": 932.7,
+      "p50": 922.5,
+      "p95": 1091.1,
+      "max": 1544.5
+    }
+  },
+  "summary": {
+    "overall": {
+      "items": 264,
+      "questions": 456,
+      "accuracy": 0.8443,
+      "accuracy_ci": [
+        0.8092,
+        0.8772
+      ],
+      "item_accuracy": 0.7765
+    },
+    "choice": {
+      "n": 192,
+      "accuracy": 0.9375,
+      "accuracy_ci": [
+        0.901,
+        0.974
+      ],
+      "macro_f1": 0.9458,
+      "ece": 0.0995,
+      "mce": 0.2861,
+      "brier": 0.1149,
+      "acting": {
+        "n": 123,
+        "coverage": 0.6406,
+        "accuracy": 1.0
+      },
+      "reliability": [
+        {
+          "low": 0.3,
+          "high": 0.4,
+          "n": 4,
+          "confidence": 0.3808,
+          "accuracy": 0.5
+        },
+        {
+          "low": 0.4,
+          "high": 0.5,
+          "n": 9,
+          "confidence": 0.4596,
+          "accuracy": 0.5556
+        },
+        {
+          "low": 0.5,
+          "high": 0.6,
+          "n": 12,
+          "confidence": 0.5472,
+          "accuracy": 0.8333
+        },
+        {
+          "low": 0.6,
+          "high": 0.7,
+          "n": 10,
+          "confidence": 0.6579,
+          "accuracy": 0.8
+        },
+        {
+          "low": 0.7,
+          "high": 0.8,
+          "n": 19,
+          "confidence": 0.7537,
+          "accuracy": 0.9474
+        },
+        {
+          "low": 0.8,
+          "high": 0.9,
+          "n": 34,
+          "confidence": 0.8556,
+          "accuracy": 0.9706
+        },
+        {
+          "low": 0.9,
+          "high": 1.0,
+          "n": 104,
+          "confidence": 0.949,
+          "accuracy": 1.0
+        }
+      ]
+    },
+    "noul": {
+      "n": 168,
+      "accuracy": 0.9167,
+      "accuracy_ci": [
+        0.875,
+        0.9524
+      ],
+      "ece": 0.1002,
+      "mce": 0.185,
+      "brier": 0.0662,
+      "acting": {
+        "n": 111,
+        "coverage": 0.6607,
+        "accuracy": 1.0
+      },
+      "reliability": [
+        {
+          "low": 0.5,
+          "high": 0.6,
+          "n": 13,
+          "confidence": 0.5389,
+          "accuracy": 0.4615
+        },
+        {
+          "low": 0.6,
+          "high": 0.7,
+          "n": 13,
+          "confidence": 0.6612,
+          "accuracy": 0.8462
+        },
+        {
+          "low": 0.7,
+          "high": 0.8,
+          "n": 31,
+          "confidence": 0.7475,
+          "accuracy": 0.8387
+        },
+        {
+          "low": 0.8,
+          "high": 0.9,
+          "n": 49,
+          "confidence": 0.8502,
+          "accuracy": 1.0
+        },
+        {
+          "low": 0.9,
+          "high": 1.0,
+          "n": 62,
+          "confidence": 0.9473,
+          "accuracy": 1.0
+        }
+      ]
+    },
+    "score": {
+      "n": 96,
+      "accuracy": 0.5312,
+      "accuracy_ci": [
+        0.4375,
+        0.6354
+      ],
+      "within_one": 0.8542,
+      "mae": 0.5217,
+      "mae_ci": [
+        0.4381,
+        0.6085
+      ],
+      "rmse": 0.6767,
+      "rps": 0.1054
+    },
+    "questions": {
+      "intent": {
+        "type": "choice",
+        "category": "intent_readiness",
+        "n": 56,
+        "accuracy": 0.9821,
+        "macro_f1": 0.9821,
+        "brier": 0.0253
+      },
+      "specific_enough": {
+        "type": "noul",
+        "category": "intent_readiness",
+        "n": 56,
+        "accuracy": 0.8393,
+        "brier": 0.1141
+      },
+      "failure_kind": {
+        "type": "choice",
+        "category": "failure_triage",
+        "n": 48,
+        "accuracy": 0.9375,
+        "macro_f1": 0.9372,
+        "brier": 0.1181
+      },
+      "retry": {
+        "type": "noul",
+        "category": "failure_triage",
+        "n": 48,
+        "accuracy": 1.0,
+        "brier": 0.0292
+      },
+      "risk": {
+        "type": "score",
+        "category": "change_risk",
+        "n": 48,
+        "accuracy": 0.5417,
+        "mae": 0.4908,
+        "rps": 0.0925
+      },
+      "needs_review": {
+        "type": "noul",
+        "category": "change_risk",
+        "n": 48,
+        "accuracy": 0.8958,
+        "brier": 0.0663
+      },
+      "owner": {
+        "type": "choice",
+        "category": "routing",
+        "n": 40,
+        "accuracy": 1.0,
+        "macro_f1": 1.0,
+        "brier": 0.0588
+      },
+      "effort": {
+        "type": "score",
+        "category": "effort_approach",
+        "n": 40,
+        "accuracy": 0.425,
+        "mae": 0.6433,
+        "rps": 0.1398
+      },
+      "approach": {
+        "type": "choice",
+        "category": "effort_approach",
+        "n": 40,
+        "accuracy": 0.8,
+        "macro_f1": 0.7963,
+        "brier": 0.3143
+      },
+      "dominant_red": {
+        "type": "noul",
+        "category": "vision_noul",
+        "n": 8,
+        "accuracy": 1.0,
+        "brier": 0.0071
+      },
+      "dominant_colour": {
+        "type": "choice",
+        "category": "vision_choice",
+        "n": 8,
+        "accuracy": 1.0,
+        "macro_f1": 1.0,
+        "brier": 0.0061
+      },
+      "alert_level": {
+        "type": "score",
+        "category": "vision_score",
+        "n": 8,
+        "accuracy": 1.0,
+        "mae": 0.0995,
+        "rps": 0.0103
+      },
+      "colour_changed": {
+        "type": "noul",
+        "category": "vision_video",
+        "n": 8,
+        "accuracy": 1.0,
+        "brier": 0.0113
+      }
+    },
+    "categories": {
+      "intent_readiness": {
+        "items": 56,
+        "item_accuracy": 0.8214,
+        "accuracy": 0.9107
+      },
+      "failure_triage": {
+        "items": 48,
+        "item_accuracy": 0.9375,
+        "accuracy": 0.9688
+      },
+      "change_risk": {
+        "items": 48,
+        "item_accuracy": 0.5417,
+        "accuracy": 0.7188
+      },
+      "routing": {
+        "items": 40,
+        "item_accuracy": 1.0,
+        "accuracy": 1.0
+      },
+      "effort_approach": {
+        "items": 40,
+        "item_accuracy": 0.4,
+        "accuracy": 0.6125
+      },
+      "vision_noul": {
+        "items": 8,
+        "item_accuracy": 1.0,
+        "accuracy": 1.0
+      },
+      "vision_choice": {
+        "items": 8,
+        "item_accuracy": 1.0,
+        "accuracy": 1.0
+      },
+      "vision_score": {
+        "items": 8,
+        "item_accuracy": 1.0,
+        "accuracy": 1.0
+      },
+      "vision_video": {
+        "items": 8,
+        "item_accuracy": 1.0,
+        "accuracy": 1.0
+      }
+    },
+    "misses": [
+      {
+        "id": "intent_001",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.21
+      },
+      {
+        "id": "intent_003",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4492
+      },
+      {
+        "id": "intent_004",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4771
+      },
+      {
+        "id": "intent_005",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2896
+      },
+      {
+        "id": "intent_013",
+        "question": "intent",
+        "gold": "implement",
+        "predicted": "fix",
+        "signal": 0.4767
+      },
+      {
+        "id": "intent_021",
+        "question": "specific_enough",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5103
+      },
+      {
+        "id": "failure_010",
+        "question": "failure_kind",
+        "gold": "environment",
+        "predicted": "flaky",
+        "signal": 0.4559
+      },
+      {
+        "id": "failure_012",
+        "question": "failure_kind",
+        "gold": "environment",
+        "predicted": "flaky",
+        "signal": 0.3967
+      },
+      {
+        "id": "failure_023",
+        "question": "failure_kind",
+        "gold": "test_bug",
+        "predicted": "logic_bug",
+        "signal": 0.4582
+      },
+      {
+        "id": "risk_001",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6795
+      },
+      {
+        "id": "risk_002",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5274
+      },
+      {
+        "id": "risk_003",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.505
+      },
+      {
+        "id": "risk_004",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6778
+      },
+      {
+        "id": "risk_005",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6039
+      },
+      {
+        "id": "risk_016",
+        "question": "risk",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.2963
+      },
+      {
+        "id": "risk_016",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2894
+      },
+      {
+        "id": "risk_018",
+        "question": "risk",
+        "gold": 2,
+        "predicted": 3,
+        "signal": 2.5412
+      },
+      {
+        "id": "risk_019",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.0053
+      },
+      {
+        "id": "risk_022",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.6729
+      },
+      {
+        "id": "risk_022",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4489
+      },
+      {
+        "id": "risk_023",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.9744
+      },
+      {
+        "id": "risk_024",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.4138
+      },
+      {
+        "id": "effort_002",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5077
+      },
+      {
+        "id": "effort_003",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5632
+      },
+      {
+        "id": "effort_006",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.5034
+      },
+      {
+        "id": "effort_009",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 3,
+        "signal": 2.7832
+      },
+      {
+        "id": "effort_013",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.0137
+      },
+      {
+        "id": "effort_015",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.8455
+      },
+      {
+        "id": "effort_016",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 1.2879
+      },
+      {
+        "id": "effort_017",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.6057
+      },
+      {
+        "id": "effort_018",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 2.3753
+      },
+      {
+        "id": "effort_019",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.7496
+      },
+      {
+        "id": "effort_020",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.576
+      },
+      {
+        "id": "effort_020",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.3813
+      },
+      {
+        "id": "intent_029",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2951
+      },
+      {
+        "id": "intent_031",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2268
+      },
+      {
+        "id": "intent_032",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4937
+      },
+      {
+        "id": "intent_048",
+        "question": "specific_enough",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5024
+      },
+      {
+        "id": "risk_025",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6363
+      },
+      {
+        "id": "risk_026",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5781
+      },
+      {
+        "id": "risk_027",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.652
+      },
+      {
+        "id": "risk_028",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6299
+      },
+      {
+        "id": "risk_030",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.7283
+      },
+      {
+        "id": "risk_043",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.0075
+      },
+      {
+        "id": "risk_044",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.1912
+      },
+      {
+        "id": "risk_045",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.3729
+      },
+      {
+        "id": "risk_045",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3522
+      },
+      {
+        "id": "risk_046",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.4588
+      },
+      {
+        "id": "risk_047",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.4532
+      },
+      {
+        "id": "risk_047",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3415
+      },
+      {
+        "id": "risk_048",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.9822
+      },
+      {
+        "id": "risk_048",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4009
+      },
+      {
+        "id": "effort_022",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.7123
+      },
+      {
+        "id": "effort_023",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 1.0327
+      },
+      {
+        "id": "effort_027",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 3,
+        "signal": 2.7649
+      },
+      {
+        "id": "effort_029",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.7744
+      },
+      {
+        "id": "effort_031",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.356
+      },
+      {
+        "id": "effort_032",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.1929
+      },
+      {
+        "id": "effort_032",
+        "question": "approach",
+        "gold": "new_component",
+        "predicted": "minimal_patch",
+        "signal": 0.6594
+      },
+      {
+        "id": "effort_033",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.496
+      },
+      {
+        "id": "effort_033",
+        "question": "approach",
+        "gold": "new_component",
+        "predicted": "minimal_patch",
+        "signal": 0.5199
+      },
+      {
+        "id": "effort_034",
+        "question": "approach",
+        "gold": "new_component",
+        "predicted": "minimal_patch",
+        "signal": 0.5048
+      },
+      {
+        "id": "effort_035",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.2267
+      },
+      {
+        "id": "effort_036",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.748
+      },
+      {
+        "id": "effort_036",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.8104
+      },
+      {
+        "id": "effort_038",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.645
+      },
+      {
+        "id": "effort_038",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.7892
+      },
+      {
+        "id": "effort_039",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.4905
+      },
+      {
+        "id": "effort_039",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "new_component",
+        "signal": 0.4093
+      },
+      {
+        "id": "effort_040",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 1.0679
+      },
+      {
+        "id": "effort_040",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.6666
+      }
+    ]
+  }
+}
