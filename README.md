@@ -1,235 +1,152 @@
-# Clef-Flash Local → opencode MCP
+# gut-feeling
 
-Run [Cloudflare's Clef-Flash](https://huggingface.co/Cloudflare/clef-flash)
-decision model **locally on an Apple Silicon Mac** and expose it to
-[opencode](https://opencode.ai) as an MCP tool your coding agent can call for
-fast, typed decisions.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/brand/hero-dark.svg">
+  <img src="assets/brand/hero-light.svg" alt="gut-feeling — Ember hugs its glowing tummy. Give your agent a gut feeling." width="1200">
+</picture>
 
-## Why it's built this way
+[Brand assets and palette](assets/brand/README.md)
 
-Clef is a **decision model**, not a chat model. It takes a `state` plus a schema
-of typed `questions` and returns one probability per option — no text
-generation, no tool calls. That means you **cannot** point opencode's model
-provider at it. Instead:
+**A local gut feeling for coding agents.** gut-feeling runs
+[Cloudflare's Clef-Flash](https://huggingface.co/Cloudflare/clef-flash) model on your Apple
+Silicon Mac and gives agents one MCP tool, `advise`: describe a situation, ask typed
+questions, and get back a calibrated feeling about every option. It's a little buddy for
+judgment calls — it advises; the agent decides.
+
+## How it works
+
+Clef is a decision model, not a chat model: it takes a `state` plus a schema of typed
+questions and returns one probability per option, with no text generation. So gut-feeling
+plugs into agents as a **tool**, while their reasoning stays on their normal LLM:
 
 ```
-opencode agent  ──(MCP tool: clef_decide)──►  MCP server (thin, fast)
-   (reasoning stays on                        │
-    your normal LLM)                          ▼
-                                    warm HTTP server (holds the model)
-                                              │
-                                              ▼
-                                    Clef-Flash on MPS (fp16)
+coding agent ──(MCP tool: gut-feeling_advise)──► gut-feeling-mcp (stdio, starts instantly)
+                                                   │  instructions + gut-feeling://guide
+                                                   ▼  starts the server on first call
+                                          gut-feeling model server (HTTP, stays warm)
+                                                   ▼
+                                          Clef-Flash on MPS (fp16)
 ```
 
-- The **HTTP server** (`clef_local/server.py`) loads the model once and stays warm.
-- The **MCP server** (`clef_local/mcp_server.py`) is a thin client; it starts the
-  HTTP server on first use (if needed) so opencode's MCP startup stays instant and
-  the model isn't reloaded per session.
+- The **model server** (`gut_feeling/server.py`) loads the model once and stays warm across
+  agent sessions.
+- The **MCP server** (`gut_feeling/mcp_server.py`) never loads the model; it starts the model
+  server on the first tool call, so the MCP handshake stays instant.
+
+### Names
+
+| Thing | Name |
+| --- | --- |
+| Product, package, repository | `gut-feeling` (Python import: `gut_feeling`) |
+| CLI | `gut-feeling` (short alias: `gut`) |
+| MCP server / command | `gut-feeling` / `gut-feeling-mcp` |
+| Tool | `advise` — opencode: `gut-feeling_advise`; Claude Code: `mcp__gut-feeling__advise` |
+| Playbook skill / MCP resource | `gut-feeling-advise` / `gut-feeling://guide` |
+| Environment variables | `GUT_FEELING_*` |
+
+"Clef" always refers to Cloudflare's upstream model, never to this product.
 
 ## Verified
 
-On a MacBook Pro **M4 Max / 128 GB**, torch 2.14.1, transformers 5.18.0, mcp 2.x:
+On a MacBook Pro **M4 Max / 128 GB**, torch 2.14.1, transformers 5.18.0, mcp 2.3:
 
 | Step | Result |
 | --- | --- |
 | Model load | ~5 s |
-| Warm inference | **~0.9–1.2 s** for ~220–360 input tokens |
-| opencode tool call | ✅ `clef_decide` invoked, correct probabilities returned |
-
-## Layout
-
-```
-clef_local/
-  cli.py              # the `clef` command (lifecycle, models, doctor, init)
-  runtime.py          # MPS-safe loader (CPU load -> MPS move) + ClefEngine
-  server.py           # FastAPI: POST /v1/systemone, GET /health
-  mcp_server.py       # MCP stdio server exposing the `decide` tool
-  process.py          # warm-server lifecycle (pidfile + HTTP health, no bash/lsof)
-  models.py           # model registry + pull/list/rm (flash default, full opt-in)
-  paths.py            # platform dirs (config/state/log) + HF cache
-  config.py           # config with flag > env > file > default precedence
-  opencode_config.py  # write/merge the mcp.clef entry
-  opencode_plugin.py  # install the local opencode plugin
-  agent_kit/          # what agents read: MCP instructions, clef-decide skill, AGENTS snippet
-packages/opencode-plugin/   # publishable opencode plugin source (npm-ready)
-scripts/
-  clef-server.sh      # dev server lifecycle (bash)
-  smoke_mps.py        # direct MPS inference smoke test
-  test_mcp_client.py  # MCP protocol end-to-end test
-  doctor.sh           # readiness report (bash)
-tests/                # pytest suite (see "Tests" below)
-.specify/             # spec-kit; memory/constitution.md governs this repo
-AGENTS.md CLAUDE.md   # contributor-agent guidelines (CLAUDE.md imports AGENTS.md)
-Makefile          # dev lifecycle commands (run `make help`)
-opencode.json     # generated per machine by `clef init` / `make init` (gitignored)
-pyproject.toml    # package + deps (installs `clef` and `clef-mcp`)
-```
+| Warm request | **~0.9–1.3 s** for ~220–360 input tokens |
+| opencode end to end | ✅ the agent reads the instructions, lists the skill, and calls the tool unprompted |
 
 ## Install (Apple Silicon)
 
-Requires macOS on Apple Silicon. Weights (~18 GB) download on first pull into
-HuggingFace's shared cache (`~/.cache/huggingface`); config/state live in
-`~/Library/Application Support/clef-local`.
+Requires macOS on Apple Silicon. The weights (~18 GB) download into Hugging Face's shared
+cache (`~/.cache/huggingface`); config, state, and logs live in
+`~/Library/Application Support/gut-feeling`.
 
 ```bash
-uv tool install "clef-local @ git+https://github.com/shapeandshare/gut-feeling"
+uv tool install --python 3.12 "gut-feeling @ git+https://github.com/shapeandshare/gut-feeling"
 
-clef model pull          # ~18 GB, resumable, disk-space checked
-clef doctor              # env / model / server readiness
-clef init --opencode     # install the opencode plugin (project) or --global
+gut-feeling model pull          # ~18 GB, resumable, disk-space checked
+gut-feeling doctor              # platform, dependencies, model, and server
+gut-feeling init --opencode     # register with opencode: config, plugin, and skill
 ```
 
-The repository is private, so installers need read access plus git credentials:
-run `gh auth setup-git` once for HTTPS, or install from
+Keep `--python 3.12`: uv otherwise picks your newest interpreter, which the pinned
+torch/transformers stack is not tested on.
+
+The repository is private, so installers need read access plus git credentials: run
+`gh auth setup-git` once for HTTPS, or install from
 `git+ssh://git@github.com/shapeandshare/gut-feeling` with SSH keys.
 
-Restart opencode, and the agent gains a `clef_decide` tool. The model server
-stays **lazy** — it starts on the first tool call (or `clef start`).
+Restart opencode and the agent gains `gut-feeling_advise`. The model server stays **lazy** —
+it starts on the first tool call (or with `gut-feeling start`).
 
-Everything is pinned for reproducibility: `flash` to the commit verified on MPS
-(`17f0b0a`), `full` to its release commit (`2f3de3d`, not yet verified locally),
-and torch/torchvision to the tested minor series. Set `CLEF_MODEL_DIR` to run any
-other weights directory.
-
-## CLI
-
-```bash
-# lifecycle
-clef doctor                      # readiness report
-clef serve                       # run the server in the foreground
-clef start | stop | restart | status | logs
-clef config path | show
-clef uninstall [--purge-models]
-
-# models
-clef model pull [flash|full]     # flash = 9B (default), full = 27B
-clef model list | path [name] | rm [name]
-
-# opencode
-clef init --opencode [--global]  # install the local opencode plugin + clef-decide skill
-clef init                        # or just write the mcp.clef config entry
-
-# agent onboarding
-clef agents install [--agent opencode|claude|codex] [--global]
-clef agents show instructions|skill|snippet
-```
+Everything is pinned for reproducibility: `flash` to the commit verified on MPS (`17f0b0a`),
+`full` to its release commit (`2f3de3d`, not yet verified locally), and torch/torchvision to
+the tested minor series. Set `GUT_FEELING_MODEL_DIR` to run another weights directory.
 
 ## Agent onboarding
 
-Installing the tool is half the job; the other half is making agents **want** to call it at
-the right moments and act on its answers sensibly. `clef_local/agent_kit/` ships that guidance
-through every channel each agent actually reads:
+Installing the tool is half the job; the other half is making agents **want** to consult it
+at the right moments and read its answers sensibly. `gut_feeling/agent_kit/` ships that
+guidance through every channel each agent actually reads:
 
 | Channel | opencode | Claude Code | Codex CLI | How you get it |
 | --- | --- | --- | --- | --- |
-| MCP server instructions (when to use, how to ask, how to act) | ✅ in the system prompt | ✅ (2 KB cap) | — | built in, nothing to do |
-| `clef://guide` resource (full playbook) | ✅ via `read_mcp_resource` | ✅ | — | built in |
-| `clef-decide` skill (playbook, loaded on demand) | ✅ | ✅ | ✅ | `clef agents install --agent <agent>` |
-| AGENTS.md / CLAUDE.md policy block | ✅ | ✅ (CLAUDE.md) | ✅ | `clef agents show snippet >> AGENTS.md` |
+| MCP server instructions (when to consult, how to ask, how to read answers) | ✅ in the system prompt | ✅ (2 KB cap) | — | built in, nothing to do |
+| `gut-feeling://guide` resource (full playbook) | ✅ via `read_mcp_resource` | ✅ | — | built in |
+| `gut-feeling-advise` skill (playbook, loaded on demand) | ✅ | ✅ | ✅ | `gut-feeling agents install --agent <agent>` |
+| AGENTS.md / CLAUDE.md policy block | ✅ | ✅ (CLAUDE.md) | ✅ | `gut-feeling agents show snippet >> AGENTS.md` |
 
 ```bash
-clef init --opencode                  # opencode: plugin + skill in one step
-clef agents install --agent claude    # .claude/skills/clef-decide/SKILL.md
-clef agents install --agent codex     # .agents/skills/... (opencode reads this too)
-clef agents show snippet >> AGENTS.md # then edit the project decision policy
+gut-feeling init --opencode                  # opencode: config entry, plugin, and skill
+gut-feeling agents install --agent claude    # .claude/skills/gut-feeling-advise/SKILL.md
+gut-feeling agents install --agent codex     # .agents/skills/... (opencode reads this too)
+gut-feeling agents show snippet >> AGENTS.md # then edit the project policy at the end
 ```
 
-The skill is a playbook, not a reference card: decision points worth gating, copy-paste
-schemas for intent and readiness, failure triage, change risk, routing, and effort; and
-starting confidence thresholds calibrated from observed model output (re-measured whenever the
-pinned model revision changes). The snippet ends with a **project decision policy** — edit it
-to wire Clef into your own workflow, e.g. "score change risk before every push".
+The skill is a playbook, not a reference card: the decision points worth consulting
+gut-feeling about, copy-paste question sets for intent and readiness, failure triage, change
+risk, routing, and effort, and starting confidence thresholds calibrated from observed model
+output (re-measured whenever the pinned model revision changes). The snippet ends with a
+**project policy** — edit it to wire gut-feeling into your own workflow, e.g. "check change
+risk before every push".
 
 Agent-specific notes:
 
 - opencode reads skills from `.opencode/skills`, `.claude/skills`, and `.agents/skills`, so
   install one copy per project to avoid duplicate listings.
-- Claude Code names the tool `mcp__clef__decide`; register the server there with
-  `claude mcp add clef -- clef-mcp`.
+- Claude Code: register the server with `claude mcp add gut-feeling -- gut-feeling-mcp`; the
+  tool appears as `mcp__gut-feeling__advise`.
 - Codex CLI support for MCP server instructions and resources is unconfirmed, so rely on the
   skill and the AGENTS.md snippet there.
 
-## Development setup
+## CLI
+
+`gut` is a short alias for every command below.
 
 ```bash
-make bootstrap    # deps + pinned weights + opencode.json + readiness (idempotent)
-# or individually: make sync, make download, make init
+# lifecycle
+gut-feeling doctor                      # platform, dependencies, model, and server
+gut-feeling serve                       # run the model server in the foreground
+gut-feeling start | stop | restart | status | logs
+gut-feeling config path | show
+gut-feeling uninstall [--purge-models]  # also removes global opencode/skill installs
+
+# models
+gut-feeling model pull [flash|full]     # flash = 9B (default), full = 27B
+gut-feeling model list | path [name] | rm [name]
+
+# opencode and agents
+gut-feeling init [--opencode] [--global]
+gut-feeling agents install [--agent opencode|claude|codex] [--global]
+gut-feeling agents show instructions|skill|snippet
+gut-feeling mcp                         # the MCP stdio server agents launch
 ```
-
-`opencode.json` and `.opencode/plugins/clef.js` embed this clone's absolute paths,
-so they are gitignored — regenerate them with `make init` / `make opencode` after
-cloning.
-
-## Run
-
-```bash
-make doctor        # check env, weights, and server readiness
-make start         # start the warm model server (background)
-make status        # is it up?
-make logs          # tail the server log
-make stop          # stop it
-make serve         # run it in the foreground instead
-```
-
-opencode reads the project `opencode.json` automatically — **restart opencode**
-after first install so it picks up the MCP server. Verify:
-
-```bash
-make mcp-list      # → ✓ clef connected
-```
-
-### Make targets
-
-| Target | What it does |
-| --- | --- |
-| `make help` | List all targets (default) |
-| `make bootstrap` | From a fresh clone: `setup` + `init` + `doctor` |
-| `make setup` | `sync` + `download` |
-| `make sync` | Install/sync Python deps (uv) |
-| `make download` | Fetch Clef-Flash weights (~18 GB) |
-| `make init` | Regenerate `opencode.json` with this clone's absolute paths |
-| `make serve` | Run model server in the foreground |
-| `make start` / `stop` / `restart` | Background model server lifecycle |
-| `make status` | Server health + engine info |
-| `make logs` | Tail `logs/server.log` |
-| `make mcp` | Run the MCP server in the foreground (debug) |
-| `make mcp-list` | `opencode mcp list` |
-| `make test` | Full test suite (loads the model once) |
-| `make test-fast` | Unit tests only (no model load) |
-| `make test-strict` | Full suite that **fails** if weights are missing (CI) |
-| `make mcp-check` | MCP protocol end-to-end check |
-| `make smoke` | Direct MPS inference smoke test |
-| `make compile` | Byte-compile all modules |
-| `make check` | `compile` + `test-fast` |
-| `make ci` | `bootstrap` + `check` + `test-strict` (full gate) |
-| `make doctor` | Environment / model / server readiness |
-| `make clean` | Remove caches and stale pid files |
-| `make clean-model` | Delete weights (`CLEF_FORCE=1 make clean-model` to skip the prompt) |
-
-Override the server bind with env vars, e.g. `CLEF_PORT=9000 make start`.
-
-### Fully programmatic (fresh clone → working agent)
-
-```bash
-make bootstrap      # deps + weights + opencode.json + readiness
-make start          # warm the model (optional; opencode auto-starts it too)
-make ci             # non-interactive gate: bootstrap + check + strict tests
-```
-
-Everything above is idempotent and non-interactive. The only manual step is
-restarting a running opencode so it picks up `opencode.json`.
 
 ## Usage
 
-Ask the agent in natural language; it will call `clef_decide` with a state and
-typed questions. Examples:
-
-- *"Is this bug report urgent? Which team should own it?"*
-- *"Score how severe this incident is on No impact / Minor / Major / Critical."*
-- *"Classify which module this change touches."*
-
-The tool returns:
+Ask the agent in natural language — "Is this bug report urgent, and which team should own
+it?" — and it calls `gut-feeling_advise` with a state and typed questions:
 
 ```json
 {
@@ -248,14 +165,81 @@ The tool returns:
 }
 ```
 
-Question types: `noul` (yes/no → P(true)), `choice` (named options),
-`score` (ordered options → expected score + legend).
+Question types: `noul` (yes/no → P(true)), `choice` (named options), `score` (ordered options →
+expected score plus legend). The `model` field echoes the upstream model label.
+
+## Configuration
+
+Settings resolve as **CLI flag > environment variable > config file > default**. The config file
+is JSON at `gut-feeling config path` (keys `model`, `host`, `port`, `device`, `max_length`).
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `GUT_FEELING_HOST` / `GUT_FEELING_PORT` | `127.0.0.1` / `8765` | Model server address |
+| `GUT_FEELING_DEVICE` | `auto` | `auto`, `mps`, or `cpu` |
+| `GUT_FEELING_MODEL` | `flash` | `flash` (9B) or `full` (27B) |
+| `GUT_FEELING_MODEL_DIR` | — | Run weights from this directory instead of the pinned cache |
+| `GUT_FEELING_MAX_LENGTH` | `16384` | Token cap per request |
+| `GUT_FEELING_SERVER_URL` | `http://127.0.0.1:8765` | Where the MCP server sends requests |
+| `GUT_FEELING_AUTOSTART` | `1` | Let the MCP server start the model server on demand |
+| `GUT_FEELING_START_TIMEOUT` | `300` | Seconds to wait for the model server to start |
+| `GUT_FEELING_STATE_DIR` | Application Support | Where the pid file and logs live |
+
+## Development
+
+```
+gut_feeling/
+  cli.py              # the `gut-feeling` command (alias `gut`)
+  runtime.py          # MPS-safe loader (CPU load → .to("mps")) + Engine
+  server.py           # FastAPI: POST /v1/systemone, GET /health (reports pid)
+  mcp_server.py       # MCP stdio server: advise tool, instructions, gut-feeling://guide
+  process.py          # model-server lifecycle (pid file + HTTP health)
+  models.py           # pinned model registry + pull/list/rm
+  paths.py config.py  # platform dirs, config precedence
+  opencode_config.py opencode_plugin.py   # opencode integration
+  agent_kit/          # what agents read: instructions, gut-feeling-advise skill, AGENTS snippet
+packages/opencode-plugin/   # npm-ready opencode plugin source
+scripts/              # MPS smoke test, MCP end-to-end check
+tests/                # pytest suite (unit + model-backed, host-isolated)
+.specify/             # spec-kit; memory/constitution.md governs this repo
+AGENTS.md CLAUDE.md   # guidelines for agents working on this repo
+Makefile              # contributor lifecycle (wraps the CLI)
+```
+
+```bash
+make bootstrap    # deps + pinned weights + opencode.json + doctor (idempotent)
+make start        # model server in the background; stop | restart | status | logs
+make opencode     # this checkout's opencode plugin and skill
+```
+
+`opencode.json`, `.opencode/plugins/gut-feeling.js`, and `.opencode/skills/gut-feeling-advise/`
+embed this clone's absolute paths or copy packaged files, so they are gitignored — regenerate
+them with `make init` / `make opencode` after cloning.
+
+### Make targets
+
+| Target | What it does |
+| --- | --- |
+| `make help` | List all targets (default) |
+| `make bootstrap` | From a fresh clone: `setup` + `init` + `doctor` |
+| `make setup` / `sync` / `download` | Deps + weights / deps only / pinned weights to `.models/` |
+| `make init` / `make opencode` | `gut-feeling init` / `gut-feeling init --opencode` for this checkout |
+| `make serve` / `start` / `stop` / `restart` / `status` / `logs` | Model-server lifecycle via the CLI |
+| `make mcp` / `make mcp-list` | Run the MCP server / `opencode mcp list` |
+| `make test` / `test-fast` / `test-strict` | Full suite / unit tests only / full suite that fails without weights |
+| `make mcp-check` / `make smoke` | MCP end-to-end check / direct MPS inference |
+| `make compile` / `make check` | Byte-compile / compile + unit tests |
+| `make ci` | `bootstrap` + `check` + `test-strict` |
+| `make doctor` | `gut-feeling doctor` |
+| `make clean` / `make clean-model` | Caches and build output / weights (`GUT_FEELING_FORCE=1` skips the prompt) |
+
+Make re-syncs the environment automatically when `pyproject.toml` or `uv.lock` changes.
 
 ## Tests
 
 ```bash
-make test         # full suite (~35s, loads the model once)
-make test-fast    # unit tests only, no model load (~11s)
+make test         # full suite (~30 s, loads the model once)
+make test-fast    # unit tests only, no model load (~12 s)
 make check        # compile + test-fast
 make test-strict  # full suite; FAILS (not skips) if weights are missing — for CI
 make ci           # bootstrap + check + test-strict
@@ -263,55 +247,51 @@ make ci           # bootstrap + check + test-strict
 
 `tests/` covers the supported call paths:
 
-- `GET /health` (device/dtype reporting)
-- `POST /v1/systemone` across `noul` / `choice` / `score`, probability
+- `GET /health` and `POST /v1/systemone` across `noul` / `choice` / `score`, probability
   normalization, and request-validation `422`s
-- MCP tool discovery and `decide` over stdio
-- MCP error when the model server is down
-- MCP autostart on a configured (non-default) port, with PID cleanup
-- `opencode.json` merge/idempotency, pinned model revisions, and the management
-  script (without invoking opencode)
+- MCP tool discovery, `advise` over stdio, actionable errors (server down, model missing,
+  malformed questions), and autostart on a configured port with pid cleanup
+- the agent kit: instructions size, skill frontmatter, the `gut-feeling://guide` resource
+- the CLI: `agents`, `init --opencode`, `status`/`stop` on unused ports, `doctor`, `uninstall`
+- process safety: `stop` never signals a pid that is not a gut-feeling server it started
 
-**Safe on a host running other opencode instances.** The suite:
+**Safe on a host running other opencode instances.** The suite binds random free ports (never
+`8765`), keeps state in temporary directories, stops only the processes it started, and never
+invokes the opencode CLI or touches global opencode config.
 
-- binds a **random free port** and never the default `8765`,
-- starts/stops **only the processes it owns** (tracked by PID; never kills by port),
-- never invokes the opencode CLI or mutates global opencode config.
-
-**CI** (`.github/workflows/ci.yml`): every push/PR runs `uv sync --locked`,
-`make check`, `uv build`, and an install smoke of the built wheel as a uv tool on a
-hosted Apple Silicon runner. Hosted runners lack the memory for the ~19 GB fp16
-model, so the model-backed `make test-strict` job runs on manual dispatch against a
-self-hosted Apple Silicon runner.
+**CI** (`.github/workflows/ci.yml`) runs `uv sync --locked`, `make check`, `uv build`, and an
+install smoke of the built wheel on a hosted Apple Silicon runner. Hosted runners lack the
+memory for the ~19 GB fp16 model, so the model-backed `make test-strict` job runs on manual
+dispatch against a self-hosted Apple Silicon runner.
 
 ## Caveats
 
-- **Gated DeltaNet fallback.** Qwen3.5's backbone is a hybrid linear-attention
-  model. The optimized CUDA kernels (`causal_conv1d`, `flash-linear-attention`)
-  don't exist for Apple Silicon, so it uses the pure-PyTorch reference path. This
-  is **correct but slower**. You'll see two "falling back" log lines — expected.
-- **fp16 on MPS.** `bfloat16` works but is emulated and less battle-tested on
-  MPS; the loader uses `float16`. CPU mode uses `float32`.
-- **Vision/video untested on MPS.** Text-only inputs skip the vision tower
-  entirely (verified in Clef's own code), so text decisions are safe. Image/video
-  on MPS is unproven.
-- **Numerics.** MPS can differ slightly from CUDA/CPU. If calibrated
-  probabilities matter, cross-check with `CLEF_DEVICE=cpu scripts/clef-server.sh restart`.
-- **`device_map={"": "mps"}` segfaults** in this torch/transformers combo. The
-  loader works around it by loading on CPU then moving to MPS. Don't "simplify"
-  that away.
+- **Gated DeltaNet fallback.** Qwen3.5's backbone is a hybrid linear-attention model. The
+  optimized CUDA kernels (`causal_conv1d`, `flash-linear-attention`) don't exist for Apple
+  Silicon, so it uses the pure-PyTorch reference path: **correct but slower**. You'll see two
+  "falling back" log lines — expected.
+- **fp16 on MPS.** `bfloat16` works but is emulated and less battle-tested on MPS, so the
+  loader uses `float16`; CPU mode uses `float32`.
+- **Vision and video are untested on MPS.** Text-only inputs skip the vision tower entirely, so
+  text questions are safe.
+- **Numerics.** MPS can differ slightly from CUDA/CPU. If calibrated probabilities matter,
+  cross-check with `GUT_FEELING_DEVICE=cpu gut-feeling restart`.
+- **`device_map={"": "mps"}` segfaults** with the pinned stack. The loader loads on CPU and then
+  moves the model to MPS — don't "simplify" that away.
 
 ## Troubleshooting
 
-- Server logs: `logs/server.log`
-- MCP discovery failing in opencode: check `opencode mcp list`; the config uses
-  the flat `mcp.<name>` shape this opencode build expects.
-- `Qwen3VLVideoProcessor requires Torchvision` → `uv add torchvision` (already in deps).
-- Any single unimplemented MPS op falls back to CPU (`PYTORCH_ENABLE_MPS_FALLBACK=1`,
-  set by the runtime).
+- Start with `gut-feeling doctor`, then `gut-feeling logs`
+  (`~/Library/Application Support/gut-feeling/logs/server.log`).
+- The agent can't see the tool: `opencode mcp list` should show `✓ gut-feeling connected`.
+- "model … is not pulled": run `gut-feeling model pull`, or point `GUT_FEELING_MODEL_DIR` at the
+  weights.
+- `Qwen3VLVideoProcessor requires Torchvision` → torchvision is a pinned dependency; run
+  `uv sync` (or reinstall the tool).
+- Any single unimplemented MPS op falls back to CPU (`PYTORCH_ENABLE_MPS_FALLBACK=1`, set by the
+  runtime).
 
 ## License
 
-MIT (see `LICENSE`). The Clef model weights and Cloudflare's
-`joint_schema_model.py` are Apache-2.0; they are downloaded from Hugging Face at
-runtime, not redistributed here.
+MIT (see `LICENSE`). Cloudflare's Clef weights and `joint_schema_model.py` are Apache-2.0; they
+are downloaded from Hugging Face at runtime, not redistributed here.
