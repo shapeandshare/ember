@@ -1,0 +1,37 @@
+# CI — model-backed tests
+#
+# STATUS: STUB — requires a self-hosted Apple Silicon runner with model weights.
+# Runs only on manual dispatch until a self-hosted runner is registered.
+# To enable automatic runs: register a self-hosted runner with labels
+#   [self-hosted, macos, arm64] and update the `on:` trigger.
+#
+name: CI — Model
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: Reason for manual run
+        required: false
+        default: ad-hoc
+
+jobs:
+  model-tests:
+    name: Model-backed tests (Apple Silicon)
+    runs-on: [self-hosted, macos, arm64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Download model weights
+        run: make download
+
+      - name: Run strict test suite
+        run: make test-strict

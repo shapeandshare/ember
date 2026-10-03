@@ -1,0 +1,43 @@
+# Release automation
+#
+# STATUS: STUB — not yet enabled.
+# Pre-requisites before enabling:
+#   1. Configure commitizen bump workflow and confirm CHANGELOG.md generation
+#   2. Add a BUMP_PAT secret (GitHub PAT with repo + workflow scopes) for auto-merge
+#   3. Configure PyPI trusted publishing or token (PYPI_TOKEN secret) if publishing to PyPI
+#   4. Test the full bump -> tag -> release flow manually first
+#
+name: Release
+
+on:
+  workflow_dispatch:   # manual trigger only
+
+jobs:
+  release:
+    name: Cut release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.BUMP_PAT || github.token }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked --all-groups
+
+      - name: Bump version + changelog
+        run: uv run cz bump --changelog
+
+      - name: Build wheel
+        run: uv build
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: false

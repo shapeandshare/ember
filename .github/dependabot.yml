@@ -1,0 +1,38 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: America/Los_Angeles
+    groups:
+      ml-deps:
+        patterns: ["torch*", "torchvision*", "transformers*", "accelerate*", "safetensors*", "huggingface*"]
+        update-types: ["minor", "patch"]
+      server-deps:
+        patterns: ["fastapi*", "uvicorn*", "pydantic*", "httpx*"]
+        update-types: ["minor", "patch"]
+      mcp-deps:
+        patterns: ["mcp*"]
+        update-types: ["minor", "patch"]
+      dev-deps:
+        patterns: ["pytest*", "ruff*", "mypy*", "bandit*", "commitizen*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      # Pinned to tested minor series — bump requires model-backed tests (Article V)
+      - dependency-name: "torch"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "torchvision"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "transformers"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: America/Los_Angeles

@@ -1,0 +1,109 @@
+# CI — fast check gate
+#
+# STATUS: STUB — not yet enabled for automatic runs.
+# To enable: change the `on:` block to trigger on push/pull_request.
+# Pre-requisites before enabling:
+#   1. Confirm `make lint`, `make typecheck`, `make security` pass locally
+#   2. Add ruff, mypy, bandit to dev dependencies and run `uv sync --locked`
+#   3. Verify matrix targets in this file match current Makefile targets
+#
+name: CI — Check
+
+on:
+  workflow_dispatch:   # manual trigger only until enabled
+  # push:              # uncomment to enable on push
+  #   branches: [main]
+  # pull_request:      # uncomment to enable on PRs
+  #   branches: [main]
+
+jobs:
+  check:
+    name: Compile + unit tests
+    runs-on: macos-latest   # Apple Silicon hosted runner when available
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked --all-groups
+
+      - name: Compile
+        run: make compile
+
+      - name: Unit tests (no model)
+        run: make test-fast
+
+  lint:
+    name: Lint + format check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked --all-groups
+
+      - name: Ruff lint
+        run: make lint
+
+      - name: Ruff format check
+        run: make format-check
+
+  typecheck:
+    name: Type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked --all-groups
+
+      - name: mypy strict
+        run: make typecheck
+
+  security:
+    name: Security scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked --all-groups
+
+      - name: Bandit
+        run: make security
+
+  gate-status:
+    name: Gate status
+    runs-on: ubuntu-latest
+    needs: [check, lint, typecheck, security]
+    if: always()
+    steps:
+      - name: Check all gates passed
+        run: |
+          if [[ "${{ needs.check.result }}" != "success" || \
+                "${{ needs.lint.result }}" != "success" || \
+                "${{ needs.typecheck.result }}" != "success" || \
+                "${{ needs.security.result }}" != "success" ]]; then
+            echo "One or more gates failed"
+            exit 1
+          fi
+          echo "All gates passed"
