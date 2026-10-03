@@ -11,3 +11,5 @@ logs/
 /.opencode/plugins/gut-feeling.js
 /.opencode/skills/gut-feeling-advise/
 .DS_Store
+.idea/
+.omo/
