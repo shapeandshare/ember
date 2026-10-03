@@ -1,4 +1,4 @@
-# Gut Feeling mascots
+# Ember mascots
 
 **Ember is the primary mascot.** Mellow and Float are retained alternate concepts.
 

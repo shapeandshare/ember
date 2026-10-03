@@ -14,7 +14,7 @@ All three SVGs have transparent canvases and transparent negative space. They co
 For system-theme switching:
 
 ```html
-<img src="/assets/brand/svg/mellow-auto.svg" alt="Gut Feeling" width="128" height="128">
+<img src="/assets/brand/svg/mellow-auto.svg" alt="Mellow" width="128" height="128">
 ```
 
 For an application with its own theme toggle, choose `mellow-light.svg` or `mellow-dark.svg` based on the application's current theme. Automatic mode follows the browser's preferred color scheme; it does not read a parent application's theme class. Use explicit theme files for image editors and export tools that do not support CSS media queries.

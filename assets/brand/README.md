@@ -1,4 +1,4 @@
-# Gut Feeling brand
+# Ember brand
 
 **Ember is the official mascot.** Its curled plum silhouette and glowing tummy
 represent a warm, local source of advice. The product advises; the agent decides.
@@ -39,8 +39,8 @@ The mascot's gradients add complementary orange and peach shades.
 
 ## Theme integration
 
-Load `tokens.css` and use `var(--gf-surface)`, `var(--gf-text)`,
-`var(--gf-muted)`, `var(--gf-accent)`, and `var(--gf-border)`.
+Load `tokens.css` and use `var(--ember-surface)`, `var(--ember-text)`,
+`var(--ember-muted)`, `var(--ember-accent)`, and `var(--ember-border)`.
 The stylesheet defaults to system preference. Set `data-theme="light"` or
 `data-theme="dark"` on the root HTML element to override it.
 

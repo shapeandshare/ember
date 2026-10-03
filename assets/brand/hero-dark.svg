@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
-<title id="title">gut-feeling</title><desc id="desc">Ember, the Gut Feeling mascot, hugging its glowing tummy. Give your agent a gut feeling.</desc>
+<title id="title">ember</title><desc id="desc">Ember hugging its glowing tummy. Give your agent a gut feeling.</desc>
 <g transform="translate(18 8) scale(.38)"><style>.warm{stop-color:#E8A569}.plum{stop-color:#713C60}.lavender{stop-color:#A88CC9}</style><defs>
 <radialGradient id="shell" cx="80%" cy="32%" r="83%"><stop class="warm"/><stop offset=".38" stop-color="#D65E64"/><stop offset=".76" class="plum"/><stop offset="1" stop-color="#B34D69"/></radialGradient>
 <radialGradient id="core" cx="67%" cy="27%" r="80%"><stop stop-color="#FFF4B1"/><stop offset=".38" stop-color="#FFC24D"/><stop offset="1" stop-color="#FF722F"/></radialGradient>
@@ -13,7 +13,7 @@
 <g fill="url(#core)"><ellipse cx="404" cy="271" rx="25" ry="53" transform="rotate(43 404 271)"/><ellipse cx="316" cy="382" rx="17" ry="40" transform="rotate(29 316 382)"/><ellipse cx="298" cy="322" rx="8" ry="20" transform="rotate(36 298 322)"/><ellipse cx="285" cy="461" rx="8" ry="13"/></g>
 <g fill="none" stroke="#591344" stroke-width="10" stroke-linecap="round"><path d="M 630 343 Q 650 367 677 357"/><path d="M 774 385 Q 786 404 811 397"/><path d="M 699 390 Q 714 409 738 402"/></g></g>
 <g font-family="system-ui, -apple-system, sans-serif" fill="#FFF8EB">
-<text x="455" y="169" font-size="76" font-weight="750" letter-spacing="-3">gut-feeling</text>
+<text x="455" y="169" font-size="76" font-weight="750" letter-spacing="-3">ember</text>
 <text x="460" y="231" font-size="29">Give your agent a gut feeling.</text>
 <text x="460" y="280" font-size="21" fill="#D8BFCB">Local advice for agents. The agent decides.</text>
 </g><g transform="translate(460 317)"><rect width="60" height="6" rx="3" fill="#603050"/><rect x="70" width="60" height="6" rx="3" fill="#D65E64"/><rect x="140" width="60" height="6" rx="3" fill="#FFC24D"/></g></svg>
