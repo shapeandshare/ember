@@ -20,6 +20,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Request, Response
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
+    CollectorRegistry,
     Counter,
     Gauge,
     Histogram,
@@ -32,28 +33,35 @@ from .runtime import Engine
 
 _ENGINE: Engine | None = None
 
+REGISTRY = CollectorRegistry()
+
 ADVISE_REQUESTS = Counter(
     "ember_advise_requests_total",
     "advise requests by HTTP status.",
     ["status"],
+    registry=REGISTRY,
 )
 ADVISE_LATENCY = Histogram(
     "ember_advise_latency_seconds",
     "advise request latency in seconds.",
     ["status"],
+    registry=REGISTRY,
 )
 ADVISE_INPUT_TOKENS = Counter(
     "ember_advise_input_tokens_total",
     "Input tokens processed by advise.",
+    registry=REGISTRY,
 )
 ADVISE_OUTPUT_TOKENS = Counter(
     "ember_advise_output_tokens_total",
     "Output tokens produced by advise.",
+    registry=REGISTRY,
 )
 MODEL_INFO = Gauge(
     "ember_model_info",
     "Metadata for the loaded model (value is always 1).",
     ["model", "device", "dtype"],
+    registry=REGISTRY,
 )
 
 
@@ -82,6 +90,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
     finally:
         _ENGINE = None
+        MODEL_INFO.clear()
 
 
 app = FastAPI(title="ember", version="0.1.0", lifespan=lifespan)
@@ -124,8 +133,8 @@ def health() -> dict[str, Any]:
 
 @app.get("/metrics")
 def metrics() -> Response:
-    """Prometheus exposition of server metrics."""
-    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+    """Prometheus exposition of ember's own metrics."""
+    return Response(content=generate_latest(REGISTRY), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.post("/v1/systemone")

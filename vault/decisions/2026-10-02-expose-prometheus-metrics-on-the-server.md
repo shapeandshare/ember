@@ -34,14 +34,16 @@ signal that the server is healthy and being used.
 - Instrument `/v1/systemone` in an HTTP middleware so every request is counted and timed
   by status — including schema-validation 422s, 503s, and 500s; `/health` and `/metrics`
   are cheap and are intentionally not counted.
+- Register the metrics in a dedicated `CollectorRegistry`, so `/metrics` exposes only ember
+  metrics and not the standard `python_*`/`process_*` collectors.
 
 ## Consequences
 
 - No authentication: `/metrics` is reachable wherever the server is bound. The default is
   loopback, so changing `EMBER_HOST` already exposes the whole API.
 - The metric names and labels are public API; change them together with the README and tests.
-- `ember_model_info` is set when the engine loads and is not cleared, so it reports the last
-  loaded model.
+- `ember_model_info` is set when the engine loads and cleared when it unloads, so it tracks
+  `/health` readiness rather than reporting a stale model.
 
 ## Alternatives considered
 

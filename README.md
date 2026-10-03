@@ -198,7 +198,9 @@ While the model server is running it exposes Prometheus metrics at
 | `ember_model_info{model,device,dtype}` | gauge | `1` while a model is loaded |
 
 The endpoint binds to the same address as the rest of the API (loopback by default), so
-it is reachable only there unless you change `EMBER_HOST`.
+it is reachable only there unless you change `EMBER_HOST`. Ember's metrics live in a
+dedicated Prometheus registry, so the standard `python_*`/`process_*` collectors are not
+included — `/metrics` shows only the table above.
 
 ## Development
 

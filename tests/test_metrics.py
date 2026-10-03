@@ -48,6 +48,37 @@ def test_metrics_endpoint_is_exposed_without_the_model():
     assert resp.headers["content-type"].startswith("text/plain")
     for name in METRIC_NAMES:
         assert name in resp.text, f"{name} missing from /metrics"
+    for name in (
+        "python_info",
+        "python_gc_objects_collected_total",
+        "process_cpu_seconds_total",
+    ):
+        assert name not in resp.text, f"{name} should not be exposed"
+
+
+def test_model_info_tracks_the_engine_lifecycle(monkeypatch, tmp_path):
+    from ember import server
+    from fastapi.testclient import TestClient
+    from prometheus_client import generate_latest
+
+    class FakeEngine:
+        device = "cpu"
+        dtype = "float32"
+
+        def __init__(self, model_dir, device=None, max_length=None):
+            self.model_dir = model_dir
+
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    monkeypatch.setattr(server.models, "resolve_dir", lambda name: model_dir)
+    monkeypatch.setattr(server, "Engine", FakeEngine)
+
+    with TestClient(server.app) as client:
+        during = client.get("/metrics").text
+    assert _total(during, "ember_model_info") == 1.0
+
+    after = generate_latest(server.REGISTRY).decode()
+    assert _total(after, "ember_model_info") == 0.0
 
 
 def test_unloaded_engine_requests_are_counted():
