@@ -4,8 +4,12 @@ and request-validation errors. Uses the session-scoped isolated server.
 
 from __future__ import annotations
 
+import base64
+import io
+
 import httpx
 import pytest
+from PIL import Image
 
 STATE = (
     "Checkout is down for all customers; every request has returned HTTP 500 "
@@ -31,12 +35,29 @@ QUESTIONS = {
 }
 
 
-def _ask(base_url: str, *, state=STATE, questions=QUESTIONS) -> httpx.Response:
-    return httpx.post(
-        f"{base_url}/v1/systemone",
-        json={"model": "clef-flash", "state": state, "questions": questions},
-        timeout=300.0,
-    )
+def _png_data_uri(color: tuple[int, int, int] = (220, 30, 30)) -> str:
+    buffer = io.BytesIO()
+    Image.new("RGB", (8, 8), color).save(buffer, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
+
+
+def _ask(
+    base_url: str,
+    *,
+    state=STATE,
+    questions=QUESTIONS,
+    images=None,
+    videos=None,
+    media_kwargs=None,
+) -> httpx.Response:
+    body: dict = {"model": "clef-flash", "state": state, "questions": questions}
+    if images is not None:
+        body["images"] = images
+    if videos is not None:
+        body["videos"] = videos
+    if media_kwargs is not None:
+        body["media_kwargs"] = media_kwargs
+    return httpx.post(f"{base_url}/v1/systemone", json=body, timeout=300.0)
 
 
 @pytest.mark.model
@@ -117,4 +138,40 @@ def test_missing_state_rejected(base_url: str) -> None:
 @pytest.mark.model
 def test_missing_questions_rejected(base_url: str) -> None:
     resp = httpx.post(f"{base_url}/v1/systemone", json={"state": STATE}, timeout=30.0)
+    assert resp.status_code == 422
+
+
+@pytest.mark.model
+def test_systemone_accepts_an_inline_image(base_url: str) -> None:
+    questions = {
+        "red": {"type": "noul", "instructions": "Is the image predominantly red?"}
+    }
+    resp = _ask(
+        base_url,
+        state="Review the attached color swatch.",
+        questions=questions,
+        images=[_png_data_uri()],
+    )
+    assert resp.status_code == 200, resp.text
+    answer = resp.json()["answers"]["red"]
+    assert answer["type"] == "noul"
+    assert answer["noul"] > 0.5, "the model should read the red swatch as red"
+
+
+@pytest.mark.model
+def test_invalid_media_ref_rejected(base_url: str) -> None:
+    resp = _ask(base_url, images=["/etc/passwd"])
+    assert resp.status_code == 422
+
+
+@pytest.mark.model
+def test_disallowed_data_uri_content_type_rejected(base_url: str) -> None:
+    svg = "data:image/svg+xml;base64," + base64.b64encode(b"<svg/>").decode()
+    resp = _ask(base_url, images=[svg])
+    assert resp.status_code == 422
+
+
+@pytest.mark.model
+def test_reserved_media_kwargs_key_rejected(base_url: str) -> None:
+    resp = _ask(base_url, media_kwargs={"text": "override"})
     assert resp.status_code == 422
