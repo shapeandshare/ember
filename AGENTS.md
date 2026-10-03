@@ -1,6 +1,6 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-02 (project vault; product renamed to ember to match the mascot; table-stakes tooling; design doc; community docs)
+**Last updated**: 2026-10-02 (project vault; product renamed to ember to match the mascot; table-stakes tooling; design doc; community docs; full context window and vision inputs)
 
 ## What this repo is
 
@@ -255,6 +255,12 @@ Run `make pr-ready` before every PR: formats, lints, type-checks, security-scans
   Never kill by port or process pattern (constitution Article IV).
 - **torch and torchvision are pinned to the tested minor series** because MPS behavior is
   version-sensitive; widening the range is a constitution-governed change.
+- **Media refs are `data:` URIs or `{content_type, base64}` objects only** (`ember/media.py`);
+  remote URLs and local paths are rejected so an agent cannot make the warm server read host
+  files or fetch URLs. Video frames must be decoded to PIL before Clef's processor — string
+  frames need `torchcodec`, which we do not ship.
+- **`max_length` of `0` means "the model's maximum"** (`ember/config.py` → `Engine` →
+  `runtime.model_max_length`). Do not reintroduce a hardcoded 16384 cap.
 - **Hosted CI cannot hold the model.** Model-backed tests run locally or on a self-hosted
   Apple Silicon runner via `workflow_dispatch`.
 - **Pushing `.github/workflows/` changes over HTTPS** needs a gh token with the `workflow` scope.
@@ -273,6 +279,11 @@ MUST pass the constitution check.
 
 ## Recent Changes
 
+- 2026-10-02: full context window and vision inputs: `max_length` now defaults to the model's
+  maximum (262144, derived from the pinned `config.json`; `0` means derive); `advise` accepts
+  `images`/`videos`/`media_kwargs` as base64 `data:` URIs or `{content_type, base64}` objects,
+  decoded to PIL in `ember/media.py` (server-side only); MCP and HTTP schemas, the agent kit,
+  README, and tests updated; vision verified end-to-end on MPS.
 - 2026-10-02: project vault on the wellspring pattern: `vault/` (hub `vault/ember.md`,
   tag vocabulary, templates), the `vault` MCP server (`@bitbonsai/mcpvault@0.12.4`) in
   `.opencode/opencode.json`, `make vault-audit` (`scripts/vault_audit.py`, also run by the

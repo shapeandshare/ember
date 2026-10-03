@@ -15,8 +15,8 @@ decides for you — it advises, you decide.
 | --- | --- |
 | Latency | ~1 s per call when warm (1–3 questions cost the same); ~5–15 s for the first call while the model loads |
 | Determinism | The same request always gets the same feeling |
-| Privacy | Runs on this machine; `state` never leaves it |
-| Sees | Only `state` and your questions — no files, history, or web |
+| Privacy | Runs on this machine; `state` and media never leave it |
+| Sees | `state`, any `images`/`videos` you attach, and your questions — no history or web |
 | Returns | Calibrated probabilities over the options you define |
 
 ## When to consult it
@@ -50,6 +50,8 @@ apply an unexamined heuristic:
 {
   "input": {
     "state": "<string or JSON with ALL the evidence>",
+    "images": ["<optional: data:image/png;base64,...>"],
+    "videos": [["<optional: frame data URIs of one video>"]],
     "questions": {
       "<id>": {"type": "noul", "instructions": "<a proposition, phrased positively>"},
       "<id>": {"type": "choice", "instructions": "<what to weigh>",
@@ -60,6 +62,11 @@ apply an unexamined heuristic:
   }
 }
 ```
+
+Images and videos are optional and inlined as base64 `data:` URIs (or
+`{"content_type": "image/png", "base64": "..."}` objects). Remote URLs and local
+paths are not accepted: the model server never reads host files or fetches URLs on
+an agent's behalf.
 
 Each answer is keyed by question id:
 
@@ -73,9 +80,10 @@ The response also carries `usage.input_tokens` and `latency_ms`.
 
 ## Asking well
 
-1. **Put all evidence in `state` — and only evidence.** ember sees nothing else. Prefer
+1. **Put all evidence in `state` — and only evidence.** Prefer
    structured JSON with labeled fields (`{"test": ..., "output": ..., "diff_summary": ...}`)
-   and trim logs to the relevant lines; inputs are capped at 16,384 tokens. Don't write your
+   and trim logs to the relevant lines; inputs are capped at the model's 262,144-token window.
+   Attach pixels as base64 `images`/`videos` when the evidence is visual. Don't write your
    own verdict into `state` ("this is an infrastructure issue"): it gets echoed back and you
    lose the independent read you asked for.
 2. **Ask exactly what you need.** Confidence is about the question asked, not about overall

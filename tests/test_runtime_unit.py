@@ -4,6 +4,7 @@ that is explicitly killed. Safe to run repeatedly and safe on a shared host.
 
 from __future__ import annotations
 
+import inspect
 import json
 import os
 import re
@@ -54,6 +55,53 @@ def test_joint_module_exposes_expected_api():
     module = runtime.joint_module(model_dir)
     for attr in ("systemone", "load_release_model", "encode_record", "collate_records"):
         assert hasattr(module, attr), f"joint_schema_model missing {attr}"
+
+
+def test_model_max_length_reads_text_config(tmp_path):
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text(
+        json.dumps({"text_config": {"max_position_embeddings": 4096}})
+    )
+    assert runtime.model_max_length(model_dir) == 4096
+
+
+def test_model_max_length_reads_top_level_config(tmp_path):
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text(
+        json.dumps({"max_position_embeddings": 8192})
+    )
+    assert runtime.model_max_length(model_dir) == 8192
+
+
+def test_model_max_length_falls_back_without_a_config(tmp_path):
+    assert runtime.model_max_length(tmp_path / "missing") == runtime.FALLBACK_MAX_LENGTH
+
+
+def test_model_max_length_falls_back_when_zero(tmp_path):
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text(
+        json.dumps({"text_config": {"max_position_embeddings": 0}})
+    )
+    assert runtime.model_max_length(model_dir) == runtime.FALLBACK_MAX_LENGTH
+
+
+def test_engine_max_length_defaults_to_the_model_maximum():
+    default = (
+        inspect.signature(runtime.Engine.__init__).parameters["max_length"].default
+    )
+    assert default is None
+
+
+def test_pinned_model_declares_the_model_maximum():
+    model_dir = runtime.DEFAULT_MODEL_DIR
+    if not model_dir.is_dir():
+        if os.environ.get("EMBER_REQUIRE_MODEL") == "1":
+            pytest.fail(f"model dir not present: {model_dir} (EMBER_REQUIRE_MODEL=1)")
+        pytest.skip("model dir not present")
+    assert runtime.model_max_length(model_dir) == 262144
 
 
 # --------------------------------------------------------------------------- #

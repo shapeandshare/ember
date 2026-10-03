@@ -82,7 +82,7 @@ class AdviseInput(BaseModel):
     state: Any = Field(
         description=(
             "The situation to read: a string or any JSON object/array. "
-            "ember sees nothing else."
+            "Attach images/videos separately when the evidence is visual."
         ),
     )
     questions: dict[str, Question] = Field(
@@ -90,6 +90,20 @@ class AdviseInput(BaseModel):
     )
     model: str = Field(
         default="clef-flash", description="Model label echoed back in the response."
+    )
+    images: list[str | dict[str, Any]] | None = Field(
+        default=None,
+        description=(
+            "Optional images as data: URIs (data:image/png;base64,...) or "
+            "{content_type, base64} objects. No remote URLs or local paths."
+        ),
+    )
+    videos: list[list[str | dict[str, Any]]] | None = Field(
+        default=None,
+        description="Optional videos, each a list of frame refs in the images format.",
+    )
+    media_kwargs: dict[str, Any] | None = Field(
+        default=None, description="Optional image/video processor arguments."
     )
 
 
@@ -122,17 +136,19 @@ def advise(input: AdviseInput) -> dict[str, Any]:
 
     ember (Cloudflare's Clef-Flash model, running locally) advises; you decide.
     Consult it at bounded decision points: intent, triage, routing, yes/no gates, and
-    risk, severity, or effort scores. It sees only `state`, so include every piece of
-    evidence the call depends on. For 'choice' the answer has the leading option,
-    its confidence, and full probabilities; for 'score' an expected score over the
-    ordered criteria; for 'noul' the probability the proposition is true.
+    risk, severity, or effort scores. It sees only what you pass, so include every
+    piece of evidence the call depends on and attach images or video frames as base64
+    `data:` URIs in `images`/`videos` when pixels are the evidence. For 'choice' the
+    answer has the leading option, its confidence, and full probabilities; for 'score'
+    an expected score over the ordered criteria; for 'noul' the probability the
+    proposition is true.
     """
     # Only ToolError messages reach the agent; anything else is reported generically.
     try:
         _ensure_server()
     except RuntimeError as exc:
         raise ToolError(str(exc)) from exc
-    payload = {
+    payload: dict[str, Any] = {
         "model": input.model,
         "state": input.state,
         "questions": {
@@ -140,6 +156,12 @@ def advise(input: AdviseInput) -> dict[str, Any]:
             for key, question in input.questions.items()
         },
     }
+    if input.images is not None:
+        payload["images"] = input.images
+    if input.videos is not None:
+        payload["videos"] = input.videos
+    if input.media_kwargs is not None:
+        payload["media_kwargs"] = input.media_kwargs
     try:
         resp = httpx.post(f"{SERVER_URL}/v1/systemone", json=payload, timeout=300.0)
     except httpx.HTTPError as exc:

@@ -167,10 +167,16 @@ it?" — and it calls `ember_advise` with a state and typed questions:
 Question types: `noul` (yes/no → P(true)), `choice` (named options), `score` (ordered options →
 expected score plus legend). The `model` field echoes the upstream model label.
 
+When the evidence is visual, attach images or video frames inline: `images` is a list of
+`data:image/png;base64,...` URIs (or `{"content_type": "image/png", "base64": "..."}`
+objects), and `videos` is a list of videos, each a list of frame refs. Remote URLs and local
+paths are rejected — the model server never reads host files or fetches URLs for an agent.
+
 ## Configuration
 
 Settings resolve as **CLI flag > environment variable > config file > default**. The config file
-is JSON at `ember config path` (keys `model`, `host`, `port`, `device`, `max_length`).
+is JSON at `ember config path` (keys `model`, `host`, `port`, `device`, `max_length`; a
+`max_length` of `0` means the model's own maximum).
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
@@ -178,7 +184,7 @@ is JSON at `ember config path` (keys `model`, `host`, `port`, `device`, `max_len
 | `EMBER_DEVICE` | `auto` | `auto`, `mps`, or `cpu` |
 | `EMBER_MODEL` | `flash` | `flash` (9B) or `full` (27B) |
 | `EMBER_MODEL_DIR` | — | Run weights from this directory instead of the pinned cache |
-| `EMBER_MAX_LENGTH` | `16384` | Token cap per request |
+| `EMBER_MAX_LENGTH` | `0` (the model's maximum: 262144) | Token cap per request; `0` derives it from the model |
 | `EMBER_SERVER_URL` | `http://127.0.0.1:8765` | Where the MCP server sends requests |
 | `EMBER_AUTOSTART` | `1` | Let the MCP server start the model server on demand |
 | `EMBER_START_TIMEOUT` | `300` | Seconds to wait for the model server to start |
@@ -275,8 +281,10 @@ dispatch against a self-hosted Apple Silicon runner.
   "falling back" log lines — expected.
 - **fp16 on MPS.** `bfloat16` works but is emulated and less battle-tested on MPS, so the
   loader uses `float16`; CPU mode uses `float32`.
-- **Vision and video are untested on MPS.** Text-only inputs skip the vision tower entirely, so
-  text questions are safe.
+- **Vision works on MPS.** Images and video frames run through the same fp16 path as text.
+  Inline them as base64 `data:` URIs in `images`/`videos`; remote URLs and local paths are
+  rejected on purpose, so an agent cannot make the server read host files or fetch URLs.
+  Text-only inputs skip the vision tower entirely.
 - **Numerics.** MPS can differ slightly from CUDA/CPU. If calibrated probabilities matter,
   cross-check with `EMBER_DEVICE=cpu ember restart`.
 - **`device_map={"": "mps"}` segfaults** with the pinned stack. The loader loads on CPU and then
