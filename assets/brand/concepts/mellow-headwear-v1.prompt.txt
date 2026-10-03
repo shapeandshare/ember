@@ -1,0 +1,11 @@
+Tool: built-in imagegen
+Reference: happy-gut-v1.png, original 08 Mellow
+
+Use case: logo-brand, precise character design variations. Reference target is ONLY the CENTER original character "08 · Mellow" in supplied image. Return to this ORIGINAL design, NOT later versions. Make one polished concept sheet of SIX variations in a spacious 3-column by 2-row grid on solid opaque warm cream. Every cell repeats exactly the SAME original Mellow lower silhouette: coral round bottom-heavy bean body with NO LEGS AND NO SHOES; deep plum abstract broad arm curling from left side across tummy, cream gap between arm and torso, sleepy closed eyes and small plum contented smile. Preserve original body's proportions and all details identically across six. Change ONLY head dressing silhouette. All headwear deep plum to match original arm. No other colors, no props, no clothing on body. Heading "Gut Feeling — Mellow Headwear". Small captions beneath each:
+"01 · Soft Point": short softly pointed conical cap with gently curved modest brim, slight tip lean.
+"02 · Fold": asymmetrical triangular fabric cap with one folded-over tip, no brim, clean iconic shape.
+"03 · Beret": low rounded tilted beret, tiny soft top nub, narrow curved underside.
+"04 · Hood": smooth cozy pointed hood framing upper head, one cream face opening, no drawstrings, no extension onto body.
+"05 · Wave": sculptural abstract crest of two flowing curved lobes sweeping to one side, airy minimal form.
+"06 · Crescent": simple crescent-shaped wrap cap hugging crown of head with one softly rising point, no moon icon or additional ornament.
+These six headwear designs must have clearly different silhouettes, not merely small tweaks. Keep head dressing compact relative to body, keep faces unobscured. Uniform character scale, consistent visual alignment, wide gutters, generous whitespace. Flat vector-like logo artwork, bold solid coral and plum shapes, no texture, no shading, no gradients, no realistic material, no detailed costume elements. No stars, buckles, leaves, patterns or mushroom gills. High contrast captions, all six fully visible. The defining original abstract tummy hug must remain unchanged.

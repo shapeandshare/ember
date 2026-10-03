@@ -1,0 +1,29 @@
+/* Gut Feeling: Ember brand palette. Explicit data-theme overrides system preference. */
+:root {
+  --gf-plum: #603050;
+  --gf-coral: #D65E64;
+  --gf-gold: #FFC24D;
+  --gf-cream: #FFF8EB;
+  --gf-ink: #201922;
+  --gf-surface: var(--gf-cream);
+  --gf-text: var(--gf-ink);
+  --gf-muted: #715568;
+  --gf-accent: var(--gf-plum);
+  --gf-border: #D8BFCB;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --gf-surface: #201922;
+    --gf-text: #FFF8EB;
+    --gf-muted: #D8BFCB;
+    --gf-accent: #FFC24D;
+    --gf-border: #98658F;
+  }
+}
+:root[data-theme="dark"] {
+  --gf-surface: #201922;
+  --gf-text: #FFF8EB;
+  --gf-muted: #D8BFCB;
+  --gf-accent: #FFC24D;
+  --gf-border: #98658F;
+}

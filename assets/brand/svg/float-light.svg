@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1050" width="1100" height="1050" role="img" aria-labelledby="float-title float-desc"><title id="float-title">Gut Feeling — Float</title><desc id="float-desc">A floating lavender organism with a warm inner glow and two droplets.</desc><style>.warm{stop-color:#FFC777}.plum{stop-color:#603050}.lavender{stop-color:#C7A4E9}</style><defs>
+<radialGradient id="jelly" cx="48%" cy="53%" r="65%"><stop stop-color="#FFEAB9"/><stop offset=".4" stop-color="#F8BEAA"/><stop offset=".73" class="lavender"/><stop offset="1" stop-color="#FFDAB6"/></radialGradient>
+<radialGradient id="glow"><stop stop-color="#FFF7B6"/><stop offset=".4" stop-color="#FFD47D"/><stop offset=".78" stop-color="#FFAE83" stop-opacity=".8"/><stop offset="1" stop-color="#FFA2A7" stop-opacity="0"/></radialGradient>
+<radialGradient id="drop" cx="65%" cy="25%" r="85%"><stop stop-color="#FFFBE5"/><stop offset=".24" stop-color="#EAD8FF"/><stop offset=".52" class="lavender"/><stop offset=".8" stop-color="#FFB6B0"/><stop offset="1" stop-color="#FFDEAD"/></radialGradient>
+<clipPath id="silhouette"><path d="M 350 311 C 409 275 419 192 501 157 C 614 102 739 155 771 258 C 801 346 765 405 814 453 C 842 482 909 488 926 548 C 950 631 891 688 816 678 C 730 663 696 701 654 757 C 598 837 512 869 433 824 C 354 780 365 719 316 671 C 264 618 182 613 166 545 C 139 432 266 374 350 311 Z"/></clipPath>
+</defs>
+<path d="M 350 311 C 409 275 419 192 501 157 C 614 102 739 155 771 258 C 801 346 765 405 814 453 C 842 482 909 488 926 548 C 950 631 891 688 816 678 C 730 663 696 701 654 757 C 598 837 512 869 433 824 C 354 780 365 719 316 671 C 264 618 182 613 166 545 C 139 432 266 374 350 311 Z" fill="url(#jelly)" stroke="#D9A7CF" stroke-width="4"/>
+<g clip-path="url(#silhouette)">
+<ellipse cx="548" cy="529" rx="252" ry="258" fill="url(#glow)"/>
+<g fill="none" stroke="#FFF2D5" stroke-width="3" opacity=".42"><ellipse cx="548" cy="529" rx="106" ry="119"/><ellipse cx="548" cy="529" rx="152" ry="167"/><path d="M 423 315 C 328 420 317 562 409 665 C 497 775 695 762 741 640 C 793 510 643 439 685 325"/><path d="M 367 334 C 268 438 251 553 349 619 C 444 683 433 803 548 794 C 633 788 653 708 735 681 C 826 650 858 618 815 548"/></g>
+<path d="M 503 170 C 593 131 696 176 734 236" fill="none" stroke="#FFF8ED" stroke-width="14" stroke-linecap="round" opacity=".6"/>
+<path d="M 195 490 C 178 555 257 593 318 617 C 382 642 405 703 438 748" fill="none" stroke="#FFF5D9" stroke-width="6" stroke-linecap="round" opacity=".7"/>
+</g>
+<g fill="url(#drop)" stroke="#EEACC8" stroke-width="3"><ellipse cx="280" cy="270" rx="37" ry="57" transform="rotate(39 280 270)"/><ellipse cx="779" cy="796" rx="38" ry="61" transform="rotate(49 779 796)"/></g>
+<g fill="none" stroke="#591344" stroke-width="9" stroke-linecap="round"><path d="M 508 315 Q 525 338 552 329"/><path d="M 674 359 Q 692 378 718 369"/><path d="M 587 357 Q 603 376 629 367"/></g></svg>

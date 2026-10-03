@@ -1,0 +1,4 @@
+Tool: built-in imagegen
+Reference: ../concepts/inner-glow-v2.png
+
+Extract ONLY the CENTER character 02 Float from the supplied three-character Inner Glow Round Two sheet as a single standalone centered mascot, no text, no other characters. Faithfully preserve the rounded asymmetrical floating translucent lavender-peach jelly organism, warm luminous golden tummy core, subtle flowing concentric inner ripples, two closed happy eyes and tiny serene smile, and two small lavender-peach floating droplets, one upper left and one lower right. Preserve softly shaded luminous illustration style and subtle hovering shadow. Full character and droplets visible with generous margin, square composition. Solid opaque warm cream background. Do not redesign, add arms, clothing, hats, legs, or decorations. This is the selected Float mascot for Gut Feeling.

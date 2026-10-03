@@ -1,0 +1,10 @@
+Tool: built-in imagegen
+Reference: mellow-pointy-hat-v1.png
+
+Use case: logo-brand. Edit the supplied Mellow mascot into a landscape comparison sheet with THREE minimal abstract variations. Use reference only for the beloved plump body, serene closed eyes/smile, and sweeping abstract arm hugging his tummy. New direction: radically simplify the hat and shoes; remove all wizard, jester, woodland, costume iconography. No stars, moons, leaves, pompoms, bands, buckles, cuffs, or decorative motifs.
+CRITICAL COLOR SEPARATION: body AND the abstract belly-hugging arm must be the SAME warm coral flesh color, with a deliberate slim cream negative-space curved slit defining the arm's sweeping shape across the tummy. Arm must NOT be colored like clothing. The hat and two shoes are a SECOND contrasting color shared only by those accessories. Face dark ink. Tiny legs also coral. Preserve the iconic tummy-hug silhouette with no fingers, no realistic anatomy.
+Three distinct restrained silhouettes, all in polished flat vector-like graphic style:
+01 "Fold": a small asymmetrical triangular hat with a single bent point, no brim, in deep petrol teal; two tiny matching teal oval shoes.
+02 "Arc": a low sculptural softly pointed cap, one continuous curved silhouette, no brim, in cobalt blue; two matching blue simple bean-shaped shoes.
+03 "Tilt": a compact jaunty cone tilted slightly to one side, one clean point, no brim, in muted aubergine; two matching aubergine rounded wedge shoes.
+Hats modest in scale, about one quarter of character height, body remains focal point. Shoes tiny and uncomplicated. Each figure full body, evenly spaced, same approximate height and body pose. Opaque pale warm cream background throughout, generous whitespace. Heading exactly "Gut Feeling — Less, but warmer". Small dark labels below exactly "01 · Fold", "02 · Arc", "03 · Tilt". Strong graphic simplicity, clean solid colors, no shading, gradient, texture, shadows or 3D. No mushroom or wizard brim. No additional props. Think abstract friendly brand symbol with a contented face rather than detailed fantasy character.

@@ -1,0 +1,4 @@
+Tool: built-in imagegen
+Reference: ../concepts/inner-glow-v2.png
+
+Extract ONLY the LEFT character 01 Ember from the supplied sheet as a single standalone centered mascot, no text, no other characters. Faithfully preserve the compact curled plum body, large soft arm embracing luminous orange tummy, head tilted tenderly toward tummy, closed happy eyes and tiny smile, orange spots, warm softly shaded illustrated treatment. Full body visible with generous margin, square composition. Solid opaque warm cream background. Do not redesign, add clothing, limbs, props or decorations. This is the selected final Ember mascot for Gut Feeling.

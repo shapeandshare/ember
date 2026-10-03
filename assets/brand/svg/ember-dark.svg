@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1050" role="img" aria-labelledby="ember-title ember-desc"><title id="ember-title">Gut Feeling — Ember</title><desc id="ember-desc">A curled creature hugging its glowing tummy.</desc><style>.warm{stop-color:#E8A569}.plum{stop-color:#713C60}.lavender{stop-color:#A88CC9}</style><defs>
+<radialGradient id="shell" cx="80%" cy="32%" r="83%"><stop class="warm"/><stop offset=".38" stop-color="#D65E64"/><stop offset=".76" class="plum"/><stop offset="1" stop-color="#B34D69"/></radialGradient>
+<radialGradient id="core" cx="67%" cy="27%" r="80%"><stop stop-color="#FFF4B1"/><stop offset=".38" stop-color="#FFC24D"/><stop offset="1" stop-color="#FF722F"/></radialGradient>
+<linearGradient id="arm" x1=".85" y1="0" x2=".2" y2="1" gradientUnits="objectBoundingBox"><stop class="warm"/><stop offset=".28" stop-color="#C16A7D"/><stop offset=".75" class="plum"/><stop offset="1" stop-color="#A24B6B"/></linearGradient>
+</defs>
+<path fill="url(#shell)" stroke="#EE8B79" stroke-width="3" d="M 773 448 C 881 485 956 596 951 739 C 951 873 856 925 677 925 L 415 916 C 225 920 155 798 166 652 C 176 475 285 286 451 193 C 575 123 735 127 811 214 C 878 291 875 397 825 442 C 808 455 790 457 773 448 Z"/>
+<path fill="#8C3452" d="M 763 451 C 866 489 894 579 866 700 C 839 817 697 866 561 811 C 444 764 353 659 375 552 C 390 473 498 429 588 433 Z"/>
+<ellipse cx="633" cy="632" rx="202" ry="202" fill="url(#core)"/>
+<path fill="url(#shell)" d="M 190 655 C 219 440 333 262 499 190 C 625 135 745 161 809 241 C 864 310 863 395 817 438 C 782 471 722 443 666 418 C 574 377 469 407 412 464 C 368 508 350 563 386 612 C 419 653 471 654 515 648 L 572 764 C 395 887 208 830 190 655 Z"/>
+<path fill="url(#arm)" stroke="#E58A83" stroke-width="3" d="M 202 675 C 222 726 282 761 340 755 C 413 749 447 700 509 661 C 577 618 643 637 671 696 C 707 769 652 852 572 896 C 467 953 318 930 242 861 C 188 812 165 733 177 684 Q 185 653 202 675 Z"/>
+<g fill="url(#core)"><ellipse cx="404" cy="271" rx="25" ry="53" transform="rotate(43 404 271)"/><ellipse cx="316" cy="382" rx="17" ry="40" transform="rotate(29 316 382)"/><ellipse cx="298" cy="322" rx="8" ry="20" transform="rotate(36 298 322)"/><ellipse cx="285" cy="461" rx="8" ry="13"/></g>
+<g fill="none" stroke="#591344" stroke-width="10" stroke-linecap="round"><path d="M 630 343 Q 650 367 677 357"/><path d="M 774 385 Q 786 404 811 397"/><path d="M 699 390 Q 714 409 738 402"/></g></svg>
