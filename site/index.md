@@ -13,11 +13,26 @@ description: A local gut feeling for coding agents. ember runs Cloudflare's Clef
 
 <p class="lede">A local gut feeling for coding agents. ember runs Cloudflare's Clef model on your Apple Silicon Mac and answers typed judgment questions as calibrated probabilities — privately, in about a second.</p>
 
-<p class="hero-actions">
-  <a class="button primary" href="{{ '/docs/overview/' | relative_url }}">Get started</a>
-  <a class="button" href="{{ '/results/' | append: bench_home | append: '/' | relative_url }}">Benchmark</a>
-  <a class="button" href="{{ site.github }}">GitHub</a>
-</p>
+<ul class="hero-links">
+  <li>
+    <a href="{{ '/docs/overview/' | relative_url }}">
+      <strong>Install ember</strong>
+      <span>uv tool install, then connect it to your coding agent</span>
+    </a>
+  </li>
+  <li>
+    <a href="{{ '/results/' | append: bench_home | append: '/' | relative_url }}">
+      <strong>Benchmark</strong>
+      <span>How ember scores against the agent kit's decision rules</span>
+    </a>
+  </li>
+  <li>
+    <a href="{{ site.github }}">
+      <strong>Source on GitHub</strong>
+      <span>Code, issues, and the MIT license</span>
+    </a>
+  </li>
+</ul>
 
 ```bash
 uv tool install --python 3.12 "gut @ git+https://github.com/shapeandshare/ember"
