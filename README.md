@@ -254,6 +254,7 @@ committed: it registers the `vault` MCP server that agents use to read and write
 | `make test` / `test-fast` / `test-strict` | Full suite / unit tests only / full suite that fails without weights |
 | `make test-evals` | Calibration eval suite: positive + negative recipe cases (loads model) |
 | `make eval-run` | Run the benchmark dataset against the live server; writes `results/` |
+| `make eval-snapshot` | Copy the latest run into `benchmark/` for the site to render |
 | `make eval-report` | Render the most recent run as a Markdown table |
 | `make mcp-check` / `make smoke` | MCP end-to-end check / direct MPS inference |
 | `make compile` / `make check` | Byte-compile / compile + unit tests |

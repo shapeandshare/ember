@@ -64,3 +64,15 @@ organisation's `oldgrowth` site.
   Dependabot's github-actions updates.
 - No link-integrity gate yet; `darkharbour` uses `lychee` for that. Worth adding if the
   docs section grows.
+
+## Benchmark data and rendering
+
+The benchmark report is part of the same site. A run is snapshotted into the tracked
+`benchmark/<run-id>/` (results, trace, dataset, and the `analysis.build` **model**) by
+`scripts/snapshot_evals.py` (`make eval-snapshot` / `ember eval snapshot`) — everything up
+to, but not including, HTML rendering. `scripts/build_site_benchmark.py` then renders that
+model into native pages under `/results/` (one page per report section, inside the site
+shell), reusing the report's content styles (`evals/report.css`) as the site asset
+`benchmark.css`. The run produces the data; the website renders the HTML. `ember eval
+export` still writes a portable single-file HTML for external reviewers, which the site no
+longer uses.

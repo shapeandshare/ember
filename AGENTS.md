@@ -61,6 +61,7 @@ after changing brand assets. Do not invent missing provenance or license facts.
 | Development memory (decisions, discoveries, session logs) | `vault/` (hub `vault/ember.md`) |
 | Verification | `tests/`, `.github/workflows/ci.yml` |
 | Site build and deploy | `scripts/build_site_docs.py`, `site/_data/docs.json`, `.github/workflows/deploy-site.yml` |
+| Benchmark runs (data the site renders) | `benchmark/<run-id>/`, written by `scripts/snapshot_evals.py` |
 
 ## Project structure
 
@@ -87,9 +88,10 @@ shared/               # Makefile domain modules (.mk files)
    release.mk          #   download, init, bootstrap, check, ci, clean
    vault.mk            #   vault-audit
    site.mk             #   site, site-serve (Jekyll Pages)
-scripts/              # MPS smoke test, MCP e2e check, site build, provenance/vault audits
+scripts/              # MPS smoke test, MCP e2e check, site build, eval snapshot, provenance/vault audits
 tests/                # pytest suite (unit + model-backed, host-isolated)
-site/                 # Jekyll GitHub Pages site (docs + brand assets generated at build)
+site/                 # Jekyll GitHub Pages site (docs, brand assets, benchmark report generated at build)
+benchmark/            # tracked benchmark runs (results, trace, dataset, model.json) the site renders
 vault/                # project memory (Obsidian): decisions, discoveries, sessions
   ember.md            #   hub note; every note must be reachable from it
   _meta/              #   tags.md (controlled vocabulary) and templates/
@@ -127,6 +129,7 @@ vault/                # project memory (Obsidian): decisions, discoveries, sessi
 | `make doctor` | Environment, model, and server readiness |
 | `make vault-audit` | Audit `vault/` notes: frontmatter, tags, wikilinks, code-refs, orphans |
 | `make eval-run` / `make eval-export` | Model benchmark (`evals/clef-flash.jsonl`) / reviewer report bundle |
+| `make eval-snapshot` | Copy the latest run into `benchmark/` for the site to render |
 | `make eval-agent` / `make eval-agent-smoke` | Agent-in-the-loop eval through opencode (opt-in; spends provider credit) |
 | `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000` (needs Docker) |
 | `.venv/bin/ember …` or `.venv/bin/gut …` | Primary CLI, built from this checkout |
@@ -326,6 +329,13 @@ reformat untouched files just to satisfy Article X.
   `_config.yml` and pass it in CI, and use `relative_url` for internal links.
   `.github/workflows/deploy-site.yml` is SHA-pinned and `ruby/setup-ruby` is on the Actions
   allow-list. See `vault/decisions/2026-10-03-publish-a-pages-site.md`.
+- **The benchmark report is rendered by the site.** A run's data is snapshotted into the
+  tracked `benchmark/<run-id>/` (results, trace, dataset, and the `analysis.build` model) by
+  `scripts/snapshot_evals.py`; `scripts/build_site_benchmark.py` renders that model into native
+  pages under `site/results/` (`/results/<section>/`), reusing `evals/report.css` as the site
+  asset `benchmark.css`. The run produces data; the website renders the HTML. `site/results/`
+  is generated and gitignored. `ember eval export` still writes a portable single-file HTML for
+  external reviewers.
 - **The agent eval is the only code that launches opencode.** `ember eval agent`
   (`scripts/run_agent_evals.py`, `evals/agent/`) runs `opencode run --pure` in a temporary
   sandbox with a private HOME and XDG dirs and no port (constitution Article IV). Keep it out of
