@@ -70,12 +70,16 @@ HuggingFace's shared cache (`~/.cache/huggingface`); config/state live in
 `~/Library/Application Support/clef-local`.
 
 ```bash
-uv tool install "clef-local @ git+https://github.com/<you>/gut-feeling"
+uv tool install "clef-local @ git+https://github.com/shapeandshare/gut-feeling"
 
 clef model pull          # ~18 GB, resumable, disk-space checked
 clef doctor              # env / model / server readiness
 clef init --opencode     # install the opencode plugin (project) or --global
 ```
+
+The repository is private, so installers need read access plus git credentials:
+run `gh auth setup-git` once for HTTPS, or install from
+`git+ssh://git@github.com/shapeandshare/gut-feeling` with SSH keys.
 
 Restart opencode, and the agent gains a `clef_decide` tool. The model server
 stays **lazy** — it starts on the first tool call (or `clef start`).
