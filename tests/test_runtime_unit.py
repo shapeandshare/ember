@@ -11,9 +11,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-import gut_feeling.runtime as runtime
+import ember.runtime as runtime
 import pytest
-from gut_feeling import models, opencode_config, paths, process
+from ember import models, opencode_config, paths, process
 
 from tests.conftest import free_port
 
@@ -48,10 +48,8 @@ def test_load_clef_missing_dir_raises():
 def test_joint_module_exposes_expected_api():
     model_dir = runtime.DEFAULT_MODEL_DIR
     if not model_dir.is_dir():
-        if os.environ.get("GUT_FEELING_REQUIRE_MODEL") == "1":
-            pytest.fail(
-                f"model dir not present: {model_dir} (GUT_FEELING_REQUIRE_MODEL=1)"
-            )
+        if os.environ.get("EMBER_REQUIRE_MODEL") == "1":
+            pytest.fail(f"model dir not present: {model_dir} (EMBER_REQUIRE_MODEL=1)")
         pytest.skip("model dir not present")
     module = runtime.joint_module(model_dir)
     for attr in ("systemone", "load_release_model", "encode_record", "collate_records"):
@@ -62,7 +60,7 @@ def test_joint_module_exposes_expected_api():
 # MCP server helpers (imported without loading the model)
 # --------------------------------------------------------------------------- #
 def test_mcp_server_import_does_not_load_torch():
-    code = "import sys, gut_feeling.mcp_server; print('torch' in sys.modules)"
+    code = "import sys, ember.mcp_server; print('torch' in sys.modules)"
     result = subprocess.run(  # noqa: S603 - this interpreter with a literal script
         [sys.executable, "-c", code], capture_output=True, text=True, timeout=60
     )
@@ -70,14 +68,14 @@ def test_mcp_server_import_does_not_load_torch():
 
 
 def test_mcp_server_ready_false_when_nothing_listening(monkeypatch):
-    from gut_feeling import mcp_server
+    from ember import mcp_server
 
     monkeypatch.setattr(mcp_server, "SERVER_URL", f"http://127.0.0.1:{free_port()}")
     assert mcp_server._server_ready() is False
 
 
 def test_ensure_server_raises_when_down_and_autostart_disabled(monkeypatch):
-    from gut_feeling import mcp_server
+    from ember import mcp_server
 
     monkeypatch.setattr(mcp_server, "SERVER_URL", f"http://127.0.0.1:{free_port()}")
     monkeypatch.setattr(mcp_server, "AUTOSTART", False)
@@ -86,10 +84,10 @@ def test_ensure_server_raises_when_down_and_autostart_disabled(monkeypatch):
 
 
 # --------------------------------------------------------------------------- #
-# process lifecycle (state isolated under a temporary GUT_FEELING_STATE_DIR)
+# process lifecycle (state isolated under a temporary EMBER_STATE_DIR)
 # --------------------------------------------------------------------------- #
 def test_spawn_records_pid_and_log_in_state_dir(tmp_path, monkeypatch):
-    monkeypatch.setenv("GUT_FEELING_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path / "state"))
     proc = process.spawn(tmp_path / "no-model", "127.0.0.1", free_port(), "cpu")
     try:
         assert paths.pid_path() == tmp_path / "state" / "server.pid"
@@ -100,23 +98,21 @@ def test_spawn_records_pid_and_log_in_state_dir(tmp_path, monkeypatch):
         proc.wait(timeout=15)
 
 
-def test_tracked_pid_ignores_a_pid_that_is_not_a_gut_feeling_server(
-    tmp_path, monkeypatch
-):
-    monkeypatch.setenv("GUT_FEELING_STATE_DIR", str(tmp_path))
+def test_tracked_pid_ignores_a_pid_that_is_not_an_ember_server(tmp_path, monkeypatch):
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
     paths.pid_path().write_text(str(os.getpid()))
     assert process.tracked_pid("127.0.0.1", free_port()) is None
     assert not paths.pid_path().exists()
 
 
 def test_stop_without_a_tracked_server_signals_nothing(tmp_path, monkeypatch):
-    monkeypatch.setenv("GUT_FEELING_STATE_DIR", str(tmp_path))
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
     assert process.stop("127.0.0.1", free_port()) is False
 
 
 def test_start_fails_fast_when_the_model_is_missing(tmp_path, monkeypatch):
-    monkeypatch.setenv("GUT_FEELING_STATE_DIR", str(tmp_path))
-    monkeypatch.setenv("GUT_FEELING_MODEL_DIR", str(tmp_path / "missing"))
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
+    monkeypatch.setenv("EMBER_MODEL_DIR", str(tmp_path / "missing"))
     with pytest.raises(RuntimeError, match="model pull"):
         process.start(host="127.0.0.1", port=free_port(), timeout=5)
 
@@ -132,7 +128,7 @@ def test_model_revisions_are_pinned_commits():
 
 
 def test_model_dir_override_applies_to_the_run_not_the_listing(tmp_path, monkeypatch):
-    monkeypatch.setenv("GUT_FEELING_MODEL_DIR", str(tmp_path))
+    monkeypatch.setenv("EMBER_MODEL_DIR", str(tmp_path))
     assert models.resolve_dir("full") == tmp_path
     assert models.resolve_dir("full", override=False) != tmp_path
 
@@ -153,11 +149,11 @@ def test_opencode_config_write_merges_and_is_idempotent(tmp_path):
     config = json.loads(first)
     assert config["model"] == "keep-me"
     assert "other" in config["mcp"]
-    entry = config["mcp"]["gut-feeling"]
+    entry = config["mcp"]["ember"]
     assert entry["type"] == "local"
     assert entry["enabled"] is True
     assert Path(entry["command"][0]).is_absolute()
-    assert entry["environment"]["GUT_FEELING_SERVER_URL"] == "http://127.0.0.1:9999"
+    assert entry["environment"]["EMBER_SERVER_URL"] == "http://127.0.0.1:9999"
 
     opencode_config.write(target, "127.0.0.1", 9999, "1")
     assert target.read_text() == first

@@ -1,4 +1,4 @@
-"""Shared fixtures for the gut-feeling test suite.
+"""Shared fixtures for the ember test suite.
 
 Isolation rules (important on a host with other opencode instances running):
   * Tests NEVER use the default port 8765; they bind a random free port.
@@ -23,7 +23,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MODEL_DIR = REPO_ROOT / ".models" / "clef-flash"
-SERVER_TIMEOUT = float(os.environ.get("GUT_FEELING_TEST_START_TIMEOUT", "300"))
+SERVER_TIMEOUT = float(os.environ.get("EMBER_TEST_START_TIMEOUT", "300"))
 # Ports the test suite must never touch (the user's warm servers).
 PROTECTED_PORTS = {8765}
 
@@ -64,15 +64,15 @@ def mcp_stdin_params(base_url: str, *, autostart: str = "0", **extra_env: str):
     env = dict(os.environ)
     env.update(
         {
-            "GUT_FEELING_SERVER_URL": base_url,
-            "GUT_FEELING_AUTOSTART": autostart,
+            "EMBER_SERVER_URL": base_url,
+            "EMBER_AUTOSTART": autostart,
             "PYTORCH_ENABLE_MPS_FALLBACK": "1",
         }
     )
     env.update({k: str(v) for k, v in extra_env.items()})
     return StdioServerParameters(
         command=sys.executable,
-        args=["-m", "gut_feeling.mcp_server"],
+        args=["-m", "ember.mcp_server"],
         cwd=str(REPO_ROOT),
         env=env,
     )
@@ -80,12 +80,12 @@ def mcp_stdin_params(base_url: str, *, autostart: str = "0", **extra_env: str):
 
 @pytest.fixture(scope="session")
 def base_url(tmp_path_factory) -> str:
-    """Start one isolated gut-feeling server on a random port for the whole session."""
+    """Start one isolated ember server on a random port for the whole session."""
     if not MODEL_DIR.is_dir():
         message = f"Clef-Flash weights not found at {MODEL_DIR} (run: make download)"
-        if os.environ.get("GUT_FEELING_REQUIRE_MODEL") == "1":
+        if os.environ.get("EMBER_REQUIRE_MODEL") == "1":
             pytest.fail(
-                f"{message} (GUT_FEELING_REQUIRE_MODEL=1: failing instead of skipping)"
+                f"{message} (EMBER_REQUIRE_MODEL=1: failing instead of skipping)"
             )
         pytest.skip(message)
 
@@ -93,15 +93,15 @@ def base_url(tmp_path_factory) -> str:
     env = dict(os.environ)
     env.update(
         {
-            "GUT_FEELING_HOST": "127.0.0.1",
-            "GUT_FEELING_PORT": str(port),
+            "EMBER_HOST": "127.0.0.1",
+            "EMBER_PORT": str(port),
             "PYTORCH_ENABLE_MPS_FALLBACK": "1",
         }
     )
-    log_path = tmp_path_factory.mktemp("gut-feeling-server") / "server.log"
+    log_path = tmp_path_factory.mktemp("ember-server") / "server.log"
     handle = open(log_path, "ab")
     proc = subprocess.Popen(
-        [sys.executable, "-m", "gut_feeling.server"],
+        [sys.executable, "-m", "ember.server"],
         cwd=str(REPO_ROOT),
         env=env,
         stdout=handle,

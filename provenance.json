@@ -829,7 +829,7 @@
   ],
   "dependencies": {
     "lockfile": "uv.lock",
-    "lockfile_sha256": "63ea9098f8b0740cf4806c61deaa0ad55d4dfd3b1a40beb39b616a72e4dc16a3",
+    "lockfile_sha256": "f97407c32ae9499b193cebf741897434a7ac59f580f880e89083d4bbf3d4aaad",
     "inventory": [
       {
         "name": "accelerate",

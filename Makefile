@@ -1,7 +1,7 @@
-# gut-feeling — development lifecycle
+# ember — development lifecycle
 #
 # Run `make` or `make help` to list targets.
-# Server lifecycle targets wrap the `gut-feeling` CLI so contributors and
+# Server lifecycle targets wrap the `ember` CLI so contributors and
 # users share one implementation.
 #
 # Makefile layout:
@@ -17,20 +17,20 @@ SHELL := /bin/bash
 REPO_ROOT := $(CURDIR)
 VENV      := $(REPO_ROOT)/.venv
 PY        := $(VENV)/bin/python
-GF        := $(VENV)/bin/gut-feeling
+EMBER     := $(VENV)/bin/ember
 UV        ?= uv
 
-GUT_FEELING_HOST   ?= 127.0.0.1
-GUT_FEELING_PORT   ?= 8765
-GUT_FEELING_DEVICE ?= auto
-export GUT_FEELING_HOST GUT_FEELING_PORT GUT_FEELING_DEVICE
+EMBER_HOST   ?= 127.0.0.1
+EMBER_PORT   ?= 8765
+EMBER_DEVICE ?= auto
+export EMBER_HOST EMBER_PORT EMBER_DEVICE
 
 MODEL_DIR ?= $(REPO_ROOT)/.models/clef-flash
 
 # Venv sentinel — rebuilt whenever pyproject.toml or uv.lock change
-$(GF): pyproject.toml uv.lock
+$(EMBER): pyproject.toml uv.lock
 	$(UV) sync
-	@touch $(GF)
+	@touch $(EMBER)
 
 include shared/helper.mk
 include shared/python.mk

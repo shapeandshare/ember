@@ -1,12 +1,12 @@
 [project]
-name = "gut-feeling"
+name = "gut"
 version = "0.1.0"
 description = "A local gut feeling for coding agents: calibrated advice over MCP from Cloudflare's Clef model on Apple Silicon."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 license = "MIT"
 authors = [{ name = "shapeandshare" }]
-keywords = ["gut-feeling", "mcp", "opencode", "coding-agents", "apple-silicon", "mps", "clef"]
+keywords = ["ember", "mcp", "opencode", "coding-agents", "apple-silicon", "mps", "clef"]
 classifiers = [
     "Environment :: MacOS X",
     "Programming Language :: Python :: 3.12",
@@ -28,19 +28,19 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/shapeandshare/gut-feeling"
+Repository = "https://github.com/shapeandshare/ember"
 
 [project.scripts]
-gut-feeling = "gut_feeling.cli:main"
-gut = "gut_feeling.cli:main"
-gut-feeling-mcp = "gut_feeling.mcp_server:main"
+ember = "ember.cli:main"
+gut = "ember.cli:main"
+ember-mcp = "ember.mcp_server:main"
 
 [build-system]
 requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["gut_feeling"]
+packages = ["ember"]
 
 [dependency-groups]
 dev = [
@@ -66,7 +66,7 @@ filterwarnings = [
 [tool.ruff]
 line-length = 88
 target-version = "py312"
-src = ["gut_feeling"]
+src = ["ember"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "S", "PT", "RUF"]
@@ -91,7 +91,7 @@ disallow_incomplete_defs = true
 check_untyped_defs = true
 no_implicit_optional = true
 show_error_codes = true
-files = ["gut_feeling"]
+files = ["ember"]
 untyped_calls_exclude = ["transformers"]
 
 [[tool.mypy.overrides]]
@@ -107,7 +107,7 @@ module = [
 ignore_missing_imports = true
 
 [tool.bandit]
-targets = ["gut_feeling"]
+targets = ["ember"]
 skips = [
     "B101",  # assert_used — fine in test helpers
     "B603",  # subprocess_without_shell_equals_true — CLI wraps known binaries
@@ -122,7 +122,7 @@ major_version_zero = true
 tag_format = "v$version"
 
 [tool.coverage.run]
-source = ["gut_feeling"]
+source = ["ember"]
 omit = ["tests/*", "scripts/*"]
 
 [tool.coverage.report]

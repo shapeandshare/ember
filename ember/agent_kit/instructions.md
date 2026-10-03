@@ -1,4 +1,4 @@
-gut-feeling is your little buddy for judgment calls: a local model (Cloudflare's Clef-Flash) behind this server's `advise` tool (opencode: `gut-feeling_advise`). It reads a situation and radiates a feeling about each option you define, as calibrated probabilities, in about a second, privately, on this machine. It advises; you decide.
+ember is your little buddy for judgment calls: a local model (Cloudflare's Clef-Flash) behind this server's `advise` tool (opencode: `ember_advise`). It reads a situation and radiates a feeling about each option you define, as calibrated probabilities, in about a second, privately, on this machine. It advises; you decide.
 
 Consult it at bounded decision points: what the user is asking for, why something failed, who owns a problem, yes/no gates (needs human review? safe to retry? specific enough to act on?), and risk, severity, or effort on an ordered scale.
 
@@ -16,6 +16,6 @@ Reading the feeling:
 - noul: P(true) >= 0.80 means yes, <= 0.20 means no, anything between is unsure.
 - score: read the expected `score`, not the top option's confidence.
 - The same request always gets the same feeling; change the evidence instead of re-asking.
-- Strong contrary evidence wins: override it and say why. Name the signal you used, e.g. "gut-feeling: needs_review P=0.93".
+- Strong contrary evidence wins: override it and say why. Name the signal you used, e.g. "ember: needs_review P=0.93".
 
-Full playbook with recipes: read the MCP resource gut-feeling://guide, or load the `gut-feeling-advise` skill.
+Full playbook with recipes: read the MCP resource ember://guide, or load the `ember-advise` skill.

@@ -1,9 +1,9 @@
 """Model-server lifecycle: start, stop, restart, status.
 
-Every path that starts the server (``gut-feeling start``, ``gut-feeling restart``,
+Every path that starts the server (``ember start``, ``ember restart``,
 and MCP autostart) goes through ``start``, so they share model resolution, the pid
 file, and the log. ``stop`` only signals the pid this tool recorded, after
-confirming it is still a gut-feeling server; it never kills by port or by pattern.
+confirming it is still an ember server; it never kills by port or by pattern.
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ def _pid_alive(pid: int) -> bool:
         return True
 
 
-def _is_gut_feeling_server(pid: int) -> bool:
+def _is_ember_server(pid: int) -> bool:
     try:
         command = subprocess.run(  # noqa: S603 - fixed argv, no shell; pid is an int
             ["/bin/ps", "-o", "command=", "-p", str(pid)],
@@ -56,17 +56,17 @@ def _is_gut_feeling_server(pid: int) -> bool:
         ).stdout
     except OSError:
         return False
-    return "gut_feeling.server" in command
+    return "ember.server" in command
 
 
 def tracked_pid(host: str, port: int) -> int | None:
-    """The pid recorded by ``start``, if that process is still a gut-feeling server."""
+    """The pid recorded by ``start``, if that process is still an ember server."""
     pid_file = paths.pid_path()
     try:
         pid = int(pid_file.read_text().strip())
     except (FileNotFoundError, ValueError):
         return None
-    if not (_pid_alive(pid) and _is_gut_feeling_server(pid)):
+    if not (_pid_alive(pid) and _is_ember_server(pid)):
         pid_file.unlink(missing_ok=True)
         return None
     info = health(host, port)
@@ -82,18 +82,18 @@ def spawn(
     env = dict(os.environ)
     env.update(
         {
-            "GUT_FEELING_MODEL_DIR": str(model_dir),
-            "GUT_FEELING_HOST": host,
-            "GUT_FEELING_PORT": str(port),
-            "GUT_FEELING_DEVICE": str(device),
-            "GUT_FEELING_MAX_LENGTH": str(config.resolve("max_length")),
+            "EMBER_MODEL_DIR": str(model_dir),
+            "EMBER_HOST": host,
+            "EMBER_PORT": str(port),
+            "EMBER_DEVICE": str(device),
+            "EMBER_MAX_LENGTH": str(config.resolve("max_length")),
             "PYTORCH_ENABLE_MPS_FALLBACK": "1",
             "HF_HUB_OFFLINE": "1",
         }
     )
     with open(paths.server_log_path(), "ab") as handle:
         proc = subprocess.Popen(
-            [sys.executable, "-m", "gut_feeling.server"],
+            [sys.executable, "-m", "ember.server"],
             cwd=str(paths.state_dir()),
             stdout=handle,
             stderr=handle,
@@ -123,7 +123,7 @@ def start(
     model_dir = models.resolve_dir(name)
     if model_dir is None:
         raise RuntimeError(
-            f"model {name!r} is not pulled; run: gut-feeling model pull {name}"
+            f"model {name!r} is not pulled; run: ember model pull {name}"
         )
 
     proc = spawn(model_dir, host, port, device)

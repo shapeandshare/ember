@@ -1,6 +1,6 @@
 """End-to-end MCP check: initialize, list tools, and call `advise` like an agent would.
 
-Spawns the gut-feeling MCP server over stdio against the local server on the default
+Spawns the ember MCP server over stdio against the local server on the default
 port, starting it (and loading the model) on first call if it is not already running.
 
 Usage:
@@ -24,11 +24,11 @@ from mcp.client.stdio import StdioServerParameters, stdio_client  # noqa: E402
 
 async def main() -> int:
     env = dict(os.environ)
-    env.setdefault("GUT_FEELING_AUTOSTART", "1")
-    env.setdefault("GUT_FEELING_START_TIMEOUT", "300")
+    env.setdefault("EMBER_AUTOSTART", "1")
+    env.setdefault("EMBER_START_TIMEOUT", "300")
     params = StdioServerParameters(
         command=sys.executable,
-        args=["-m", "gut_feeling.mcp_server"],
+        args=["-m", "ember.mcp_server"],
         cwd=str(REPO_ROOT),
         env=env,
     )

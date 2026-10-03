@@ -8,8 +8,8 @@ logs/
 /dist/
 .pytest_cache/
 /opencode.json
-/.opencode/plugins/gut-feeling.js
-/.opencode/skills/gut-feeling-advise/
+/.opencode/plugins/ember.js
+/.opencode/skills/ember-advise/
 .DS_Store
 .idea/
 .omo/

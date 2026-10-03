@@ -1,4 +1,4 @@
-"""The `gut-feeling` command line: server, models, opencode, and agent onboarding."""
+"""The `ember` command line: server, models, opencode, and agent onboarding."""
 
 from __future__ import annotations
 
@@ -37,14 +37,12 @@ def _apply_server_env(args: argparse.Namespace) -> None:
     name = args.model or config.resolve("model")
     model_dir = models.resolve_dir(name)
     if model_dir is None:
-        raise SystemExit(
-            f"model {name!r} is not pulled; run: gut-feeling model pull {name}"
-        )
+        raise SystemExit(f"model {name!r} is not pulled; run: ember model pull {name}")
     host, port = _host_port(args)
-    os.environ["GUT_FEELING_MODEL_DIR"] = str(model_dir)
-    os.environ["GUT_FEELING_HOST"] = host
-    os.environ["GUT_FEELING_PORT"] = str(port)
-    os.environ["GUT_FEELING_DEVICE"] = str(args.device or config.resolve("device"))
+    os.environ["EMBER_MODEL_DIR"] = str(model_dir)
+    os.environ["EMBER_HOST"] = host
+    os.environ["EMBER_PORT"] = str(port)
+    os.environ["EMBER_DEVICE"] = str(args.device or config.resolve("device"))
 
 
 # --------------------------------------------------------------------------- #
@@ -60,7 +58,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
 
 def cmd_start(args: argparse.Namespace) -> int:
     pid = process.start(args.model, args.host, args.port, args.device)
-    print(f"gut-feeling server ready (pid {pid})")
+    print(f"ember server ready (pid {pid})")
     return 0
 
 
@@ -72,8 +70,8 @@ def cmd_stop(args: argparse.Namespace) -> int:
     info = process.health(host, port)
     if info is not None:
         print(
-            f"a gut-feeling server is running at {host}:{port} "
-            f"(pid {info.get('pid')}) but was not started by `gut-feeling start`; "
+            f"an ember server is running at {host}:{port} "
+            f"(pid {info.get('pid')}) but was not started by `ember start`; "
             "stop it where it runs"
         )
         return 1
@@ -83,7 +81,7 @@ def cmd_stop(args: argparse.Namespace) -> int:
 
 def cmd_restart(args: argparse.Namespace) -> int:
     pid = process.restart(args.model, args.host, args.port, args.device)
-    print(f"gut-feeling server restarted (pid {pid})")
+    print(f"ember server restarted (pid {pid})")
     return 0
 
 
@@ -116,11 +114,11 @@ def cmd_logs(args: argparse.Namespace) -> int:
 def cmd_mcp(args: argparse.Namespace) -> int:
     if args.host or args.port:
         host, port = _host_port(args)
-        os.environ["GUT_FEELING_SERVER_URL"] = f"http://{host}:{port}"
+        os.environ["EMBER_SERVER_URL"] = f"http://{host}:{port}"
     if args.device:
-        os.environ["GUT_FEELING_DEVICE"] = args.device
+        os.environ["EMBER_DEVICE"] = args.device
     if args.model:
-        os.environ["GUT_FEELING_MODEL"] = args.model
+        os.environ["EMBER_MODEL"] = args.model
     from . import mcp_server
 
     mcp_server.main()
@@ -269,7 +267,7 @@ def cmd_doctor(_: argparse.Namespace) -> int:
         model_dir is not None,
         str(model_dir)
         if model_dir
-        else f"not pulled; run: gut-feeling model pull {selected}",
+        else f"not pulled; run: ember model pull {selected}",
     )
     for row in models.list_models():
         if row["name"] != selected:
@@ -284,7 +282,7 @@ def cmd_doctor(_: argparse.Namespace) -> int:
         "server",
         f"running at {host}:{port}"
         if running
-        else "stopped; starts on first use or with `gut-feeling start`",
+        else "stopped; starts on first use or with `ember start`",
     )
     info("opencode", shutil.which("opencode") or "not on PATH")
     return 0 if ok else 1
@@ -310,18 +308,18 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
             shutil.rmtree(skill_dir)
             print(f"removed {skill_dir}")
     if opencode_config.remove(opencode_config.global_config_path()):
-        print(f"removed mcp.gut-feeling from {opencode_config.global_config_path()}")
+        print(f"removed mcp.ember from {opencode_config.global_config_path()}")
     for directory in {paths.state_dir(), paths.config_dir()}:
         shutil.rmtree(directory, ignore_errors=True)
         print(f"removed {directory}")
 
     print(
         "project installs are left in place: in each initialized project, remove the "
-        "`mcp.gut-feeling` entry from opencode.json, "
+        "`mcp.ember` entry from opencode.json, "
         f".opencode/plugins/{opencode_plugin.PLUGIN_FILENAME}, "
         f"and any {agent_kit.SKILL_NAME} skill directories"
     )
-    print("then run: uv tool uninstall gut-feeling")
+    print("then run: uv tool uninstall gut")
     return 0
 
 
@@ -337,7 +335,7 @@ def _add_server_flags(parser: argparse.ArgumentParser) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="gut-feeling",
+        prog="ember",
         description=(
             "A local gut feeling for coding agents: calibrated advice from "
             "Cloudflare's Clef model on Apple Silicon."
@@ -354,7 +352,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     lifecycle = (
         ("start", cmd_start, "start the model server in the background"),
-        ("stop", cmd_stop, "stop the server started by `gut-feeling start`"),
+        ("stop", cmd_stop, "stop the server started by `ember start`"),
         ("restart", cmd_restart, "restart the background model server"),
         ("status", cmd_status, "show server health (exit code 1 when stopped)"),
     )
@@ -423,7 +421,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser(
         "uninstall",
-        help="stop the server and remove gut-feeling's state and global installs",
+        help="stop the server and remove ember's state and global installs",
     )
     p.add_argument("--purge-models", action="store_true")
     p.set_defaults(func=cmd_uninstall)

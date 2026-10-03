@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from gut_feeling import (
+from ember import (
     agent_kit,
     cli,
     models,
@@ -26,7 +26,7 @@ from tests.conftest import free_port
 def sandbox(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
-    monkeypatch.setenv("GUT_FEELING_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path / "state"))
     return tmp_path
 
 
@@ -53,25 +53,21 @@ def test_agents_show_prints_the_kit(what, loader, capsys):
 )
 def test_agents_install_writes_project_skill(sandbox, agent, root):
     assert cli.main(["agents", "install", "--agent", agent]) == 0
-    assert (
-        sandbox / root / "gut-feeling-advise/SKILL.md"
-    ).read_text() == agent_kit.skill()
+    assert (sandbox / root / "ember-advise/SKILL.md").read_text() == agent_kit.skill()
 
 
 def test_agents_install_global_targets_home(sandbox):
     assert cli.main(["agents", "install", "--agent", "opencode", "--global"]) == 0
-    assert (
-        sandbox / "home/.config/opencode/skills/gut-feeling-advise/SKILL.md"
-    ).exists()
+    assert (sandbox / "home/.config/opencode/skills/ember-advise/SKILL.md").exists()
 
 
 def test_init_opencode_registers_server_plugin_and_skill(sandbox):
     assert cli.main(["init", "--opencode"]) == 0
     config = json.loads((sandbox / "opencode.json").read_text())
-    assert config["mcp"]["gut-feeling"]["type"] == "local"
-    assert (sandbox / ".opencode/plugins/gut-feeling.js").exists()
+    assert config["mcp"]["ember"]["type"] == "local"
+    assert (sandbox / ".opencode/plugins/ember.js").exists()
     assert (
-        sandbox / ".opencode/skills/gut-feeling-advise/SKILL.md"
+        sandbox / ".opencode/skills/ember-advise/SKILL.md"
     ).read_text() == agent_kit.skill()
 
 
@@ -103,4 +99,4 @@ def test_uninstall_removes_global_installs_and_keeps_other_config(sandbox):
     assert not agent_kit.skill_path("opencode", "global").exists()
     remaining = json.loads(global_config.read_text())
     assert remaining["model"] == "keep-me"
-    assert "gut-feeling" not in remaining["mcp"]
+    assert "ember" not in remaining["mcp"]

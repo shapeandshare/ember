@@ -1,4 +1,4 @@
-"""OpenCode integration: write, merge, and remove the `mcp.gut-feeling` config entry."""
+"""OpenCode integration: write, merge, and remove the `mcp.ember` config entry."""
 
 from __future__ import annotations
 
@@ -22,10 +22,10 @@ def project_config_path(root: Path) -> Path:
 
 def mcp_command() -> list[str]:
     """Prefer the installed console script; fall back to this interpreter + module."""
-    exe = shutil.which("gut-feeling-mcp")
+    exe = shutil.which("ember-mcp")
     if exe:
         return [exe]
-    return [sys.executable, "-m", "gut_feeling.mcp_server"]
+    return [sys.executable, "-m", "ember.mcp_server"]
 
 
 def build_entry(host: str, port: int, autostart: str) -> dict[str, Any]:
@@ -35,8 +35,8 @@ def build_entry(host: str, port: int, autostart: str) -> dict[str, Any]:
         "enabled": True,
         "timeout": 30000,
         "environment": {
-            "GUT_FEELING_SERVER_URL": f"http://{host}:{port}",
-            "GUT_FEELING_AUTOSTART": autostart,
+            "EMBER_SERVER_URL": f"http://{host}:{port}",
+            "EMBER_AUTOSTART": autostart,
         },
     }
     # Absolute command paths already avoid PATH issues, but opencode may be
@@ -55,20 +55,20 @@ def write(path: Path, host: str, port: int, autostart: str) -> Path:
             existing = {}
     existing.setdefault("$schema", SCHEMA)
     mcp = existing.setdefault("mcp", {})
-    mcp["gut-feeling"] = build_entry(host, port, autostart)
+    mcp["ember"] = build_entry(host, port, autostart)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(existing, indent=2) + "\n")
     return path
 
 
 def remove(path: Path) -> bool:
-    """Drop the `mcp.gut-feeling` entry; False if it is absent or not plain JSON."""
+    """Drop the `mcp.ember` entry; False if it is absent or not plain JSON."""
     try:
         existing = json.loads(path.read_text())
     except (FileNotFoundError, json.JSONDecodeError):
         return False
-    if "gut-feeling" not in existing.get("mcp", {}):
+    if "ember" not in existing.get("mcp", {}):
         return False
-    del existing["mcp"]["gut-feeling"]
+    del existing["mcp"]["ember"]
     path.write_text(json.dumps(existing, indent=2) + "\n")
     return True

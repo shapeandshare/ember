@@ -1,4 +1,4 @@
-"""gut-feeling runtime: loads Cloudflare's Clef-Flash model on Apple Silicon (MPS).
+"""ember runtime: loads Cloudflare's Clef-Flash model on Apple Silicon (MPS).
 
 Wraps Cloudflare's shipped ``joint_schema_model.py`` with a loader that works
 around a segfault seen when ``device_map={"": "mps"}`` is passed to
