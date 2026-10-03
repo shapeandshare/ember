@@ -17,10 +17,12 @@ JEKYLL_DOCKER := docker run --rm --user "$$(id -u):$$(id -g)" \
 site: ## Build the Pages site into site/_site (needs Docker)
 	@mkdir -p "$(SITE_DIR)/.gems"
 	$(PY) scripts/build_site_docs.py
+	$(PY) scripts/build_site_benchmark.py
 	$(JEKYLL_DOCKER) $(JEKYLL_IMAGE) bash -lc 'bundle install --quiet && bundle exec jekyll build --baseurl ""'
 	@echo "built: $(SITE_DIR)/_site"
 
 site-serve: ## Preview the Pages site at http://localhost:4000 (needs Docker)
 	@mkdir -p "$(SITE_DIR)/.gems"
 	$(PY) scripts/build_site_docs.py
+	$(PY) scripts/build_site_benchmark.py
 	$(JEKYLL_DOCKER) -p 4000:4000 $(JEKYLL_IMAGE) bash -lc 'bundle install --quiet && bundle exec jekyll serve --host 0.0.0.0 --baseurl ""'

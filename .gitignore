@@ -23,3 +23,7 @@ vault/.trash/
 /site/_docs/
 /site/assets/brand/
 /site/.gems/
+# Benchmark report: rendered at build time from benchmark/<run-id>/model.json.
+/site/results/
+/site/assets/benchmark.css
+/site/_data/benchmark.json

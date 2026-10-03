@@ -273,29 +273,76 @@ def _hero(report: Mapping[str, Any]) -> str:
     )
 
 
+FILTER_SCRIPT = """
+(() => {
+  document.querySelectorAll("form[data-filter-table]").forEach((form) => {
+    const table = document.getElementById(form.dataset.filterTable);
+    const status = form.querySelector("[data-count]");
+    const update = () => {
+      const picks = [...form.querySelectorAll("select")].map((s) => [s.name, s.value]);
+      let shown = 0;
+      table.querySelectorAll("tbody tr").forEach((row) => {
+        const keep = picks.every(([k, v]) => !v || row.dataset[k] === v);
+        row.hidden = !keep;
+        shown += keep ? 1 : 0;
+      });
+      status.textContent = shown + " of " + table.tBodies[0].rows.length + " items";
+    };
+    form.addEventListener("change", update);
+    form.addEventListener("submit", (e) => e.preventDefault());
+    form.hidden = false;
+    update();
+  });
+})();
+"""
+
+
+def css() -> str:
+    """Return the report stylesheet: theme palette, chart rules, content styles."""
+    return _theme_css() + CSS.read_text(encoding="utf-8")
+
+
+def hero(report: Mapping[str, Any]) -> str:
+    """Return the report's hero header (mascot, title, run chips)."""
+    return _hero(report)
+
+
+def filter_script() -> str:
+    """Return the JavaScript that enables the appendix table filters."""
+    return FILTER_SCRIPT
+
+
+def section_html(report: Mapping[str, Any]) -> list[tuple[str, int, str, str]]:
+    """Return ``(anchor, number, title, html)`` per section, for embedding."""
+    writer = _Writer(report)
+    out: list[tuple[str, int, str, str]] = []
+    for s in document.build(report):
+        inner = "".join(writer.block(block) for block in s.blocks)
+        html = (
+            f'<section id="{s.anchor}" aria-labelledby="{s.anchor}-title">'
+            f'<h2 id="{s.anchor}-title"><span class="sec-num">{s.number}</span>'
+            f"{escape(s.title)}</h2>{inner}</section>"
+        )
+        out.append((s.anchor, s.number, s.title, html))
+    return out
+
+
 def render(report: Mapping[str, Any]) -> str:
     """Return the report as one self-contained HTML document."""
-    writer = _Writer(report)
     meta, text = report["meta"], report["text"]
-    sections = document.build(report)
+    sections = section_html(report)
     toc = "".join(
-        f'<li><a href="#{s.anchor}"><span>{s.number}</span>{escape(s.title)}</a></li>'
-        for s in sections
+        f'<li><a href="#{anchor}"><span>{number}</span>{escape(title)}</a></li>'
+        for anchor, number, title, _ in sections
     )
-    body = "".join(
-        f'<section id="{s.anchor}" aria-labelledby="{s.anchor}-title"><h2 id="'
-        f'{s.anchor}-title"><span class="sec-num">{s.number}</span>{escape(s.title)}'
-        f"</h2>{''.join(writer.block(block) for block in s.blocks)}</section>"
-        for s in sections
-    )
+    body = "".join(html for *_, html in sections)
     title = f"{text['title']}: {meta['run_id']}"
     return (
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1">'
         '<meta name="color-scheme" content="light dark">'
         '<meta name="generator" content="ember eval export">'
-        f"<title>{escape(title)}</title><style>{_theme_css()}"
-        f"{CSS.read_text(encoding='utf-8')}</style></head><body>"
+        f"<title>{escape(title)}</title><style>{css()}</style></head><body>"
         '<a class="skip" href="#main">Skip to the report</a>'
         f"{_hero(report)}"
         '<div class="layout"><nav class="toc" aria-label="Contents">'
