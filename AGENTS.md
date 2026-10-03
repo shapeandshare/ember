@@ -120,6 +120,8 @@ vault/                # project memory (Obsidian): decisions, discoveries, sessi
 | `make smoke` / `make mcp-check` | Direct MPS inference / MCP protocol end-to-end |
 | `make doctor` | Environment, model, and server readiness |
 | `make vault-audit` | Audit `vault/` notes: frontmatter, tags, wikilinks, code-refs, orphans |
+| `make eval-run` / `make eval-export` | Model benchmark (`evals/clef-flash.jsonl`) / reviewer report bundle |
+| `make eval-agent` / `make eval-agent-smoke` | Agent-in-the-loop eval through opencode (opt-in; spends provider credit) |
 | `.venv/bin/ember …` or `.venv/bin/gut …` | Primary CLI, built from this checkout |
 
 ## Architecture (call path)
@@ -303,6 +305,12 @@ reformat untouched files just to satisfy Article X.
   Apple Silicon VMs (the server OOMs on MPS). Run `make test` locally for model-affecting
   changes. See `vault/discoveries/2026-10-03-self-hosted-vms-cannot-hold-the-model.md`.
 - **Pushing `.github/workflows/` changes over HTTPS** needs a gh token with the `workflow` scope.
+- **The agent eval is the only code that launches opencode.** `ember eval agent`
+  (`scripts/run_agent_evals.py`, `evals/agent/`) runs `opencode run --pure` in a temporary
+  sandbox with a private HOME and XDG dirs and no port (constitution Article IV). Keep it out of
+  `tests/`; its unit tests (`tests/test_agent_eval.py`) use scripted transcripts. Benchmark
+  gold labels and agent-scenario checks are frozen before runs; see
+  `vault/decisions/2026-10-03-freeze-benchmark-labels-before-runs.md`.
 - **Article X is prospective.** It binds new and modified code, not the existing tree; don't
   reformat untouched files to satisfy it. See the migration-debt list in Article X §10.18.
 - **Article X docstrings are enforced.** ruff `D` with `convention = "numpy"` runs over

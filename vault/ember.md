@@ -26,6 +26,8 @@ Session-level decisions with their context and consequences.
 - [[2026-10-02-publish-as-gut-and-opencode-ember-advise]]
 - [[2026-10-02-adopt-a-governed-project-vault]]
 - [[2026-10-02-expose-prometheus-metrics-on-the-server]]
+- [[2026-10-03-freeze-benchmark-labels-before-runs]]
+- [[2026-10-03-measure-ember-through-the-agent]]
 
 ### Discoveries
 
@@ -43,6 +45,8 @@ Append-only session logs, never pruned.
 - [[2026-10-02-ember-rename-and-vault-bootstrap]]
 - [[2026-10-02-full-context-and-vision]]
 - [[2026-10-02-prometheus-metrics]]
+- [[2026-10-03-advise-eval-harness]]
+- [[2026-10-03-eval-benchmark-harness]]
 
 ## Reference
 

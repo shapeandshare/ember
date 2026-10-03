@@ -253,6 +253,9 @@ committed: it registers the `vault` MCP server that agents use to read and write
 | `make serve` / `start` / `stop` / `restart` / `status` / `logs` | Model-server lifecycle via the CLI |
 | `make mcp` / `make mcp-list` | Run the MCP server / `opencode mcp list` |
 | `make test` / `test-fast` / `test-strict` | Full suite / unit tests only / full suite that fails without weights |
+| `make test-evals` | Calibration eval suite: positive + negative recipe cases (loads model) |
+| `make eval-run` | Run the benchmark dataset against the live server; writes `results/` |
+| `make eval-report` | Render the most recent run as a Markdown table |
 | `make mcp-check` / `make smoke` | MCP end-to-end check / direct MPS inference |
 | `make compile` / `make check` | Byte-compile / compile + unit tests |
 | `make ci` | `bootstrap` + `check` + `test-strict` |
@@ -290,6 +293,69 @@ invokes the opencode CLI or touches global opencode config.
 install smoke of the built wheel on a hosted Apple Silicon runner. Model-backed tests are
 **not** run in CI: the ~19 GB fp16 model does not fit the available runners (hosted or the
 org's 8 GiB self-hosted VMs), so run `make test` locally for model-affecting changes.
+
+### Benchmark
+
+`evals/clef-flash.jsonl` is a 264-item benchmark covering the five agent-kit recipes (intent
+and readiness, failure triage, change risk, routing, effort and approach) plus four vision
+recipes (`vision_noul`, `vision_choice`, `vision_score`, `vision_video`): 456 scored questions
+(184 `choice`, 152 `noul`, 88 `score`, 32 across the four vision recipes), split into
+`dev` (130 items) and `test` (134). Vision items carry an `images` or `videos` field
+(base64 `data:` URIs) alongside `state` and `questions`. Each line is
+self-contained (`state`, the recipe's fixed question set, a gold label for every question, and
+a `rationale`), so other implementations can score it without this harness.
+
+```bash
+make eval-run       # or: ember eval run [--split dev|test] [--category <recipe>]
+make eval-report    # Markdown report of the most recent run
+make eval-export    # or: ember eval export; the reviewer bundle described below
+ember eval report --compare results/<a>_results.json results/<b>_results.json
+```
+
+`ember eval export` writes `results/<run_id>_report/` for external reviewers:
+`report.html` (one self-contained file with inline charts, light and dark themes, a print
+layout, and item filters; it loads nothing from the network), `report.md` with its
+`figures/*.svg`, and `data/` with the run's results, trace, and the exact dataset scored.
+The report covers context, the system under test, benchmark design, metric definitions with
+references, results, calibration, the agent kit's decision rules replayed on every item, a
+review card for every miss, limitations, and reproduction pins.
+
+The report gives accuracy with a 95% bootstrap interval, macro-F1, top-label ECE, and Brier
+score (`choice`, `noul`); ranked probability score and MAE (`score`); and coverage and accuracy
+at the agent kit's act-on-it thresholds. Each run records the git hash, the engine, and the
+dataset's SHA-256, and `--compare` warns when two runs scored different item sets.
+
+Gold labels are judged from `state` alone against the recipe's option descriptions, and they
+are fixed before any run: `needs_review` is true exactly when `risk` is Medium or High, and
+`retry` only for `flaky` failures. A person reviews disagreements; labels are never changed to
+match the model. `make check` validates the dataset (`tests/test_eval_benchmark.py`).
+`ember eval` reads `evals/` and `scripts/` from the checkout, so it works only in a clone.
+
+### Agent in the loop
+
+The benchmark above scores the model. `ember eval agent` scores ember the way it is used:
+through a coding agent. It gives opencode 54 scripted requests (vague and precise asks,
+failing tests, risky and trivial commits, routing and effort questions, and controls), each
+in a throwaway git repo, and judges the agent only by what it did (files, commits, tests,
+its reply). Each scenario runs under four conditions: `none` (no ember), `mcp` (the MCP
+server and its instructions), `skill` (plus the `ember-advise` skill), and `full` (plus the
+AGENTS.md policy).
+
+```bash
+ember start                       # the agent sessions call the warm server
+make eval-agent-smoke             # 6 scenarios x 4 conditions x 2 models, 1 trial
+make eval-agent                   # or: ember eval agent [--models ...] [--trials 3] [--parallel 8]
+ember eval export --agent latest  # put the agent results first in the reviewer report
+```
+
+Every session runs `opencode run --pure` with a private HOME and XDG directories and no TCP
+port, so your opencode config, plugins, sessions, and running instances are untouched. The
+provider key is read from the environment or opencode's auth file and passed only to the child
+process. The run reports, per model and condition: gold-action accuracy, its paired change
+against `none`, how often the agent consulted ember at decision points (and on controls),
+whether it consulted before acting, asked the kit's recipe questions, passed the evidence, and
+followed ember's answer, plus cost and time per session. It spends real provider credit and is
+never part of `make check`, `make test`, or CI.
 
 ## Caveats
 
