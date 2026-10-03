@@ -12,6 +12,7 @@
 #     shared/testing.mk  — test, test-fast, test-strict, test-cov, mcp-check, smoke
 #     shared/server.mk   — serve, start, stop, restart, status, logs, mcp, mcp-list, doctor
 #     shared/release.mk  — download, init, opencode, setup, bootstrap, check, ci, clean, clean-model
+#     shared/vault.mk    — vault-audit
 SHELL := /bin/bash
 
 REPO_ROOT := $(CURDIR)
@@ -37,6 +38,7 @@ include shared/python.mk
 include shared/testing.mk
 include shared/server.mk
 include shared/release.mk
+include shared/vault.mk
 
 .PHONY: setup-hooks
 setup-hooks: ## Install git hooks from .githooks/ (sets core.hooksPath)
