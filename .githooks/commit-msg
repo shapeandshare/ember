@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# .githooks/commit-msg
+#
+# Enforces Conventional Commits via commitizen.
+# Rejects commits whose subject line does not match the pattern:
+#   <type>(<optional scope>): <description>
+# Valid types: feat, fix, docs, chore, refactor, test, perf, ci, build, style
+#
+# Install:
+#   git config core.hooksPath .githooks
+# or:
+#   make setup-hooks
+#
+# Bypass (use sparingly):
+#   git commit --no-verify
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+if [[ ! -x ".venv/bin/cz" ]]; then
+    echo "commit-msg: .venv/bin/cz not found — run 'make sync' first" >&2
+    exit 1
+fi
+
+.venv/bin/cz check --commit-msg-file "$1"
