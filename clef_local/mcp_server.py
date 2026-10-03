@@ -31,6 +31,8 @@ import httpx
 from mcp.server import MCPServer
 from pydantic import BaseModel, Field
 
+from clef_local import agent_kit
+
 # stdout is the JSON-RPC wire; log to stderr only.
 logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="[clef-mcp] %(message)s")
 log = logging.getLogger("clef-mcp")
@@ -40,7 +42,17 @@ SERVER_URL = os.environ.get("CLEF_SERVER_URL", "http://127.0.0.1:8765").rstrip("
 AUTOSTART = os.environ.get("CLEF_AUTOSTART", "1").lower() not in ("0", "false", "no", "")
 START_TIMEOUT = float(os.environ.get("CLEF_START_TIMEOUT", "300"))
 
-mcp = MCPServer("clef")
+mcp = MCPServer("clef", instructions=agent_kit.instructions())
+
+
+@mcp.resource(
+    agent_kit.GUIDE_URI,
+    name="clef-decide-guide",
+    description="Full playbook for the decide tool: schemas, thresholds, and recipes.",
+    mime_type="text/markdown",
+)
+def guide() -> str:
+    return agent_kit.skill()
 
 
 class Question(BaseModel):
@@ -149,10 +161,11 @@ def decide(input: DecideInput) -> dict[str, Any]:
     """Ask the local Clef-Flash decision model to classify a state.
 
     Use this for bounded, high-speed decisions: routing, triage, urgency,
-    yes/no checks, or scoring. Returns per-question answers. For 'choice' the
-    answer has the picked choice, confidence, and full probabilities; for
-    'score' an expected score over the ordered criteria; for 'noul' the
-    probability the proposition is true.
+    yes/no checks, or scoring. The model sees only `state`, so include every
+    piece of evidence the decision depends on. Returns per-question answers.
+    For 'choice' the answer has the picked choice, confidence, and full
+    probabilities; for 'score' an expected score over the ordered criteria;
+    for 'noul' the probability the proposition is true.
     """
     _ensure_server()
     payload = {

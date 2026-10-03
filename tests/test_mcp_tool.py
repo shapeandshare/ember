@@ -15,6 +15,8 @@ from mcp.client.stdio import stdio_client
 
 from tests.conftest import free_port, mcp_stdin_params, terminate_pid
 
+from clef_local import agent_kit
+
 SAMPLE = {
     "input": {
         "state": "The login endpoint returns 401 for all users after the latest deploy.",
@@ -100,3 +102,22 @@ def test_mcp_autostart_launches_server_on_configured_port(tmp_path) -> None:
     finally:
         if pidfile.exists():
             terminate_pid(int(pidfile.read_text().strip()))
+
+
+def test_mcp_advertises_instructions_and_guide_resource() -> None:
+    """Agents learn the tool from initialize.instructions and the clef://guide resource,
+    neither of which needs the model server."""
+    params = mcp_stdin_params(f"http://127.0.0.1:{free_port()}", autostart="0")
+
+    async def run():
+        async with stdio_client(params) as (read, write):
+            async with ClientSession(read, write) as session:
+                init = await session.initialize()
+                resources = await session.list_resources()
+                guide = await session.read_resource(agent_kit.GUIDE_URI)
+                return init, resources, guide
+
+    init, resources, guide = asyncio.run(run())
+    assert init.instructions == agent_kit.instructions()
+    assert agent_kit.GUIDE_URI in {str(resource.uri) for resource in resources.resources}
+    assert guide.contents[0].text == agent_kit.skill()
