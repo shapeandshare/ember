@@ -305,6 +305,9 @@ reformat untouched files just to satisfy Article X.
 - **Pushing `.github/workflows/` changes over HTTPS** needs a gh token with the `workflow` scope.
 - **Article X is prospective.** It binds new and modified code, not the existing tree; don't
   reformat untouched files to satisfy it. See the migration-debt list in Article X §10.18.
+- **Article X docstrings are enforced.** ruff `D` with `convention = "numpy"` runs over
+  `ember/` (tests and scripts are exempt) and `ember/py.typed` ships, so keep new public
+  modules, classes, and functions documented or `make lint` fails.
 
 ## Speckit integration
 
