@@ -1,18 +1,34 @@
 name: ci
 
+# The model-backed job needs Apple Silicon, so it runs on the org's self-hosted
+# pool described in shapeandshare/gh-runner-standalone (Tart track): registered
+# labels [self-hosted, macOS, arm64] in runner group "default". It is
+# workflow_dispatch-only so an offline runner cannot leave a pull request's
+# check pending. Everything else runs on GitHub-hosted runners.
+
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      reason:
+        description: Reason for a manual run (the model job needs the self-hosted runner)
+        required: false
+        default: ad-hoc
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check:
     name: compile, unit tests, build, install smoke
     runs-on: macos-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
@@ -32,7 +48,10 @@ jobs:
   model:
     name: model-backed tests (self-hosted Apple Silicon)
     if: github.event_name == 'workflow_dispatch'
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on:
+      group: default
+      labels: [self-hosted, macOS, arm64]
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
