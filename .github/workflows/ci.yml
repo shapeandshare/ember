@@ -57,4 +57,9 @@ jobs:
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --locked
       - run: make download
+      - name: Runner diagnostics
+        run: |
+          echo "mem_bytes=$(sysctl -n hw.memsize) cpus=$(sysctl -n hw.ncpu)"
+          df -h .
+          ls -la .models/clef-flash | head
       - run: make test-strict

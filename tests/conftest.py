@@ -78,6 +78,14 @@ def mcp_stdin_params(base_url: str, *, autostart: str = "0", **extra_env: str):
     )
 
 
+def _server_log_tail(log_path: Path, limit: int = 4000) -> str:
+    """The tail of a spawned server's log, for actionable CI failures."""
+    try:
+        return log_path.read_text(encoding="utf-8", errors="replace")[-limit:]
+    except OSError:
+        return ""
+
+
 @pytest.fixture(scope="session")
 def base_url(tmp_path_factory) -> str:
     """Start one isolated ember server on a random port for the whole session."""
@@ -114,7 +122,8 @@ def base_url(tmp_path_factory) -> str:
         while time.time() < deadline:
             if proc.poll() is not None:
                 raise RuntimeError(
-                    f"test server exited early rc={proc.returncode}; see {log_path}"
+                    f"test server exited early rc={proc.returncode}; see {log_path}\n"
+                    f"--- server.log tail ---\n{_server_log_tail(log_path)}"
                 )
             with contextlib.suppress(httpx.HTTPError):
                 resp = httpx.get(f"{url}/health", timeout=2.0)
@@ -123,7 +132,8 @@ def base_url(tmp_path_factory) -> str:
             time.sleep(1.0)
         else:
             raise RuntimeError(
-                f"test server not ready within {SERVER_TIMEOUT}s; see {log_path}"
+                f"test server not ready within {SERVER_TIMEOUT}s; see {log_path}\n"
+                f"--- server.log tail ---\n{_server_log_tail(log_path)}"
             )
         yield url
     finally:
