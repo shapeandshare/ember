@@ -7,7 +7,7 @@
   "exports": {
     ".": "./index.js"
   },
-  "license": "Apache-2.0",
+  "license": "MIT",
   "keywords": ["opencode", "opencode-plugin", "mcp", "clef"],
   "files": ["index.js", "README.md"]
 }
