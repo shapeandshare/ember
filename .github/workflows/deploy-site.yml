@@ -1,0 +1,86 @@
+name: Deploy Site
+
+# Builds the Jekyll site in `site/` and publishes it to GitHub Pages. The docs
+# and brand assets are assembled from the repository by scripts/build_site_docs.py,
+# so they are generated, not committed. Actions are pinned to full commit SHAs
+# (Dependabot bumps them); the `zizmor` job in ci audits this file.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "benchmark/**"
+      - "evals/**"
+      - "scripts/build_site_docs.py"
+      - "scripts/build_site_benchmark.py"
+      - "assets/brand/**"
+      - ".github/workflows/deploy-site.yml"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read # checkout
+      pages: write # actions/configure-pages configures the Pages site
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Assemble docs and brand assets from the repository
+        run: python3 scripts/build_site_docs.py
+
+      - name: Render the benchmark report
+        run: python3 scripts/build_site_benchmark.py
+
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          ruby-version: "3.3"
+          bundler-cache: false # a Pages deploy must not restore cache state
+          working-directory: site
+
+      - name: Install gems
+        run: bundle install
+        working-directory: site
+
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - name: Build with Jekyll
+        working-directory: site
+        env:
+          JEKYLL_ENV: production
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: bundle exec jekyll build --baseurl "$BASE_PATH"
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site/_site
+
+  deploy:
+    name: deploy
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write # actions/deploy-pages publishes the artifact
+      id-token: write # OIDC token for the Pages deployment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

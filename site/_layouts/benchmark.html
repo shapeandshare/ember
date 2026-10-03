@@ -1,0 +1,31 @@
+---
+layout: default
+---
+<div class="doc-layout">
+  {% include benchmark_nav.html %}
+  <article class="benchmark">
+{{ content }}
+  </article>
+</div>
+<script>
+(() => {
+  document.querySelectorAll("form[data-filter-table]").forEach((form) => {
+    const table = document.getElementById(form.dataset.filterTable);
+    const status = form.querySelector("[data-count]");
+    const update = () => {
+      const picks = [...form.querySelectorAll("select")].map((s) => [s.name, s.value]);
+      let shown = 0;
+      table.querySelectorAll("tbody tr").forEach((row) => {
+        const keep = picks.every(([k, v]) => !v || row.dataset[k] === v);
+        row.hidden = !keep;
+        shown += keep ? 1 : 0;
+      });
+      status.textContent = shown + " of " + table.tBodies[0].rows.length + " items";
+    };
+    form.addEventListener("change", update);
+    form.addEventListener("submit", (e) => e.preventDefault());
+    form.hidden = false;
+    update();
+  });
+})();
+</script>

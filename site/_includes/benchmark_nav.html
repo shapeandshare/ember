@@ -1,0 +1,9 @@
+<nav class="docs-nav" aria-label="Benchmark report">
+  <span class="docs-nav-home">Benchmark report</span>
+  <ul>
+    {%- for s in site.data.benchmark.sections %}
+    {%- assign surl = '/results/' | append: s.anchor | append: '/' %}
+    <li><a href="{{ surl | relative_url }}"{% if page.url == surl %} aria-current="page"{% endif %}><span class="nav-num">{{ s.number }}</span>{{ s.title }}</a></li>
+    {%- endfor %}
+  </ul>
+</nav>

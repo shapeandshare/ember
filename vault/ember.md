@@ -29,6 +29,7 @@ Session-level decisions with their context and consequences.
 - [[2026-10-03-freeze-benchmark-labels-before-runs]]
 - [[2026-10-03-measure-ember-through-the-agent]]
 - [[2026-10-03-harden-github-before-going-public]]
+- [[2026-10-03-publish-a-pages-site]]
 
 ### Discoveries
 

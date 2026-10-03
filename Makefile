@@ -13,6 +13,7 @@
 #     shared/server.mk   — serve, start, stop, restart, status, logs, mcp, mcp-list, doctor
 #     shared/release.mk  — download, init, opencode, setup, bootstrap, check, ci, clean, clean-model
 #     shared/vault.mk    — vault-audit
+#     shared/site.mk     — site, site-serve (Jekyll GitHub Pages)
 SHELL := /bin/bash
 
 REPO_ROOT := $(CURDIR)
@@ -39,6 +40,7 @@ include shared/testing.mk
 include shared/server.mk
 include shared/release.mk
 include shared/vault.mk
+include shared/site.mk
 
 .PHONY: setup-hooks
 setup-hooks: ## Install git hooks from .githooks/ (sets core.hooksPath)

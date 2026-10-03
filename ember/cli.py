@@ -639,6 +639,27 @@ def cmd_eval_export(args: argparse.Namespace) -> int:
     return report_main(argv)
 
 
+def cmd_eval_snapshot(args: argparse.Namespace) -> int:
+    """Snapshot a run into the tracked benchmark bundle (``ember eval snapshot``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses ``args.results_file``.
+
+    Returns
+    -------
+    int
+        Exit code from ``snapshot_evals.main``.
+    """
+    try:
+        from scripts.snapshot_evals import main as snapshot_main
+    except ImportError as exc:
+        raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
+    argv = [str(args.results_file)] if args.results_file else []
+    return snapshot_main(argv)
+
+
 def cmd_eval_agent(args: argparse.Namespace) -> int:
     """Run the agent-in-the-loop eval through opencode (``ember eval agent``).
 
@@ -840,6 +861,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="attach an agent-in-the-loop run: an agent_*_results.json, or 'latest'",
     )
     p.set_defaults(func=cmd_eval_export)
+
+    p = esub.add_parser(
+        "snapshot",
+        help="copy a run into the tracked benchmark/ bundle the site renders",
+    )
+    p.add_argument(
+        "results_file",
+        nargs="?",
+        default=None,
+        help="path to *_results.json (default: most recent in results/)",
+    )
+    p.set_defaults(func=cmd_eval_snapshot)
 
     p = esub.add_parser(
         "agent",

@@ -1,0 +1,11 @@
+<nav class="docs-nav" aria-label="Documentation">
+  <a class="docs-nav-home" href="{{ '/docs/' | relative_url }}">Documentation</a>
+  <ul>
+    {%- for doc in site.data.docs %}
+    {%- assign durl = '/docs/' | append: doc.slug | append: '/' %}
+    <li><a href="{{ durl | relative_url }}"{% if page.url == durl %} aria-current="page"{% endif %}>{{ doc.title }}</a></li>
+    {%- endfor %}
+    {%- assign bench_home = site.data.benchmark.sections[0].anchor | default: "summary" %}
+    <li><a href="{{ '/results/' | append: bench_home | append: '/' | relative_url }}">Benchmark report</a></li>
+  </ul>
+</nav>

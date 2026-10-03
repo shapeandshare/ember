@@ -1,0 +1,10 @@
+[
+  {"slug": "overview", "title": "Overview", "source": "README.md"},
+  {"slug": "compatibility", "title": "Compatibility", "source": "COMPATIBILITY.md"},
+  {"slug": "responsible-use", "title": "Responsible use", "source": "RESPONSIBLE_USE.md"},
+  {"slug": "third-party-notices", "title": "Third-party notices", "source": "THIRD_PARTY_NOTICES.md"},
+  {"slug": "security", "title": "Security", "source": "SECURITY.md"},
+  {"slug": "design", "title": "Design system", "source": "DESIGN.md"},
+  {"slug": "agent-instructions", "title": "Agent instructions", "source": "ember/agent_kit/instructions.md"},
+  {"slug": "agent-skill", "title": "The ember-advise skill", "source": "ember/agent_kit/ember-advise/SKILL.md"}
+]

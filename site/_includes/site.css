@@ -1,0 +1,175 @@
+/* ember site — consumes the --ember-* tokens from assets/brand/tokens.css */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--ember-text);
+  background: var(--ember-surface);
+}
+
+a { color: var(--ember-accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+code, pre, kbd, samp {
+  font-family: ui-monospace, "SF Mono", Menlo, "Cascadia Code", Consolas, monospace;
+  font-size: 0.9em;
+}
+
+img { max-width: 100%; height: auto; }
+
+/* --- top gradient band, full-bleed and shared by every page -------------- */
+/* The colours are the benchmark report hero's warm/cool glows, so the whole
+   site carries the same band. It spans the full page width. */
+.page-body {
+  background:
+    radial-gradient(70% 90% at 12% 0%, color-mix(in srgb, #ff722f 16%, transparent), transparent 70%),
+    radial-gradient(60% 80% at 92% 0%, color-mix(in srgb, #c7a4e9 20%, transparent), transparent 70%);
+  background-repeat: no-repeat;
+  background-size: 100% 620px;
+}
+@media (prefers-color-scheme: dark) {
+  .page-body {
+    background:
+      radial-gradient(70% 90% at 12% 0%, color-mix(in srgb, #ff8b52 18%, transparent), transparent 70%),
+      radial-gradient(60% 80% at 92% 0%, color-mix(in srgb, #a88cc9 22%, transparent), transparent 70%);
+    background-repeat: no-repeat;
+    background-size: 100% 620px;
+  }
+}
+
+/* --- shell ------------------------------------------------------------- */
+
+.site-head {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--ember-surface);
+  border-bottom: 1px solid var(--ember-border);
+}
+.site-head-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0.6rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.brand { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--ember-text); }
+.brand:hover { text-decoration: none; }
+.brand-name { font-weight: 600; letter-spacing: -0.01em; }
+.site-nav { display: flex; gap: 1.25rem; }
+.site-nav a { color: var(--ember-muted); }
+.site-nav a:hover { color: var(--ember-text); text-decoration: none; }
+
+.site-foot {
+  max-width: 980px;
+  margin: 4rem auto 0;
+  padding: 2rem 1.25rem 3rem;
+  border-top: 1px solid var(--ember-border);
+  color: var(--ember-muted);
+  font-size: 0.9rem;
+}
+.site-foot-line { margin: 0 0 0.25rem; color: var(--ember-text); }
+.site-foot-meta { margin: 0; }
+
+/* --- home -------------------------------------------------------------- */
+
+.hero {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 3.5rem 1.25rem 1rem;
+  text-align: center;
+}
+.hero-art img { display: block; margin: 0 auto 1.5rem; width: min(200px, 55%); }
+.hero h1 { font-size: clamp(1.9rem, 5vw, 2.6rem); line-height: 1.15; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
+.hero .lede { font-size: 1.15rem; color: var(--ember-muted); margin: 0 auto 1.5rem; max-width: 46ch; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin: 1.5rem 0; }
+.button {
+  display: inline-block;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--ember-border);
+  color: var(--ember-text);
+}
+.button:hover { text-decoration: none; border-color: var(--ember-accent); }
+.button.primary { background: var(--ember-accent); border-color: var(--ember-accent); color: var(--ember-surface); }
+.button.primary:hover { opacity: 0.92; }
+
+.wrap { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.25rem 0; }
+
+/* --- docs -------------------------------------------------------------- */
+
+.doc-layout {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 0;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: start;
+}
+.docs-nav { position: sticky; top: 4.5rem; font-size: 0.92rem; }
+.docs-nav-home { display: block; font-weight: 600; color: var(--ember-text); margin-bottom: 0.6rem; }
+.docs-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.docs-nav a { color: var(--ember-muted); }
+.docs-nav a[aria-current="page"] { color: var(--ember-accent); font-weight: 600; }
+.doc-content { min-width: 0; }
+.doc-content > h1:first-child { margin-top: 0; }
+
+@media (max-width: 760px) {
+  .doc-layout { grid-template-columns: 1fr; gap: 1.5rem; }
+  .docs-nav { position: static; }
+}
+
+/* --- prose ------------------------------------------------------------- */
+
+h1, h2, h3, h4 { line-height: 1.25; letter-spacing: -0.01em; margin: 2rem 0 0.75rem; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.4rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ember-border); }
+h3 { font-size: 1.15rem; }
+p, ul, ol { margin: 0 0 1rem; }
+li { margin: 0.2rem 0; }
+
+pre {
+  background: var(--ember-ink);
+  color: var(--ember-cream);
+  padding: 1rem 1.1rem;
+  border-radius: 10px;
+  overflow-x: auto;
+  line-height: 1.5;
+  text-align: left;
+}
+:root[data-theme="dark"] pre,
+@media (prefers-color-scheme: dark) { }
+pre code { color: inherit; background: none; padding: 0; }
+
+code { background: var(--ember-border); border-radius: 5px; padding: 0.12em 0.35em; }
+pre code { background: none; padding: 0; }
+
+blockquote {
+  margin: 1.25rem 0;
+  padding: 0.25rem 1rem;
+  border-left: 3px solid var(--ember-accent);
+  color: var(--ember-muted);
+}
+
+table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.94rem; }
+th, td { text-align: left; padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--ember-border); }
+th { color: var(--ember-text); }
+
+hr { border: none; border-top: 1px solid var(--ember-border); margin: 2rem 0; }
+
+.doc-list { list-style: none; padding: 0; display: grid; gap: 0.5rem; }
+.doc-list a { font-size: 1.05rem; }
+
+/* --- benchmark report (rendered natively from benchmark/<run-id>/) ------ */
+.benchmark { min-width: 0; }
+.docs-nav .nav-num { display: inline-block; min-width: 1.4em; color: var(--ember-muted); font-variant-numeric: tabular-nums; }
