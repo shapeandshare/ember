@@ -58,6 +58,7 @@ dev = [
 testpaths = ["tests"]
 markers = [
     "model: loads the Clef model (slow; needs MPS or CPU)",
+    "evals: calibration eval suite — positive and negative recipe cases (implies model)",
 ]
 addopts = "-q"
 filterwarnings = [
