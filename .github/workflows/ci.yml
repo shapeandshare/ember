@@ -21,11 +21,13 @@ jobs:
       - run: uv build
       - name: Install the wheel as a uv tool and smoke the CLI
         run: |
-          uv tool install dist/clef_local-*.whl
+          uv tool install --python 3.12 dist/gut_feeling-*.whl
           bin="$(uv tool dir --bin)"
-          "$bin/clef" --help
-          "$bin/clef" model list
-          test -x "$bin/clef-mcp"
+          "$bin/gut-feeling" --help
+          "$bin/gut" --help
+          "$bin/gut-feeling" model list
+          "$bin/gut-feeling" agents show instructions | head -1
+          test -x "$bin/gut-feeling-mcp"
 
   model:
     name: model-backed tests (self-hosted Apple Silicon)
