@@ -24,6 +24,26 @@ code, pre, kbd, samp {
 
 img { max-width: 100%; height: auto; }
 
+/* --- top gradient band, full-bleed and shared by every page -------------- */
+/* The colours are the benchmark report hero's warm/cool glows, so the whole
+   site carries the same band. It spans the full page width. */
+.page-body {
+  background:
+    radial-gradient(70% 90% at 12% 0%, color-mix(in srgb, #ff722f 16%, transparent), transparent 70%),
+    radial-gradient(60% 80% at 92% 0%, color-mix(in srgb, #c7a4e9 20%, transparent), transparent 70%);
+  background-repeat: no-repeat;
+  background-size: 100% 620px;
+}
+@media (prefers-color-scheme: dark) {
+  .page-body {
+    background:
+      radial-gradient(70% 90% at 12% 0%, color-mix(in srgb, #ff8b52 18%, transparent), transparent 70%),
+      radial-gradient(60% 80% at 92% 0%, color-mix(in srgb, #a88cc9 22%, transparent), transparent 70%);
+    background-repeat: no-repeat;
+    background-size: 100% 620px;
+  }
+}
+
 /* --- shell ------------------------------------------------------------- */
 
 .site-head {
