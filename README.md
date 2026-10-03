@@ -287,9 +287,9 @@ make ci           # bootstrap + check + test-strict
 invokes the opencode CLI or touches global opencode config.
 
 **CI** (`.github/workflows/ci.yml`) runs `uv sync --locked`, `make check`, `uv build`, and an
-install smoke of the built wheel on a hosted Apple Silicon runner. Hosted runners lack the
-memory for the ~19 GB fp16 model, so the model-backed `make test-strict` job runs on manual
-dispatch against a self-hosted Apple Silicon runner.
+install smoke of the built wheel on a hosted Apple Silicon runner. Model-backed tests are
+**not** run in CI: the ~19 GB fp16 model does not fit the available runners (hosted or the
+org's 8 GiB self-hosted VMs), so run `make test` locally for model-affecting changes.
 
 ## Caveats
 

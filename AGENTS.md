@@ -265,12 +265,10 @@ Run `make pr-ready` before every PR: formats, lints, type-checks, security-scans
   `ember_advise_*` / `ember_model_info` together with the README and `tests/test_metrics.py`.
   They live in a dedicated `CollectorRegistry`, so only ember metrics are exposed — no
   `python_*`/`process_*` collectors.
-- **CI's model job targets the org's self-hosted pool** via
-  `runs-on: {group: default, labels: [self-hosted, macOS, arm64]}` (the Tart track in
-  `shapeandshare/gh-runner-standalone`; start it with `runner run --config macos/config.toml`).
-  It is `workflow_dispatch`-only so an offline runner cannot leave a PR check pending.
-- **Hosted CI cannot hold the model.** Model-backed tests run locally or on a self-hosted
-  Apple Silicon runner via `workflow_dispatch`.
+- **Model-backed tests are local-only.** CI runs only `make check` (unit) plus a build/install
+  smoke: the ~19 GB fp16 model fits neither hosted runners nor the org's 8 GiB self-hosted
+  Apple Silicon VMs (the server OOMs on MPS). Run `make test` locally for model-affecting
+  changes. See `vault/discoveries/2026-10-03-self-hosted-vms-cannot-hold-the-model.md`.
 - **Pushing `.github/workflows/` changes over HTTPS** needs a gh token with the `workflow` scope.
 
 ## Speckit integration

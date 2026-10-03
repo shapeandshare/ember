@@ -178,7 +178,7 @@ make test-strict  # full suite; fails instead of skipping when weights are missi
 - Tests must stop only the processes they started.
 - Tests must never invoke the opencode CLI.
 - Model-backed tests are marked with `@pytest.mark.model` and skipped automatically when
-  weights are absent. They run locally and on the self-hosted Apple Silicon CI runner.
+  weights are absent. They run locally, not in CI — the model does not fit the available runners.
 
 ### Test layout
 

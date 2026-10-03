@@ -33,6 +33,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-02-ember-names-are-taken-on-pypi-and-npm]]
 - [[2026-10-02-opencode-merges-the-dot-opencode-config]]
 - [[2026-10-02-media-refs-are-data-uris-not-host-paths]]
+- [[2026-10-03-self-hosted-vms-cannot-hold-the-model]]
 
 ### Sessions
 
