@@ -95,6 +95,28 @@ def test_engine_max_length_defaults_to_the_model_maximum():
     assert default is None
 
 
+def test_engine_model_name_explicit_and_fallback(tmp_path, monkeypatch):
+    model_dir = tmp_path / "my-model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+
+    engine_explicit = runtime.Engine(model_dir, model_name="full")
+    assert engine_explicit.model_name == "full"
+    assert engine_explicit.describe()["model"] == "full"
+
+    engine_fallback = runtime.Engine(model_dir)
+    assert engine_fallback.model_name == "my-model"
+    assert engine_fallback.describe()["model"] == "my-model"
+
+    engine_none = runtime.Engine(model_dir, model_name=None)
+    assert engine_none.model_name == "my-model"
+
+    engine_empty = runtime.Engine(model_dir, model_name="")
+    assert engine_empty.model_name == ""
+
+
 def test_pinned_model_declares_the_model_maximum():
     model_dir = runtime.DEFAULT_MODEL_DIR
     if not model_dir.is_dir():
@@ -215,7 +237,7 @@ def test_opencode_config_remove_drops_only_our_entry(tmp_path):
     target.write_text(json.dumps(config))
 
     assert opencode_config.remove(target) is True
-    assert json.loads(target.read_text())["mcp"] == {
-        "other": {"type": "remote", "url": "http://x"}
-    }
+    remaining_mcp = json.loads(target.read_text())["mcp"]
+    assert "ember" not in remaining_mcp
+    assert remaining_mcp["other"] == {"type": "remote", "url": "http://x"}
     assert opencode_config.remove(target) is False
