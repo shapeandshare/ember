@@ -432,13 +432,14 @@ def cmd_doctor(_: argparse.Namespace) -> int:
         print(f"[info] {label}: {detail}")
 
     supported = paths.is_apple_silicon()
-    check(
-        "platform",
-        supported,
-        "Apple Silicon macOS"
-        if supported
-        else f"{sys.platform}/{platform.machine()} is unsupported",
-    )
+    if supported:
+        check("platform", True, "Apple Silicon macOS")
+    else:
+        info(
+            "platform",
+            f"{sys.platform}/{platform.machine()} — unsupported; "
+            "model server requires Apple Silicon macOS",
+        )
     tested_python = sys.version_info[:2] == (3, 12)
     check(
         "python",

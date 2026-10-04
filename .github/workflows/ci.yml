@@ -13,6 +13,11 @@ name: ci
 # This workflow mirrors `make pr-ready`: format, lint, typecheck, security, compile,
 # unit tests, build, install smoke — all in parallel, all required to pass.
 # Model-backed tests and coverage reporting run locally; see `make test-cov`.
+#
+# Runner strategy:
+#   ubuntu-latest — lint, typecheck, security, unit tests (fast, cheap Linux)
+#   macos-latest  — build wheel + install smoke only (MPS deps need macOS)
+# Unit tests no longer require macOS; they run on Linux in the `test` job.
 
 on:
   push:
@@ -80,13 +85,13 @@ jobs:
       - run: make security
 
   # ########################################################################
-  # Compile + unit tests + build + install smoke (requires macOS for MPS
-  # deps; also builds and smoke-tests the wheel)
+  # Compile + unit tests (Linux — fast and cheap; no macOS needed for unit
+  # tests since they do not load torch or exercise MPS paths)
   # ########################################################################
-  check:
-    name: compile, unit tests, build, install smoke
-    runs-on: macos-latest
-    timeout-minutes: 30
+  test:
+    name: compile, unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -96,6 +101,24 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       - run: uv sync --locked
       - run: make check
+
+  # ########################################################################
+  # Build wheel + install smoke (macOS — needed for torch/MPS dependencies
+  # that the wheel bundles; separate from unit tests to avoid billing macOS
+  # runner time for work that Linux handles cheaply)
+  # ########################################################################
+  smoke:
+    name: build wheel, install smoke
+    runs-on: macos-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - run: uv sync --locked
       - run: uv build
       - name: Install the wheel as a uv tool and smoke the CLI
         run: |
