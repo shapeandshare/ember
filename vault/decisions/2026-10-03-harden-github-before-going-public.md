@@ -10,7 +10,8 @@ created: 2026-10-03
 updated: 2026-10-03
 code-refs:
   - .github/workflows/ci.yml
-  - .github/workflows/release.yml
+  - .github/workflows/release-ember.yml
+  - .github/workflows/release-plugin.yml
   - .github/dependabot.yml
   - .github/CODEOWNERS
   - SECURITY.md
@@ -27,7 +28,7 @@ repository and organization settings below are applied in order.
 - On a public repository, a fork's pull request runs the `pull_request` workflows from
   its own branch, so it can rewrite any step, including `runs-on` and `permissions`.
 - An audit on 2026-10-03 found 38 zizmor findings (14 high): actions pinned to mutable
-  tags, no `permissions:` on `release.yml` or `ci-check.yml`, checkout persisting the
+  tags, no `permissions:` on `release-ember.yml`/`release-plugin.yml` or `ci-check.yml`, checkout persisting the
   token, a cached release build, and no Dependabot cooldown. The repository's default
   token was read-write and allowed to approve pull requests, the planned release flow
   wanted a broad personal access token, `CODEOWNERS` named an owner GitHub could not
