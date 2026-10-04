@@ -66,17 +66,20 @@ jobs:
         id: bump
         run: |
           LAST_TAG=$(git tag --list 'plugin/v*' --sort=-version:refname | head -1)
-          if [ -z "$LAST_TAG" ]; then
-            LAST_TAG="plugin/v0.1.0"
-          fi
 
           CURRENT=$(node -p "require('./packages/opencode-plugin/package.json').version")
 
-          COMMITS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"%s" \
-            -- packages/opencode-plugin/ 2>/dev/null || true)
+          if [ -z "$LAST_TAG" ]; then
+            # No plugin tag exists yet — scan all history for plugin-touching commits.
+            COMMITS=$(git log HEAD --pretty=format:"%s" \
+              -- packages/opencode-plugin/ 2>/dev/null || true)
+          else
+            COMMITS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"%s" \
+              -- packages/opencode-plugin/ 2>/dev/null || true)
+          fi
 
           if [ -z "$COMMITS" ]; then
-            echo "No releasable commits in packages/opencode-plugin/ since ${LAST_TAG} — skipping."
+            echo "No releasable commits in packages/opencode-plugin/ since ${LAST_TAG:-<root>} — skipping."
             echo "tag=" >> "$GITHUB_OUTPUT"
             echo "branch=" >> "$GITHUB_OUTPUT"
             exit 0
