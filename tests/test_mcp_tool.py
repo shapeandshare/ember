@@ -15,10 +15,10 @@ import time
 
 import pytest
 from ember.agent_kit import api as agent_kit
-from mcp import ClientSession
 from mcp.client.stdio import stdio_client
 from PIL import Image
 
+from mcp import ClientSession
 from tests.conftest import free_port, mcp_stdin_params, terminate_pid
 
 

@@ -18,8 +18,6 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Any
 
-log = logging.getLogger(__name__)
-
 from fastapi import FastAPI, HTTPException, Request, Response
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
@@ -34,6 +32,8 @@ from pydantic import BaseModel, Field
 from .. import models
 from ..cfg import config
 from .runtime import Engine
+
+log = logging.getLogger(__name__)
 
 _ENGINE: Engine | None = None
 
