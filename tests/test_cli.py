@@ -12,14 +12,10 @@ import json
 import sys
 
 import pytest
-from ember import (
-    agent_kit,
-    cli,
-    models,
-    opencode_config,
-    opencode_plugin,
-    process,
-)
+from ember import cli, models
+from ember.agent_kit import api as agent_kit
+from ember.opencode import opencode_config, opencode_plugin
+from ember.serving import process
 
 from tests.conftest import free_port
 
@@ -106,7 +102,9 @@ def test_uninstall_removes_global_installs_and_keeps_other_config(sandbox):
 
 
 def test_eval_commands_require_a_checkout(monkeypatch):
-    monkeypatch.setitem(sys.modules, "scripts", None)
+    monkeypatch.setitem(sys.modules, "evals.eval", None)
+    monkeypatch.setitem(sys.modules, "evals.eval.run_evals", None)
+    monkeypatch.setitem(sys.modules, "evals.eval.report_evals", None)
     args = argparse.Namespace(
         server=None,
         split=None,

@@ -14,7 +14,7 @@ import json
 import time
 
 import pytest
-from ember import agent_kit
+from ember.agent_kit import api as agent_kit
 from mcp import ClientSession
 from mcp.client.stdio import stdio_client
 from PIL import Image

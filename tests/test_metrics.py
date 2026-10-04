@@ -40,7 +40,8 @@ def _metrics(base_url: str) -> str:
 
 
 def test_metrics_endpoint_is_exposed_without_the_model():
-    from ember import server
+    # import-placement:allow - deferred; server loads torch at import
+    from ember.serving import server
     from fastapi.testclient import TestClient
 
     resp = TestClient(server.app).get("/metrics")
@@ -57,8 +58,11 @@ def test_metrics_endpoint_is_exposed_without_the_model():
 
 
 def test_model_info_tracks_the_engine_lifecycle(monkeypatch, tmp_path):
-    from ember import server
+    # import-placement:allow - deferred; server loads torch at import
+    from ember.serving import server
     from fastapi.testclient import TestClient
+
+    # import-placement:allow - deferred; server loads torch at import
     from prometheus_client import generate_latest
 
     class FakeEngine:
@@ -83,7 +87,8 @@ def test_model_info_tracks_the_engine_lifecycle(monkeypatch, tmp_path):
 
 
 def test_unloaded_engine_requests_are_counted():
-    from ember import server
+    # import-placement:allow - deferred; server loads torch at import
+    from ember.serving import server
     from fastapi.testclient import TestClient
 
     client = TestClient(server.app)
@@ -97,7 +102,8 @@ def test_unloaded_engine_requests_are_counted():
 
 
 def test_unexpected_errors_are_counted(monkeypatch):
-    from ember import server
+    # import-placement:allow - deferred; server loads torch at import
+    from ember.serving import server
     from fastapi.testclient import TestClient
 
     class ExplodingEngine:

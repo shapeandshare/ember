@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ember import opencode_plugin
+from ember.opencode import opencode_plugin
 
 
 def test_render_injects_command_and_environment(monkeypatch):

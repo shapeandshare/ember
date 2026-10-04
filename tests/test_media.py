@@ -10,7 +10,7 @@ import base64
 import io
 
 import pytest
-from ember import media
+from ember.serving import media
 from PIL import Image
 
 
