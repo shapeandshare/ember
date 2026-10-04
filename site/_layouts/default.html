@@ -9,5 +9,25 @@
 {{ content }}
 </div>
 {% include footer.html %}
+<script>
+  (() => {
+    const button = document.getElementById("theme");
+    if (!button) return;
+    const modes = ["auto", "light", "dark"];
+    const root = document.documentElement;
+    let mode = "auto";
+    try { mode = localStorage.getItem("ember-theme") || "auto"; } catch (e) {}
+    const apply = (next) => {
+      mode = next;
+      if (next === "auto") root.removeAttribute("data-theme");
+      else root.setAttribute("data-theme", next);
+      button.textContent = next[0].toUpperCase() + next.slice(1);
+      button.setAttribute("aria-label", "Colour theme: " + next);
+      try { localStorage.setItem("ember-theme", next); } catch (e) {}
+    };
+    button.addEventListener("click", () => apply(modes[(modes.indexOf(mode) + 1) % 3]));
+    apply(mode === "auto" || mode === "light" || mode === "dark" ? mode : "auto");
+  })();
+</script>
 </body>
 </html>
