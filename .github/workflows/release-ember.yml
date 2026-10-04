@@ -1,0 +1,158 @@
+# Release automation — ember Python package (gut wheel, v* tags).
+#
+# Triggers on every push to main that touches ember/** or evals/**. The
+# workflow-level paths filter is the isolation mechanism; no per-job if: is
+# needed, and the broken contains(toJson(commits.*.modified)) pattern is
+# intentionally absent.
+#
+# Flow:
+#   1. cz bump --changelog --yes  — bumps pyproject.toml, generates CHANGELOG.
+#   2. Push bump branch + tag; open PR with auto-merge enabled.
+#   3. Poll until the v* tag lands on main (bump PR merged by CI).
+#   4. Build wheel + sdist; create GitHub Release.
+#
+# Loop prevention: the bump commit only changes pyproject.toml (version
+# string), uv.lock, and CHANGELOG.md — none of those match ember/** or
+# evals/**, so the workflow does not re-trigger on the bump push.
+#
+# Security posture (per AGENTS.md):
+#   - All uses: pinned to full commit SHAs with # vX.Y.Z comments.
+#   - permissions: {} at workflow level; each job grants only what it needs.
+#   - checkout uses persist-credentials: false throughout.
+#   - No pull_request_target, workflow_run, or self-hosted runners.
+#   - No stored secrets beyond GITHUB_TOKEN (auto-provisioned per run).
+#   - zizmor audits this file on every PR touching .github/** (ci.yml).
+
+name: Release ember
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ember/**"
+      - "evals/**"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: release-ember
+  cancel-in-progress: false
+
+jobs:
+  release-ember:
+    name: ember — bump, PR, wait, release
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+
+      - name: Install dependencies
+        run: uv sync --locked --all-groups
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump ember version and generate changelog
+        id: bump
+        run: |
+          if ! uv run cz bump --changelog --yes; then
+            code=$?
+            if [ "$code" -eq 21 ]; then
+              echo "No releasable ember commits since last tag — skipping."
+              echo "tag=" >> "$GITHUB_OUTPUT"
+              echo "branch=" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            exit "$code"
+          fi
+          echo "tag=$(git describe --tags --abbrev=0 --match 'v[0-9]*')" >> "$GITHUB_OUTPUT"
+          echo "branch=ci/bump-$(git describe --tags --abbrev=0 --match 'v[0-9]*')" >> "$GITHUB_OUTPUT"
+
+      - name: Skip remaining steps if no bump needed
+        id: check
+        env:
+          BUMP_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          if [ -z "$BUMP_TAG" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push bump branch and tag
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
+        run: |
+          git remote set-url origin \
+            "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}"
+          git push origin "HEAD:refs/heads/${BUMP_BRANCH}" --tags
+
+      - name: Open bump PR and enable auto-merge
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
+          BUMP_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          PR_URL=$(gh pr create \
+            --title "release ${BUMP_TAG}" \
+            --body "Automated ember version bump to ${BUMP_TAG}. Auto-merges when CI passes." \
+            --base main \
+            --head "${BUMP_BRANCH}")
+          echo "Opened: ${PR_URL}"
+          gh pr merge "${PR_URL}" --auto --squash
+
+      - name: Wait for bump PR to land on main (up to 10 min)
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUMP_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          for i in $(seq 1 20); do
+            if git ls-remote --tags origin "refs/tags/${BUMP_TAG}" \
+                | grep -q "${BUMP_TAG}"; then
+              echo "Tag ${BUMP_TAG} confirmed on remote after ${i} polls."
+              break
+            fi
+            if [ "$i" -eq 20 ]; then
+              echo "Timed out waiting for ${BUMP_TAG} on remote." >&2; exit 1
+            fi
+            sleep 30
+          done
+
+      - name: Build wheel and sdist
+        if: steps.check.outputs.skip == 'false'
+        run: uv build
+
+      - name: Extract release notes from CHANGELOG.md
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          awk '/^## v/{if(seen) exit; seen=1} seen' CHANGELOG.md > release-notes.md
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          gh release create "$RELEASE_TAG" dist/* \
+            --verify-tag \
+            --title "$RELEASE_TAG" \
+            --notes-file release-notes.md
