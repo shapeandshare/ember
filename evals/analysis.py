@@ -97,9 +97,9 @@ def _label_order(spec: Mapping[str, Any]) -> list[Any]:
     return list(spec["criteria"])
 
 
-# ---------------------------------------------------------------------------
+# ###########################################################################
 # Items and question sets
-# ---------------------------------------------------------------------------
+# ###########################################################################
 
 
 def _items(trace: Sequence[Record], dataset: Mapping[str, Record]) -> list[Record]:
@@ -116,9 +116,15 @@ def _items(trace: Sequence[Record], dataset: Mapping[str, Record]) -> list[Recor
                 "correct": q["correct"],
                 "signal": _signal(q),
                 "band": _band(q),
-                "probabilities": q["probabilities"] if q["type"] != "noul" else None,
+                "probabilities": q.get("probabilities"),
             }
-            if q["type"] == "score":
+            if q["type"] == "noul":
+                p_true = float(q["p_true"])
+                entry["p_true"] = p_true
+                entry["confidence"] = float(q["confidence"]) if "confidence" in q else max(p_true, 1.0 - p_true)
+            elif q["type"] == "choice":
+                entry["confidence"] = float(q["confidence"])
+            elif q["type"] == "score":
                 entry["abs_error"] = q["abs_error"]
             if qid in specs:
                 entry["gold_text"] = _option_text(specs[qid], q["gold"])
@@ -217,9 +223,9 @@ def _composition(sources: Sequence[Record]) -> Record:
     }
 
 
-# ---------------------------------------------------------------------------
+# ###########################################################################
 # Calibration, confusion, and score spread
-# ---------------------------------------------------------------------------
+# ###########################################################################
 
 
 def _questions_of(items: Sequence[Record], qtype: str) -> list[Record]:
@@ -331,9 +337,9 @@ def _score_spread(items: Sequence[Record], recipes: Sequence[Record]) -> Record:
     return spread
 
 
-# ---------------------------------------------------------------------------
+# ###########################################################################
 # Decision rules: confidence bands and the default project policy
-# ---------------------------------------------------------------------------
+# ###########################################################################
 
 BANDS = {
     "choice": [
@@ -478,9 +484,9 @@ def _misses(items: Sequence[Record]) -> list[Record]:
     return misses
 
 
-# ---------------------------------------------------------------------------
+# ###########################################################################
 # Splits, latency, findings
-# ---------------------------------------------------------------------------
+# ###########################################################################
 
 
 def _splits(trace: Sequence[Record]) -> Record:
@@ -669,9 +675,9 @@ def _findings(
     return findings
 
 
-# ---------------------------------------------------------------------------
+# ###########################################################################
 # Build
-# ---------------------------------------------------------------------------
+# ###########################################################################
 
 
 def _text(values: Mapping[str, Any]) -> Record:

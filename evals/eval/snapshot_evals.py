@@ -8,8 +8,8 @@ model into pages, so this bundle is the data the site serves.
 
 Usage
 -----
-    python3 scripts/snapshot_evals.py                  # most recent run
-    python3 scripts/snapshot_evals.py results/<run>_results.json
+    python3 evals/eval/snapshot_evals.py                  # most recent run
+    python3 evals/eval/snapshot_evals.py results/<run>_results.json
 """
 
 from __future__ import annotations

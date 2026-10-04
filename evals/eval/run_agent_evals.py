@@ -8,11 +8,11 @@ part of ``make check`` or ``make test`` (constitution Article IV).
 
 Usage
 -----
-    python scripts/run_agent_evals.py                       # full matrix
-    python scripts/run_agent_evals.py --smoke                # 1 trial, 6 scenarios
-    python scripts/run_agent_evals.py --models openrouter/anthropic/claude-sonnet-5 \
+    python evals/eval/run_agent_evals.py                       # full matrix
+    python evals/eval/run_agent_evals.py --smoke                # 1 trial, 6 scenarios
+    python evals/eval/run_agent_evals.py --models openrouter/anthropic/claude-sonnet-5 \
         --conditions none full --trials 3 --scenarios change_risk
-    python scripts/run_agent_evals.py --report results/agent_<ts>_results.json
+    python evals/eval/run_agent_evals.py --report results/agent_<ts>_results.json
 
 Writes ``results/agent_<timestamp>_trace.jsonl`` and ``..._results.json``.
 """
@@ -39,7 +39,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from evals.agent import judge, opencode, sandbox, summary  # noqa: E402
 from evals.agent.scenarios import SCENARIOS  # noqa: E402
-from scripts.run_evals import _git_hash, _host  # noqa: E402
+from .run_evals import _git_hash, _host  # noqa: E402
 
 RESULTS_DIR = REPO_ROOT / "results"
 DEFAULT_MODELS = (

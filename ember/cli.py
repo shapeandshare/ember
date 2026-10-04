@@ -12,15 +12,11 @@ import sys
 import time
 from pathlib import Path
 
-from . import (
-    agent_kit,
-    config,
-    models,
-    opencode_config,
-    opencode_plugin,
-    paths,
-    process,
-)
+from . import models
+from .agent_kit import api as agent_kit
+from .cfg import config, paths
+from .opencode import opencode_config, opencode_plugin
+from .serving import process
 
 
 def _emit(obj: object) -> None:
@@ -45,9 +41,9 @@ def _apply_server_env(args: argparse.Namespace) -> None:
     os.environ["EMBER_DEVICE"] = str(args.device or config.resolve("device"))
 
 
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 # server lifecycle
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 def cmd_serve(args: argparse.Namespace) -> int:
     """Run the model server in the foreground (``ember serve``).
 
@@ -62,7 +58,8 @@ def cmd_serve(args: argparse.Namespace) -> int:
         Always ``0`` (the process exits when the server stops).
     """
     _apply_server_env(args)
-    from . import server
+    # import-placement:allow - defers torch/model load to serve subcommand only
+    from .serving import server
 
     server.main()
     return 0
@@ -205,15 +202,16 @@ def cmd_mcp(args: argparse.Namespace) -> int:
         os.environ["EMBER_DEVICE"] = args.device
     if args.model:
         os.environ["EMBER_MODEL"] = args.model
-    from . import mcp_server
+    # import-placement:allow - defers torch/model load to mcp subcommand only
+    from .mcp import mcp_server
 
     mcp_server.main()
     return 0
 
 
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 # model lifecycle
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 def cmd_model_pull(args: argparse.Namespace) -> int:
     """Download a model's pinned weights (``ember model pull``).
 
@@ -294,9 +292,9 @@ def cmd_model_rm(args: argparse.Namespace) -> int:
     return 0
 
 
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 # config, opencode, agents
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 def cmd_config_path(_: argparse.Namespace) -> int:
     """Print the config file path (``ember config path``).
 
@@ -407,9 +405,9 @@ def cmd_agents_show(args: argparse.Namespace) -> int:
     return 0
 
 
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 # doctor, uninstall
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 def cmd_doctor(_: argparse.Namespace) -> int:
     """Check platform, dependencies, model, and server (``ember doctor``).
 
@@ -451,6 +449,7 @@ def cmd_doctor(_: argparse.Namespace) -> int:
         "reinstall with `uv tool install --python 3.12 ...`",
     )
     try:
+        # import-placement:allow - doctor availability probe; may not be installed
         import torch
 
         mps = torch.backends.mps.is_available()
@@ -459,13 +458,14 @@ def cmd_doctor(_: argparse.Namespace) -> int:
             True,
             f"{torch.__version__} (mps={'yes' if mps else 'no, CPU fallback'})",
         )
-    except Exception as exc:
+    except (ImportError, ModuleNotFoundError) as exc:
         check("torch", False, str(exc))
     try:
+        # import-placement:allow - doctor availability probe; may not be installed
         import transformers
 
         check("transformers", True, transformers.__version__)
-    except Exception as exc:
+    except (ImportError, ModuleNotFoundError) as exc:
         check("transformers", False, str(exc))
 
     selected = config.resolve("model")
@@ -543,11 +543,11 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
     return 0
 
 
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 # eval
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 _EVAL_CHECKOUT_ERROR = (
-    "the `ember eval` commands require a repository checkout: `scripts/` is not "
+    "the `ember eval` commands require a repository checkout: `evals/eval/` is not "
     "part of the installed package. Run from a clone, or use `make eval-run` / "
     "`make eval-report`."
 )
@@ -568,7 +568,7 @@ def cmd_eval_run(args: argparse.Namespace) -> int:
         Exit code from ``run_evals``.
     """
     try:
-        from scripts.run_evals import DEFAULT_SERVER, run_evals
+        from evals.eval.run_evals import DEFAULT_SERVER, run_evals
     except ImportError as exc:
         raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
 
@@ -596,7 +596,7 @@ def cmd_eval_report(args: argparse.Namespace) -> int:
         Exit code from ``report_evals.main``.
     """
     try:
-        from scripts.report_evals import main as report_main
+        from evals.eval.report_evals import main as report_main
     except ImportError as exc:
         raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
 
@@ -625,7 +625,7 @@ def cmd_eval_export(args: argparse.Namespace) -> int:
         Exit code from ``report_evals.main``.
     """
     try:
-        from scripts.report_evals import main as report_main
+        from evals.eval.report_evals import main as report_main
     except ImportError as exc:
         raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
 
@@ -653,7 +653,7 @@ def cmd_eval_snapshot(args: argparse.Namespace) -> int:
         Exit code from ``snapshot_evals.main``.
     """
     try:
-        from scripts.snapshot_evals import main as snapshot_main
+        from evals.eval.snapshot_evals import main as snapshot_main
     except ImportError as exc:
         raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
     argv = [str(args.results_file)] if args.results_file else []
@@ -667,7 +667,7 @@ def cmd_eval_agent(args: argparse.Namespace) -> int:
     ----------
     args : argparse.Namespace
         Parsed CLI arguments; ``args.agent_args`` pass through to
-        ``scripts/run_agent_evals.py`` unchanged (try ``ember eval agent --help``).
+        ``evals/eval/run_agent_evals.py`` unchanged (try ``ember eval agent --help``).
 
     Returns
     -------
@@ -675,20 +675,23 @@ def cmd_eval_agent(args: argparse.Namespace) -> int:
         Exit code from ``run_agent_evals.main``.
     """
     try:
-        from scripts.run_agent_evals import main as agent_main
+        from evals.eval.run_agent_evals import main as agent_main
     except ImportError as exc:
         raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
     return agent_main(list(args.agent_args))
 
 
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 # parser
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 def _add_server_flags(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--host")
     parser.add_argument("--port", type=int)
     parser.add_argument("--device", choices=["auto", "mps", "cpu"])
-    parser.add_argument("--model", help="model name (flash|full)")
+    parser.add_argument(
+        "--model",
+        help="model name; one of the keys in the registry (e.g. flash, full)",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:

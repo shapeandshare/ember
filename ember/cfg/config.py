@@ -17,7 +17,7 @@ DEFAULTS: dict[str, Any] = {
     "host": "127.0.0.1",
     "port": 8765,
     "device": "auto",
-    # 0 means "the model's own maximum" (ember.runtime.model_max_length).
+    # 0 means "the model's own maximum" (ember.serving.runtime.model_max_length).
     "max_length": 0,
 }
 
@@ -55,7 +55,9 @@ def save(config: dict[str, Any]) -> Path:
         The config file path written to.
     """
     path = paths.config_path()
-    path.write_text(json.dumps(config, indent=2) + "\n")
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+    os.replace(tmp, path)
     return path
 
 

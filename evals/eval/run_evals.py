@@ -3,17 +3,17 @@
 
 Usage
 -----
-    python scripts/run_evals.py                      # every item
-    python scripts/run_evals.py --split test         # held-out split only
-    python scripts/run_evals.py --category routing   # one recipe
-    python scripts/run_evals.py --dry-run            # list items, send nothing
+    python evals/eval/run_evals.py                      # every item
+    python evals/eval/run_evals.py --split test         # held-out split only
+    python evals/eval/run_evals.py --category routing   # one recipe
+    python evals/eval/run_evals.py --dry-run            # list items, send nothing
 
 Writes ``results/<model>_<timestamp>_trace.jsonl`` (one scored line per item)
 and ``results/<model>_<timestamp>_results.json`` (run config plus summary). It
 also copies the exact dataset it scored to
 ``results/<model>_<timestamp>_dataset.jsonl``, so a report reflects the bytes
 that were run even after the checkout's dataset changes.
-Render the summary with ``scripts/report_evals.py`` or ``ember eval report``.
+Render the summary with ``evals/eval/report_evals.py`` or ``ember eval report``.
 """
 
 from __future__ import annotations
@@ -210,6 +210,7 @@ def run_evals(
             latencies.append(elapsed)
             scored.update(
                 latency_ms=round(elapsed, 1),
+                model=body.get("model"),
                 usage=body.get("usage", {}),
                 answers=body.get("answers", {}),
             )

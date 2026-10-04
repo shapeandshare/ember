@@ -59,6 +59,7 @@ def terminate_pid(pid: int, timeout: float = 10.0) -> None:
 
 def mcp_stdin_params(base_url: str, *, autostart: str = "0", **extra_env: str):
     """Build StdioServerParameters for the MCP server, pointed at a test server."""
+    # import-placement:allow - deferred; mcp import triggers network probes at load
     from mcp.client.stdio import StdioServerParameters
 
     env = dict(os.environ)
@@ -72,7 +73,7 @@ def mcp_stdin_params(base_url: str, *, autostart: str = "0", **extra_env: str):
     env.update({k: str(v) for k, v in extra_env.items()})
     return StdioServerParameters(
         command=sys.executable,
-        args=["-m", "ember.mcp_server"],
+        args=["-m", "ember.mcp.mcp_server"],
         cwd=str(REPO_ROOT),
         env=env,
     )
@@ -109,7 +110,7 @@ def base_url(tmp_path_factory) -> str:
     log_path = tmp_path_factory.mktemp("ember-server") / "server.log"
     handle = open(log_path, "ab")
     proc = subprocess.Popen(
-        [sys.executable, "-m", "ember.server"],
+        [sys.executable, "-m", "ember.serving.server"],
         cwd=str(REPO_ROOT),
         env=env,
         stdout=handle,

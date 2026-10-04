@@ -10,8 +10,8 @@ from collections import Counter
 from collections.abc import Mapping
 from typing import Any
 
-from . import charts
-from .blocks import (
+from ..charts import charts
+from ..render.blocks import (
     Block,
     Bullets,
     Card,
@@ -27,7 +27,7 @@ from .blocks import (
     mark,
     num,
 )
-from .markup import figure_id
+from ..render.markup import figure_id
 from .sections_front import Built, Report, recipe_title
 
 TONES = {

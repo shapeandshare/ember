@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from . import charts, charts_agent
-from .agent.report import short
-from .blocks import (
+from ..agent.report import short
+from ..charts import charts, charts_agent
+from ..render.blocks import (
     Block,
     Callout,
     Figure,

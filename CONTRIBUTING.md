@@ -110,18 +110,18 @@ A few non-negotiable rules that tooling doesn't fully enforce:
 
 - **stdout is the MCP wire.** In `mcp_server.py`, log to stderr only. Never `print` to stdout.
 - **Never pass `device_map={"": "mps"}`** to a model loader. It segfaults. Load on CPU, then
-  call `.to("mps")`. See `ember/runtime.py` for the canonical pattern.
+  call `.to("mps")`. See `ember/serving/runtime.py` for the canonical pattern.
 - **`opencode.json` and `.opencode/plugins/ember.js` are per-machine.** They are gitignored.
   Never commit them.
 
 Beyond the tooling, `ember/` follows the Python conventions in
-`.specify/memory/constitution.md` **Article X** (adapted from the sibling repositories). They
+`.specify/memory/constitution.md` **Articles X–XV** (adapted from the sibling repositories). They
 apply to new and modified code; existing violations are tracked as migration debt in Article X
 §10.18 and must not grow.
 
 | Concern | Convention |
 | --- | --- |
-| Package ownership | Bare `__init__.py` markers (no imports/re-exports), except the root and `agent_kit` which define a small public API; none in data-only dirs |
+| Package ownership | Every owned package level has a bare, docstring-only `__init__.py` (no imports, no re-exports); the package root `ember/__init__.py` is the only level that MAY re-export symbols; sub-packages with a public API (e.g. `agent_kit`) put that code in a named module (`api.py`) — callers import from it explicitly, not through `__init__.py`; data-only dirs have none |
 | File shape | One primary class per file; modules `snake_case.py` named after their class |
 | Sizing | ≤ 400 lines/module; evaluate splitting at six peer modules; ≤ 2 levels of nesting |
 | Imports | Top of file only; exceptions: `TYPE_CHECKING` (`# cycle:`), optional-dep `try/except ImportError`, the runtime model import, `# import-placement:allow`; relative inside the package |
@@ -136,6 +136,11 @@ apply to new and modified code; existing violations are tracked as migration deb
 | Concurrency | Sync inference behind the engine lock; async only at I/O boundaries with structured concurrency |
 | Entry points | One composition root per subsystem; ember deliberately has no application-wide God class |
 | Writes | Idempotent and guarded; `.tmp` + `os.replace()` for files that could clobber |
+| Tests (Article XI) | Tests ship in the same commit as the code they cover; `fail_under = 71` is the ratchet floor — never lower it; run `make test-cov` to verify |
+| Async-first (Article XII) | New FastAPI route handlers are `async def`; sync engine calls carry `# async-first:exception - engine lock is synchronous` |
+| Layered architecture (Article XIII) | MCP layer → HTTP layer → Engine layer; no primitives cross layer boundaries; cross-layer data is Pydantic or plain dict |
+| Pit of success (Article XIV) | Server returns 503 when model not loaded (never crashes); CPU is always the fallback device; setup is idempotent |
+| Simplicity / YAGNI (Article XV) | Choose the simplest viable solution; no speculative generality; document complexity beyond the obvious minimum in commit or vault |
 
 ---
 
@@ -224,8 +229,8 @@ require matching README and test updates in the same PR.
 
 | Artifact | Location | Constraint |
 | --- | --- | --- |
-| Tool name | `ember/mcp_server.py` | Must stay `ember_advise` (opencode) / `advise` (MCP) |
-| Input schema | `ember/mcp_server.py` | Input wrapped in `input`; do not flatten |
+| Tool name | `ember/mcp/mcp_server.py` | Must stay `ember_advise` (opencode) / `advise` (MCP) |
+| Input schema | `ember/mcp/mcp_server.py` | Input wrapped in `input`; do not flatten |
 | MCP instructions | `ember/agent_kit/instructions.md` | Must stay ≤ 2048 bytes |
 | Guide resource | `ember/agent_kit/ember-advise/SKILL.md` | Delivered as `ember://guide` |
 | Skill name | `ember/agent_kit/ember-advise/` | Must stay `ember-advise` |

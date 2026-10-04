@@ -25,7 +25,9 @@ def synthetic_run(tmp_path_factory: pytest.TempPathFactory) -> Path:
     scored = []
     for index, item in enumerate(ITEMS):
         result = metrics.score_item(item, _answers(item, right=index % 3 != 0))
-        result.update(latency_ms=900.0 + index, usage={}, answers={})
+        result.update(
+            latency_ms=900.0 + index, model="clef-flash", usage={}, answers={}
+        )
         scored.append(result)
     trace = directory / f"{run_id}_trace.jsonl"
     trace.write_text("".join(json.dumps(r) + "\n" for r in scored), encoding="utf-8")
@@ -148,9 +150,9 @@ def test_misses_carry_the_evidence_a_reviewer_needs(report: dict) -> None:
         assert miss["kit_outcome"], miss["id"]
 
 
-# ---------------------------------------------------------------------------
+# ###########################################################################
 # Rendered exports
-# ---------------------------------------------------------------------------
+# ###########################################################################
 
 SECTION_IDS = (
     "summary",
@@ -175,6 +177,7 @@ SECTION_IDS = (
 
 @pytest.fixture(scope="module")
 def bundle(synthetic_run: Path, tmp_path_factory: pytest.TempPathFactory) -> Path:
+    # import-placement:allow - deferred; loaded only for model-backed tests
     from evals import export
 
     return export.export(synthetic_run, tmp_path_factory.mktemp("bundle"))
@@ -193,6 +196,7 @@ def test_export_writes_the_full_bundle(bundle: Path) -> None:
 
 
 def test_html_is_well_formed_self_contained_and_complete(bundle: Path) -> None:
+    # import-placement:allow - deferred per test function to avoid eager std-lib load
     from html.parser import HTMLParser
 
     html = (bundle / "report.html").read_text(encoding="utf-8")
@@ -211,6 +215,7 @@ def test_html_is_well_formed_self_contained_and_complete(bundle: Path) -> None:
 
 
 def test_markdown_references_only_existing_figures(bundle: Path) -> None:
+    # import-placement:allow - deferred per test function
     import re
 
     markdown = (bundle / "report.md").read_text(encoding="utf-8")
@@ -223,6 +228,7 @@ def test_markdown_references_only_existing_figures(bundle: Path) -> None:
 
 
 def test_every_figure_is_valid_svg(bundle: Path) -> None:
+    # import-placement:allow - deferred per test function
     import xml.etree.ElementTree as ET
 
     figures = list((bundle / "figures").glob("*.svg"))
@@ -234,9 +240,11 @@ def test_every_figure_is_valid_svg(bundle: Path) -> None:
 
 
 def test_untrusted_dataset_text_is_escaped(report: dict) -> None:
+    # import-placement:allow - deferred per test function
     import copy
 
-    from evals import render_html, render_markdown
+    # import-placement:allow - deferred per test function
+    from evals.render import render_html, render_markdown
 
     hostile = copy.deepcopy(report)
     payload = "<script>alert(1)</script> | `x` **y**"
@@ -254,7 +262,8 @@ def test_untrusted_dataset_text_is_escaped(report: dict) -> None:
 
 
 def test_code_spans_and_fences_cannot_be_closed_early() -> None:
-    from evals.markup import md_code, md_fence
+    # import-placement:allow - deferred per test function
+    from evals.render.markup import md_code, md_fence
 
     def fence(text: str) -> int:
         length = 0
@@ -273,6 +282,7 @@ def test_code_spans_and_fences_cannot_be_closed_early() -> None:
 
 def _agent_run(directory: Path) -> Path:
     """Write a scripted agent-in-the-loop results file and its trace."""
+    # import-placement:allow - deferred per test function
     from evals.agent import summary
     from evals.agent.scenarios import SCENARIOS
 
@@ -357,6 +367,7 @@ def _agent_run(directory: Path) -> Path:
 def test_export_with_an_agent_run_leads_with_the_agent_section(
     synthetic_run: Path, tmp_path: Path
 ) -> None:
+    # import-placement:allow - deferred per test function
     from evals import export
 
     out = export.export(synthetic_run, tmp_path / "bundle", _agent_run(tmp_path))
@@ -371,6 +382,7 @@ def test_export_with_an_agent_run_leads_with_the_agent_section(
 
 
 def test_flow_diagrams_have_text_versions(bundle: Path) -> None:
+    # import-placement:allow - deferred per test function
     from evals import report_text
 
     markdown = (bundle / "report.md").read_text(encoding="utf-8")

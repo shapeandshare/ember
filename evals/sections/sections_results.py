@@ -8,8 +8,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from . import charts, charts_calibration
-from .blocks import (
+from ..charts import charts, charts_calibration
+from ..render.blocks import (
     Block,
     Cell,
     Figure,

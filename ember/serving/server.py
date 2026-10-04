@@ -1,9 +1,9 @@
 """ember model server: loads the model once and serves the Jev/SystemOne API.
 
-The MCP server (``ember.mcp_server``) talks to this process over HTTP, so the MCP
-handshake stays instant and the model stays warm across agent sessions.
+The MCP server (``ember.mcp.mcp_server``) talks to this process over HTTP, so the
+MCP handshake stays instant and the model stays warm across agent sessions.
 
-Run:  ember serve        (or: python -m ember.server)
+Run:  ember serve        (or: python -m ember.serving.server)
 Env:  EMBER_HOST (127.0.0.1), EMBER_PORT (8765),
       EMBER_DEVICE (auto|mps|cpu), EMBER_MAX_LENGTH (0 = the model's maximum),
       EMBER_MODEL_DIR (default: the pinned model)
@@ -11,11 +11,14 @@ Env:  EMBER_HOST (127.0.0.1), EMBER_PORT (8765),
 
 from __future__ import annotations
 
+import logging
 import os
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Any
+
+log = logging.getLogger(__name__)
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from prometheus_client import (
@@ -28,7 +31,8 @@ from prometheus_client import (
 )
 from pydantic import BaseModel, Field
 
-from . import config, models
+from .. import models
+from ..cfg import config
 from .runtime import Engine
 
 _ENGINE: Engine | None = None
@@ -88,15 +92,25 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     name = config.resolve("model")
     model_dir = models.resolve_dir(name)
     if model_dir is None:
-        raise RuntimeError(
-            f"model {name!r} not found (check EMBER_MODEL_DIR); "
-            f"run: ember model pull {name}"
+        # Article XIV §14.1 — pit of success: start in unloaded state rather
+        # than crashing. POST /v1/systemone returns 503; GET /health returns
+        # {"status": "loading"}. process.start() already validates weights
+        # before spawning, so ember start / MCP autostart still fail fast with
+        # an actionable error message via that path.
+        log.warning(
+            "model %r not found — server starting in unloaded state "
+            "(advise calls will return 503). Run: ember model pull %s",
+            name,
+            name,
         )
+        yield
+        return
     raw_length = int(config.resolve("max_length"))
     _ENGINE = Engine(
         model_dir,
         device=config.resolve("device"),
         max_length=raw_length if raw_length > 0 else None,
+        model_name=name,
     )
     MODEL_INFO.clear()
     MODEL_INFO.labels(
@@ -137,7 +151,13 @@ async def observe_advise(
 class AdviseRequest(BaseModel):
     """Request body for ``POST /v1/systemone``."""
 
-    model: str = "clef-flash"
+    model: str = Field(
+        default="clef-flash",
+        description=(
+            "Informational label only. The server always responds with the model "
+            "it loaded at startup; this field is not used for routing."
+        ),
+    )
     state: Any = Field(description="Any string or JSON value describing the situation.")
     questions: dict[str, Any] = Field(description="Mapping of question ID to question.")
     images: list[str | dict[str, Any]] | None = Field(
@@ -157,7 +177,7 @@ class AdviseRequest(BaseModel):
 
 
 @app.get("/health")
-def health() -> dict[str, Any]:
+async def health() -> dict[str, Any]:
     """Report whether the model is loaded, and by which pid.
 
     Returns
@@ -174,13 +194,15 @@ def health() -> dict[str, Any]:
 
 
 @app.get("/metrics")
-def metrics() -> Response:
+async def metrics() -> Response:
     """Prometheus exposition of ember's own metrics."""
     return Response(content=generate_latest(REGISTRY), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.post("/v1/systemone")
-def systemone_endpoint(req: AdviseRequest) -> dict[str, Any]:
+def systemone_endpoint(
+    req: AdviseRequest,
+) -> dict[str, Any]:  # async-first:exception - engine lock is synchronous
     """Run an advise request against the loaded model and record metrics.
 
     Parameters
@@ -206,7 +228,6 @@ def systemone_endpoint(req: AdviseRequest) -> dict[str, Any]:
         result = _ENGINE.advise(
             req.state,
             req.questions,
-            model_name=req.model,
             images=req.images,
             videos=req.videos,
             media_kwargs=req.media_kwargs,
@@ -222,6 +243,7 @@ def systemone_endpoint(req: AdviseRequest) -> dict[str, Any]:
 
 def main() -> None:
     """Run the model server in the foreground with uvicorn."""
+    # import-placement:allow - deferred to main(); avoids uvicorn import at module load
     import uvicorn
 
     uvicorn.run(

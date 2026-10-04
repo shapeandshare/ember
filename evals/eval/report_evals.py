@@ -3,12 +3,12 @@
 
 Usage
 -----
-    python scripts/report_evals.py                     # most recent run
-    python scripts/report_evals.py results/<run>_results.json
-    python scripts/report_evals.py --format json results/<run>_results.json
-    python scripts/report_evals.py --compare \
+    python evals/eval/report_evals.py                     # most recent run
+    python evals/eval/report_evals.py results/<run>_results.json
+    python evals/eval/report_evals.py --format json results/<run>_results.json
+    python evals/eval/report_evals.py --compare \
         results/<a>_results.json results/<b>_results.json
-    python scripts/report_evals.py --export [results/<run>_results.json] [--out DIR]
+    python evals/eval/report_evals.py --export [results/<run>_results.json] [--out DIR]
 """
 
 from __future__ import annotations

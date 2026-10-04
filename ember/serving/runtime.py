@@ -1,4 +1,4 @@
-"""ember runtime: loads Cloudflare's Clef-Flash model on Apple Silicon (MPS).
+"""ember runtime: loads a SystemOne-compatible model on Apple Silicon (MPS).
 
 Wraps Cloudflare's shipped ``joint_schema_model.py`` with a loader that works
 around a segfault seen when ``device_map={"": "mps"}`` is passed to
@@ -11,7 +11,13 @@ Fixes applied:
     fallback path; a few ops may still be missing).
   * CPU -> MPS load (avoids the loader segfault).
   * float16 on MPS, float32 on CPU.
-  * pad_token_id fallback to eos (Clef-flash's config leaves it null).
+  * pad_token_id fallback to eos (some models leave it null in config).
+
+One model per process. ``joint_schema_model`` is imported by a fixed module name
+from the model directory; Python caches it in ``sys.modules`` under that name, so
+a second model's ``joint_schema_model.py`` in the same process would silently reuse
+the first import. Run one server process per model (different ports) to isolate
+them.
 """
 
 from __future__ import annotations
@@ -129,19 +135,20 @@ def load_clef(
     device: str | None = None,
     dtype: torch.dtype | None = None,
 ) -> tuple[Any, Any]:
-    """Load the Clef-Flash backbone + joint schema head + processor.
+    """Load a SystemOne-compatible backbone + joint schema head + processor.
 
     Returns ``(ClefModel, processor)``.
     """
     model_dir = Path(model_dir)
     if not model_dir.is_dir():
-        raise FileNotFoundError(f"Clef-Flash model dir not found: {model_dir}")
+        raise FileNotFoundError(f"model dir not found: {model_dir}")
 
     js = joint_module(model_dir)
     device = pick_device(device)
     if dtype is None:
         dtype = pick_dtype(device)
 
+    # import-placement:allow - deferred to load_clef(); ML deps must not load at import
     from safetensors.torch import load_file
     from transformers import AutoProcessor, Qwen3_5ForConditionalGeneration
 
@@ -185,8 +192,10 @@ class Engine:
         device: str | None = None,
         dtype: torch.dtype | None = None,
         max_length: int | None = None,
+        model_name: str | None = None,
     ) -> None:
         self.model_dir = Path(model_dir)
+        self.model_name = model_name if model_name is not None else self.model_dir.name
         self.device = pick_device(device)
         self.dtype = dtype or pick_dtype(self.device)
         if max_length is not None and max_length <= 0:
@@ -201,7 +210,6 @@ class Engine:
         self,
         state: Any,
         questions: dict[str, Any],
-        model_name: str = "clef-flash",
         max_length: int | None = None,
         images: list[media.MediaRef] | None = None,
         videos: list[list[media.MediaRef]] | None = None,
@@ -210,7 +218,7 @@ class Engine:
         """Run a Jev/SystemOne request and return the SystemOne response body."""
         js = joint_module(self.model_dir)
         request: dict[str, Any] = {
-            "model": model_name,
+            "model": self.model_name,
             "state": state,
             "questions": questions,
         }
@@ -241,9 +249,10 @@ class Engine:
         Returns
         -------
         dict[str, Any]
-            ``device``, ``dtype``, ``model_dir``, and ``max_length``.
+            ``model``, ``device``, ``dtype``, ``model_dir``, and ``max_length``.
         """
         return {
+            "model": self.model_name,
             "device": self.device,
             "dtype": str(self.dtype).replace("torch.", ""),
             "model_dir": str(self.model_dir),

@@ -3,6 +3,12 @@
   <img src="assets/brand/hero-light.svg" alt="ember — Ember hugs its glowing tummy. Give your agent a gut feeling." width="1200">
 </picture>
 
+<div align="center">
+
+**[→ Project site: shapeandshare.github.io/ember](https://shapeandshare.github.io/ember/)**
+
+</div>
+
 [Brand assets and palette](assets/brand/README.md) · [Provenance and licensing](PROVENANCE.md) · [Project site](https://shapeandshare.github.io/ember/)
 
 **A local gut feeling for coding agents.** ember runs
@@ -22,9 +28,9 @@ plugs into agents as a **tool**, while their reasoning stays on their normal LLM
   <img src="assets/diagrams/call-path-light.svg" width="760" alt="ember call path: a coding agent calls the advise tool over MCP into ember-mcp (stdio, starts instantly), which starts the ember model server on the first call; the server stays warm and runs Cloudflare's Clef-Flash on MPS in fp16.">
 </picture>
 
-- The **model server** (`ember/server.py`) loads the model once and stays warm across
+- The **model server** (`ember/serving/server.py`) loads the model once and stays warm across
   agent sessions.
-- The **MCP server** (`ember/mcp_server.py`) never loads the model; it starts the model
+- The **MCP server** (`ember/mcp/mcp_server.py`) never loads the model; it starts the model
   server on the first tool call, so the MCP handshake stays instant.
 
 ### Names
@@ -222,16 +228,26 @@ included — `/metrics` shows only the table above.
 ```
 ember/
   cli.py              # the `ember` command (alias `gut`)
-  runtime.py          # MPS-safe loader (CPU load → .to("mps")) + Engine
-  server.py           # FastAPI: POST /v1/systemone, GET /health (reports pid)
-  mcp_server.py       # MCP stdio server: advise tool, instructions, ember://guide
-  process.py          # model-server lifecycle (pid file + HTTP health)
   models.py           # pinned model registry + pull/list/rm
-  paths.py config.py  # platform dirs, config precedence
-  opencode_config.py opencode_plugin.py   # opencode integration
+  serving/            # HTTP model server, MPS runtime, lifecycle, media
+    server.py         #   FastAPI: POST /v1/systemone, GET /health (reports pid)
+    runtime.py        #   MPS-safe loader (CPU load → .to("mps")) + Engine
+    process.py        #   model-server lifecycle (pid file + HTTP health)
+    media.py          #   base64 data-URI / {content_type,base64} → PIL decoder
+  mcp/                # MCP stdio server and wire types
+    mcp_server.py     #   MCP stdio server: advise tool, instructions, ember://guide
+    mcp_types.py      #   Pydantic wire types (Question, AdviseInput)
+  cfg/                # configuration and platform paths
+    config.py         #   config resolution (CLI flag > env > file > default)
+    paths.py          #   platform-aware app dirs (macOS Library, XDG)
+  opencode/           # opencode integration
+    opencode_config.py  # generates opencode.json
+    opencode_plugin.py  # installs the npm plugin
   agent_kit/          # what agents read: instructions, ember-advise skill, AGENTS snippet
+    api.py            #   public API: instructions(), skill(), snippet(), install_skill()
 packages/opencode-plugin/   # npm-ready opencode plugin source
-scripts/              # MPS smoke test, MCP end-to-end check, provenance and vault audits
+scripts/              # make-only dev tools: MPS smoke, MCP e2e, site build, provenance/vault audits
+evals/eval/           # benchmark harness: run, report, export, snapshot, agent-in-the-loop
 tests/                # pytest suite (unit + model-backed, host-isolated)
 vault/                # project memory (Obsidian): decisions, discoveries, session logs
 .specify/             # spec-kit; memory/constitution.md governs this repo
@@ -272,6 +288,8 @@ committed: it registers the `vault` MCP server that agents use to read and write
 | `make doctor` | `ember doctor` |
 | `make vault-audit` | Check `vault/` notes: frontmatter, tags, wikilinks, code-refs, orphans |
 | `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000` (needs Docker) |
+| `make release-dry` | Preview next version bump without changes (dry run) |
+| `make release` | Bump version, update CHANGELOG.md, tag, push — run on `main` only |
 | `make clean` / `make clean-model` | Caches and build output / weights (`EMBER_FORCE=1` skips the prompt) |
 
 Make re-syncs the environment automatically when `pyproject.toml` or `uv.lock` changes.
@@ -305,6 +323,11 @@ install smoke of the built wheel on a hosted Apple Silicon runner, and audits th
 with [zizmor](https://docs.zizmor.sh). Model-backed tests are
 **not** run in CI: the ~19 GB fp16 model does not fit the available runners (hosted or the
 org's 8 GiB self-hosted VMs), so run `make test` locally for model-affecting changes.
+
+**Coverage is tracked and gated** (constitution Article XI). Run `make test-cov` to see the
+full report. The enforced floor (`fail_under` in `pyproject.toml`) is the current measured
+level and may only increase — currently **71 %**. Lowering it requires explicit, recorded
+approval per Article XI §11.2.
 
 ### Benchmark
 

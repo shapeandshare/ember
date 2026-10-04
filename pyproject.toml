@@ -34,7 +34,7 @@ Repository = "https://github.com/shapeandshare/ember"
 [project.scripts]
 ember = "ember.cli:main"
 gut = "ember.cli:main"
-ember-mcp = "ember.mcp_server:main"
+ember-mcp = "ember.mcp.mcp_server:main"
 
 [build-system]
 requires = ["hatchling>=1.27"]
@@ -127,11 +127,13 @@ version_provider = "uv"
 update_changelog_on_bump = true
 major_version_zero = true
 tag_format = "v$version"
+bump_message = "release v$new_version [skip ci]"
+changelog_incremental = true
 
 [tool.coverage.run]
 source = ["ember"]
 omit = ["tests/*", "scripts/*"]
 
 [tool.coverage.report]
-fail_under = 60
+fail_under = 71
 show_missing = true

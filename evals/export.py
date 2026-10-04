@@ -16,8 +16,9 @@ import os
 import shutil
 from pathlib import Path
 
-from . import analysis, render_html, render_markdown
+from . import analysis
 from .agent import report as agent_report
+from .render import render_html, render_markdown
 
 
 def _write(path: Path, content: str) -> None:

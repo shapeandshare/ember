@@ -3,7 +3,7 @@ code-refs:
   - evals/agent/scenarios.py
   - evals/agent/opencode.py
   - evals/agent/judge.py
-  - scripts/run_agent_evals.py
+  - evals/eval/run_agent_evals.py
 created: 2026-10-03
 tags:
   - type/decision

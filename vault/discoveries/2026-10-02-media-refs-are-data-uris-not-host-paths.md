@@ -9,9 +9,9 @@ tags:
 created: 2026-10-02
 updated: 2026-10-02
 code-refs:
-  - ember/media.py
-  - ember/runtime.py
-  - ember/mcp_server.py
+  - ember/serving/media.py
+  - ember/serving/runtime.py
+  - ember/mcp/mcp_server.py
 ---
 
 # media refs are data URIs, never host paths or URLs

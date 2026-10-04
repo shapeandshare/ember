@@ -12,17 +12,21 @@ import subprocess
 import sys
 from pathlib import Path
 
-import ember.runtime as runtime
+import ember.serving.runtime as runtime
 import pytest
-from ember import models, opencode_config, paths, process
+from ember import models
+from ember.cfg import paths
+from ember.opencode import opencode_config
+from ember.serving import process
 
 from tests.conftest import free_port
 
 
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 # runtime helpers
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 def test_pick_device_defaults_to_available_accelerator():
+    # import-placement:allow - deferred; torch must not load at module collect time
     import torch
 
     expected = "mps" if torch.backends.mps.is_available() else "cpu"
@@ -35,6 +39,7 @@ def test_pick_device_explicit_passthrough():
 
 
 def test_pick_dtype_is_fp16_on_mps_fp32_on_cpu():
+    # import-placement:allow - deferred; torch must not load at module collect time
     import torch
 
     assert runtime.pick_dtype("mps") == torch.float16
@@ -95,6 +100,28 @@ def test_engine_max_length_defaults_to_the_model_maximum():
     assert default is None
 
 
+def test_engine_model_name_explicit_and_fallback(tmp_path, monkeypatch):
+    model_dir = tmp_path / "my-model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+
+    engine_explicit = runtime.Engine(model_dir, model_name="full")
+    assert engine_explicit.model_name == "full"
+    assert engine_explicit.describe()["model"] == "full"
+
+    engine_fallback = runtime.Engine(model_dir)
+    assert engine_fallback.model_name == "my-model"
+    assert engine_fallback.describe()["model"] == "my-model"
+
+    engine_none = runtime.Engine(model_dir, model_name=None)
+    assert engine_none.model_name == "my-model"
+
+    engine_empty = runtime.Engine(model_dir, model_name="")
+    assert engine_empty.model_name == ""
+
+
 def test_pinned_model_declares_the_model_maximum():
     model_dir = runtime.DEFAULT_MODEL_DIR
     if not model_dir.is_dir():
@@ -104,11 +131,11 @@ def test_pinned_model_declares_the_model_maximum():
     assert runtime.model_max_length(model_dir) == 262144
 
 
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 # MCP server helpers (imported without loading the model)
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 def test_mcp_server_import_does_not_load_torch():
-    code = "import sys, ember.mcp_server; print('torch' in sys.modules)"
+    code = "import sys, ember.mcp.mcp_server; print('torch' in sys.modules)"
     result = subprocess.run(  # noqa: S603 - this interpreter with a literal script
         [sys.executable, "-c", code], capture_output=True, text=True, timeout=60
     )
@@ -116,14 +143,16 @@ def test_mcp_server_import_does_not_load_torch():
 
 
 def test_mcp_server_ready_false_when_nothing_listening(monkeypatch):
-    from ember import mcp_server
+    # import-placement:allow - deferred; mcp_server imports torch at module load
+    from ember.mcp import mcp_server
 
     monkeypatch.setattr(mcp_server, "SERVER_URL", f"http://127.0.0.1:{free_port()}")
     assert mcp_server._server_ready() is False
 
 
 def test_ensure_server_raises_when_down_and_autostart_disabled(monkeypatch):
-    from ember import mcp_server
+    # import-placement:allow - deferred; mcp_server imports torch at module load
+    from ember.mcp import mcp_server
 
     monkeypatch.setattr(mcp_server, "SERVER_URL", f"http://127.0.0.1:{free_port()}")
     monkeypatch.setattr(mcp_server, "AUTOSTART", False)
@@ -131,9 +160,9 @@ def test_ensure_server_raises_when_down_and_autostart_disabled(monkeypatch):
         mcp_server._ensure_server()
 
 
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 # process lifecycle (state isolated under a temporary EMBER_STATE_DIR)
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 def test_spawn_records_pid_and_log_in_state_dir(tmp_path, monkeypatch):
     monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path / "state"))
     proc = process.spawn(tmp_path / "no-model", "127.0.0.1", free_port(), "cpu")
@@ -165,9 +194,9 @@ def test_start_fails_fast_when_the_model_is_missing(tmp_path, monkeypatch):
         process.start(host="127.0.0.1", port=free_port(), timeout=5)
 
 
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 # models and opencode configuration
-# --------------------------------------------------------------------------- #
+# ###########################################################################
 def test_model_revisions_are_pinned_commits():
     for spec in models.REGISTRY.values():
         assert re.fullmatch(r"[0-9a-f]{40}", spec.revision), (
@@ -215,7 +244,7 @@ def test_opencode_config_remove_drops_only_our_entry(tmp_path):
     target.write_text(json.dumps(config))
 
     assert opencode_config.remove(target) is True
-    assert json.loads(target.read_text())["mcp"] == {
-        "other": {"type": "remote", "url": "http://x"}
-    }
+    remaining_mcp = json.loads(target.read_text())["mcp"]
+    assert "ember" not in remaining_mcp
+    assert remaining_mcp["other"] == {"type": "remote", "url": "http://x"}
     assert opencode_config.remove(target) is False

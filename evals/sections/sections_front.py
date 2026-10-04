@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from . import charts
-from .blocks import (
+from ..charts import charts
+from ..render.blocks import (
     Block,
     Bullets,
     Callout,

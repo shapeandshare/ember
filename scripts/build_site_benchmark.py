@@ -22,7 +22,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
-from evals import render_html  # noqa: E402
+from evals.render import render_html  # noqa: E402
 
 SITE = REPO / "site"
 BENCHMARK = REPO / "benchmark"

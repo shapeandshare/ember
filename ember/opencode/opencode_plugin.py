@@ -117,5 +117,7 @@ def install(
     directory = plugin_dir(scope, project_root)
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / PLUGIN_FILENAME
-    path.write_text(render(command, server_url))
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(render(command, server_url), encoding="utf-8")
+    os.replace(tmp, path)
     return path

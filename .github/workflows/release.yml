@@ -1,19 +1,46 @@
 # Release automation
 #
-# STATUS: STUB — not yet enabled.
-# Pre-requisites before enabling:
-#   1. Configure commitizen bump workflow and confirm CHANGELOG.md generation
-#   2. Push the bump commit and tag before the release step, authenticating only that
-#      step (this job's GITHUB_TOKEN, or a GitHub App token if the main ruleset blocks
-#      it); never a personal access token, which outlives the run and the repository
-#   3. If publishing to PyPI, use trusted publishing (OIDC, `id-token: write`) from a
-#      protected `release` environment; never a long-lived or org-wide PyPI token
-#   4. Test the full bump -> tag -> release flow manually first
+# Triggers on every push to main that touches source files, pyproject.toml,
+# or uv.lock — but NOT when the bump commit itself lands (the bump commit
+# message carries "[skip ci]" via commitizen's bump_message setting, and the
+# paths exclusion of CHANGELOG.md provides a belt-and-suspenders second guard).
 #
+# Flow:
+#   1. cz bump --changelog  — bumps version in pyproject.toml, generates/
+#      updates CHANGELOG.md, creates a local commit + tag.
+#   2. git push origin main --tags  — lands the bump commit and tag using
+#      GITHUB_TOKEN (works because main has no branch protection rules that
+#      block Actions pushes; reassess and switch to a fine-grained PAT or
+#      GitHub App token if branch protection is ever added).
+#   3. uv build  — builds the wheel and sdist from the bumped version.
+#   4. gh release create  — publishes a GitHub Release with wheel attached.
+#
+# Security posture (per AGENTS.md watch-outs for GitHub Actions):
+#   - All uses: pins are full commit SHAs with a # vX.Y.Z comment.
+#   - permissions: {} at workflow level; job grants only contents: write.
+#   - checkout uses persist-credentials: false; the push step authenticates
+#     via an explicit GH_TOKEN environment variable instead.
+#   - No pull_request_target, workflow_run, or self-hosted runners.
+#   - No stored secrets beyond GITHUB_TOKEN (auto-provisioned per run).
+#   - zizmor audits this file on every PR touching .github/** (ci.yml).
+#
+# Adapted from the anvil peer repo's single-package release pattern.
+# Simplified vs. anvil: no PAT needed (no branch protection), no bump PR,
+# direct push to main (Article XV §15.1 — simplest viable solution).
+
 name: Release
 
 on:
-  workflow_dispatch:   # manual trigger only
+  push:
+    branches: [main]
+    paths:
+      - "ember/**"
+      - "evals/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "!CHANGELOG.md"       # never retrigger on the bump commit itself
+      - "!.github/**"         # workflow changes don't cut releases
+  workflow_dispatch:           # escape hatch for manual cuts
 
 permissions: {}
 
@@ -23,38 +50,62 @@ concurrency:
 
 jobs:
   release:
-    name: Cut release
+    name: Bump version, tag, and release
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     timeout-minutes: 20
     permissions:
-      contents: write   # create the GitHub release and upload its assets
+      contents: write   # push bump commit + tag; create GitHub Release
+
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          fetch-depth: 0          # full history for cz bump to walk commits
           persist-credentials: false
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          enable-cache: false   # a release build must not restore CI cache state
+          enable-cache: false     # release build must not restore CI cache state
 
       - name: Install dependencies
         run: uv sync --locked --all-groups
 
-      - name: Bump version + changelog
-        run: uv run cz bump --changelog
+      - name: Configure git identity for bump commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Build wheel
-        run: uv build
+      - name: Bump version and generate changelog
+        id: bump
+        run: |
+          uv run cz bump --changelog --yes
+          echo "tag=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
 
-      # The preinstalled gh CLI instead of a third-party release action, so no extra
-      # code runs with this job's write token. --verify-tag refuses to create the tag
-      # on the remote when the bump tag was not pushed (prerequisite 2).
-      - name: Create GitHub Release
+      - name: Push bump commit and tag to main
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="$(git describe --tags --abbrev=0)"
-          gh release create "$tag" dist/* --verify-tag --title "$tag" --notes ""
+          git remote set-url origin \
+            "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}"
+          git push origin main --tags
+
+      - name: Build wheel and sdist
+        run: uv build
+
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          # Print lines in the first versioned section of CHANGELOG.md
+          # (between the new "## vX.Y.Z" heading and the next one).
+          awk '/^## v/{if(seen) exit; seen=1} seen' CHANGELOG.md > release-notes.md
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          # --verify-tag refuses to create the release when the tag was not
+          # successfully pushed — acts as an idempotency guard on reruns.
+          gh release create "$RELEASE_TAG" dist/* \
+            --verify-tag \
+            --title "$RELEASE_TAG" \
+            --notes-file release-notes.md

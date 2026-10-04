@@ -79,6 +79,7 @@ def _group(records: Sequence[Record]) -> Record:
 
 def _latency_by_recipe(valid: Sequence[Record]) -> dict[str, Any]:
     """Per-recipe mean session latency, split by whether ember was consulted."""
+    # import-placement:allow - deferred to avoid defaultdict at module load
     from collections import defaultdict as _dd
 
     by: dict[str, dict[str, list[float]]] = _dd(

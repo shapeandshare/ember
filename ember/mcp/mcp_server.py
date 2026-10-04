@@ -1,6 +1,6 @@
 """ember MCP stdio server: the ``advise`` tool plus its agent guidance.
 
-A thin client. Each tool call goes to the warm model server (``ember.server``).
+A thin client. Each tool call goes to the warm model server (``ember.serving.server``).
 When that server is down and EMBER_AUTOSTART is on, it is started through
 ``process.start`` — the same model resolution, pid file, and log as
 ``ember start``. The model never loads in this process, so the MCP handshake
@@ -20,15 +20,16 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from typing import Any, Literal
+from typing import Any
 from urllib.parse import urlparse
 
 import httpx
 from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
-from pydantic import BaseModel, Field
 
-from . import agent_kit, process
+from ..agent_kit import api as agent_kit
+from ..serving import process
+from .mcp_types import AdviseInput
 
 # stdout is the JSON-RPC wire; log to stderr only.
 logging.basicConfig(
@@ -63,57 +64,6 @@ def guide() -> str:
         The skill's ``SKILL.md`` content.
     """
     return agent_kit.skill()
-
-
-class Question(BaseModel):
-    """One typed question for ember to weigh in on."""
-
-    type: Literal["noul", "choice", "score"] = Field(
-        description="noul = yes/no, choice = named options, score = ordered options",
-    )
-    instructions: str | None = Field(
-        default=None,
-        description="What to weigh in on. Optional; defaults to the question ID.",
-    )
-    criteria: dict[str, str] | list[str] | None = Field(
-        default=None,
-        description=(
-            "For choice: mapping of option id -> description. "
-            "For score: ordered list of option descriptions (index 0 is lowest). "
-            "For noul: optional {'true':..., 'false':...} descriptions."
-        ),
-    )
-
-
-class AdviseInput(BaseModel):
-    """Input schema for the ``advise`` tool (wrapped in an ``input`` field)."""
-
-    state: Any = Field(
-        description=(
-            "The situation to read: a string or any JSON object/array. "
-            "Attach images/videos separately when the evidence is visual."
-        ),
-    )
-    questions: dict[str, Question] = Field(
-        description="Mapping of question ID to a typed question.",
-    )
-    model: str = Field(
-        default="clef-flash", description="Model label echoed back in the response."
-    )
-    images: list[str | dict[str, Any]] | None = Field(
-        default=None,
-        description=(
-            "Optional images as data: URIs (data:image/png;base64,...) or "
-            "{content_type, base64} objects. No remote URLs or local paths."
-        ),
-    )
-    videos: list[list[str | dict[str, Any]]] | None = Field(
-        default=None,
-        description="Optional videos, each a list of frame refs in the images format.",
-    )
-    media_kwargs: dict[str, Any] | None = Field(
-        default=None, description="Optional image/video processor arguments."
-    )
 
 
 def _host_port() -> tuple[str, int]:

@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 import yaml
-from ember import agent_kit
+from ember.agent_kit import api as agent_kit
 
 
 def _frontmatter(text: str) -> dict:

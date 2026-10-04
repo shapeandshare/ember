@@ -1,7 +1,7 @@
 # shared/release.mk — setup, bootstrap, release, and cleanup targets
 # Assumes UV, PY, EMBER, MODEL_DIR, and EMBER_* vars are defined in the root Makefile.
 
-.PHONY: download init opencode setup bootstrap check ci clean clean-model
+.PHONY: download init opencode setup bootstrap check ci clean clean-model release release-dry
 
 download: $(EMBER) ## Download pinned Clef-Flash weights (~18 GB) to .models/
 	$(PY) -c "from huggingface_hub import snapshot_download; from ember.models import get; spec = get('flash'); snapshot_download(spec.repo, revision=spec.revision, local_dir='$(MODEL_DIR)')"
@@ -32,3 +32,13 @@ clean-model: ## Delete downloaded model weights
 		[ "$$ans" = "y" ] || [ "$$ans" = "Y" ] || { printf "Aborted.\n"; exit 1; }; \
 	fi
 	rm -rf $(MODEL_DIR)
+
+release-dry: ## Preview next version bump without making changes (dry run)
+	$(PY) -m commitizen bump --dry-run
+
+release: ## Bump version, generate CHANGELOG.md, tag, and push (run on main only)
+	@if [ "$$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then \
+		printf "Error: make release must be run on the main branch.\n"; exit 1; \
+	fi
+	$(PY) -m commitizen bump --changelog --yes
+	git push origin main --tags

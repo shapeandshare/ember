@@ -29,15 +29,17 @@ import pytest
 
 from tests.conftest import mcp_stdin_params
 
-# ---------------------------------------------------------------------------
+# ###########################################################################
 # Helpers
-# ---------------------------------------------------------------------------
+# ###########################################################################
 
 
 async def _advise(base_url: str, payload: dict[str, Any]) -> dict[str, Any]:
     """Call the advise tool over MCP stdio and return the decoded JSON answer."""
-    from mcp import ClientSession
+    # import-placement:allow - deferred; model-backed test skipped when server absent
     from mcp.client.stdio import stdio_client
+
+    from mcp import ClientSession
 
     params = mcp_stdin_params(base_url)
     async with stdio_client(params) as (read, write):
@@ -72,9 +74,9 @@ def _score(resp: dict[str, Any], qid: str) -> float:
     return float(a["score"])
 
 
-# ---------------------------------------------------------------------------
+# ###########################################################################
 # Recipe question sets  (fixed; changing a sibling shifts confidences — AGENTS.md)
-# ---------------------------------------------------------------------------
+# ###########################################################################
 
 INTENT_QUESTIONS: dict[str, Any] = {
     "intent": {
@@ -812,8 +814,10 @@ class TestAntiPatterns:
 
         Pins the AGENTS.md rule: "Raise ToolError for failures the agent should read."
         """
-        from mcp import ClientSession
+        # import-placement:allow - deferred; skipped when server absent
         from mcp.client.stdio import stdio_client
+
+        from mcp import ClientSession
 
         params = mcp_stdin_params(base_url)
 

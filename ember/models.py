@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from . import paths
+from .cfg import paths
 
 
 @dataclass(frozen=True)
@@ -112,6 +112,7 @@ def resolve_dir(name: str | None = None, *, override: bool = True) -> Path | Non
     if dev.is_dir():
         return dev
     try:
+        # import-placement:allow - avoids HF import at module load; local cache probe
         from huggingface_hub import snapshot_download
 
         return Path(
@@ -140,6 +141,7 @@ def pull(name: str | None = None, allow_low_disk: bool = False) -> Path:
     dev = _dev_dir(spec)
     if dev.is_dir():
         return dev
+    # import-placement:allow - deferred to pull(); avoids HF import at module load
     from huggingface_hub import snapshot_download
 
     ok, message = _disk_ok(paths.hf_hub_cache(), spec.approx_bytes)
@@ -206,6 +208,7 @@ def remove(name: str | None = None) -> str:
         shutil.rmtree(dev)
         return f"removed {dev}"
     try:
+        # import-placement:allow - deferred to remove(); avoids HF import at module load
         from huggingface_hub import scan_cache_dir
 
         cache = scan_cache_dir()

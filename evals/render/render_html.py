@@ -13,8 +13,9 @@ from pathlib import Path
 from typing import Any
 
 from . import blocks as b
-from . import brand, document, svg
 from .markup import Citations, to_html
+from .. import brand, document
+from ..charts import svg
 
 CSS = Path(__file__).with_name("report.css")
 TONE_LABEL = {"good": "Holds", "warn": "Watch", "info": "Note", "bad": "Wrong action"}

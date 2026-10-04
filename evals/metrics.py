@@ -48,9 +48,9 @@ BINS = 10
 Record = dict[str, Any]
 
 
-# ---------------------------------------------------------------------------
+# ###########################################################################
 # Metrics
-# ---------------------------------------------------------------------------
+# ###########################################################################
 
 
 def macro_f1(predicted: Sequence[str], gold: Sequence[str]) -> float:
@@ -164,9 +164,9 @@ def bootstrap_ci(
     return (means[int(tail * resamples)], means[upper])
 
 
-# ---------------------------------------------------------------------------
+# ###########################################################################
 # Scoring one item
-# ---------------------------------------------------------------------------
+# ###########################################################################
 
 
 def score_question(
@@ -191,8 +191,14 @@ def score_question(
         )
     elif qtype == "noul":
         p_true = float(answer["noul"])
-        record.update(p_true=p_true, predicted=p_true >= 0.5)
-        record["correct"] = record["predicted"] == gold
+        predicted = p_true >= 0.5
+        record.update(
+            p_true=p_true,
+            probabilities={"true": p_true, "false": round(1.0 - p_true, 10)},
+            confidence=max(p_true, 1.0 - p_true),
+            predicted=predicted,
+            correct=predicted == gold,
+        )
     else:
         levels = len(spec["criteria"])
         expected = float(answer["score"])
@@ -224,9 +230,9 @@ def score_item(item: Mapping[str, Any], answers: Mapping[str, Any]) -> Record:
     }
 
 
-# ---------------------------------------------------------------------------
+# ###########################################################################
 # Summary
-# ---------------------------------------------------------------------------
+# ###########################################################################
 
 
 def _mean(values: Sequence[float]) -> float:
@@ -275,7 +281,7 @@ def _noul(records: Sequence[Record]) -> Record | None:
         return None
     correct = _flags(records)
     p_true = [float(r["p_true"]) for r in records]
-    confidences = [max(p, 1.0 - p) for p in p_true]
+    confidences = [float(r["confidence"]) if "confidence" in r else max(p, 1.0 - p) for r, p in zip(records, p_true)]
     ece, mce = calibration_error(confidences, correct)
     return {
         "n": len(records),

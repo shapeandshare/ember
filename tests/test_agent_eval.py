@@ -342,6 +342,7 @@ def test_call_quality_control_recipe_ids_are_not_scored() -> None:
 
 def test_group_handles_missing_steps_key() -> None:
     """_group must not crash when a record lacks the 'steps' key."""
+    # import-placement:allow - deferred per test function
     from evals.agent.summary import _group
 
     record = {
@@ -365,6 +366,7 @@ def test_group_handles_missing_steps_key() -> None:
 
 def test_agent_summary_has_overall_key() -> None:
     """summarize() must return an 'overall' key with accuracy and CI."""
+    # import-placement:allow - deferred per test function
     from evals.agent.summary import summarize
 
     record = {

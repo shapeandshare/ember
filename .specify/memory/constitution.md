@@ -1,4 +1,93 @@
 <!--
+SYNC IMPACT REPORT — Five New Constitutional Articles
+Version change: 1.3.5 → 1.4.0 (MINOR: Articles XI–XV added; coverage ratchet applied; async-first enforced)
+Date: 2026-10-04
+Modified principles:
+  - Article VIII — coverage floor ratcheted from 60% to 71% (current measured level).
+Added sections:
+  - Article XI — Test-Driven Development & Coverage Ratchet
+  - Article XII — Async-First
+  - Article XIII — Layered Architecture
+  - Article XIV — Pit of Success
+  - Article XV — Simplicity First and YAGNI
+Migration debt delta: none (server.py health() and metrics() converted to async def;
+  systemone_endpoint() documented as async-first:exception for the engine lock).
+Templates / docs propagated:
+  - ✅ AGENTS.md (new sections for each article)
+  - ✅ CONTRIBUTING.md (code style table updated)
+  - ✅ ember/serving/server.py (health/metrics -> async def)
+  - ✅ pyproject.toml (fail_under 60 -> 71)
+  - ✅ vault/decisions/2026-10-04-constitutional-articles-xi-xv.md
+Follow-up TODOs: none
+-->
+<!--
+SYNC IMPACT REPORT — Sub-package Restructure
+Version change: 1.3.4 → 1.3.5 (PATCH: §10.18 paths updated; §10.16 path updated; §10.3 compliance restored)
+Date: 2026-10-04
+Modified principles:
+  - Article X §10.18 — Migration debt paths updated to reflect sub-package move:
+    ember/serving/server.py, ember/mcp/mcp_server.py, ember/mcp/mcp_types.py;
+    deferred imports updated to from .serving import server / from .mcp import mcp_server.
+  - Article X §10.16 — Server schema path updated to ember/serving/server.py.
+Added sections: none
+Removed sections: none
+Templates / docs propagated:
+  - ✅ AGENTS.md (project structure tree, watch-outs, MCP table, call-path paths updated)
+  - ✅ README.md (project structure tree, call-path paths updated)
+  - ✅ CONTRIBUTING.md (runtime.py → serving/runtime.py, mcp_server.py → mcp/mcp_server.py)
+  - ✅ ember/ code (serving/, mcp/, cfg/, opencode/ sub-packages; all imports and -m paths updated)
+  - ✅ evals/ code (render/, sections/, charts/ sub-packages; all imports updated)
+  - ✅ vault/decisions/2026-10-04-restructure-into-sub-packages.md
+Follow-up TODOs: none
+-->
+<!--
+SYNC IMPACT REPORT — Package Ownership Policy Reinstatement
+Version change: 1.3.3 → 1.3.4 (PATCH: §10.1 reverted from PEP 420 to explicit __init__.py ownership; root-only re-export rule added)
+Date: 2026-10-04
+Modified principles:
+  - Article X §10.1 — Reverted from pure PEP 420 implicit namespaces back to the explicit
+    __init__.py ownership policy. Every fully-owned package level MUST have an __init__.py.
+    Sub-package __init__.py files are bare and docstring-only (no imports, no re-exports).
+    The package root ember/__init__.py is the ONLY level permitted to re-export symbols.
+    Data-only directory prohibition unchanged.
+Added sections: none
+Removed sections: none
+Migration debt delta: ember/__init__.py restored (bare marker, MAY carry __version__ and
+  re-exports from root); ember/agent_kit/__init__.py restored (bare docstring-only marker,
+  no imports, no re-exports); ember/agent_kit/api.py retained as named API module;
+  explicit_package_bases = true removed from pyproject.toml [tool.mypy].
+Templates / docs propagated:
+  - ✅ AGENTS.md (§10.1 bullet updated)
+  - ✅ CONTRIBUTING.md (Package ownership row updated)
+  - ✅ ember/ code (__init__.py files restored; api.py retained; no import site changes needed)
+  - ✅ vault/decisions/2026-10-04-ownership-policy-reinstatement.md
+Follow-up TODOs: none
+-->
+<!--
+SYNC IMPACT REPORT — Implicit Namespace Packages Amendment
+Version change: 1.3.2 → 1.3.3 (PATCH: §10.1 rewritten to mandate PEP 420 implicit namespaces)
+Date: 2026-10-04
+Modified principles:
+  - Article X §10.1 — "Package ownership" rule rewritten: NO __init__.py anywhere under ember/
+    (pure PEP 420 implicit namespaces). The previous rule required a bare docstring-only
+    __init__.py at every fully-owned package level; that requirement is removed. The two
+    exceptions (package root __version__ and agent_kit public API) are replaced by the
+    instruction to place such code in a normal named module (e.g. api.py) inside the sub-package.
+    Data-only directory prohibition carried forward unchanged.
+Added sections: none
+Removed sections: none
+Migration debt delta: ember/__init__.py (bare marker) deleted; ember/agent_kit/__init__.py
+  API code moved to ember/agent_kit/api.py; six import sites updated (ember/cli.py,
+  ember/mcp/mcp_server.py, tests/test_agent_kit.py, tests/test_mcp_tool.py, tests/test_cli.py,
+  evals/agent/sandbox.py).
+Templates / docs propagated:
+  - ✅ AGENTS.md (§10.1 bullet updated)
+  - ✅ CONTRIBUTING.md (Package ownership row updated)
+  - ✅ ember/ code (both __init__.py files removed; api.py created; imports updated)
+  - ✅ vault/decisions/2026-10-04-implicit-namespace-packages.md
+Follow-up TODOs: none
+-->
+<!--
 SYNC IMPACT REPORT — Public Repository Clarification
 Version change: 1.3.1 → 1.3.2 (PATCH: clarification, no principle change)
 Date: 2026-10-03
@@ -277,18 +366,26 @@ kind of vault, and agents read it through the `vault` MCP server.
 
 ### Article X — Python Conventions
 
-**Applicability**: Effective 2026-10-03. Applies to new and modified code under `ember/`.
-Existing violations are enumerated under §10.18 and MUST NOT increase. These rules refine
-Article VIII; where they are silent, Article VIII governs. They are adapted from the peer
-repositories' constitutions (anvil, wellspring, sonarqube-standalone, darkfactory,
-infrastructure, k8s.platform) harvested on 2026-10-03.
+**Applicability**: Effective 2026-10-03. Applies to new and modified code under `ember/`
+and `evals/` (full strictness). `tests/` is covered with one relaxation: §10.2 (one class
+per file) does not apply to test-class groupings (e.g. `class TestIntentAndReadiness`) —
+grouped test classes that share a fixture scope or scenario family MAY share a file.
+`scripts/` is a collection of standalone entry points, not a package; §10.1 does not apply
+(no `__init__.py` required). Existing violations are enumerated under §10.18 and MUST NOT
+increase. These rules refine Article VIII; where they are silent, Article VIII governs. They
+are adapted from the peer repositories' constitutions (anvil, wellspring, sonarqube-standalone,
+darkfactory, infrastructure, k8s.platform) harvested on 2026-10-03.
 
-- §10.1 **Package ownership.** Every fully-owned package level carries an `__init__.py`.
-  Package markers are bare and docstring-only: no imports, and no re-exports of symbols
-  defined in sibling modules. Two exceptions: the package root `ember/__init__.py` MAY carry
-  the module docstring and `__version__`; and a sub-package whose entire purpose is a small
-  public API (`ember/agent_kit/`) MAY define that API directly in its `__init__.py`. Data-only
-  directories MUST NOT contain an `__init__.py`.
+- §10.1 **Package ownership via `__init__.py`.** Every fully-owned package level under
+  `ember/` MUST carry an `__init__.py`. Sub-package markers are bare and docstring-only:
+  no imports and no re-exports of symbols defined in sibling modules. The single exception
+  is the package root `ember/__init__.py`: it MAY carry the module docstring, `__version__`,
+  and re-exports of symbols that form the package's public API surface. No other
+  `__init__.py` in the tree may re-export anything. A sub-package whose purpose is a named
+  public API (e.g. `ember/agent_kit/`) puts that code in a normal named module inside the
+  sub-package (e.g. `api.py`) and callers import from that module explicitly — not through
+  the sub-package `__init__.py`. Data-only directories (no `.py` files) MUST NOT contain
+  an `__init__.py`.
 - §10.2 **One class per file.** A source file declares at most one primary class. A tightly
   coupled exception class raised only by that primary class MAY share its file.
 - §10.3 **Sizing.** A module SHOULD NOT exceed 400 physical lines; reaching the ceiling is a
@@ -348,23 +445,187 @@ infrastructure, k8s.platform) harvested on 2026-10-03.
   seam, and each root wires only its own subsystem.
 - §10.16 **Client SDKs.** Any typed Python client for the model server follows a
   transport → sub-client → facade layering with one shared transport and lazy sub-clients; the
-  server's request/response schema (`ember/server.py`) remains the source of truth.
+  server's request/response schema (`ember/serving/server.py`) remains the source of truth.
 - §10.17 **Idempotent, atomic operations.** State-writing commands are safe to re-run and
   existence-guarded; a file write that could clobber another writes a sibling `.tmp` first and
   installs it with `os.replace()`.
 - §10.18 **Migration debt.** Known existing violations, tracked here and never increased:
-  `ember/cli.py` is 788 lines, over the 400-line ceiling, and defers its `server`/`mcp_server`
-  imports into commands to keep startup light (an unsanctioned exception to §10.5);
-  `ember/mcp_server.py` declares two classes; and most modules are function-oriented rather
-  than one-class-per-file. NumPy docstrings (ruff `D`) and the `py.typed` marker are now
-  enforced. Each remaining item is paid down as its file is next touched — splitting
-  `ember/cli.py` is the priority.
+  `ember/cli.py` is 929 lines, over the 400-line ceiling; `ember/cli.py` defers
+  `from .serving import server` and `from .mcp import mcp_server` inside subcommand
+  functions to avoid loading torch at CLI startup — this violates §10.5's "internal ember
+  modules MUST NOT be lazy-imported" and is tracked here until `cli.py` is split into
+  per-subcommand entry points; `ember/mcp/mcp_types.py` declares two Pydantic models
+  (`Question` and `AdviseInput`) — `Question` is a sub-schema field type of `AdviseInput`
+  with no independent callers, satisfying the spirit of §10.2's tight-coupling principle
+  though not the letter of the exception; `evals/render/blocks.py` declares 17 frozen
+  dataclass types that
+  form a single DSL for the report renderer — each type is a leaf value with no independent
+  callers; splitting to 17 files adds ceremony with no readability gain;
+  `scripts/vault_audit.py` declares four classes (`Rule`, `Finding`, `Frontmatter`,
+  `VaultIndex`) that are tightly coupled steps in a single audit pipeline — splitting would
+  require four separate files for a 201-line script; and most modules are function-oriented
+  rather than one-class-per-file. NumPy docstrings (ruff `D`) and the
+  `py.typed` marker are now enforced for `ember/`; `evals/` and `tests/` are exempt from
+  ruff `D`. Each remaining item is paid down as its file is next touched — splitting
+  `ember/cli.py` is the priority. Previously tracked items now resolved:
+  `ember/mcp/mcp_server.py` two-class violation (classes moved to `ember/mcp/mcp_types.py`
+  on 2026-10-04); `evals/agent/opencode.py` two-class violation (`ToolCall` →
+  `tool_call.py`, `Transcript` → `transcript.py`, 2026-10-04); `evals/agent/sandbox.py`
+  two-class violation (`Snapshot` → `snapshot.py`, 2026-10-04).
 
 Rationale: ember's sibling repositories converge on these conventions, and adopting them keeps
 agent-written changes consistent across the family. Where ember's runtime differs — synchronous
 MPS inference, an MCP / HTTP / CLI seam, and deliberately function-oriented modules — the rule
 is scoped or the divergence recorded, so this constitution stays truthful about what the code
 actually does.
+
+### Article XI — Test-Driven Development and Coverage Ratchet
+
+**Applicability**: Effective 2026-10-04. Applies to all new features and non-trivial
+changes across `ember/`, `evals/`, and `tests/`.
+
+Tests MUST be written before or in the same commit as implementation. The Red-Green-Refactor
+discipline is the default; tests that arrive after implementation in a separate commit are a
+process violation and MUST be flagged at review.
+
+- §11.1 **Test-first default.** Every new public function, class, or behaviour change ships
+  with a corresponding test in the same commit. Agents MUST NOT mark a task complete without
+  demonstrating test coverage for the changed path.
+- §11.2 **Coverage ratchet.** The enforced floor (`fail_under` in
+  `[tool.coverage.report]`) equals the current measured level and MAY only increase.
+  Lowering it requires explicit human approval recorded in an amendment to this Article.
+  The current floor is **71%**. Run `make test-cov` to see the current percentage before
+  setting a new floor.
+- §11.3 **No deleting tests to pass.** Removing a test to make coverage or a test run pass
+  is a constitution violation. If a test is wrong, fix the test; do not delete it.
+- §11.4 **End-to-end path.** At least one test MUST exercise each MCP→HTTP→Engine call
+  path end-to-end (via stdio or HTTP fixture). Model-backed tests are exempt from CI but
+  MUST exist and be runnable locally (`make test`).
+
+Rationale: a codebase that will grow needs a discipline that prevents the accumulation of
+untested paths. Ratcheting the floor makes it impossible for coverage to regress silently.
+
+### Article XII — Async-First
+
+**Applicability**: Effective 2026-10-04. Applies to all I/O-bound code in `ember/`.
+The model inference path is the sole explicit exception.
+
+All FastAPI route handlers and middleware MUST be declared `async def`. All outbound HTTP
+calls (e.g. health probes in `process.py`) MUST use `httpx.AsyncClient` or equivalent
+async transport when called from an async context. All file I/O on hot paths MUST use
+`anyio.Path` or be offloaded with `run_sync_in_worker_thread`.
+
+- §12.1 **Route handlers.** Every `@app.get`, `@app.post`, and `@app.middleware` function
+  MUST be `async def`.
+- §12.2 **Synchronous exception — engine lock.** `_ENGINE.advise()` is synchronous by
+  design (Article X §10.14). A FastAPI handler that calls the engine MAY remain `def` or
+  use `asyncio.get_event_loop().run_in_executor(None, …)`. The handler MUST carry a
+  `# async-first:exception - engine lock is synchronous` comment.
+- §12.3 **MCP server.** The MCP `advise` tool handler calls the engine over HTTP
+  (`httpx.post`). Any new MCP tool that performs I/O MUST do so with `httpx.AsyncClient`
+  in an async context.
+- §12.4 **Tags.** Every synchronous function in `ember/` that is deliberately not async
+  (because it either has no I/O or is covered by the engine-lock exception) MUST carry one
+  of: `# async-first:exception - <reason>` (documented exception) or nothing (pure
+  computation). Synchronous I/O without a tag is a violation.
+
+Rationale: the server runs under uvicorn's async event loop. Sync handlers block the loop
+and serialize requests. Async handlers let uvicorn interleave health probes and metrics
+reads during the engine lock wait.
+
+### Article XIII — Layered Architecture
+
+**Applicability**: Effective 2026-10-04. Applies to `ember/` and any future layers.
+
+ember's architecture is a strict three-layer stack. Primitives from an inner layer MUST NOT
+leak into an outer layer; outer layers call inward through defined interfaces only.
+
+```
+MCP layer        (ember/mcp/)        ← agent-facing; no model primitives
+HTTP layer       (ember/serving/)    ← REST API; no MCP concepts
+Engine layer     (ember/serving/runtime.py + ember/serving/server.py)
+                                     ← model I/O; no HTTP/MCP concepts
+```
+
+- §13.1 **MCP layer** (`ember/mcp/`). Handles the MCP stdio protocol: parses tool inputs,
+  calls the HTTP layer over `httpx`, raises `ToolError`. It MUST NOT import torch, load
+  the model, or reference `Engine`. It MUST NOT parse or validate model outputs beyond what
+  the MCP schema requires.
+- §13.2 **HTTP layer** (`ember/serving/server.py`, `ember/serving/process.py`). Exposes the
+  REST API and lifecycle. It MUST NOT import from `ember/mcp/`. It MAY import `Engine`
+  directly and MUST own all Prometheus metrics.
+- §13.3 **Engine layer** (`ember/serving/runtime.py`). Loads the model, runs inference,
+  returns structured dicts. It MUST NOT import FastAPI, httpx, MCP, or any
+  network/protocol library.
+- §13.4 **Cross-layer data contracts.** Data crossing a layer boundary MUST be a Pydantic
+  `BaseModel` or a plain `dict[str, Any]` (for JSON pass-through). No torch tensors,
+  processor objects, or internal runtime state may cross a layer boundary.
+- §13.5 **Configuration.** All layers read configuration through `ember.cfg.config.resolve()`.
+  No layer hard-codes host, port, or device values.
+
+Rationale: strict layering makes each layer independently testable and replaceable. The
+MCP layer can be tested without a running model server; the HTTP layer can be tested with a
+fake engine; the engine can be tested directly.
+
+### Article XIV — Pit of Success
+
+**Applicability**: Effective 2026-10-04. Applies to the install, configuration, and
+runtime paths.
+
+The default path — `uv tool install gut`, `ember doctor`, `ember start` — MUST always
+produce a working system on supported hardware without manual intervention. Optional or
+enhanced capabilities MUST silently degrade, never crash or block.
+
+- §14.1 **Install layer.** Model weights are downloaded on explicit user request
+  (`ember model pull`, `make download`). The tool installs and starts without weights
+  present; the server reports `503` until weights arrive, never a crash.
+- §14.2 **Device fallback.** If MPS is opted in but unavailable (no Apple Silicon, torch
+  missing, driver error), the server MUST fall back to CPU automatically and log the reason.
+  `EMBER_DEVICE=auto` is the default; it detects and selects the best available device.
+- §14.3 **Graceful 503.** When the model has not finished loading, `POST /v1/systemone`
+  returns `503 Service Unavailable` with an actionable message. The MCP layer surfaces this
+  as a `ToolError` the agent can read and retry.
+- §14.4 **No crash on optional missing deps.** Doctor, status, and lifecycle commands MUST
+  NOT crash when optional dependencies (torch, transformers) are absent. They report the
+  missing dep and continue.
+- §14.5 **Idempotent setup.** `make bootstrap` and `ember init` are safe to re-run. They
+  detect existing state and skip steps that are already complete.
+
+Rationale: agents and users must be able to onboard, restart, and recover without reading
+error messages or consulting documentation. Pit-of-success design means the happy path is
+also the only path.
+
+### Article XV — Simplicity First and YAGNI
+
+**Applicability**: Effective 2026-10-04. Applies to all code, dependency, and architecture
+decisions across the repository.
+
+Every change MUST favour the simplest, most boring solution that fully satisfies the stated
+requirement. Complexity is never the default; it MUST be justified by a concrete, present
+requirement.
+
+- §15.1 **Simplest viable solution.** Before choosing an implementation, identify the
+  simplest approach that meets the requirement. If a more complex approach is chosen, the
+  reason MUST be documented in the vault or the commit message.
+- §15.2 **Boring over novel.** Prefer mature, well-understood libraries and patterns.
+  A novel or experimental dependency MUST NOT be introduced unless a simpler proven
+  alternative has been explicitly considered and rejected. New dependencies MUST be
+  justified in the commit or a vault decision note.
+- §15.3 **YAGNI.** Build only what the current requirement needs. Speculative generality,
+  premature abstraction, unused configuration knobs, and "future-proofing" for unrequested
+  scenarios are forbidden. Introduce an abstraction only when the second concrete use case
+  arrives.
+- §15.4 **Reuse first.** Existing utilities, patterns, and abstractions already in the
+  codebase MUST be reused before a new one is introduced. Adding a second way to do
+  something the codebase already does is reject-worthy.
+- §15.5 **Testability gate.** An approach that cannot be demonstrated correct through tests
+  MUST NOT be shipped as the chosen solution. A simpler, demonstrably testable approach
+  is always preferred. This pairs with Article XI.
+
+Rationale: ember is a focused tool. Complexity accumulates silently; YAGNI and simplicity-
+first discipline are the primary defences against it. Agents making implementation choices
+MUST apply §15.1–§15.4 before selecting a design and MUST NOT add complexity that is not
+required by the current work.
 
 ## Additional Constraints
 
@@ -386,13 +647,17 @@ actually does.
 
 1. Plan non-trivial features with spec-kit (`/speckit.specify` → `/speckit.plan` →
    `/speckit.tasks` → `/speckit.implement`); every plan MUST pass a Constitution Check.
-2. Commit atomically with Conventional Commits subjects; tests land in the same commit as the
-   code they cover.
+2. Commit atomically with Conventional Commits subjects; **tests land in the same commit as
+   the code they cover** (Article XI). No implementation commit is complete without its tests.
 3. Gate every commit on `make check`; gate PRs on `make pr-ready`; gate merges on CI plus
    `make test` for model-affecting changes, run on a maintainer's Apple Silicon machine
    (`make test-strict` fails instead of skipping when weights are missing).
 4. Keep `AGENTS.md`, `README.md`, and the agent kit consistent with each other and with this
    constitution in the same change.
+5. Before choosing an implementation, verify it is the simplest viable solution (Article XV
+   §15.1). If a more complex approach is chosen, document why in the commit or vault.
+6. New FastAPI routes MUST be `async def` (Article XII §12.1). Any sync handler that calls
+   the engine carries a `# async-first:exception - engine lock is synchronous` comment.
 
 ## Governance
 
@@ -407,4 +672,4 @@ actually does.
 - Reviews MUST check changes against the Articles, with special attention to Article III
   (agent contract) and Article V (pins).
 
-**Version**: 1.3.2 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-03
+**Version**: 1.4.0 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-04

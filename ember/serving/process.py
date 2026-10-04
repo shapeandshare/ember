@@ -18,7 +18,8 @@ from typing import Any
 
 import httpx
 
-from . import config, models, paths
+from .. import models
+from ..cfg import config, paths
 
 
 def health(host: str, port: int, timeout: float = 2.0) -> dict[str, Any] | None:
@@ -87,7 +88,7 @@ def _is_ember_server(pid: int) -> bool:
         ).stdout
     except OSError:
         return False
-    return "ember.server" in command
+    return "ember.serving.server" in command
 
 
 def tracked_pid(host: str, port: int) -> int | None:
@@ -139,7 +140,7 @@ def spawn(
     )
     with open(paths.server_log_path(), "ab") as handle:
         proc = subprocess.Popen(
-            [sys.executable, "-m", "ember.server"],
+            [sys.executable, "-m", "ember.serving.server"],
             cwd=str(paths.state_dir()),
             stdout=handle,
             stderr=handle,
@@ -147,7 +148,10 @@ def spawn(
             env=env,
             start_new_session=True,
         )
-    paths.pid_path().write_text(str(proc.pid))
+    pid_path = paths.pid_path()
+    tmp = pid_path.with_suffix(".tmp")
+    tmp.write_text(str(proc.pid), encoding="utf-8")
+    os.replace(tmp, pid_path)
     return proc
 
 

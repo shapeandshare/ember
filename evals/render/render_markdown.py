@@ -11,8 +11,8 @@ from html import escape
 from typing import Any
 
 from . import blocks as b
-from . import brand, document
 from .markup import Citations, md_code, md_fence, md_literal, to_markdown
+from .. import brand, document
 
 TONE_LABEL = {"good": "Holds", "warn": "Watch", "info": "Note"}
 

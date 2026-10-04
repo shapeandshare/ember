@@ -18,8 +18,9 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
-from mcp import ClientSession  # noqa: E402
 from mcp.client.stdio import StdioServerParameters, stdio_client  # noqa: E402
+
+from mcp import ClientSession  # noqa: E402
 
 
 async def main() -> int:
@@ -28,7 +29,7 @@ async def main() -> int:
     env.setdefault("EMBER_START_TIMEOUT", "300")
     params = StdioServerParameters(
         command=sys.executable,
-        args=["-m", "ember.mcp_server"],
+        args=["-m", "ember.mcp.mcp_server"],
         cwd=str(REPO_ROOT),
         env=env,
     )
