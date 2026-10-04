@@ -3,7 +3,7 @@
 *::before,
 *::after { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; color-scheme: light dark; }
 
 body {
   margin: 0;
@@ -159,6 +159,12 @@ pre {
   line-height: 1.5;
   text-align: left;
 }
+/* --ember-ink is dark in both themes, so in dark mode it would match the page;
+   lift the code panel off the background. */
+@media (prefers-color-scheme: dark) {
+  pre { background: #2a2030; }
+}
+:root[data-theme="dark"] pre { background: #2a2030; }
 :root[data-theme="dark"] pre,
 @media (prefers-color-scheme: dark) { }
 pre code { color: inherit; background: none; padding: 0; }
