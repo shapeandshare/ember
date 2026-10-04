@@ -160,6 +160,29 @@ def test_confident_wrong_noul_answers_are_miscalibrated() -> None:
     assert summary["noul"]["acting"] == {"n": 1, "coverage": 1.0, "accuracy": 0.0}
 
 
+def test_noul_score_question_stores_probabilities_and_confidence() -> None:
+    item = next(i for i in ITEMS if i["category"] == "change_risk")
+    qid = next(qid for qid, s in item["questions"].items() if s["type"] == "noul")
+    spec = item["questions"][qid]
+    gold = item["gold_labels"][qid]
+    record = metrics.score_question(spec, gold, {"type": "noul", "noul": 0.9})
+    assert record["probabilities"] == {
+        "true": pytest.approx(0.9),
+        "false": pytest.approx(0.1),
+    }
+    assert record["confidence"] == pytest.approx(0.9)
+    assert record["p_true"] == pytest.approx(0.9)
+    record2 = metrics.score_question(spec, gold, {"type": "noul", "noul": 0.1})
+    assert record2["probabilities"] == {
+        "true": pytest.approx(0.1),
+        "false": pytest.approx(0.9),
+    }
+    assert record2["confidence"] == pytest.approx(0.9)
+    assert record2["probabilities"]["true"] + record2["probabilities"][
+        "false"
+    ] == pytest.approx(1.0)
+
+
 def test_a_missing_answer_is_a_contract_error() -> None:
     item = ITEMS[0]
     with pytest.raises(ValueError, match="expected a"):
