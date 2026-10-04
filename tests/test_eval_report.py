@@ -25,7 +25,9 @@ def synthetic_run(tmp_path_factory: pytest.TempPathFactory) -> Path:
     scored = []
     for index, item in enumerate(ITEMS):
         result = metrics.score_item(item, _answers(item, right=index % 3 != 0))
-        result.update(latency_ms=900.0 + index, usage={}, answers={})
+        result.update(
+            latency_ms=900.0 + index, model="clef-flash", usage={}, answers={}
+        )
         scored.append(result)
     trace = directory / f"{run_id}_trace.jsonl"
     trace.write_text("".join(json.dumps(r) + "\n" for r in scored), encoding="utf-8")

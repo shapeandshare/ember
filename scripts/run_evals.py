@@ -210,6 +210,7 @@ def run_evals(
             latencies.append(elapsed)
             scored.update(
                 latency_ms=round(elapsed, 1),
+                model=body.get("model"),
                 usage=body.get("usage", {}),
                 answers=body.get("answers", {}),
             )
