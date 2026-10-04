@@ -25,6 +25,7 @@ on:
       - "SECURITY.md"
       - "ember/agent_kit/instructions.md"
       - "ember/agent_kit/ember-advise/SKILL.md"
+      - "CHANGELOG.md"
       - ".github/workflows/deploy-site.yml"
   workflow_dispatch:
 

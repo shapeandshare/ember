@@ -146,13 +146,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           BUMP_TAG: ${{ steps.bump.outputs.tag }}
         run: |
-          for i in $(seq 1 40); do
+          for i in $(seq 1 20); do
             if git ls-remote --tags origin "refs/tags/${BUMP_TAG}" \
                 | grep -q "${BUMP_TAG}"; then
               echo "Tag ${BUMP_TAG} confirmed on remote after ${i} polls."
               break
             fi
-            if [ "$i" -eq 40 ]; then
+            if [ "$i" -eq 20 ]; then
               echo "Timed out waiting for ${BUMP_TAG} on remote." >&2; exit 1
             fi
             sleep 30
