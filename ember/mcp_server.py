@@ -98,7 +98,11 @@ class AdviseInput(BaseModel):
         description="Mapping of question ID to a typed question.",
     )
     model: str = Field(
-        default="clef-flash", description="Model label echoed back in the response."
+        default="clef-flash",
+        description=(
+            "Informational label only. The response always reflects the model "
+            "the server loaded at startup; this field is not used for routing."
+        ),
     )
     images: list[str | dict[str, Any]] | None = Field(
         default=None,

@@ -71,6 +71,7 @@ def test_health_reports_accelerator_and_dtype(base_url: str) -> None:
     assert engine["device"] in ("mps", "cpu")
     assert engine["dtype"] in ("float16", "float32")
     assert engine["model_dir"].endswith("clef-flash")
+    assert engine["model"] == "flash"
 
 
 @pytest.mark.model

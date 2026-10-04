@@ -97,6 +97,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         model_dir,
         device=config.resolve("device"),
         max_length=raw_length if raw_length > 0 else None,
+        model_name=name,
     )
     MODEL_INFO.clear()
     MODEL_INFO.labels(
@@ -137,7 +138,13 @@ async def observe_advise(
 class AdviseRequest(BaseModel):
     """Request body for ``POST /v1/systemone``."""
 
-    model: str = "clef-flash"
+    model: str = Field(
+        default="clef-flash",
+        description=(
+            "Informational label only. The server always responds with the model "
+            "it loaded at startup; this field is not used for routing."
+        ),
+    )
     state: Any = Field(description="Any string or JSON value describing the situation.")
     questions: dict[str, Any] = Field(description="Mapping of question ID to question.")
     images: list[str | dict[str, Any]] | None = Field(
@@ -206,7 +213,6 @@ def systemone_endpoint(req: AdviseRequest) -> dict[str, Any]:
         result = _ENGINE.advise(
             req.state,
             req.questions,
-            model_name=req.model,
             images=req.images,
             videos=req.videos,
             media_kwargs=req.media_kwargs,
