@@ -34,7 +34,7 @@ Repository = "https://github.com/shapeandshare/ember"
 [project.scripts]
 ember = "ember.cli:main"
 gut = "ember.cli:main"
-ember-mcp = "ember.mcp_server:main"
+ember-mcp = "ember.mcp.mcp_server:main"
 
 [build-system]
 requires = ["hatchling>=1.27"]
@@ -133,5 +133,5 @@ source = ["ember"]
 omit = ["tests/*", "scripts/*"]
 
 [tool.coverage.report]
-fail_under = 60
+fail_under = 71
 show_missing = true

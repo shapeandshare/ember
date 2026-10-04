@@ -1,9 +1,9 @@
 """ember model server: loads the model once and serves the Jev/SystemOne API.
 
-The MCP server (``ember.mcp_server``) talks to this process over HTTP, so the MCP
-handshake stays instant and the model stays warm across agent sessions.
+The MCP server (``ember.mcp.mcp_server``) talks to this process over HTTP, so the
+MCP handshake stays instant and the model stays warm across agent sessions.
 
-Run:  ember serve        (or: python -m ember.server)
+Run:  ember serve        (or: python -m ember.serving.server)
 Env:  EMBER_HOST (127.0.0.1), EMBER_PORT (8765),
       EMBER_DEVICE (auto|mps|cpu), EMBER_MAX_LENGTH (0 = the model's maximum),
       EMBER_MODEL_DIR (default: the pinned model)
@@ -28,7 +28,8 @@ from prometheus_client import (
 )
 from pydantic import BaseModel, Field
 
-from . import config, models
+from .. import models
+from ..cfg import config
 from .runtime import Engine
 
 _ENGINE: Engine | None = None
@@ -164,7 +165,7 @@ class AdviseRequest(BaseModel):
 
 
 @app.get("/health")
-def health() -> dict[str, Any]:
+async def health() -> dict[str, Any]:
     """Report whether the model is loaded, and by which pid.
 
     Returns
@@ -181,13 +182,15 @@ def health() -> dict[str, Any]:
 
 
 @app.get("/metrics")
-def metrics() -> Response:
+async def metrics() -> Response:
     """Prometheus exposition of ember's own metrics."""
     return Response(content=generate_latest(REGISTRY), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.post("/v1/systemone")
-def systemone_endpoint(req: AdviseRequest) -> dict[str, Any]:
+def systemone_endpoint(
+    req: AdviseRequest,
+) -> dict[str, Any]:  # async-first:exception - engine lock is synchronous
     """Run an advise request against the loaded model and record metrics.
 
     Parameters
@@ -228,6 +231,7 @@ def systemone_endpoint(req: AdviseRequest) -> dict[str, Any]:
 
 def main() -> None:
     """Run the model server in the foreground with uvicorn."""
+    # import-placement:allow - deferred to main(); avoids uvicorn import at module load
     import uvicorn
 
     uvicorn.run(

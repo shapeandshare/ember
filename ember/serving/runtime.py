@@ -148,6 +148,7 @@ def load_clef(
     if dtype is None:
         dtype = pick_dtype(device)
 
+    # import-placement:allow - deferred to load_clef(); ML deps must not load at import
     from safetensors.torch import load_file
     from transformers import AutoProcessor, Qwen3_5ForConditionalGeneration
 
