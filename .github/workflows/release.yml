@@ -88,11 +88,35 @@ jobs:
       - name: Bump version and generate changelog
         id: bump
         run: |
-          uv run cz bump --changelog --yes
+          # cz bump exits 21 (NO_COMMITS_TO_BUMP) when all commits since the
+          # last tag are non-bumping types (ci:, docs:, chore:, etc.).
+          # Treat that as a clean no-op — no tag, no release needed.
+          if ! uv run cz bump --changelog --yes; then
+            code=$?
+            if [ "$code" -eq 21 ]; then
+              echo "No releasable commits since last tag — skipping release."
+              echo "tag=" >> "$GITHUB_OUTPUT"
+              echo "branch=" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            exit "$code"
+          fi
           echo "tag=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
           echo "branch=ci/bump-$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
 
+      - name: Skip remaining steps if no bump needed
+        id: check
+        env:
+          BUMP_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          if [ -z "$BUMP_TAG" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Push bump branch and tag
+        if: steps.check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
           BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
@@ -102,6 +126,7 @@ jobs:
           git push origin "HEAD:refs/heads/${BUMP_BRANCH}" --tags
 
       - name: Open bump PR and enable auto-merge
+        if: steps.check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
           BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
@@ -116,6 +141,7 @@ jobs:
           gh pr merge "${PR_URL}" --auto --squash
 
       - name: Wait for bump PR to land on main (up to 20 min)
+        if: steps.check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
           BUMP_TAG: ${{ steps.bump.outputs.tag }}
@@ -133,13 +159,16 @@ jobs:
           done
 
       - name: Build wheel and sdist
+        if: steps.check.outputs.skip == 'false'
         run: uv build
 
       - name: Extract release notes from CHANGELOG.md
+        if: steps.check.outputs.skip == 'false'
         run: |
           awk '/^## v/{if(seen) exit; seen=1} seen' CHANGELOG.md > release-notes.md
 
       - name: Create GitHub Release
+        if: steps.check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.bump.outputs.tag }}
