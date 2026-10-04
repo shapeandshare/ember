@@ -288,6 +288,8 @@ committed: it registers the `vault` MCP server that agents use to read and write
 | `make doctor` | `ember doctor` |
 | `make vault-audit` | Check `vault/` notes: frontmatter, tags, wikilinks, code-refs, orphans |
 | `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000` (needs Docker) |
+| `make release-dry` | Preview next version bump without changes (dry run) |
+| `make release` | Bump version, update CHANGELOG.md, tag, push — run on `main` only |
 | `make clean` / `make clean-model` | Caches and build output / weights (`EMBER_FORCE=1` skips the prompt) |
 
 Make re-syncs the environment automatically when `pyproject.toml` or `uv.lock` changes.

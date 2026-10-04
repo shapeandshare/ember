@@ -141,6 +141,8 @@ vault/                # project memory (Obsidian): decisions, discoveries, sessi
 | `make eval-snapshot` | Copy the latest run into `benchmark/` for the site to render |
 | `make eval-agent` / `make eval-agent-smoke` | Agent-in-the-loop eval through opencode (opt-in; spends provider credit) |
 | `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000` (needs Docker) |
+| `make release-dry` | Preview next version bump without changes (dry run) |
+| `make release` | Bump version, update CHANGELOG.md, tag, push — run on `main` only |
 | `.venv/bin/ember …` or `.venv/bin/gut …` | Primary CLI, built from this checkout |
 
 ## Architecture (call path)
