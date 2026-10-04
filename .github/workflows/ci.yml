@@ -9,6 +9,10 @@ name: ci
 # job as running untrusted code: GitHub-hosted runners only, a read-only token that is
 # never persisted to disk, and actions pinned to full commit SHAs (Dependabot bumps
 # the pins). The zizmor job fails the build when a workflow drifts from this.
+#
+# This workflow mirrors `make pr-ready`: format, lint, typecheck, security, compile,
+# unit tests, build, install smoke — all in parallel, all required to pass.
+# Model-backed tests and coverage reporting run locally; see `make test-cov`.
 
 on:
   push:
@@ -23,6 +27,62 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ########################################################################
+  # Format + lint (ruff — fast, runs on Linux)
+  # ########################################################################
+  lint:
+    name: format + lint (ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - run: uv sync --locked
+      - run: make format
+      - run: make lint
+
+  # ########################################################################
+  # Type checking (mypy --strict, runs on Linux)
+  # ########################################################################
+  typecheck:
+    name: typecheck (mypy --strict)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - run: uv sync --locked
+      - run: make typecheck
+
+  # ########################################################################
+  # Security scan (bandit, runs on Linux)
+  # ########################################################################
+  security:
+    name: security scan (bandit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - run: uv sync --locked
+      - run: make security
+
+  # ########################################################################
+  # Compile + unit tests + build + install smoke (requires macOS for MPS
+  # deps; also builds and smoke-tests the wheel)
+  # ########################################################################
   check:
     name: compile, unit tests, build, install smoke
     runs-on: macos-latest
@@ -47,6 +107,10 @@ jobs:
           "$bin/ember" agents show instructions | head -1
           test -x "$bin/ember-mcp"
 
+  # ########################################################################
+  # Workflow security (zizmor — only needs Linux, only meaningful when
+  # .github/** changes; still runs on every PR to catch drift)
+  # ########################################################################
   zizmor:
     name: workflow security (zizmor)
     runs-on: ubuntu-latest

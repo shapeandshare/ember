@@ -10,7 +10,6 @@ created: 2026-10-03
 updated: 2026-10-03
 code-refs:
   - .github/workflows/ci.yml
-  - .github/workflows/ci-check.yml
   - .github/workflows/release.yml
   - .github/dependabot.yml
   - .github/CODEOWNERS
