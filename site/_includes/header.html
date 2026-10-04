@@ -9,6 +9,7 @@
       {%- assign bench_home = site.data.benchmark.sections[0].anchor | default: "summary" %}
       <a href="{{ '/results/' | append: bench_home | append: '/' | relative_url }}">Benchmark</a>
       <a href="{{ site.github }}">GitHub</a>
+      <button id="theme" class="theme-toggle" type="button" aria-label="Colour theme">Auto</button>
     </nav>
   </div>
 </header>

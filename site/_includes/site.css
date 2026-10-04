@@ -26,22 +26,31 @@ img { max-width: 100%; height: auto; }
 
 /* --- top gradient band, full-bleed and shared by every page -------------- */
 /* The colours are the benchmark report hero's warm/cool glows, so the whole
-   site carries the same band. It spans the full page width. */
-.page-body {
-  background:
-    radial-gradient(70% 90% at 12% 0%, color-mix(in srgb, #ff722f 16%, transparent), transparent 70%),
-    radial-gradient(60% 80% at 92% 0%, color-mix(in srgb, #c7a4e9 20%, transparent), transparent 70%);
-  background-repeat: no-repeat;
-  background-size: 100% 620px;
+   site carries the same band. It spans the full page width. The system
+   preference and the header theme toggle both switch these variables. */
+:root {
+  --page-glow-a: #ff722f;
+  --page-glow-b: #c7a4e9;
+  --code-bg: var(--ember-ink);
 }
 @media (prefers-color-scheme: dark) {
-  .page-body {
-    background:
-      radial-gradient(70% 90% at 12% 0%, color-mix(in srgb, #ff8b52 18%, transparent), transparent 70%),
-      radial-gradient(60% 80% at 92% 0%, color-mix(in srgb, #a88cc9 22%, transparent), transparent 70%);
-    background-repeat: no-repeat;
-    background-size: 100% 620px;
+  :root:not([data-theme="light"]) {
+    --page-glow-a: #ff8b52;
+    --page-glow-b: #a88cc9;
+    --code-bg: #2a2030;
   }
+}
+:root[data-theme="dark"] {
+  --page-glow-a: #ff8b52;
+  --page-glow-b: #a88cc9;
+  --code-bg: #2a2030;
+}
+.page-body {
+  background:
+    radial-gradient(70% 90% at 12% 0%, color-mix(in srgb, var(--page-glow-a) 17%, transparent), transparent 70%),
+    radial-gradient(60% 80% at 92% 0%, color-mix(in srgb, var(--page-glow-b) 21%, transparent), transparent 70%);
+  background-repeat: no-repeat;
+  background-size: 100% 620px;
 }
 
 /* --- shell ------------------------------------------------------------- */
@@ -68,6 +77,16 @@ img { max-width: 100%; height: auto; }
 .site-nav { display: flex; gap: 1.25rem; }
 .site-nav a { color: var(--ember-muted); }
 .site-nav a:hover { color: var(--ember-text); text-decoration: none; }
+.theme-toggle {
+  font: inherit;
+  color: var(--ember-muted);
+  background: none;
+  border: 1px solid var(--ember-border);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  cursor: pointer;
+}
+.theme-toggle:hover { color: var(--ember-text); border-color: var(--ember-accent); }
 
 .site-foot {
   max-width: 980px;
@@ -151,7 +170,7 @@ p, ul, ol { margin: 0 0 1rem; }
 li { margin: 0.2rem 0; }
 
 pre {
-  background: var(--ember-ink);
+  background: var(--code-bg);
   color: var(--ember-cream);
   padding: 1rem 1.1rem;
   border-radius: 10px;
@@ -159,14 +178,6 @@ pre {
   line-height: 1.5;
   text-align: left;
 }
-/* --ember-ink is dark in both themes, so in dark mode it would match the page;
-   lift the code panel off the background. */
-@media (prefers-color-scheme: dark) {
-  pre { background: #2a2030; }
-}
-:root[data-theme="dark"] pre { background: #2a2030; }
-:root[data-theme="dark"] pre,
-@media (prefers-color-scheme: dark) { }
 pre code { color: inherit; background: none; padding: 0; }
 
 code { background: var(--ember-border); border-radius: 5px; padding: 0.12em 0.35em; }
