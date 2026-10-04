@@ -1,40 +1,21 @@
-# Release automation
+# Release automation — two independent jobs, one per releasable component.
 #
-# Triggers on every push to main that touches source files, pyproject.toml,
-# or uv.lock. The paths exclusion of CHANGELOG.md prevents the bump PR
-# merge from retriggering the workflow (the bump PR only changes
-# pyproject.toml, CHANGELOG.md, and uv.lock — two of those three are
-# excluded, and pyproject.toml IS included so future feature merges still
-# fire the workflow; but the bump commit itself changes only patch-level
-# version strings that don't match "ember/**" or "evals/**", so combining
-# the CHANGELOG.md exclusion with requiring ember/ or evals/ changes is
-# sufficient).
+# release-ember  — triggered by changes to ember/** or evals/**
+#   Bumps pyproject.toml version (cz bump), opens a bump PR, waits for it to
+#   land, then builds the wheel/sdist and creates a GitHub Release tagged v*.
 #
-# Flow (on every qualifying push to main):
-#   1. cz bump --changelog --yes  — bumps version in pyproject.toml,
-#      generates/updates CHANGELOG.md, creates a local commit + tag.
-#   2. Push the bump branch and open a PR with auto-merge enabled. The PR
-#      targets main; the ruleset requires 2 status checks so CI must pass
-#      before it can squash-merge. GITHUB_TOKEN can open PRs and enable
-#      auto-merge; it just cannot bypass the branch protection gate.
-#   3. Poll until the bump tag appears on main (i.e. the auto-merge landed).
-#   4. Build the wheel and sdist from the bumped pyproject.toml.
-#   5. gh release create — publish a GitHub Release with the wheel.
+# release-plugin — triggered by changes to packages/opencode-plugin/**
+#   Bumps packages/opencode-plugin/package.json version (cz bump with plugin
+#   flags), opens a bump PR, waits for it to land, then creates a GitHub
+#   Release tagged plugin/v* (no wheel — plugin ships via npm / direct install).
 #
-# Loop prevention: paths exclusion drops any push whose diff is only
-# CHANGELOG.md / .github/**. The bump commit also changes pyproject.toml
-# and uv.lock, but a version-string-only change in pyproject.toml does NOT
-# match "ember/**" or "evals/**", and uv.lock is intentionally excluded too.
-# Any genuine feature merge WILL match "ember/**" or "evals/**" and fires.
+# Loop prevention (both jobs):
+#   The bump commit only changes version strings and CHANGELOG files — it never
+#   touches ember/**, evals/**, or packages/opencode-plugin/**, so the paths
+#   filter drops it and the workflow does not re-trigger.
 #
-# Note on GITHUB_TOKEN + rulesets: GITHUB_TOKEN can open PRs and enable
-# auto-merge. It CANNOT bypass ruleset required-status-checks. The bump PR
-# therefore runs the same CI as every other PR before merging. This is the
-# correct security posture: every commit to main — including the release
-# bump — passes tests.
-#
-# Security posture (per AGENTS.md watch-outs for GitHub Actions):
-#   - All uses: pins are full commit SHAs with a # vX.Y.Z comment.
+# Security posture (per AGENTS.md):
+#   - All uses: pinned to full commit SHAs with # vX.Y.Z comments.
 #   - permissions: {} at workflow level; each job grants only what it needs.
 #   - checkout uses persist-credentials: false throughout.
 #   - No pull_request_target, workflow_run, or self-hosted runners.
@@ -49,6 +30,7 @@ on:
     paths:
       - "ember/**"
       - "evals/**"
+      - "packages/opencode-plugin/**"
   workflow_dispatch:
 
 permissions: {}
@@ -58,14 +40,26 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Bump, open PR, wait, then release
-    if: github.ref == 'refs/heads/main'
+
+  # --------------------------------------------------------------------------
+  # release-ember
+  # Bumps pyproject.toml, opens bump PR, waits, builds wheel, creates release.
+  # --------------------------------------------------------------------------
+  release-ember:
+    name: ember — bump, PR, wait, release
+    if: |
+      github.ref == 'refs/heads/main' && (
+        contains(toJson(github.event.commits.*.modified), 'ember/') ||
+        contains(toJson(github.event.commits.*.added),    'ember/') ||
+        contains(toJson(github.event.commits.*.modified), 'evals/') ||
+        contains(toJson(github.event.commits.*.added),    'evals/') ||
+        github.event_name == 'workflow_dispatch'
+      )
     runs-on: macos-latest
     timeout-minutes: 30
     permissions:
-      contents: write       # push bump branch + tag; create GitHub Release
-      pull-requests: write  # open bump PR; enable auto-merge
+      contents: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -85,24 +79,21 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Bump version and generate changelog
+      - name: Bump ember version and generate changelog
         id: bump
         run: |
-          # cz bump exits 21 (NO_COMMITS_TO_BUMP) when all commits since the
-          # last tag are non-bumping types (ci:, docs:, chore:, etc.).
-          # Treat that as a clean no-op — no tag, no release needed.
           if ! uv run cz bump --changelog --yes; then
             code=$?
             if [ "$code" -eq 21 ]; then
-              echo "No releasable commits since last tag — skipping release."
+              echo "No releasable ember commits since last tag — skipping."
               echo "tag=" >> "$GITHUB_OUTPUT"
               echo "branch=" >> "$GITHUB_OUTPUT"
               exit 0
             fi
             exit "$code"
           fi
-          echo "tag=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
-          echo "branch=ci/bump-$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
+          echo "tag=$(git describe --tags --abbrev=0 --match 'v*')" >> "$GITHUB_OUTPUT"
+          echo "branch=ci/bump-$(git describe --tags --abbrev=0 --match 'v*')" >> "$GITHUB_OUTPUT"
 
       - name: Skip remaining steps if no bump needed
         id: check
@@ -134,13 +125,13 @@ jobs:
         run: |
           PR_URL=$(gh pr create \
             --title "release ${BUMP_TAG}" \
-            --body "Automated version bump to ${BUMP_TAG}. Auto-merges when CI passes." \
+            --body "Automated ember version bump to ${BUMP_TAG}. Auto-merges when CI passes." \
             --base main \
             --head "${BUMP_BRANCH}")
           echo "Opened: ${PR_URL}"
           gh pr merge "${PR_URL}" --auto --squash
 
-      - name: Wait for bump PR to land on main (up to 20 min)
+      - name: Wait for bump PR to land on main (up to 10 min)
         if: steps.check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -177,3 +168,199 @@ jobs:
             --verify-tag \
             --title "$RELEASE_TAG" \
             --notes-file release-notes.md
+
+  # --------------------------------------------------------------------------
+  # release-plugin
+  # Bumps package.json, opens bump PR, waits, creates release (no wheel).
+  # --------------------------------------------------------------------------
+  release-plugin:
+    name: plugin — bump, PR, wait, release
+    if: |
+      github.ref == 'refs/heads/main' && (
+        contains(toJson(github.event.commits.*.modified), 'packages/opencode-plugin/') ||
+        contains(toJson(github.event.commits.*.added),    'packages/opencode-plugin/') ||
+        github.event_name == 'workflow_dispatch'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Compute next plugin version from conventional commits
+        id: bump
+        run: |
+          LAST_TAG=$(git tag --list 'plugin/v*' --sort=-version:refname | head -1)
+          if [ -z "$LAST_TAG" ]; then
+            LAST_TAG="plugin/v0.1.0"
+          fi
+
+          CURRENT=$(node -p "require('./packages/opencode-plugin/package.json').version")
+
+          COMMITS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"%s" \
+            -- packages/opencode-plugin/ 2>/dev/null || true)
+
+          if [ -z "$COMMITS" ]; then
+            echo "No commits touching packages/opencode-plugin/ since ${LAST_TAG} — skipping."
+            echo "tag=" >> "$GITHUB_OUTPUT"
+            echo "branch=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          BUMP_TYPE="patch"
+          while IFS= read -r subject; do
+            if echo "$subject" | grep -qE '!:|BREAKING CHANGE'; then
+              BUMP_TYPE="minor"
+              break
+            elif echo "$subject" | grep -qE '^feat(\([^)]*\))?:'; then
+              BUMP_TYPE="minor"
+            fi
+          done <<< "$COMMITS"
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          case "$BUMP_TYPE" in
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+
+          printf '%s\n' "$COMMITS" > /tmp/plugin-commits.txt
+          echo "bump_type=${BUMP_TYPE}"     >> "$GITHUB_OUTPUT"
+          echo "new_version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=plugin/v${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "branch=ci/bump-plugin-v${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Skip remaining steps if no bump needed
+        id: check
+        env:
+          BUMP_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          if [ -z "$BUMP_TAG" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Write new version into package.json
+        if: steps.check.outputs.skip == 'false'
+        env:
+          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('packages/opencode-plugin/package.json', 'utf8'));
+            pkg.version = process.env.NEW_VERSION;
+            fs.writeFileSync('packages/opencode-plugin/package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+      - name: Prepend CHANGELOG entry for plugin
+        if: steps.check.outputs.skip == 'false'
+        env:
+          BUMP_TAG: ${{ steps.bump.outputs.tag }}
+          BUMP_TYPE: ${{ steps.bump.outputs.bump_type }}
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          SECTION=$([ "$BUMP_TYPE" = "minor" ] && echo "feat" || echo "fix")
+          {
+            echo "## ${BUMP_TAG} (${DATE})"
+            echo ""
+            echo "### ${SECTION}"
+            echo ""
+            while IFS= read -r line; do echo "- ${line}"; done < /tmp/plugin-commits.txt
+            echo ""
+          } > /tmp/new-entry.md
+          awk '
+            /<!-- next-version -->/ {
+              print
+              while ((getline line < "/tmp/new-entry.md") > 0) print line
+              next
+            }
+            { print }
+          ' packages/opencode-plugin/CHANGELOG.md > /tmp/cl-merged.md
+          mv /tmp/cl-merged.md packages/opencode-plugin/CHANGELOG.md
+
+      - name: Commit, tag, push bump branch
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
+          BUMP_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          git remote set-url origin \
+            "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}"
+          git add packages/opencode-plugin/package.json \
+                  packages/opencode-plugin/CHANGELOG.md
+          git commit -m "release ${BUMP_TAG}"
+          git tag "${BUMP_TAG}"
+          git push origin "HEAD:refs/heads/${BUMP_BRANCH}" --tags
+
+      - name: Open bump PR and enable auto-merge
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
+          BUMP_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          PR_URL=$(gh pr create \
+            --title "release ${BUMP_TAG}" \
+            --body "Automated opencode plugin version bump to ${BUMP_TAG}. Auto-merges when CI passes." \
+            --base main \
+            --head "${BUMP_BRANCH}")
+          echo "Opened: ${PR_URL}"
+          gh pr merge "${PR_URL}" --auto --squash
+
+      - name: Wait for bump PR to land on main (up to 10 min)
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUMP_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          for i in $(seq 1 20); do
+            if git ls-remote --tags origin | grep -qF "refs/tags/${BUMP_TAG}"; then
+              echo "Tag ${BUMP_TAG} confirmed on remote after ${i} polls."
+              break
+            fi
+            if [ "$i" -eq 20 ]; then
+              echo "Timed out waiting for ${BUMP_TAG} on remote." >&2; exit 1
+            fi
+            sleep 30
+          done
+
+      - name: Extract release notes from plugin CHANGELOG
+        if: steps.check.outputs.skip == 'false'
+        env:
+          BUMP_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          awk -v tag="## ${BUMP_TAG}" '
+            $0 == tag { seen=1; next }
+            seen && /^## / { exit }
+            seen { print }
+          ' packages/opencode-plugin/CHANGELOG.md > plugin-release-notes.md
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            packages/opencode-plugin/index.js \
+            packages/opencode-plugin/package.json \
+            --verify-tag \
+            --title "$RELEASE_TAG" \
+            --notes-file plugin-release-notes.md

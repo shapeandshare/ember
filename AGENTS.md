@@ -1,6 +1,6 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-04 (constitutional Articles XI–XV adopted; Testing section added; Architecture Rules + Docstring Convention + Design System sections added; behavioral principles 9–12 expanded with full TDD workflow; Python conventions expanded with enums, forward refs, solid separators)
+**Last updated**: 2026-10-04 (constitutional Articles XI–XV adopted; Testing section added; Architecture Rules + Docstring Convention + Design System sections added; behavioral principles 9–12 expanded with full TDD workflow; Python conventions expanded with enums, forward refs, solid separators; commit scope discipline added to principle 6; per-component versioning: ember=v*, plugin=plugin/v*)
 
 ## What this repo is
 
@@ -201,6 +201,17 @@ Rules for changing it:
 5. **Keep pins honest.** Bump model revisions or dependency ranges only with model-backed tests
    and re-measured kit numbers.
 6. **Smallest correct change.** Atomic commits with plain, imperative English subjects.
+   Every commit touching a specific component MUST carry its scope:
+
+   | Scope | Component | Versioned separately? |
+   | --- | --- | --- |
+   | `ember` | Python package / CLI / MCP server (`ember/`) | Yes — `v*` tag, PyPI wheel |
+   | `plugin` | opencode npm plugin (`packages/opencode-plugin/`) | Yes — `plugin/v*` tag |
+   | `evals` | benchmark harness (`evals/`) | No — root changelog only |
+   | `site` | Jekyll Pages site (`site/`) | No — root changelog only |
+
+   Cross-cutting changes (CI, tooling, root docs) may omit the scope.
+   Examples: `feat(ember): …`, `fix(plugin): …`, `chore(evals): …`, `ci: …`
 7. **Dogfood.** When `ember_advise` is available, consult it with the kit's recipes for
    this repo's own triage and risk checks.
 8. **Use the vault.** Search `vault/` before non-trivial decisions, and write decisions

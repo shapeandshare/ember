@@ -129,6 +129,20 @@ major_version_zero = true
 tag_format = "v$version"
 bump_message = "release v$new_version"
 changelog_incremental = true
+changelog_file = "CHANGELOG.md"
+
+[tool.commitizen.extras.plugin]
+# Separate commitizen config for the opencode plugin (packages/opencode-plugin/).
+# Drive with: cz --config pyproject.toml bump --tag-format "plugin/v$version"
+#   --version-files "packages/opencode-plugin/package.json:\"version\": \"$version\""
+#   --changelog --file-name packages/opencode-plugin/CHANGELOG.md
+# The release-plugin CI job runs these flags explicitly.
+name = "cz_conventional_commits"
+version_files = ["packages/opencode-plugin/package.json:\"version\": \"$version\""]
+tag_format = "plugin/v$version"
+bump_message = "release plugin/v$new_version"
+changelog_file = "packages/opencode-plugin/CHANGELOG.md"
+major_version_zero = true
 
 [tool.coverage.run]
 source = ["ember"]

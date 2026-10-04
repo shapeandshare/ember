@@ -160,6 +160,20 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 **Types:** `feat`, `fix`, `docs`, `chore`, `test`, `refactor`, `perf`, `ci`
 
+**Scopes:** every commit touching a specific component MUST carry its scope in
+parentheses. The valid scopes are:
+
+| Scope | Component | Versioned separately? |
+| --- | --- | --- |
+| `ember` | Python package / CLI / MCP server (`ember/`) | Yes — `v*` tag, PyPI wheel |
+| `plugin` | opencode npm plugin (`packages/opencode-plugin/`) | Yes — `plugin/v*` tag |
+| `evals` | benchmark harness (`evals/`) | No — appears in the root changelog |
+| `site` | Jekyll Pages site (`site/`) | No — appears in the root changelog |
+
+A commit that touches more than one component should use the scope of the
+**primary** component changed; note secondary components in the body.
+Cross-cutting changes (CI, tooling, root docs) may omit the scope.
+
 **Subject rules:** imperative mood, 72 characters or fewer, no trailing period.
 
 **Body rules:** wrap at 72 characters; explain *why*, not just *what*.
@@ -167,15 +181,21 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/).
 **Examples:**
 
 ```
-feat: add score question type to CLI output
+feat(ember): add score question type to CLI output
 
-fix: handle missing pidfile in stop command
+fix(ember): handle missing pidfile in stop command
 
-docs: update agent onboarding kit README
+docs(ember): update agent onboarding kit README
 
 chore: bump ruff to 0.9.1
 
-test: add model-backed noul boundary test
+test(ember): add model-backed noul boundary test
+
+feat(plugin): resolve ember-mcp from EMBER_MCP env var
+
+fix(evals): include model label in trace records
+
+chore(site): add CHANGELOG link to navigation
 ```
 
 Breaking changes go in the footer:
