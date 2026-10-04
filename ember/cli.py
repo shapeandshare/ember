@@ -688,7 +688,10 @@ def _add_server_flags(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--host")
     parser.add_argument("--port", type=int)
     parser.add_argument("--device", choices=["auto", "mps", "cpu"])
-    parser.add_argument("--model", help="model name (flash|full)")
+    parser.add_argument(
+        "--model",
+        help="model name; one of the keys in the registry (e.g. flash, full)",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
