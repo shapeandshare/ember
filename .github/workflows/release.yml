@@ -1,32 +1,45 @@
 # Release automation
 #
 # Triggers on every push to main that touches source files, pyproject.toml,
-# or uv.lock — but NOT when the bump commit itself lands (the bump commit
-# message carries "[skip ci]" via commitizen's bump_message setting, and the
-# paths exclusion of CHANGELOG.md provides a belt-and-suspenders second guard).
+# or uv.lock. The paths exclusion of CHANGELOG.md prevents the bump PR
+# merge from retriggering the workflow (the bump PR only changes
+# pyproject.toml, CHANGELOG.md, and uv.lock — two of those three are
+# excluded, and pyproject.toml IS included so future feature merges still
+# fire the workflow; but the bump commit itself changes only patch-level
+# version strings that don't match "ember/**" or "evals/**", so combining
+# the CHANGELOG.md exclusion with requiring ember/ or evals/ changes is
+# sufficient).
 #
-# Flow:
-#   1. cz bump --changelog  — bumps version in pyproject.toml, generates/
-#      updates CHANGELOG.md, creates a local commit + tag.
-#   2. git push origin main --tags  — lands the bump commit and tag using
-#      GITHUB_TOKEN (works because main has no branch protection rules that
-#      block Actions pushes; reassess and switch to a fine-grained PAT or
-#      GitHub App token if branch protection is ever added).
-#   3. uv build  — builds the wheel and sdist from the bumped version.
-#   4. gh release create  — publishes a GitHub Release with wheel attached.
+# Flow (on every qualifying push to main):
+#   1. cz bump --changelog --yes  — bumps version in pyproject.toml,
+#      generates/updates CHANGELOG.md, creates a local commit + tag.
+#   2. Push the bump branch and open a PR with auto-merge enabled. The PR
+#      targets main; the ruleset requires 2 status checks so CI must pass
+#      before it can squash-merge. GITHUB_TOKEN can open PRs and enable
+#      auto-merge; it just cannot bypass the branch protection gate.
+#   3. Poll until the bump tag appears on main (i.e. the auto-merge landed).
+#   4. Build the wheel and sdist from the bumped pyproject.toml.
+#   5. gh release create — publish a GitHub Release with the wheel.
+#
+# Loop prevention: paths exclusion drops any push whose diff is only
+# CHANGELOG.md / .github/**. The bump commit also changes pyproject.toml
+# and uv.lock, but a version-string-only change in pyproject.toml does NOT
+# match "ember/**" or "evals/**", and uv.lock is intentionally excluded too.
+# Any genuine feature merge WILL match "ember/**" or "evals/**" and fires.
+#
+# Note on GITHUB_TOKEN + rulesets: GITHUB_TOKEN can open PRs and enable
+# auto-merge. It CANNOT bypass ruleset required-status-checks. The bump PR
+# therefore runs the same CI as every other PR before merging. This is the
+# correct security posture: every commit to main — including the release
+# bump — passes tests.
 #
 # Security posture (per AGENTS.md watch-outs for GitHub Actions):
 #   - All uses: pins are full commit SHAs with a # vX.Y.Z comment.
-#   - permissions: {} at workflow level; job grants only contents: write.
-#   - checkout uses persist-credentials: false; the push step authenticates
-#     via an explicit GH_TOKEN environment variable instead.
+#   - permissions: {} at workflow level; each job grants only what it needs.
+#   - checkout uses persist-credentials: false throughout.
 #   - No pull_request_target, workflow_run, or self-hosted runners.
 #   - No stored secrets beyond GITHUB_TOKEN (auto-provisioned per run).
 #   - zizmor audits this file on every PR touching .github/** (ci.yml).
-#
-# Adapted from the anvil peer repo's single-package release pattern.
-# Simplified vs. anvil: no PAT needed (no branch protection), no bump PR,
-# direct push to main (Article XV §15.1 — simplest viable solution).
 
 name: Release
 
@@ -36,41 +49,38 @@ on:
     paths:
       - "ember/**"
       - "evals/**"
-      - "pyproject.toml"
-      - "uv.lock"
-      - "!CHANGELOG.md"       # never retrigger on the bump commit itself
-      - "!.github/**"         # workflow changes don't cut releases
-  workflow_dispatch:           # escape hatch for manual cuts
+  workflow_dispatch:
 
 permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}
-  cancel-in-progress: false   # never cancel a release halfway through
+  cancel-in-progress: false
 
 jobs:
   release:
-    name: Bump version, tag, and release
+    name: Bump, open PR, wait, then release
     if: github.ref == 'refs/heads/main'
     runs-on: macos-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     permissions:
-      contents: write   # push bump commit + tag; create GitHub Release
+      contents: write       # push bump branch + tag; create GitHub Release
+      pull-requests: write  # open bump PR; enable auto-merge
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0          # full history for cz bump to walk commits
+          fetch-depth: 0
           persist-credentials: false
 
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          enable-cache: false     # release build must not restore CI cache state
+          enable-cache: false
 
       - name: Install dependencies
         run: uv sync --locked --all-groups
 
-      - name: Configure git identity for bump commit
+      - name: Configure git identity
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -80,22 +90,53 @@ jobs:
         run: |
           uv run cz bump --changelog --yes
           echo "tag=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
+          echo "branch=ci/bump-$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
 
-      - name: Push bump commit and tag to main
+      - name: Push bump branch and tag
         env:
           GH_TOKEN: ${{ github.token }}
+          BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
         run: |
           git remote set-url origin \
             "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}"
-          git push origin main --tags
+          git push origin "HEAD:refs/heads/${BUMP_BRANCH}" --tags
+
+      - name: Open bump PR and enable auto-merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
+          BUMP_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          PR_URL=$(gh pr create \
+            --title "release ${BUMP_TAG}" \
+            --body "Automated version bump to ${BUMP_TAG}. Auto-merges when CI passes." \
+            --base main \
+            --head "${BUMP_BRANCH}")
+          echo "Opened: ${PR_URL}"
+          gh pr merge "${PR_URL}" --auto --squash
+
+      - name: Wait for bump PR to land on main (up to 20 min)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUMP_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          for i in $(seq 1 40); do
+            if git ls-remote --tags origin "refs/tags/${BUMP_TAG}" \
+                | grep -q "${BUMP_TAG}"; then
+              echo "Tag ${BUMP_TAG} confirmed on remote after ${i} polls."
+              break
+            fi
+            if [ "$i" -eq 40 ]; then
+              echo "Timed out waiting for ${BUMP_TAG} on remote." >&2; exit 1
+            fi
+            sleep 30
+          done
 
       - name: Build wheel and sdist
         run: uv build
 
       - name: Extract release notes from CHANGELOG.md
         run: |
-          # Print lines in the first versioned section of CHANGELOG.md
-          # (between the new "## vX.Y.Z" heading and the next one).
           awk '/^## v/{if(seen) exit; seen=1} seen' CHANGELOG.md > release-notes.md
 
       - name: Create GitHub Release
@@ -103,8 +144,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.bump.outputs.tag }}
         run: |
-          # --verify-tag refuses to create the release when the tag was not
-          # successfully pushed — acts as an idempotency guard on reruns.
           gh release create "$RELEASE_TAG" dist/* \
             --verify-tag \
             --title "$RELEASE_TAG" \
