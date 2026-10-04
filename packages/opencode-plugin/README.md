@@ -32,3 +32,7 @@ To use this package as an npm dependency instead, add it to your opencode config
 ```
 
 It resolves `ember-mcp` at every launch; set `EMBER_MCP` to override the path.
+
+## Version history
+
+See [CHANGELOG.md](CHANGELOG.md) for a full version history.
