@@ -10,7 +10,7 @@ created: 2026-10-02
 updated: 2026-10-02
 code-refs:
   - .opencode/opencode.json
-  - ember/opencode_config.py
+  - ember/opencode/opencode_config.py
 ---
 
 # opencode merges .opencode/opencode.json with the root opencode.json

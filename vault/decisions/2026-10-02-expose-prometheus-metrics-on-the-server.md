@@ -9,7 +9,7 @@ tags:
 created: 2026-10-02
 updated: 2026-10-02
 code-refs:
-  - ember/server.py
+  - ember/serving/server.py
   - pyproject.toml
 ---
 

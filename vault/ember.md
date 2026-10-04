@@ -30,6 +30,12 @@ Session-level decisions with their context and consequences.
 - [[2026-10-03-measure-ember-through-the-agent]]
 - [[2026-10-03-harden-github-before-going-public]]
 - [[2026-10-03-publish-a-pages-site]]
+- [[2026-10-04-implicit-namespace-packages]]
+- [[2026-10-04-ownership-policy-reinstatement]]
+- [[2026-10-04-extract-mcp-types-to-own-module]]
+- [[2026-10-04-restructure-into-sub-packages]]
+- [[2026-10-04-move-eval-harness-to-evals-eval]]
+- [[2026-10-04-constitutional-articles-xi-xv]]
 
 ### Discoveries
 
