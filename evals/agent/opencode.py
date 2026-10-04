@@ -20,11 +20,12 @@ import shutil
 import signal
 import subprocess
 import time
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from .sandbox import Sandbox, git_env
+from .tool_call import ToolCall
+from .transcript import Transcript
 
 # The child inherits only these; everything else (tokens, cloud credentials,
 # agent sockets) stays out of a session that can run `bash`.
@@ -63,39 +64,6 @@ def transient(errors: list[str], stderr: str) -> bool:
     """Return whether a failed session's errors look like a passing provider issue."""
     blob = (" ".join(errors) + stderr).lower()
     return any(marker in blob for marker in TRANSIENT)
-
-
-@dataclass(frozen=True)
-class ToolCall:
-    """One completed (or failed) tool call, in the order it finished."""
-
-    index: int
-    name: str
-    input: dict[str, Any]
-    output: str
-    status: str
-    per_call_ms: float | None = None
-
-
-@dataclass
-class Transcript:
-    """What one ``opencode run`` session did."""
-
-    exit_code: int
-    timed_out: bool
-    seconds: float
-    tool_calls: list[ToolCall] = field(default_factory=list)
-    texts: list[str] = field(default_factory=list)
-    cost: float = 0.0
-    tokens: dict[str, int] = field(default_factory=dict)
-    steps: int = 0
-    errors: list[str] = field(default_factory=list)
-    stderr: str = ""
-
-    @property
-    def reply(self) -> str:
-        """Return the agent's final text."""
-        return self.texts[-1] if self.texts else ""
 
 
 def binary() -> str:

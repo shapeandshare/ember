@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from . import sections_agent, sections_front, sections_results, sections_review
-from .blocks import Section
+from .render.blocks import Section
+from .sections import sections_agent, sections_front, sections_results, sections_review
 
 BUILDERS: tuple[Callable[[Mapping[str, Any]], sections_front.Built], ...] = (
     sections_front.summary,

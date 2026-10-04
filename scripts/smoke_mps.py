@@ -18,7 +18,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 import torch  # noqa: E402
-from ember.runtime import DEFAULT_MODEL_DIR, load_clef, model_max_length  # noqa: E402
+from ember.serving.runtime import (  # noqa: E402
+    DEFAULT_MODEL_DIR,
+    load_clef,
+    model_max_length,
+)
 
 
 def main() -> int:
@@ -34,7 +38,8 @@ def main() -> int:
     model, processor = load_clef(DEFAULT_MODEL_DIR, device=device, dtype=dtype)
     print(f"loaded in {time.time() - t0:.1f}s")
 
-    from joint_schema_model import systemone  # type: ignore
+    # import-placement:allow - joint_schema_model ships in the model snapshot dir
+    from joint_schema_model import systemone  # type: ignore[import-untyped]
 
     request = {
         "model": "clef-flash",

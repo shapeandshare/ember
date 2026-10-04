@@ -20,8 +20,10 @@ import json
 import re
 from typing import Any
 
-from .opencode import ToolCall, Transcript
-from .sandbox import Sandbox, Snapshot, changed, check, named_options
+from .sandbox import Sandbox, changed, check, named_options
+from .snapshot import Snapshot
+from .tool_call import ToolCall
+from .transcript import Transcript
 from .scenarios import EFFORTS, OWNERS, RECIPE_QUESTIONS
 
 EMBER_TOOL = "ember_advise"
@@ -112,9 +114,9 @@ def merged_answers(calls: list[ToolCall]) -> dict[str, Any]:
     return merged
 
 
-# ---------------------------------------------------------------------------
+# ###########################################################################
 # Call quality: did the agent use the tool correctly?
-# ---------------------------------------------------------------------------
+# ###########################################################################
 
 
 def _verdict_in_state(calls: list[ToolCall]) -> bool:
@@ -182,9 +184,9 @@ def call_quality(
     }
 
 
-# ---------------------------------------------------------------------------
+# ###########################################################################
 # Kit decision logic and action scoring
-# ---------------------------------------------------------------------------
+# ###########################################################################
 
 
 def kit_decision(recipe: str, found: dict[str, Any]) -> str | None:
@@ -232,9 +234,9 @@ def observed(recipe: str, diff: list[str], committed: bool, reply: str) -> str |
     return None
 
 
-# ---------------------------------------------------------------------------
+# ###########################################################################
 # Main scoring entry point
-# ---------------------------------------------------------------------------
+# ###########################################################################
 
 
 def score(

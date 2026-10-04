@@ -20,8 +20,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ember import agent_kit
+from ember.agent_kit import api as agent_kit
 
+from .snapshot import Snapshot
 from .template import TEMPLATE, TEST_COMMAND
 
 CONDITIONS = ("none", "mcp", "skill", "full")
@@ -54,15 +55,6 @@ class Sandbox:
     root: Path
     home: Path
     repo: Path
-
-
-@dataclass(frozen=True)
-class Snapshot:
-    """File hashes and git position of the repo at one moment."""
-
-    files: dict[str, str]
-    head: str
-    commits: int
 
 
 def git_env(home: Path) -> dict[str, str]:

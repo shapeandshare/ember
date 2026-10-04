@@ -88,13 +88,13 @@ ARCHITECTURE = {
             "id": "agent_runner",
             "label": "Agent eval runner",
             "below": "agent",
-            "detail": "scripts/run_agent_evals.py",
+            "detail": "evals/eval/run_agent_evals.py",
         },
         {
             "id": "runner",
             "label": "Benchmark runner",
             "below": "server",
-            "detail": "scripts/run_evals.py",
+            "detail": "evals/eval/run_evals.py",
         },
     ],
     "edges": [
@@ -116,14 +116,14 @@ ARCHITECTURE = {
     ],
 }
 
-ARCHITECTURE_TEXT = """agent eval runner (scripts/run_agent_evals.py)
+ARCHITECTURE_TEXT = """agent eval runner (evals/eval/run_agent_evals.py)
    │ opencode run --pure, one sandbox per session
    ▼
-coding agent ──tools/call advise──► ember-mcp (stdio, mcp_server.py)
+coding agent ──tools/call advise──► ember-mcp (stdio, ember/mcp/mcp_server.py)
                                        │ HTTP POST /v1/systemone
                                        ▼
-model benchmark runner ──HTTP──► model server (server.py)
-(scripts/run_evals.py)                 │ Engine.advise
+model benchmark runner ──HTTP──► model server (ember/serving/server.py)
+(evals/eval/run_evals.py)              │ Engine.advise
                                        ▼
                                 Clef-Flash, fp16 on MPS"""
 

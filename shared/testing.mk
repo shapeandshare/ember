@@ -19,22 +19,22 @@ test-evals: $(EMBER) ## Calibration eval suite: positive + negative recipe cases
 	$(PY) -m pytest -m "evals" -v tests/test_advise_evals.py
 
 eval-run: $(EMBER) ## Run the calibration eval dataset against the live server
-	$(PY) scripts/run_evals.py
+	$(PY) evals/eval/run_evals.py
 
 eval-report: ## Render the most recent eval results as a Markdown table
-	$(PY) scripts/report_evals.py
+	$(PY) evals/eval/report_evals.py
 
 eval-export: ## Write the reviewer bundle (HTML + Markdown report) for the latest run
-	$(PY) scripts/report_evals.py --export
+	$(PY) evals/eval/report_evals.py --export
 
 eval-snapshot: ## Copy the latest run into the tracked benchmark/ bundle the site renders
-	$(PY) scripts/snapshot_evals.py
+	$(PY) evals/eval/snapshot_evals.py
 
 eval-agent: $(EMBER) ## Agent-in-the-loop eval through opencode (opt-in; uses API credit)
-	$(PY) scripts/run_agent_evals.py
+	$(PY) evals/eval/run_agent_evals.py
 
 eval-agent-smoke: $(EMBER) ## Agent eval smoke: 6 scenarios, 1 trial
-	$(PY) scripts/run_agent_evals.py --smoke
+	$(PY) evals/eval/run_agent_evals.py --smoke
 
 mcp-check: $(EMBER) ## MCP protocol end-to-end check
 	$(PY) -u scripts/test_mcp_client.py
