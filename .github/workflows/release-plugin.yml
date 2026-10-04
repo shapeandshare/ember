@@ -1,18 +1,22 @@
-# Release automation — two independent jobs, one per releasable component.
+# Release automation — opencode plugin (plugin/v* tags, no wheel).
 #
-# release-ember  — triggered by changes to ember/** or evals/**
-#   Bumps pyproject.toml version (cz bump), opens a bump PR, waits for it to
-#   land, then builds the wheel/sdist and creates a GitHub Release tagged v*.
+# Triggers on every push to main that touches packages/opencode-plugin/**.
+# The workflow-level paths filter is the isolation mechanism; no per-job if:
+# needed.
 #
-# release-plugin — triggered by changes to packages/opencode-plugin/**
-#   Bumps packages/opencode-plugin/package.json version (cz bump with plugin
-#   flags), opens a bump PR, waits for it to land, then creates a GitHub
-#   Release tagged plugin/v* (no wheel — plugin ships via npm / direct install).
+# Flow:
+#   1. Compute next semver from conventional commits (feat→minor, fix→patch)
+#      since the last plugin/v* tag.
+#   2. Write new version into package.json; prepend CHANGELOG entry.
+#   3. Commit, tag (plugin/v*), push bump branch; open PR with auto-merge.
+#   4. Poll until the plugin/v* tag lands on main.
+#   5. Create GitHub Release with index.js + package.json as assets.
 #
-# Loop prevention (both jobs):
-#   The bump commit only changes version strings and CHANGELOG files — it never
-#   touches ember/**, evals/**, or packages/opencode-plugin/**, so the paths
-#   filter drops it and the workflow does not re-trigger.
+# Loop prevention: the bump commit only touches package.json and CHANGELOG.md
+# inside packages/opencode-plugin/ — which DOES match the paths filter.
+# To prevent re-triggering, the bump commit message is "release plugin/v*"
+# (no feat/fix prefix), which produces zero releasable commits for the next
+# run and the bump step exits cleanly with "No commits … skipping".
 #
 # Security posture (per AGENTS.md):
 #   - All uses: pinned to full commit SHAs with # vX.Y.Z comments.
@@ -22,165 +26,25 @@
 #   - No stored secrets beyond GITHUB_TOKEN (auto-provisioned per run).
 #   - zizmor audits this file on every PR touching .github/** (ci.yml).
 
-name: Release
+name: Release plugin
 
 on:
   push:
     branches: [main]
     paths:
-      - "ember/**"
-      - "evals/**"
       - "packages/opencode-plugin/**"
   workflow_dispatch:
 
 permissions: {}
 
 concurrency:
-  group: ${{ github.workflow }}
+  group: release-plugin
   cancel-in-progress: false
 
 jobs:
-
-  # --------------------------------------------------------------------------
-  # release-ember
-  # Bumps pyproject.toml, opens bump PR, waits, builds wheel, creates release.
-  # --------------------------------------------------------------------------
-  release-ember:
-    name: ember — bump, PR, wait, release
-    if: |
-      github.ref == 'refs/heads/main' && (
-        contains(toJson(github.event.commits.*.modified), 'ember/') ||
-        contains(toJson(github.event.commits.*.added),    'ember/') ||
-        contains(toJson(github.event.commits.*.modified), 'evals/') ||
-        contains(toJson(github.event.commits.*.added),    'evals/') ||
-        github.event_name == 'workflow_dispatch'
-      )
-    runs-on: macos-latest
-    timeout-minutes: 30
-    permissions:
-      contents: write
-      pull-requests: write
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
-        with:
-          enable-cache: false
-
-      - name: Install dependencies
-        run: uv sync --locked --all-groups
-
-      - name: Configure git identity
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Bump ember version and generate changelog
-        id: bump
-        run: |
-          if ! uv run cz bump --changelog --yes; then
-            code=$?
-            if [ "$code" -eq 21 ]; then
-              echo "No releasable ember commits since last tag — skipping."
-              echo "tag=" >> "$GITHUB_OUTPUT"
-              echo "branch=" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            exit "$code"
-          fi
-          echo "tag=$(git describe --tags --abbrev=0 --match 'v*')" >> "$GITHUB_OUTPUT"
-          echo "branch=ci/bump-$(git describe --tags --abbrev=0 --match 'v*')" >> "$GITHUB_OUTPUT"
-
-      - name: Skip remaining steps if no bump needed
-        id: check
-        env:
-          BUMP_TAG: ${{ steps.bump.outputs.tag }}
-        run: |
-          if [ -z "$BUMP_TAG" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Push bump branch and tag
-        if: steps.check.outputs.skip == 'false'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
-        run: |
-          git remote set-url origin \
-            "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}"
-          git push origin "HEAD:refs/heads/${BUMP_BRANCH}" --tags
-
-      - name: Open bump PR and enable auto-merge
-        if: steps.check.outputs.skip == 'false'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
-          BUMP_TAG: ${{ steps.bump.outputs.tag }}
-        run: |
-          PR_URL=$(gh pr create \
-            --title "release ${BUMP_TAG}" \
-            --body "Automated ember version bump to ${BUMP_TAG}. Auto-merges when CI passes." \
-            --base main \
-            --head "${BUMP_BRANCH}")
-          echo "Opened: ${PR_URL}"
-          gh pr merge "${PR_URL}" --auto --squash
-
-      - name: Wait for bump PR to land on main (up to 10 min)
-        if: steps.check.outputs.skip == 'false'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BUMP_TAG: ${{ steps.bump.outputs.tag }}
-        run: |
-          for i in $(seq 1 20); do
-            if git ls-remote --tags origin "refs/tags/${BUMP_TAG}" \
-                | grep -q "${BUMP_TAG}"; then
-              echo "Tag ${BUMP_TAG} confirmed on remote after ${i} polls."
-              break
-            fi
-            if [ "$i" -eq 20 ]; then
-              echo "Timed out waiting for ${BUMP_TAG} on remote." >&2; exit 1
-            fi
-            sleep 30
-          done
-
-      - name: Build wheel and sdist
-        if: steps.check.outputs.skip == 'false'
-        run: uv build
-
-      - name: Extract release notes from CHANGELOG.md
-        if: steps.check.outputs.skip == 'false'
-        run: |
-          awk '/^## v/{if(seen) exit; seen=1} seen' CHANGELOG.md > release-notes.md
-
-      - name: Create GitHub Release
-        if: steps.check.outputs.skip == 'false'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ steps.bump.outputs.tag }}
-        run: |
-          gh release create "$RELEASE_TAG" dist/* \
-            --verify-tag \
-            --title "$RELEASE_TAG" \
-            --notes-file release-notes.md
-
-  # --------------------------------------------------------------------------
-  # release-plugin
-  # Bumps package.json, opens bump PR, waits, creates release (no wheel).
-  # --------------------------------------------------------------------------
   release-plugin:
     name: plugin — bump, PR, wait, release
-    if: |
-      github.ref == 'refs/heads/main' && (
-        contains(toJson(github.event.commits.*.modified), 'packages/opencode-plugin/') ||
-        contains(toJson(github.event.commits.*.added),    'packages/opencode-plugin/') ||
-        github.event_name == 'workflow_dispatch'
-      )
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -192,10 +56,6 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
-        with:
-          enable-cache: false
 
       - name: Configure git identity
         run: |
@@ -216,7 +76,7 @@ jobs:
             -- packages/opencode-plugin/ 2>/dev/null || true)
 
           if [ -z "$COMMITS" ]; then
-            echo "No commits touching packages/opencode-plugin/ since ${LAST_TAG} — skipping."
+            echo "No releasable commits in packages/opencode-plugin/ since ${LAST_TAG} — skipping."
             echo "tag=" >> "$GITHUB_OUTPUT"
             echo "branch=" >> "$GITHUB_OUTPUT"
             exit 0
