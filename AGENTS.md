@@ -1,6 +1,6 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-02 (project vault; product renamed to ember to match the mascot; table-stakes tooling; design doc; community docs; full context window and vision inputs; Prometheus metrics)
+**Last updated**: 2026-10-04 (constitutional Articles XI–XV adopted; Testing section added; Architecture Rules + Docstring Convention + Design System sections added; behavioral principles 9–12 expanded with full TDD workflow; Python conventions expanded with enums, forward refs, solid separators)
 
 ## What this repo is
 
@@ -50,7 +50,7 @@ after changing brand assets. Do not invent missing provenance or license facts.
 | Topic | Source of truth |
 | --- | --- |
 | Principles and gates | `.specify/memory/constitution.md` |
-| Agent-facing contract (tool schema, instructions, guide, skill, snippet) | `ember/mcp_server.py`, `ember/agent_kit/` |
+| Agent-facing contract (tool schema, instructions, guide, skill, snippet) | `ember/mcp/mcp_server.py`, `ember/agent_kit/` |
 | Model revisions | `REGISTRY` in `ember/models.py` |
 | Dependency ranges | `pyproject.toml` + `uv.lock` |
 | Lifecycle commands | `Makefile` (contributors), `ember` CLI (users) |
@@ -61,24 +61,33 @@ after changing brand assets. Do not invent missing provenance or license facts.
 | Development memory (decisions, discoveries, session logs) | `vault/` (hub `vault/ember.md`) |
 | Verification | `tests/`, `.github/workflows/ci.yml` |
 | Site build and deploy | `scripts/build_site_docs.py`, `site/_data/docs.json`, `.github/workflows/deploy-site.yml` |
-| Benchmark runs (data the site renders) | `benchmark/<run-id>/`, written by `scripts/snapshot_evals.py` |
+| Benchmark runs (data the site renders) | `benchmark/<run-id>/`, written by `scripts/snapshot_evals.py` (via `evals/eval/snapshot_evals.py`) |
 
 ## Project structure
 
 ```
 ember/
-  runtime.py          # MPS-safe loader (CPU load → .to("mps")) + Engine
-  server.py           # FastAPI: POST /v1/systemone, GET /health (reports pid)
-  mcp_server.py       # MCP stdio server: advise tool, instructions, ember://guide resource
+  cli.py              # `ember` / `gut` command: lifecycle, models, doctor, init, agents
+  models.py           # pinned model registry + pull/list/rm
+  serving/            # HTTP model server, MPS runtime, lifecycle, media
+    server.py         #   FastAPI: POST /v1/systemone, GET /health (reports pid)
+    runtime.py        #   MPS-safe loader (CPU load → .to("mps")) + Engine
+    process.py        #   warm-server lifecycle (pidfile + HTTP health)
+    media.py          #   base64 data-URI / {content_type,base64} → PIL decoder
+  mcp/                # MCP stdio server and wire types
+    mcp_server.py     #   MCP stdio server: advise tool, instructions, ember://guide
+    mcp_types.py      #   Pydantic wire types: Question, AdviseInput
+  cfg/                # configuration and platform paths
+    config.py         #   config resolution (CLI flag > env > file > default)
+    paths.py          #   platform-aware app dirs (macOS Library, XDG)
+  opencode/           # opencode integration
+    opencode_config.py  # generates opencode.json
+    opencode_plugin.py  # installs the npm plugin
   agent_kit/          # consumer onboarding kit (single source of truth)
+    api.py            #   public API: instructions(), skill(), snippet(), install_skill()
     instructions.md   #   MCP initialize.instructions (≤ 2 KB)
     ember-advise/     #   installable skill + ember://guide content
     AGENTS.snippet.md #   block consumers paste into their AGENTS.md / CLAUDE.md
-  cli.py              # `ember` / `gut` command: lifecycle, models, doctor, init, agents
-  process.py          # warm-server lifecycle (pidfile + HTTP health)
-  models.py           # pinned model registry + pull/list/rm
-  paths.py config.py  # platform dirs, config precedence
-  opencode_config.py opencode_plugin.py   # opencode integration
 packages/opencode-plugin/   # npm-ready opencode plugin source
 shared/               # Makefile domain modules (.mk files)
   helper.mk           #   auto-generated make help
@@ -88,7 +97,7 @@ shared/               # Makefile domain modules (.mk files)
    release.mk          #   download, init, bootstrap, check, ci, clean
    vault.mk            #   vault-audit
    site.mk             #   site, site-serve (Jekyll Pages)
-scripts/              # MPS smoke test, MCP e2e check, site build, eval snapshot, provenance/vault audits
+scripts/              # make-only dev tools: MPS smoke, MCP e2e, site build, provenance/vault audits
 tests/                # pytest suite (unit + model-backed, host-isolated)
 site/                 # Jekyll GitHub Pages site (docs, brand assets, benchmark report generated at build)
 benchmark/            # tracked benchmark runs (results, trace, dataset, model.json) the site renders
@@ -158,7 +167,7 @@ agent ──tools/call advise──► ember-mcp (stdio, mcp_server.py)
 
 | Server | Transport | Tool | Agent guidance | Notes |
 | --- | --- | --- | --- | --- |
-| `ember` | stdio (`ember-mcp`, or `python -m ember.mcp_server`) | `advise`; input wrapped in `input` | `initialize.instructions` + resource `ember://guide` | Starts the HTTP server lazily unless `EMBER_AUTOSTART=0` |
+| `ember` | stdio (`ember-mcp`, or `python -m ember.mcp.mcp_server`) | `advise`; input wrapped in `input` | `initialize.instructions` + resource `ember://guide` | Starts the HTTP server lazily unless `EMBER_AUTOSTART=0` |
 
 ## Agent onboarding kit
 
@@ -194,6 +203,40 @@ Rules for changing it:
    this repo's own triage and risk checks.
 8. **Use the vault.** Search `vault/` before non-trivial decisions, and write decisions
    and discoveries back as they happen (see the vault protocol below).
+9. **TDD Always — Red-Green-Refactor** (Article XI). Every feature and bugfix MUST follow
+   the TDD cycle. The test MUST be written (and confirmed failing) BEFORE any implementation
+   code. A commit with implementation but no corresponding test is incomplete.
+
+   **Red phase** — Write a failing test expressing the desired behaviour. Confirm it fails:
+   ```bash
+   python -m pytest tests/ -k test_<name> -x   # must FAIL
+   ```
+   **Green phase** — Write the *minimal* implementation to make the test pass. No speculative
+   generality, no extra behaviour. If the test uncovers an edge case, write that test first
+   (return to Red), then fix the code.
+
+   **Refactor phase** — Clean up: remove duplication, improve naming, extract helpers.
+   Keep all tests green:
+   ```bash
+   make test   # must PASS
+   ```
+   **Legacy code** — For existing code with no tests, write a characterization test capturing
+   current behaviour *before* modifying it. Then change the test to express desired behaviour
+   and fix the code.
+
+   **Enforcement** — `make test` MUST pass before any task is marked complete. A single new
+   failure outside pre-existing conditions reverts the work to Red phase. Run `make test-cov`
+   after every session; `fail_under = 71` is the ratchet floor — never lower it.
+
+10. **Simplest solution first** (Article XV). Before designing an implementation, identify the
+    simplest viable approach. Document in the commit or vault if a more complex path was
+    chosen and why.
+11. **Async by default** (Article XII). New FastAPI route handlers are `async def`. New I/O
+    outside the engine lock uses async libraries. Sync engine calls carry the
+    `# async-first:exception` tag.
+12. **Respect the layers** (Article XIII). MCP layer calls HTTP; HTTP layer owns the engine
+    and metrics; engine has no network imports. Data crossing a layer is a Pydantic model or
+    plain dict. Check the import graph before adding a cross-layer import.
 
 ## Vault protocol
 
@@ -236,6 +279,68 @@ Don't write notes for routine changes or for facts already in `README.md`, `AGEN
 `/vault-health`) before calling vault work done, and keep notes in the same change as
 the work behind them.
 
+## Testing
+
+Test files live under `tests/`. The `conftest.py` fixture provides a warm-server
+base URL and MCP stdio parameters for integration tests.
+
+| Test file | What it covers |
+|-----------|---------------|
+| `tests/test_agent_kit.py` | Kit contract: instructions size, skill frontmatter, guide resource |
+| `tests/test_cli.py` | CLI paths: onboarding, init, lifecycle on unused ports, doctor, uninstall |
+| `tests/test_media.py` | Media decoding: data URIs, {content_type,base64} objects, rejection of URLs |
+| `tests/test_metrics.py` | Prometheus endpoint: counter/gauge lifecycle, registry isolation |
+| `tests/test_mcp_tool.py` | MCP protocol: tool discovery, advise over stdio, error handling, autostart |
+| `tests/test_opencode_plugin.py` | Plugin install/uninstall, config merge/remove |
+| `tests/test_runtime_unit.py` | Runtime helpers: device selection, model max length, mcp_server isolation |
+| `tests/test_vault_audit.py` | Vault audit script: frontmatter, tags, wikilinks, code-refs, orphans |
+| `tests/test_http_api.py` | HTTP API call paths: GET /health, POST /v1/systemone across all question types, request-validation errors |
+| `tests/test_eval_benchmark.py` | Benchmark dataset integrity: schema, gold labels, split coverage |
+| `tests/test_advise_evals.py` | Calibration evals (model-backed): recipe correctness end-to-end |
+| `tests/test_agent_eval.py` | Agent-in-the-loop eval: judge scoring, sandbox lifecycle |
+| `tests/test_eval_report.py` | Report generation: HTML structure, Markdown fidelity, chart output |
+
+**Writing new tests — unit pattern** (`tests/test_<module>.py`):
+```python
+"""Unit tests for <module>."""
+
+from __future__ import annotations
+
+
+def test_<behaviour>() -> None:
+    result = <function>()
+    assert result == <expected>
+```
+
+**Writing new tests — MCP / HTTP integration pattern**:
+```python
+"""Integration tests for <endpoint>."""
+
+from __future__ import annotations
+
+import pytest
+
+
+@pytest.mark.asyncio
+async def test_<endpoint>(base_url: str) -> None:
+    # base_url fixture spins up a real server on a random free port
+    import httpx
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"{base_url}/health")
+    assert r.status_code == 200
+    assert r.json()["status"] == "ok"
+```
+
+**Test naming**: `test_<behaviour>_<expected_outcome>` — e.g.
+`test_empty_input_raises_value_error`, `test_health_returns_ok_when_loaded`.
+
+**One logical assertion per test is preferred**; multiple are acceptable when they
+test a single indivisible behaviour.
+
+**Model-backed tests** are decorated `@pytest.mark.model` and skipped unless
+weights are present. Run with `make test` (locally, with weights) or
+`make test-strict` (fails instead of skipping).
+
 ## Tooling
 
 | Tool | Purpose | Config |
@@ -257,9 +362,13 @@ Run `make pr-ready` before every PR: formats, lints, type-checks, security-scans
 Article VIII's tooling is the floor; these are the rules tooling does not fully enforce. The
 highlights:
 
-- **Package ownership** — every owned package level has an `__init__.py`; markers are bare
-  (no imports, no re-exports), except the root and an API-only sub-package such as
-  `ember/agent_kit/`, which may define a small public API; data-only directories have none.
+- **Package ownership via `__init__.py`** — every owned package level carries an
+  `__init__.py`. Sub-package markers are bare and docstring-only (no imports, no
+  re-exports). The package root `ember/__init__.py` is the **only** level permitted to
+  re-export symbols (and MAY carry `__version__`). A sub-package that needs a public API
+  (e.g. `ember/agent_kit/`) puts that code in a named module (`api.py`) and callers import
+  from it explicitly — not through the sub-package `__init__.py`. Data-only directories
+  have none.
 - **One class per file**; modules are `snake_case.py`, named after their primary class.
 - **Sizing** — ≤ 400 lines per module; split by responsibility rather than compress.
 - **Imports at the top** — the only exceptions are a `TYPE_CHECKING` cycle guard tagged
@@ -269,13 +378,27 @@ highlights:
 - **Typing** — `mypy --strict`; no bare `# type: ignore` (an error code and a comment are
   required), no `cast()`/`Any` used to silence the checker; `from __future__ import
   annotations` everywhere; PEP 604 unions.
-- **Enums over magic strings** (`Literal` only for published-schema fields), and **Pydantic
-  `BaseModel` over `@dataclass`** for data that crosses a boundary (an internal frozen
-  dataclass is fine).
+- **Enums over magic strings** — any value drawn from a fixed known set uses `StrEnum` /
+  `IntEnum`, never a bare string constant or dict mapping. `Literal[...]` is permitted only
+  for published-schema fields (e.g. the `advise` question `type`). Define enums in the
+  domain sub-package that owns them; standalone enum files are named `<thing>.py`. At
+  external boundaries (API input, config), accept `str | MyEnum` and convert immediately:
+  `if isinstance(x, str): x = MyEnum(x)`. Internal code stays strictly typed.
+- **Pydantic `BaseModel` over `@dataclass`** for data that crosses a layer boundary (HTTP,
+  MCP, config, on-disk). An internal value object that never crosses a boundary MAY be a
+  `@dataclass(frozen=True)`.
 - **Protocols over ABCs**; constructor injection; no service locators or dependency-plumbing
   module singletons — a private lazy cache for the engine or runtime module is allowed.
-- **NumPy-style docstrings** on every module, class, and public function.
-- **Comments explain why**; section separators are solid `#` lines.
+- **Forward references via PEP 563** — never use string-literal forward references
+  (`"MyClass"`). Add `from __future__ import annotations` at the top of every module; this
+  defers all annotation evaluation automatically. Use `TYPE_CHECKING`-guarded imports ONLY
+  to break a genuine runtime circular import that cannot be resolved by restructuring. Each
+  permitted guarded import MUST carry a `# cycle:` comment naming the specific cycle.
+- **NumPy-style docstrings** on every module, class, and public function (enforced by ruff
+  `D` on `ember/`). See the Docstring Convention section below.
+- **Comments explain why**; section separators use solid `#` lines — never dashes. Every
+  rule exception carries a machine-readable tag (`# cycle:`, `# import-placement:allow`,
+  `# async-first:exception`).
 - **Idempotent, atomic writes** — write a sibling `.tmp` then `os.replace()`.
 - **No single God class** — each subsystem has one composition root (`Engine.advise`,
   `process.start`, `mcp_server.main`, `cli.main`); that split is the seam.
@@ -283,6 +406,106 @@ highlights:
 These apply to new and modified code. Existing violations are recorded as migration debt in
 Article X §10.18 and MUST NOT grow — pay a file's debt down when you next touch it, and do not
 reformat untouched files just to satisfy Article X.
+
+## Architecture Rules
+
+These are prescriptive, agent-actionable rules. Check these before writing any new code.
+
+- **Layer discipline** — ember has exactly three layers; cross-layer imports are a bug:
+  - `ember/mcp/` → calls HTTP layer; MUST NOT import torch, `Engine`, or FastAPI.
+  - `ember/serving/` → owns the HTTP API and engine; MUST NOT import from `ember/mcp/`.
+  - `ember/serving/runtime.py` → pure model I/O; MUST NOT import network or protocol libs.
+  - Data crossing a layer is a Pydantic `BaseModel` or a plain `dict[str, Any]`. No
+    torch tensors or processor objects may cross a layer boundary.
+- **Relative imports only inside `ember/`** — never use `ember.X` absolute imports from
+  within the package. Use `from .module import X`, `from ..parent.module import Y`. Absolute
+  `ember.X` imports are valid only from `tests/` and `scripts/`.
+- **No lazy imports** — all `import` / `from … import` statements MUST appear at the top of
+  the file. Imports inside function bodies are forbidden with three exceptions: a
+  `TYPE_CHECKING` block carrying `# cycle:`, a `try/except ImportError` for an optional
+  dep, or a line tagged `# import-placement:allow`. Internal ember modules MUST NEVER be
+  lazy-imported.
+- **One class per file** — every `.py` file declares at most one primary class. A tightly-
+  coupled exception class raised only by that primary class may share the file.
+- **`py.typed` marker** — `ember/py.typed` ships with the package (PEP 561). Keep it; do
+  not add `py.typed` to sub-packages — the root marker covers all sub-packages.
+- **Enums are the single source of truth** — never duplicate enum values as string literals
+  elsewhere. Import and use the enum member.
+- **TDD gate** — every feature and bugfix begins with a failing test (Red phase). The test
+  suite MUST pass before any task is considered complete. Enforcement: run `make test` at
+  task completion; a single new failure outside pre-existing conditions reverts the work to
+  Red phase.
+
+## Docstring Convention
+
+Every module, class, and public function MUST have a NumPy-style docstring (enforced by
+ruff `D` on `ember/`; tests and scripts are exempt).
+
+**Module**:
+```python
+"""Short description of what this module provides."""
+```
+
+**Class** (parameters in `__init__`, not class docstring):
+```python
+class Engine:
+    """Load the Clef model once and serve advise requests.
+
+    Parameters
+    ----------
+    model_dir : Path
+        Path to the unpacked model snapshot directory.
+    device : str, optional
+        ``"mps"``, ``"cpu"``, or ``"auto"``.
+    """
+```
+
+**Function / method**:
+```python
+def advise(self, state: Any, questions: dict[str, Any]) -> dict[str, Any]:
+    """Run inference and return calibrated probabilities.
+
+    Parameters
+    ----------
+    state : Any
+        The situation to read: a string or JSON value.
+    questions : dict[str, Any]
+        Mapping of question ID to typed question schema.
+
+    Returns
+    -------
+    dict[str, Any]
+        SystemOne response body including ``answers`` and ``usage``.
+
+    Raises
+    ------
+    ValueError
+        If a question has an unsupported ``type``.
+    """
+```
+
+| Entity | Required sections |
+|--------|------------------|
+| Module / package | Short description |
+| Class | Short description; constructor params in `__init__` |
+| Public method / function | Short description; `Parameters`, `Returns` (if not None), `Raises` (if applicable) |
+| Property | Short description (no Parameters) |
+
+One-line docstrings are acceptable ONLY for trivial properties or obvious getters.
+Use ` ``backticks`` ` for parameter names and code references within prose.
+
+## Design System
+
+`DESIGN.md` governs all visual and brand decisions. Do not invent colors, fonts,
+spacing values, or component styles outside the design system.
+
+- `assets/brand/tokens.css` is the source of truth for all CSS custom property values. A
+  systemic restyle MUST be a token edit — never hardcode raw values.
+- Approved brand assets and usage rules are in `assets/brand/README.md`. Preserve the
+  primary Ember mascot choice; Mellow and Float are alternate concepts.
+- Record material origins, prompts, licensing evidence and URL checks in `provenance.json`.
+  Run `python3 scripts/check_provenance.py` after changing brand assets.
+- All UI, template, and CSS work MUST comply with `DESIGN.md`. Do not dilute its rules.
 
 ## What to watch out for
 
@@ -300,13 +523,13 @@ reformat untouched files just to satisfy Article X.
   Never kill by port or process pattern (constitution Article IV).
 - **torch and torchvision are pinned to the tested minor series** because MPS behavior is
   version-sensitive; widening the range is a constitution-governed change.
-- **Media refs are `data:` URIs or `{content_type, base64}` objects only** (`ember/media.py`);
+- **Media refs are `data:` URIs or `{content_type, base64}` objects only** (`ember/serving/media.py`);
   remote URLs and local paths are rejected so an agent cannot make the warm server read host
   files or fetch URLs. Video frames must be decoded to PIL before Clef's processor — string
   frames need `torchcodec`, which we do not ship.
-- **`max_length` of `0` means "the model's maximum"** (`ember/config.py` → `Engine` →
+- **`max_length` of `0` means "the model's maximum"** (`ember/cfg/config.py` → `Engine` →
   `runtime.model_max_length`). Do not reintroduce a hardcoded 16384 cap.
-- **Metric names and labels are public API** (`ember/server.py`): change
+- **Metric names and labels are public API** (`ember/serving/server.py`): change
   `ember_advise_*` / `ember_model_info` together with the README and `tests/test_metrics.py`.
   They live in a dedicated `CollectorRegistry`, so only ember metrics are exposed — no
   `python_*`/`process_*` collectors.
@@ -337,7 +560,7 @@ reformat untouched files just to satisfy Article X.
   is generated and gitignored. `ember eval export` still writes a portable single-file HTML for
   external reviewers.
 - **The agent eval is the only code that launches opencode.** `ember eval agent`
-  (`scripts/run_agent_evals.py`, `evals/agent/`) runs `opencode run --pure` in a temporary
+  (`evals/eval/run_agent_evals.py`, `evals/agent/`) runs `opencode run --pure` in a temporary
   sandbox with a private HOME and XDG dirs and no port (constitution Article IV). Keep it out of
   `tests/`; its unit tests (`tests/test_agent_eval.py`) use scripted transcripts. Benchmark
   gold labels and agent-scenario checks are frozen before runs; see
@@ -347,6 +570,22 @@ reformat untouched files just to satisfy Article X.
 - **Article X docstrings are enforced.** ruff `D` with `convention = "numpy"` runs over
   `ember/` (tests and scripts are exempt) and `ember/py.typed` ships, so keep new public
   modules, classes, and functions documented or `make lint` fails.
+- **Tests ship with the code that needs them** (Article XI). A commit that adds behaviour
+  without a test is incomplete. Run `make test-cov` after; `fail_under = 71` is the ratchet
+  floor — never lower it.
+- **New FastAPI route handlers are `async def`** (Article XII §12.1). Sync handlers that
+  call the engine carry `# async-first:exception - engine lock is synchronous`. Any new
+  handler without one of these is a violation.
+- **Layers must not leak** (Article XIII). Never import from `ember/mcp/` inside
+  `ember/serving/`, and never import torch or `Engine` inside `ember/mcp/`. Data crossing a
+  layer boundary must be a Pydantic `BaseModel` or a plain `dict`. Check the import graph
+  (`python3 -c "import ember.mcp.mcp_server"` must not import torch) before landing a change.
+- **Pit of success** (Article XIV). The server returns `503` when the model is not yet
+  loaded — never a crash. CPU is the always-available fallback device. `ember start` on a
+  machine with no weights must print an actionable error, not a traceback.
+- **YAGNI** (Article XV). Before adding a new abstraction, parameter, or capability, ask
+  "does the current requirement actually need this?" If not, don't add it. Document any
+  complexity beyond the simplest viable solution in the commit or vault.
 
 ## Speckit integration
 
@@ -362,10 +601,16 @@ MUST pass the constitution check.
 
 ## Recent Changes
 
+- 2026-10-04: constitutional Articles XI–XV adopted; Testing section added; Architecture
+  Rules + Docstring Convention + Design System sections added; behavioral principles 9–12
+  expanded with full TDD workflow; Python conventions expanded with enums, forward refs,
+  solid separators; `health()` and `metrics()` in `ember/serving/server.py` converted to
+  `async def` (Article XII); `fail_under` ratcheted 60 → 71 (Article XI); 59 dashed
+  comment separators converted to solid `#` (§10.11); constitution v1.4.0 (MINOR).
 - 2026-10-02: full context window and vision inputs: `max_length` now defaults to the model's
   maximum (262144, derived from the pinned `config.json`; `0` means derive); `advise` accepts
   `images`/`videos`/`media_kwargs` as base64 `data:` URIs or `{content_type, base64}` objects,
-  decoded to PIL in `ember/media.py` (server-side only); MCP and HTTP schemas, the agent kit,
+  decoded to PIL in `ember/serving/media.py` (server-side only); MCP and HTTP schemas, the agent kit,
   README, and tests updated; vision verified end-to-end on MPS.
 - 2026-10-02: Prometheus metrics: the model server exposes `GET /metrics` with
   `ember_advise_requests_total{status}`, `ember_advise_latency_seconds`,
