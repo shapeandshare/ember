@@ -12,7 +12,9 @@
     "ember",
     "opencode",
     "opencode-plugin",
-    "mcp"
+    "mcp",
+    "clef",
+    "advise"
   ],
   "files": [
     "index.js",
