@@ -3,6 +3,12 @@
   <img src="assets/brand/hero-light.svg" alt="ember — Ember hugs its glowing tummy. Give your agent a gut feeling." width="1200">
 </picture>
 
+<div align="center">
+
+**[→ Project site: shapeandshare.github.io/ember](https://shapeandshare.github.io/ember/)**
+
+</div>
+
 [Brand assets and palette](assets/brand/README.md) · [Provenance and licensing](PROVENANCE.md) · [Project site](https://shapeandshare.github.io/ember/)
 
 **A local gut feeling for coding agents.** ember runs
