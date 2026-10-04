@@ -11,11 +11,14 @@ Env:  EMBER_HOST (127.0.0.1), EMBER_PORT (8765),
 
 from __future__ import annotations
 
+import logging
 import os
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Any
+
+log = logging.getLogger(__name__)
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from prometheus_client import (
@@ -89,10 +92,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     name = config.resolve("model")
     model_dir = models.resolve_dir(name)
     if model_dir is None:
-        raise RuntimeError(
-            f"model {name!r} not found (check EMBER_MODEL_DIR); "
-            f"run: ember model pull {name}"
+        # Article XIV §14.1 — pit of success: start in unloaded state rather
+        # than crashing. POST /v1/systemone returns 503; GET /health returns
+        # {"status": "loading"}. process.start() already validates weights
+        # before spawning, so ember start / MCP autostart still fail fast with
+        # an actionable error message via that path.
+        log.warning(
+            "model %r not found — server starting in unloaded state "
+            "(advise calls will return 503). Run: ember model pull %s",
+            name,
+            name,
         )
+        yield
+        return
     raw_length = int(config.resolve("max_length"))
     _ENGINE = Engine(
         model_dir,

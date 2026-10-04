@@ -39,6 +39,35 @@ def _metrics(base_url: str) -> str:
     return httpx.get(f"{base_url}/metrics", timeout=10.0).text
 
 
+def test_server_returns_503_when_model_not_loaded(monkeypatch):
+    """Article XIV §14.1 — server MUST return 503 (not crash) when model absent.
+
+    The server must start and serve health/metrics even without weights; only
+    the advise endpoint returns 503.  ``process.start()`` fails fast *before*
+    spawning when weights are absent (tested in test_runtime_unit.py), but
+    direct ``python -m ember.serving.server`` must remain responsive.
+
+    Uses lifespan=True so the test exercises the actual startup path.
+    """
+    # import-placement:allow - deferred; server loads torch at import
+    from ember.serving import server
+    from fastapi.testclient import TestClient
+
+    monkeypatch.setenv("EMBER_MODEL_DIR", "/nonexistent/no-weights-here")
+
+    with TestClient(server.app, raise_server_exceptions=False) as client:
+        resp = client.post(
+            "/v1/systemone",
+            json={"state": "x", "questions": {"q": {"type": "noul"}}},
+        )
+        assert resp.status_code == 503
+        assert "model" in resp.json()["detail"].lower()
+
+        resp_health = client.get("/health")
+        assert resp_health.status_code == 200
+        assert resp_health.json()["status"] == "loading"
+
+
 def test_metrics_endpoint_is_exposed_without_the_model():
     # import-placement:allow - deferred; server loads torch at import
     from ember.serving import server
