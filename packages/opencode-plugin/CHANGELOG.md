@@ -5,6 +5,19 @@ Versions follow [Semantic Versioning](https://semver.org/); changes follow
 [Conventional Commits](https://www.conventionalcommits.org/) with scope `plugin`.
 
 <!-- next-version -->
+## plugin/v0.2.0 (2026-10-04)
+
+### feat
+
+- feat(plugin): add clef and advise to npm keywords (#37)
+- feat(plugin): add version history link to README (#33)
+- chore: add per-component versioning and commit scope discipline (#31)
+- docs: retitle the brand assets for ember
+- refactor!: rename the opencode plugin package to opencode-ember-advise
+- feat: rebrand the opencode plugin package as opencode-gut-feeling
+- Relicense under MIT
+- Add publishable opencode plugin package
+
 
 ## plugin/v0.1.0 (2026-10-02)
 
