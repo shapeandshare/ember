@@ -67,6 +67,7 @@ def test_init_opencode_registers_server_plugin_and_skill(sandbox):
     assert cli.main(["init", "--opencode"]) == 0
     config = json.loads((sandbox / "opencode.json").read_text())
     assert config["mcp"]["ember"]["type"] == "local"
+    assert config["mcp"]["vault"]["command"][-1] == "vault"
     assert (sandbox / ".opencode/plugins/ember.js").exists()
     assert (
         sandbox / ".opencode/skills/ember-advise/SKILL.md"

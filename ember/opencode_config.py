@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import sys
 from pathlib import Path
@@ -47,6 +46,24 @@ def mcp_command() -> list[str]:
     return [sys.executable, "-m", "ember.mcp_server"]
 
 
+VAULT_MCP_PACKAGE = "@bitbonsai/mcpvault@0.12.4"
+
+
+def build_vault_entry() -> dict[str, Any]:
+    """Build the ``mcp.vault`` entry for a project-local opencode config file.
+
+    Returns
+    -------
+    dict[str, Any]
+        The ``mcp.vault`` entry pointing at the ``vault/`` subdirectory.
+    """
+    return {
+        "type": "local",
+        "command": ["npx", "-y", VAULT_MCP_PACKAGE, "vault"],
+        "enabled": True,
+    }
+
+
 def build_entry(host: str, port: int, autostart: str) -> dict[str, Any]:
     """Build the ``mcp.ember`` entry for an opencode config file.
 
@@ -62,10 +79,9 @@ def build_entry(host: str, port: int, autostart: str) -> dict[str, Any]:
     Returns
     -------
     dict[str, Any]
-        The ``mcp.ember`` entry, with ``PATH`` set when available in the
-        current environment.
+        The ``mcp.ember`` entry.
     """
-    entry: dict[str, Any] = {
+    return {
         "type": "local",
         "command": mcp_command(),
         "enabled": True,
@@ -75,11 +91,6 @@ def build_entry(host: str, port: int, autostart: str) -> dict[str, Any]:
             "EMBER_AUTOSTART": autostart,
         },
     }
-    # Absolute command paths already avoid PATH issues, but opencode may be
-    # launched with a stripped GUI PATH; set it explicitly as belt-and-suspenders.
-    if os.environ.get("PATH"):
-        entry["environment"]["PATH"] = os.environ["PATH"]
-    return entry
 
 
 def write(path: Path, host: str, port: int, autostart: str) -> Path:
@@ -112,6 +123,7 @@ def write(path: Path, host: str, port: int, autostart: str) -> Path:
             existing = {}
     existing.setdefault("$schema", SCHEMA)
     mcp = existing.setdefault("mcp", {})
+    mcp.setdefault("vault", build_vault_entry())
     mcp["ember"] = build_entry(host, port, autostart)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(existing, indent=2) + "\n")
