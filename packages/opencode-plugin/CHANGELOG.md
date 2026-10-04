@@ -5,6 +5,12 @@ Versions follow [Semantic Versioning](https://semver.org/); changes follow
 [Conventional Commits](https://www.conventionalcommits.org/) with scope `plugin`.
 
 <!-- next-version -->
+## plugin/v0.3.0 (2026-10-04)
+
+### feat
+
+- feat: test both release paths end-to-end (#40)
+
 ## plugin/v0.2.0 (2026-10-04)
 
 ### feat
