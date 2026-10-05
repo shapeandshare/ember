@@ -132,6 +132,179 @@ def test_pinned_model_declares_the_model_maximum():
 
 
 # ###########################################################################
+# S-001: loopback validation helper
+# ###########################################################################
+def test_validate_server_url_accepts_default_loopback():
+    from ember.mcp import mcp_server
+
+    # Must not raise for the default safe URL.
+    mcp_server.validate_server_url("http://127.0.0.1:8765")
+
+
+def test_validate_server_url_accepts_localhost():
+    from ember.mcp import mcp_server
+
+    mcp_server.validate_server_url("http://localhost:8765")
+
+
+def test_validate_server_url_accepts_ipv6_loopback():
+    from ember.mcp import mcp_server
+
+    mcp_server.validate_server_url("http://[::1]:8765")
+
+
+def test_validate_server_url_accepts_loopback_range():
+    from ember.mcp import mcp_server
+
+    # 127.x.x.x is the full loopback block.
+    mcp_server.validate_server_url("http://127.0.0.2:8765")
+
+
+def test_validate_server_url_rejects_remote_host():
+    from ember.mcp import mcp_server
+
+    with pytest.raises(ValueError, match="loopback"):
+        mcp_server.validate_server_url("http://192.168.1.1:8765")
+
+
+def test_validate_server_url_rejects_0_0_0_0():
+    from ember.mcp import mcp_server
+
+    with pytest.raises(ValueError, match="loopback"):
+        mcp_server.validate_server_url("http://0.0.0.0:8765")
+
+
+def test_validate_server_url_rejects_external_hostname():
+    from ember.mcp import mcp_server
+
+    with pytest.raises(ValueError, match="loopback"):
+        mcp_server.validate_server_url("http://example.com:8765")
+
+
+def test_validate_server_url_error_mentions_security_md():
+    from ember.mcp import mcp_server
+
+    with pytest.raises(ValueError, match=r"SECURITY\.md"):
+        mcp_server.validate_server_url("http://10.0.0.1:8765")
+
+
+# ###########################################################################
+# S-001: CLI host normalisation
+# ###########################################################################
+def test_cmd_mcp_normalises_0_0_0_0_to_loopback(monkeypatch, tmp_path):
+    """ember mcp --host 0.0.0.0 must set EMBER_SERVER_URL to 127.0.0.1, not 0.0.0.0."""
+    import argparse
+
+    from ember import cli
+
+    captured: dict[str, str] = {}
+    monkeypatch.setattr(
+        "ember.mcp.mcp_server.main",
+        lambda: captured.update({"url": os.environ.get("EMBER_SERVER_URL", "")}),
+    )
+
+    args = argparse.Namespace(host="0.0.0.0", port=free_port(), device=None, model=None)  # noqa: S104 - testing normalisation of this value, not binding
+    cli.cmd_mcp(args)
+    assert "0.0.0.0" not in captured["url"], (  # noqa: S104 - asserting the value is absent, not binding
+        f"EMBER_SERVER_URL should not contain 0.0.0.0; got {captured['url']!r}"
+    )
+    assert "127.0.0.1" in captured["url"]
+
+
+# ###########################################################################
+# T-003: ALLOWED_MEDIA_KWARGS allowlist
+# ###########################################################################
+def test_allowed_media_kwargs_constant_exists():
+    assert hasattr(runtime, "ALLOWED_MEDIA_KWARGS"), (
+        "runtime must expose ALLOWED_MEDIA_KWARGS"
+    )
+
+
+def test_allowed_media_kwargs_is_frozenset():
+    assert isinstance(runtime.ALLOWED_MEDIA_KWARGS, frozenset)
+
+
+def test_allowed_media_kwargs_contains_expected_keys():
+    expected = {
+        "min_pixels",
+        "max_pixels",
+        "fps",
+        "min_frames",
+        "max_frames",
+        "do_resize",
+        "size",
+        "do_convert_rgb",
+    }
+    assert expected == runtime.ALLOWED_MEDIA_KWARGS
+
+
+def test_check_media_kwargs_passes_for_allowed_key(monkeypatch, tmp_path):
+    """An allowed key must not raise."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    # Patch joint_module to avoid actual model call.
+    fake_response: dict = {
+        "answers": {},
+        "usage": {"input_tokens": 0, "output_tokens": 0},
+    }
+
+    def fake_systemone(*a, **kw):
+        return fake_response
+
+    fake_module = type("M", (), {"systemone": staticmethod(fake_systemone)})()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    # Should not raise.
+    engine.advise("state", {}, media_kwargs={"min_pixels": 256})
+
+
+def test_check_media_kwargs_rejects_unknown_key(monkeypatch, tmp_path):
+    """An unknown key must raise ValueError listing permitted keys."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    fake_response: dict = {
+        "answers": {},
+        "usage": {"input_tokens": 0, "output_tokens": 0},
+    }
+
+    def fake_systemone(*a, **kw):
+        return fake_response
+
+    fake_module = type("M", (), {"systemone": staticmethod(fake_systemone)})()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    with pytest.raises(ValueError, match="not permitted"):
+        engine.advise("state", {}, media_kwargs={"unknown_key": "value"})
+
+
+def test_check_media_kwargs_rejects_previously_reserved_key(monkeypatch, tmp_path):
+    """Previously-reserved keys (text, images, videos, return_tensors) are not on the
+    allowlist and must still be rejected."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    fake_response: dict = {
+        "answers": {},
+        "usage": {"input_tokens": 0, "output_tokens": 0},
+    }
+
+    def fake_systemone(*a, **kw):
+        return fake_response
+
+    fake_module = type("M", (), {"systemone": staticmethod(fake_systemone)})()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    for key in ("text", "images", "videos", "return_tensors"):
+        with pytest.raises(ValueError, match="not permitted"):
+            engine.advise("state", {}, media_kwargs={key: "x"})
+
+
+# ###########################################################################
 # MCP server helpers (imported without loading the model)
 # ###########################################################################
 def test_mcp_server_import_does_not_load_torch():

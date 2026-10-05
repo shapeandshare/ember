@@ -6,16 +6,29 @@
 // stripped environment.
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { join, basename } from "node:path";
 
 function resolveEmberMcp() {
-  const candidates = [
-    process.env.EMBER_MCP,
+  const override = process.env.EMBER_MCP;
+  if (override) {
+    if (basename(override) !== "ember-mcp") {
+      console.error(
+        `[ember] EMBER_MCP ignored: basename must be "ember-mcp", got "${basename(override)}". Falling through to standard candidates.`,
+      );
+    } else if (!existsSync(override)) {
+      console.error(
+        `[ember] EMBER_MCP ignored: path does not exist: "${override}". Falling through to standard candidates.`,
+      );
+    } else {
+      return [override];
+    }
+  }
+  const standard = [
     join(homedir(), ".local", "bin", "ember-mcp"),
     "/opt/homebrew/bin/ember-mcp",
     "/usr/local/bin/ember-mcp",
-  ].filter(Boolean);
-  for (const candidate of candidates) {
+  ];
+  for (const candidate of standard) {
     if (existsSync(candidate)) return [candidate];
   }
   return ["ember-mcp"];

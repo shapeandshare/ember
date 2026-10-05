@@ -173,7 +173,14 @@ class AdviseRequest(BaseModel):
         description="Videos, each a list of frame refs in the images format.",
     )
     media_kwargs: dict[str, Any] | None = Field(
-        default=None, description="Optional image/video processor arguments."
+        default=None,
+        description=(
+            "Optional image/video processor arguments. "
+            "Only the following keys are permitted: "
+            "min_pixels, max_pixels, fps, min_frames, max_frames, "
+            "do_resize, size, do_convert_rgb. "
+            "Any other key is rejected with a 422 error."
+        ),
     )
 
 
