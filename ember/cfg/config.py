@@ -19,6 +19,10 @@ DEFAULTS: dict[str, Any] = {
     "device": "auto",
     # 0 means "the model's own maximum" (ember.serving.runtime.model_max_length).
     "max_length": 0,
+    # 0 means no per-request cap; positive values cap tokenized input before inference.
+    # Default 32768 guards against accidental MPS OOM from oversized single requests
+    # (D-002). Set EMBER_MAX_REQUEST_LENGTH=0 to restore the model-maximum behaviour.
+    "max_request_length": 32768,
 }
 
 

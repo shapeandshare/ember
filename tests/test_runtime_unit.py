@@ -421,3 +421,328 @@ def test_opencode_config_remove_drops_only_our_entry(tmp_path):
     assert "ember" not in remaining_mcp
     assert remaining_mcp["other"] == {"type": "remote", "url": "http://x"}
     assert opencode_config.remove(target) is False
+
+
+# ###########################################################################
+# D-001: bounded admission control (semaphore)
+# ###########################################################################
+def test_max_pending_advise_constant_exists():
+    """D-001: runtime must expose MAX_PENDING_ADVISE."""
+    assert hasattr(runtime, "MAX_PENDING_ADVISE"), (
+        "runtime must expose MAX_PENDING_ADVISE"
+    )
+
+
+def test_max_pending_advise_is_positive_int():
+    """D-001: MAX_PENDING_ADVISE must be a positive integer."""
+    assert isinstance(runtime.MAX_PENDING_ADVISE, int)
+    assert runtime.MAX_PENDING_ADVISE > 0
+
+
+def test_engine_has_admission_semaphore(monkeypatch, tmp_path):
+    """D-001: Engine must carry a threading.Semaphore for admission control."""
+    import threading
+
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    assert hasattr(engine, "_admission"), "Engine must have _admission attribute"
+    assert isinstance(engine._admission, type(threading.Semaphore())), (
+        "_admission must be a threading.Semaphore"
+    )
+
+
+def test_admission_semaphore_capacity_matches_constant(monkeypatch, tmp_path):
+    """D-001: _admission semaphore capacity must equal MAX_PENDING_ADVISE."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    # Drain the semaphore to verify its initial count.
+    acquired = 0
+    while engine._admission.acquire(blocking=False):
+        acquired += 1
+    assert acquired == runtime.MAX_PENDING_ADVISE, (
+        f"semaphore capacity {acquired} != "
+        f"MAX_PENDING_ADVISE {runtime.MAX_PENDING_ADVISE}"
+    )
+    # Release all acquired slots to leave the engine in a clean state.
+    for _ in range(acquired):
+        engine._admission.release()
+
+
+def test_advise_raises_when_admission_full(monkeypatch, tmp_path):
+    """D-001: advise must raise RuntimeError when the admission semaphore is full."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    # Drain all admission slots.
+    for _ in range(runtime.MAX_PENDING_ADVISE):
+        engine._admission.acquire(blocking=False)
+    fake_module = type(
+        "M",
+        (),
+        {"systemone": staticmethod(lambda *a, **kw: {"answers": {}, "usage": {}})},
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    with pytest.raises(runtime.AdmissionError, match="server busy"):
+        engine.advise("state", {})
+    # Restore semaphore.
+    for _ in range(runtime.MAX_PENDING_ADVISE):
+        engine._admission.release()
+
+
+def test_advise_succeeds_when_admission_has_capacity(monkeypatch, tmp_path):
+    """D-001: advise must succeed when the admission semaphore has capacity."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    fake_response: dict = {
+        "answers": {},
+        "usage": {"input_tokens": 5, "output_tokens": 0},
+    }
+    fake_module = type(
+        "M", (), {"systemone": staticmethod(lambda *a, **kw: fake_response)}
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    # Must not raise.
+    result = engine.advise("state", {})
+    assert result == fake_response
+
+
+def test_admission_slot_released_after_successful_advise(monkeypatch, tmp_path):
+    """D-001: the admission slot must be released after a successful advise call."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    fake_response: dict = {"answers": {}, "usage": {}}
+    fake_module = type(
+        "M", (), {"systemone": staticmethod(lambda *a, **kw: fake_response)}
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    engine.advise("state", {})
+    # After the call, all slots must be available again.
+    acquired = 0
+    while engine._admission.acquire(blocking=False):
+        acquired += 1
+    assert acquired == runtime.MAX_PENDING_ADVISE
+    for _ in range(acquired):
+        engine._admission.release()
+
+
+def test_admission_slot_released_after_failed_advise(monkeypatch, tmp_path):
+    """D-001: the admission slot must be released even when advise raises."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+
+    def boom(*a: object, **kw: object) -> dict:
+        raise ValueError("simulated engine failure")
+
+    fake_module = type("M", (), {"systemone": staticmethod(boom)})()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    with pytest.raises(ValueError, match="simulated"):
+        engine.advise("state", {})
+    # Slot must be restored.
+    acquired = 0
+    while engine._admission.acquire(blocking=False):
+        acquired += 1
+    assert acquired == runtime.MAX_PENDING_ADVISE
+    for _ in range(acquired):
+        engine._admission.release()
+
+
+# ###########################################################################
+# D-002: per-request token cap
+# ###########################################################################
+def test_max_request_length_default_in_config():
+    """D-002: config DEFAULTS must include max_request_length = 32768."""
+    from ember.cfg import config as cfg
+
+    assert "max_request_length" in cfg.DEFAULTS, (
+        "DEFAULTS must include max_request_length"
+    )
+    assert cfg.DEFAULTS["max_request_length"] == 32768, (
+        "default max_request_length must be 32768"
+    )
+
+
+def test_max_request_length_env_override(monkeypatch):
+    """D-002: EMBER_MAX_REQUEST_LENGTH env var must override the default."""
+    from ember.cfg import config as cfg
+
+    monkeypatch.setenv("EMBER_MAX_REQUEST_LENGTH", "16384")
+    value = cfg.resolve("max_request_length")
+    assert value == 16384
+
+
+def test_max_request_length_zero_means_no_cap(monkeypatch):
+    """D-002: EMBER_MAX_REQUEST_LENGTH=0 must resolve to 0 (no cap)."""
+    from ember.cfg import config as cfg
+
+    monkeypatch.setenv("EMBER_MAX_REQUEST_LENGTH", "0")
+    value = cfg.resolve("max_request_length")
+    assert value == 0
+
+
+def test_engine_accepts_max_request_length_param(monkeypatch, tmp_path):
+    """D-002: Engine.__init__ must accept a max_request_length parameter."""
+    import inspect
+
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    sig = inspect.signature(runtime.Engine.__init__)
+    assert "max_request_length" in sig.parameters, (
+        "Engine.__init__ must accept max_request_length"
+    )
+
+
+def test_engine_token_cap_rejects_over_limit(monkeypatch, tmp_path):
+    """D-002: advise must raise RequestTooLargeError when input exceeds the cap."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+
+    class FakeTokenizer:
+        def __call__(self, text: str, **kw: object) -> dict:
+            return {"input_ids": list(range(100))}
+
+    class FakeProcessor:
+        tokenizer = FakeTokenizer()
+
+    monkeypatch.setattr(
+        runtime, "load_clef", lambda *a, **kw: (object(), FakeProcessor())
+    )
+    engine = runtime.Engine(model_dir, max_request_length=50)
+    fake_module = type(
+        "M",
+        (),
+        {"systemone": staticmethod(lambda *a, **kw: {"answers": {}, "usage": {}})},
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    with pytest.raises(runtime.RequestTooLargeError, match="50"):
+        engine.advise("some long state text", {})
+
+
+def test_engine_token_cap_error_mentions_actual_length(monkeypatch, tmp_path):
+    """D-002: the rejection error must name both the cap and the actual token count."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+
+    class FakeTokenizer:
+        def __call__(self, text: str, **kw: object) -> dict:
+            return {"input_ids": list(range(200))}
+
+    class FakeProcessor:
+        tokenizer = FakeTokenizer()
+
+    monkeypatch.setattr(
+        runtime, "load_clef", lambda *a, **kw: (object(), FakeProcessor())
+    )
+    engine = runtime.Engine(model_dir, max_request_length=100)
+    fake_module = type(
+        "M",
+        (),
+        {"systemone": staticmethod(lambda *a, **kw: {"answers": {}, "usage": {}})},
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    with pytest.raises(ValueError, match="200"):
+        engine.advise("state", {})
+
+
+def test_engine_token_cap_accepts_under_limit(monkeypatch, tmp_path):
+    """D-002: advise must succeed when tokenized input is within the cap."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+
+    class FakeTokenizer:
+        def __call__(self, text: str, **kw: object) -> dict:
+            return {"input_ids": list(range(30))}
+
+    class FakeProcessor:
+        tokenizer = FakeTokenizer()
+
+    monkeypatch.setattr(
+        runtime, "load_clef", lambda *a, **kw: (object(), FakeProcessor())
+    )
+    engine = runtime.Engine(model_dir, max_request_length=50)
+    fake_response: dict = {
+        "answers": {},
+        "usage": {"input_tokens": 30, "output_tokens": 0},
+    }
+    fake_module = type(
+        "M", (), {"systemone": staticmethod(lambda *a, **kw: fake_response)}
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    result = engine.advise("short state", {})
+    assert result == fake_response
+
+
+def test_engine_token_cap_zero_disables_cap(monkeypatch, tmp_path):
+    """D-002: max_request_length=0 must disable the per-request cap entirely."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+
+    class FakeTokenizer:
+        def __call__(self, text: str, **kw: object) -> dict:
+            # Return a huge token count — should not be rejected when cap is 0.
+            return {"input_ids": list(range(999999))}
+
+    class FakeProcessor:
+        tokenizer = FakeTokenizer()
+
+    monkeypatch.setattr(
+        runtime, "load_clef", lambda *a, **kw: (object(), FakeProcessor())
+    )
+    engine = runtime.Engine(model_dir, max_request_length=0)
+    fake_response: dict = {"answers": {}, "usage": {}}
+    fake_module = type(
+        "M", (), {"systemone": staticmethod(lambda *a, **kw: fake_response)}
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    # Must not raise.
+    result = engine.advise("enormous state", {})
+    assert result == fake_response
+
+
+def test_engine_token_cap_error_mentions_env_var(monkeypatch, tmp_path):
+    """D-002: rejection error must mention EMBER_MAX_REQUEST_LENGTH."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+
+    class FakeTokenizer:
+        def __call__(self, text: str, **kw: object) -> dict:
+            return {"input_ids": list(range(100))}
+
+    class FakeProcessor:
+        tokenizer = FakeTokenizer()
+
+    monkeypatch.setattr(
+        runtime, "load_clef", lambda *a, **kw: (object(), FakeProcessor())
+    )
+    engine = runtime.Engine(model_dir, max_request_length=50)
+    fake_module = type(
+        "M",
+        (),
+        {"systemone": staticmethod(lambda *a, **kw: {"answers": {}, "usage": {}})},
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    with pytest.raises(ValueError, match="EMBER_MAX_REQUEST_LENGTH"):
+        engine.advise("state", {})
