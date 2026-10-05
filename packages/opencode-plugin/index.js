@@ -31,7 +31,7 @@ export const EmberPlugin = async () => ({
       timeout: 30000,
       environment: {
         EMBER_SERVER_URL: process.env.EMBER_SERVER_URL ?? "http://127.0.0.1:8765",
-        EMBER_AUTOSTART: "1",
+        EMBER_AUTOSTART: process.env.EMBER_AUTOSTART ?? "1",
         PATH: process.env.PATH ?? "",
       },
     };

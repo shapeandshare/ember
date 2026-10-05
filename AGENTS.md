@@ -312,6 +312,7 @@ base URL and MCP stdio parameters for integration tests.
 | `tests/test_advise_evals.py` | Calibration evals (model-backed): recipe correctness end-to-end |
 | `tests/test_agent_eval.py` | Agent-in-the-loop eval: judge scoring, sandbox lifecycle |
 | `tests/test_eval_report.py` | Report generation: HTML structure, Markdown fidelity, chart output |
+| `packages/opencode-plugin/index.test.js` | npm plugin config hook: env defaults and overrides (`node --test index.test.js`) |
 
 **Writing new tests — unit pattern** (`tests/test_<module>.py`):
 ```python

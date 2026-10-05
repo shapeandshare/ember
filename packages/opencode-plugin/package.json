@@ -7,6 +7,9 @@
   "exports": {
     ".": "./index.js"
   },
+  "scripts": {
+    "test": "node --test index.test.js"
+  },
   "license": "MIT",
   "keywords": [
     "ember",
