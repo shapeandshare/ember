@@ -1,6 +1,6 @@
 {
   "name": "opencode-ember-advise",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Register the local ember MCP server (the advise tool) with opencode. Supports MPS inference on Apple Silicon.",
   "type": "module",
   "main": "index.js",
