@@ -16,7 +16,6 @@ URLs or read host files.
 from __future__ import annotations
 
 import base64
-import binascii
 import io
 from typing import Any
 
@@ -52,7 +51,7 @@ def _decode_bytes(raw: bytes, source: str) -> Image.Image:
 def _decode_base64(payload: str, source: str) -> Image.Image:
     try:
         raw = base64.b64decode(payload, validate=True)
-    except (binascii.Error, ValueError) as exc:
+    except ValueError as exc:
         raise ValueError(f"{source} is not valid base64: {exc}") from exc
     return _decode_bytes(raw, source)
 

@@ -184,7 +184,7 @@ def main() -> None:
     try:
         validate_server_url(SERVER_URL)
     except ValueError as exc:
-        log.error("startup aborted: %s", exc)
+        log.exception("startup aborted: %s", exc)
         sys.exit(1)
     log.info(
         "ember MCP server starting (server_url=%s, autostart=%s)",

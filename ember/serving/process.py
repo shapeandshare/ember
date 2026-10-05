@@ -81,7 +81,8 @@ def _pid_alive(pid: int) -> bool:
 
 def _is_ember_server(pid: int) -> bool:
     try:
-        command = subprocess.run(  # noqa: S603 - fixed argv, no shell; pid is an int
+        # Fixed argv, no shell expansion; pid is an int — not untrusted input.
+        command = subprocess.run(  # noqa: S603
             ["/bin/ps", "-o", "command=", "-p", str(pid)],
             capture_output=True,
             text=True,
