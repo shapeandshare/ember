@@ -1,6 +1,6 @@
 # STRIDE Threat Model Review — ember
 
-**Living task-tracking report.** Last updated: 2026-10-04
+**Living task-tracking report.** Last updated: 2026-10-05
 **Scope**: Full — all components and trust-zone boundaries
 **Architecture reference**: `AGENTS.md` (call path, trust zones), `SECURITY.md` (intended threat model)
 **Existing controls cross-reference**: `SECURITY.md`, `RESPONSIBLE_USE.md`, `COMPATIBILITY.md`, `.specify/memory/constitution.md`, `vault/decisions/`, `vault/discoveries/`
@@ -14,6 +14,7 @@ _A chronological log of every scan run. Newest first._
 
 | Scan Date  | New Threats | Resolved | Regressed | Total Open | Scope |
 |------------|-------------|----------|-----------|------------|-------|
+| 2026-10-05 | +0          | -10      | +0        | 16         | status refresh — fixes merged (#57–#60) |
 | 2026-10-04 | +26         | -0       | +0        | 26         | full  |
 
 _This section grows with each scan — never prune rows._
@@ -25,43 +26,43 @@ _This section grows with each scan — never prune rows._
 | Metric                        | Value  |
 |-------------------------------|--------|
 | Total threats (all time)      | **26** |
-| Currently open                | **26** |
+| Currently open                | **16** |
 | In progress                   | **0**  |
-| Fixed / resolved              | **0**  |
+| Fixed / resolved              | **10** |
 | Wontfix / False positive      | **0**  |
-| Resolved rate                 | **0%** |
+| Resolved rate                 | **38%** |
 
 ### Open Threats by Category
 
 | Category                  | Open | Critical | High |
 |---------------------------|------|----------|------|
-| S — Spoofing              | 4    | 0        | 2    |
-| T — Tampering             | 5    | 1        | 2    |
-| R — Repudiation           | 5    | 0        | 1    |
+| S — Spoofing              | 2    | 0        | 0    |
+| T — Tampering             | 2    | 0        | 0    |
+| R — Repudiation           | 4    | 0        | 0    |
 | I — Information Disclosure| 5    | 0        | 0    |
-| D — Denial of Service     | 5    | 0        | 2    |
-| E — Elevation of Privilege| 2    | 1        | 1    |
+| D — Denial of Service     | 3    | 0        | 0    |
+| E — Elevation of Privilege| 0    | 0        | 0    |
 
 ### Open Threats by Severity
 
 | Severity | Count |
 |----------|-------|
-| CRITICAL | 2     |
-| HIGH     | 8     |
+| CRITICAL | 0     |
+| HIGH     | 0     |
 | MEDIUM   | 12    |
 | LOW      | 3     |
 | INFO     | 1     |
 
 ### Trend Since Last Review
 
-- New threats added: +26
-- Threats resolved: −0
+- New threats added: +0
+- Threats resolved: −10
 - Threats regressed: +0
 
 > ⚠️ **Top 3 Risks**:
-> 1. **E-001 / T-001** — `EMBER_MODEL_DIR` + `joint_schema_model.py` import: a single env-var controls arbitrary code execution at model-server startup. Spans Tampering (code injection), Elevation of Privilege (ACE), and Spoofing (model identity). CRITICAL severity; no compensating runtime control.
-> 2. **E-002** — `EMBER_MCP` env var in the opencode plugin resolves to an arbitrary executable without validation. Any process that can set `EMBER_MCP` in the opencode environment can substitute a malicious binary for `ember-mcp`. HIGH severity.
-> 3. **D-001 / D-002** — No rate limiting on `/v1/systemone` combined with a 262 144-token default `max_length`: a runaway agent or any loopback process can exhaust MPS memory and crash the server. HIGH severity; no queue depth or per-request token cap.
+> 1. **S-003 / T-005** — PID reuse TOCTOU and pidfile integrity: a residual window between `_is_ember_server` check and `os.kill`, combined with an unsigned pidfile, could allow a sophisticated local attacker to redirect a stop signal. MEDIUM severity; strong compensating controls (`_is_ember_server` + `/health` cross-check) reduce practical risk.
+> 2. **T-004** — Config file (`config.json`) loaded without integrity check: a local attacker with write access to the app dir can tamper with `host` to expose the server beyond loopback, or alter `port`/`device` for disruption. MEDIUM severity; requires local write access to the app dir.
+> 3. **I-001 / I-002** — `/health` discloses PID and full model directory path; `ToolError` may forward raw FastAPI error bodies (including internal paths or stack traces) to the calling agent. MEDIUM severity; acceptable for single-user loopback deployment but worth addressing before any shared-environment use.
 
 ---
 
@@ -69,34 +70,34 @@ _This section grows with each scan — never prune rows._
 
 _A single flat table covering every threat across all STRIDE categories. Sorted: open first by severity desc, then by ID._
 
-| ID    | Cat | Sev      | Status | Component | Flow / Component                          | Title                                              | Controls xref                                                                 | First Seen | Last Confirmed | Resolved |
-|-------|-----|----------|--------|-----------|-------------------------------------------|----------------------------------------------------|-------------------------------------------------------------------------------|------------|----------------|----------|
-| E-001 | E   | CRITICAL | open   | runtime   | Z4→Z3: EMBER_MODEL_DIR import             | Arbitrary code execution via model-dir import      | → SECURITY.md §out-of-scope (joint_schema_model.py is upstream code)          | 2026-10-04 | 2026-10-04     | —        |
-| T-001 | T   | CRITICAL | open   | runtime   | Z4→Z3: EMBER_MODEL_DIR + sys.path         | Executable Python imported from attacker-controlled dir | → vault/discoveries/2026-10-02-media-refs-are-data-uris-not-host-paths.md (parallel SSRF fix) | 2026-10-04 | 2026-10-04     | —        |
-| S-001 | S   | HIGH     | open   | mcp       | Z1→Z2: EMBER_SERVER_URL                   | MCP trusts arbitrary server URL without loopback validation | → SECURITY.md §security-sensitive-design-notes                          | 2026-10-04 | 2026-10-04     | —        |
-| S-002 | S   | HIGH     | open   | runtime   | Z4→Z3: EMBER_MODEL_DIR                    | Model identity unverifiable — no weight hash check | → constitution Article V (pinned revisions); → COMPATIBILITY.md §tested-models | 2026-10-04 | 2026-10-04     | —        |
-| T-002 | T   | HIGH     | open   | runtime   | Z4→Z3: EMBER_MODEL_DIR                    | EMBER_MODEL_DIR accepted without directory validation | —                                                                            | 2026-10-04 | 2026-10-04     | —        |
-| T-003 | T   | HIGH     | open   | runtime   | Z2→Z3: media_kwargs                       | Unreserved media_kwargs forwarded to joint_schema_model | → vault/discoveries/2026-10-02-media-refs-are-data-uris-not-host-paths.md  | 2026-10-04 | 2026-10-04     | —        |
-| E-002 | E   | HIGH     | open   | plugin    | Z4→Z3: EMBER_MCP env var                  | EMBER_MCP resolves to arbitrary executable         | —                                                                             | 2026-10-04 | 2026-10-04     | —        |
-| D-001 | D   | HIGH     | open   | server    | Z1→Z2: HTTP /v1/systemone                 | No rate limiting on inference endpoint             | → SECURITY.md §scope (DoS in scope)                                           | 2026-10-04 | 2026-10-04     | —        |
-| D-002 | D   | HIGH     | open   | runtime   | Z2→Z3: max_length                         | Default 262 144-token context exhausts MPS memory  | → COMPATIBILITY.md §known-issues (context length note)                        | 2026-10-04 | 2026-10-04     | —        |
-| R-001 | R   | HIGH     | open   | server    | Z4: process lifecycle                     | stop() performs destructive action with no audit log | → constitution Article IV (PID-tracked stop)                                | 2026-10-04 | 2026-10-04     | —        |
-| S-003 | S   | MEDIUM   | open   | server    | Z4→Z3: pidfile TOCTOU                     | PID reuse window between pidfile read and kill     | → constitution Article IV; → SECURITY.md §scope (process.py in scope)        | 2026-10-04 | 2026-10-04     | —        |
-| S-004 | S   | MEDIUM   | open   | mcp       | Z1→Z2: EMBER_SERVER_URL scheme            | EMBER_SERVER_URL can redirect MCP to non-loopback  | → SECURITY.md §security-sensitive-design-notes                                | 2026-10-04 | 2026-10-04     | —        |
-| T-004 | T   | MEDIUM   | open   | server    | Z4: config.json                           | Config file loaded without integrity check         | —                                                                             | 2026-10-04 | 2026-10-04     | —        |
-| T-005 | T   | MEDIUM   | open   | server    | Z4: server.pid                            | Pidfile has no integrity check                     | → constitution Article IV                                                     | 2026-10-04 | 2026-10-04     | —        |
-| R-002 | R   | MEDIUM   | open   | mcp       | Z0→Z1: advise tool call                   | advise calls not logged with state/questions       | —                                                                             | 2026-10-04 | 2026-10-04     | —        |
-| R-003 | R   | MEDIUM   | open   | mcp       | Z1: MCP stderr logging                    | MCP logs are human-readable, not structured        | —                                                                             | 2026-10-04 | 2026-10-04     | —        |
-| R-004 | R   | MEDIUM   | open   | cli       | Z4: model lifecycle                       | model rm / uninstall --purge-models not logged     | —                                                                             | 2026-10-04 | 2026-10-04     | —        |
-| I-001 | I   | MEDIUM   | open   | server    | Z2: /health response                      | /health discloses PID and engine details           | → vault/decisions/2026-10-02-expose-prometheus-metrics-on-the-server.md       | 2026-10-04 | 2026-10-04     | —        |
-| I-002 | I   | MEDIUM   | open   | mcp       | Z1→Z0: ToolError messages                 | ToolError may include internal paths or server stack traces | —                                                                     | 2026-10-04 | 2026-10-04     | —        |
-| D-003 | D   | MEDIUM   | open   | server    | Z2: uvicorn                               | uvicorn started without concurrency or timeout limits | —                                                                           | 2026-10-04 | 2026-10-04     | —        |
-| D-004 | D   | MEDIUM   | open   | server    | Z4: server.log                            | server.log grows without rotation                  | —                                                                             | 2026-10-04 | 2026-10-04     | —        |
-| D-005 | D   | MEDIUM   | open   | server    | Z4: autostart TOCTOU                      | Multiple MCP autostart calls race to spawn server  | —                                                                             | 2026-10-04 | 2026-10-04     | —        |
-| I-003 | I   | LOW      | open   | runtime   | Z3: sys.path                              | Model dir added to sys.path — path disclosure in tracebacks | —                                                                     | 2026-10-04 | 2026-10-04     | —        |
-| I-004 | I   | LOW      | open   | server    | Z4: server.log                            | server.log captures all server output including potential state echoes | → RESPONSIBLE_USE.md §privacy                                  | 2026-10-04 | 2026-10-04     | —        |
-| I-005 | I   | LOW      | open   | server    | Z2: /metrics                              | /metrics exposes model name, device, dtype         | → vault/decisions/2026-10-02-expose-prometheus-metrics-on-the-server.md       | 2026-10-04 | 2026-10-04     | —        |
-| R-005 | R   | INFO     | open   | server    | Z2: /health /metrics access               | No access log on health/metrics endpoints          | → vault/decisions/2026-10-02-expose-prometheus-metrics-on-the-server.md       | 2026-10-04 | 2026-10-04     | —        |
+| ID    | Cat | Sev      | Status | Component | Flow / Component                          | Title                                              | Controls xref                                                                 | First Seen | Last Confirmed | Resolved   |
+|-------|-----|----------|--------|-----------|-------------------------------------------|----------------------------------------------------|-------------------------------------------------------------------------------|------------|----------------|------------|
+| S-003 | S   | MEDIUM   | open   | server    | Z4→Z3: pidfile TOCTOU                     | PID reuse window between pidfile read and kill     | → constitution Article IV; → SECURITY.md §scope (process.py in scope)        | 2026-10-04 | 2026-10-04     | —          |
+| S-004 | S   | MEDIUM   | open   | mcp       | Z1→Z2: EMBER_SERVER_URL scheme            | EMBER_SERVER_URL can redirect MCP to non-loopback  | → SECURITY.md §security-sensitive-design-notes                                | 2026-10-04 | 2026-10-04     | —          |
+| T-004 | T   | MEDIUM   | open   | server    | Z4: config.json                           | Config file loaded without integrity check         | —                                                                             | 2026-10-04 | 2026-10-04     | —          |
+| T-005 | T   | MEDIUM   | open   | server    | Z4: server.pid                            | Pidfile has no integrity check                     | → constitution Article IV                                                     | 2026-10-04 | 2026-10-04     | —          |
+| R-002 | R   | MEDIUM   | open   | mcp       | Z0→Z1: advise tool call                   | advise calls not logged with state/questions       | —                                                                             | 2026-10-04 | 2026-10-04     | —          |
+| R-003 | R   | MEDIUM   | open   | mcp       | Z1: MCP stderr logging                    | MCP logs are human-readable, not structured        | —                                                                             | 2026-10-04 | 2026-10-04     | —          |
+| R-004 | R   | MEDIUM   | open   | cli       | Z4: model lifecycle                       | model rm / uninstall --purge-models not logged     | —                                                                             | 2026-10-04 | 2026-10-04     | —          |
+| I-001 | I   | MEDIUM   | open   | server    | Z2: /health response                      | /health discloses PID and engine details           | → vault/decisions/2026-10-02-expose-prometheus-metrics-on-the-server.md       | 2026-10-04 | 2026-10-04     | —          |
+| I-002 | I   | MEDIUM   | open   | mcp       | Z1→Z0: ToolError messages                 | ToolError may include internal paths or server stack traces | —                                                                     | 2026-10-04 | 2026-10-04     | —          |
+| D-003 | D   | MEDIUM   | open   | server    | Z2: uvicorn                               | uvicorn started without concurrency or timeout limits | —                                                                           | 2026-10-04 | 2026-10-04     | —          |
+| D-004 | D   | MEDIUM   | open   | server    | Z4: server.log                            | server.log grows without rotation                  | —                                                                             | 2026-10-04 | 2026-10-04     | —          |
+| D-005 | D   | MEDIUM   | open   | server    | Z4: autostart TOCTOU                      | Multiple MCP autostart calls race to spawn server  | —                                                                             | 2026-10-04 | 2026-10-04     | —          |
+| I-003 | I   | LOW      | open   | runtime   | Z3: sys.path                              | Model dir added to sys.path — path disclosure in tracebacks | —                                                                     | 2026-10-04 | 2026-10-04     | —          |
+| I-004 | I   | LOW      | open   | server    | Z4: server.log                            | server.log captures all server output including potential state echoes | → RESPONSIBLE_USE.md §privacy                                  | 2026-10-04 | 2026-10-04     | —          |
+| I-005 | I   | LOW      | open   | server    | Z2: /metrics                              | /metrics exposes model name, device, dtype         | → vault/decisions/2026-10-02-expose-prometheus-metrics-on-the-server.md       | 2026-10-04 | 2026-10-04     | —          |
+| R-005 | R   | INFO     | open   | server    | Z2: /health /metrics access               | No access log on health/metrics endpoints          | → vault/decisions/2026-10-02-expose-prometheus-metrics-on-the-server.md       | 2026-10-04 | 2026-10-04     | —          |
+| E-001 | E   | CRITICAL | fixed  | runtime   | Z4→Z3: EMBER_MODEL_DIR import             | Arbitrary code execution via model-dir import      | → SECURITY.md §out-of-scope (joint_schema_model.py is upstream code)          | 2026-10-04 | 2026-10-04     | 2026-10-05 |
+| T-001 | T   | CRITICAL | fixed  | runtime   | Z4→Z3: EMBER_MODEL_DIR + sys.path         | Executable Python imported from attacker-controlled dir | → vault/discoveries/2026-10-02-media-refs-are-data-uris-not-host-paths.md (parallel SSRF fix) | 2026-10-04 | 2026-10-04     | 2026-10-05 |
+| D-001 | D   | HIGH     | fixed  | server    | Z1→Z2: HTTP /v1/systemone                 | No rate limiting on inference endpoint             | → SECURITY.md §scope (DoS in scope)                                           | 2026-10-04 | 2026-10-04     | 2026-10-05 |
+| D-002 | D   | HIGH     | fixed  | runtime   | Z2→Z3: max_length                         | Default 262 144-token context exhausts MPS memory  | → COMPATIBILITY.md §known-issues (context length note)                        | 2026-10-04 | 2026-10-04     | 2026-10-05 |
+| E-002 | E   | HIGH     | fixed  | plugin    | Z4→Z3: EMBER_MCP env var                  | EMBER_MCP resolves to arbitrary executable         | —                                                                             | 2026-10-04 | 2026-10-04     | 2026-10-05 |
+| R-001 | R   | HIGH     | fixed  | server    | Z4: process lifecycle                     | stop() performs destructive action with no audit log | → constitution Article IV (PID-tracked stop)                                | 2026-10-04 | 2026-10-04     | 2026-10-05 |
+| S-001 | S   | HIGH     | fixed  | mcp       | Z1→Z2: EMBER_SERVER_URL                   | MCP trusts arbitrary server URL without loopback validation | → SECURITY.md §security-sensitive-design-notes                          | 2026-10-04 | 2026-10-04     | 2026-10-05 |
+| S-002 | S   | HIGH     | fixed  | runtime   | Z4→Z3: EMBER_MODEL_DIR                    | Model identity unverifiable — no weight hash check | → constitution Article V (pinned revisions); → COMPATIBILITY.md §tested-models | 2026-10-04 | 2026-10-04     | 2026-10-05 |
+| T-002 | T   | HIGH     | fixed  | runtime   | Z4→Z3: EMBER_MODEL_DIR                    | EMBER_MODEL_DIR accepted without directory validation | —                                                                            | 2026-10-04 | 2026-10-04     | 2026-10-05 |
+| T-003 | T   | HIGH     | fixed  | runtime   | Z2→Z3: media_kwargs                       | Unreserved media_kwargs forwarded to joint_schema_model | → vault/discoveries/2026-10-02-media-refs-are-data-uris-not-host-paths.md  | 2026-10-04 | 2026-10-04     | 2026-10-05 |
 
 _Sort order: open/in_progress first (by severity desc), then fixed/wontfix (by resolved_date desc)._
 
@@ -110,22 +111,23 @@ _Per-category context for each threat — scenario, gap, mitigation, and trust-z
 
 ### S — Spoofing
 
-| ID    | Severity | Status | Component | Flow / Component                    | Title                                              | First Seen | Last Confirmed | Resolved |
-|-------|----------|--------|-----------|-------------------------------------|----------------------------------------------------|------------|----------------|----------|
-| S-001 | HIGH     | open   | mcp       | Z1→Z2: EMBER_SERVER_URL             | MCP trusts arbitrary server URL without loopback validation | 2026-10-04 | 2026-10-04 | — |
-| S-002 | HIGH     | open   | runtime   | Z4→Z3: EMBER_MODEL_DIR              | Model identity unverifiable — no weight hash check | 2026-10-04 | 2026-10-04     | —        |
-| S-003 | MEDIUM   | open   | server    | Z4→Z3: pidfile TOCTOU               | PID reuse window between pidfile read and kill     | 2026-10-04 | 2026-10-04     | —        |
-| S-004 | MEDIUM   | open   | mcp       | Z1→Z2: EMBER_SERVER_URL scheme      | EMBER_SERVER_URL can redirect MCP to non-loopback  | 2026-10-04 | 2026-10-04     | —        |
+| ID    | Severity | Status | Component | Flow / Component                    | Title                                              | First Seen | Last Confirmed | Resolved   |
+|-------|----------|--------|-----------|-------------------------------------|----------------------------------------------------|------------|----------------|------------|
+| S-003 | MEDIUM   | open   | server    | Z4→Z3: pidfile TOCTOU               | PID reuse window between pidfile read and kill     | 2026-10-04 | 2026-10-04     | —          |
+| S-004 | MEDIUM   | open   | mcp       | Z1→Z2: EMBER_SERVER_URL scheme      | EMBER_SERVER_URL can redirect MCP to non-loopback  | 2026-10-04 | 2026-10-04     | —          |
+| S-001 | HIGH     | fixed  | mcp       | Z1→Z2: EMBER_SERVER_URL             | MCP trusts arbitrary server URL without loopback validation | 2026-10-04 | 2026-10-04 | 2026-10-05 |
+| S-002 | HIGH     | fixed  | runtime   | Z4→Z3: EMBER_MODEL_DIR              | Model identity unverifiable — no weight hash check | 2026-10-04 | 2026-10-04     | 2026-10-05 |
 
 #### S-001: MCP trusts arbitrary server URL without loopback validation
 
 - **Severity**: HIGH
-- **Status**: open
+- **Status**: fixed
 - **Component**: mcp
 - **Flow**: Z1 (ember-mcp) → Z2 (HTTP server via EMBER_SERVER_URL)
 - **Trust-zone crossing**: Z1 → Z2
 - **First seen**: 2026-10-04
 - **Last confirmed**: 2026-10-04
+- **Resolved**: 2026-10-05 — fixed in #58
 - **Threat scenario**: An attacker who can set `EMBER_SERVER_URL` in the MCP process environment (e.g., via a compromised opencode plugin config, a malicious `.env`, or environment injection through the agent) redirects all `advise` calls to an attacker-controlled server. The attacker's server can return crafted probabilities to manipulate agent decisions, or log the full `state` payload (which may contain code, diffs, or secrets).
 - **Gap**:
   ```python
@@ -143,12 +145,13 @@ _Per-category context for each threat — scenario, gap, mitigation, and trust-z
 #### S-002: Model identity unverifiable — no weight hash check
 
 - **Severity**: HIGH
-- **Status**: open
+- **Status**: fixed
 - **Component**: runtime
 - **Flow**: Z4 (model dir) → Z3 (Engine / joint_schema_model)
 - **Trust-zone crossing**: Z4 → Z3
 - **First seen**: 2026-10-04
 - **Last confirmed**: 2026-10-04
+- **Resolved**: 2026-10-05 — fixed in #57
 - **Threat scenario**: An attacker who can write to the model directory (or redirect `EMBER_MODEL_DIR` to a directory they control) substitutes tampered weights or a modified `joint_schema_model.py`. The server loads the substituted model without detecting the change. The tampered model returns adversarially crafted probabilities to manipulate agent decisions.
 - **Gap**:
   ```python
@@ -210,23 +213,24 @@ _Per-category context for each threat — scenario, gap, mitigation, and trust-z
 
 ### T — Tampering
 
-| ID    | Severity | Status | Component | Flow / Component                    | Title                                                   | First Seen | Last Confirmed | Resolved |
-|-------|----------|--------|-----------|-------------------------------------|---------------------------------------------------------|------------|----------------|----------|
-| T-001 | CRITICAL | open   | runtime   | Z4→Z3: EMBER_MODEL_DIR + sys.path   | Executable Python imported from attacker-controlled dir | 2026-10-04 | 2026-10-04     | —        |
-| T-002 | HIGH     | open   | runtime   | Z4→Z3: EMBER_MODEL_DIR              | EMBER_MODEL_DIR accepted without directory validation   | 2026-10-04 | 2026-10-04     | —        |
-| T-003 | HIGH     | open   | runtime   | Z2→Z3: media_kwargs                 | Unreserved media_kwargs forwarded to joint_schema_model | 2026-10-04 | 2026-10-04     | —        |
-| T-004 | MEDIUM   | open   | server    | Z4: config.json                     | Config file loaded without integrity check              | 2026-10-04 | 2026-10-04     | —        |
-| T-005 | MEDIUM   | open   | server    | Z4: server.pid                      | Pidfile has no integrity check                          | 2026-10-04 | 2026-10-04     | —        |
+| ID    | Severity | Status | Component | Flow / Component                    | Title                                                   | First Seen | Last Confirmed | Resolved   |
+|-------|----------|--------|-----------|-------------------------------------|---------------------------------------------------------|------------|----------------|------------|
+| T-004 | MEDIUM   | open   | server    | Z4: config.json                     | Config file loaded without integrity check              | 2026-10-04 | 2026-10-04     | —          |
+| T-005 | MEDIUM   | open   | server    | Z4: server.pid                      | Pidfile has no integrity check                          | 2026-10-04 | 2026-10-04     | —          |
+| T-001 | CRITICAL | fixed  | runtime   | Z4→Z3: EMBER_MODEL_DIR + sys.path   | Executable Python imported from attacker-controlled dir | 2026-10-04 | 2026-10-04     | 2026-10-05 |
+| T-002 | HIGH     | fixed  | runtime   | Z4→Z3: EMBER_MODEL_DIR              | EMBER_MODEL_DIR accepted without directory validation   | 2026-10-04 | 2026-10-04     | 2026-10-05 |
+| T-003 | HIGH     | fixed  | runtime   | Z2→Z3: media_kwargs                 | Unreserved media_kwargs forwarded to joint_schema_model | 2026-10-04 | 2026-10-04     | 2026-10-05 |
 
 #### T-001: Executable Python imported from attacker-controlled directory
 
 - **Severity**: CRITICAL
-- **Status**: open
+- **Status**: fixed
 - **Component**: runtime
 - **Flow**: Z4 (model dir / EMBER_MODEL_DIR) → Z3 (Python import)
 - **Trust-zone crossing**: Z4 → Z3
 - **First seen**: 2026-10-04
 - **Last confirmed**: 2026-10-04
+- **Resolved**: 2026-10-05 — fixed in #57
 - **Threat scenario**: An attacker who can set `EMBER_MODEL_DIR` to a directory they control places a malicious `joint_schema_model.py` in that directory. When the model server starts, `joint_module()` inserts the directory into `sys.path` and imports `joint_schema_model` as executable Python. The malicious module runs arbitrary code in the model server process at startup — with the same OS privileges as the user running `ember start`.
 - **Gap**:
   ```python
@@ -257,12 +261,13 @@ _Per-category context for each threat — scenario, gap, mitigation, and trust-z
 #### T-002: EMBER_MODEL_DIR accepted without directory validation
 
 - **Severity**: HIGH
-- **Status**: open
+- **Status**: fixed
 - **Component**: runtime
 - **Flow**: Z4 (EMBER_MODEL_DIR env var) → Z3 (Engine)
 - **Trust-zone crossing**: Z4 → Z3
 - **First seen**: 2026-10-04
 - **Last confirmed**: 2026-10-04
+- **Resolved**: 2026-10-05 — fixed in #57
 - **Threat scenario**: `EMBER_MODEL_DIR` is accepted as the model directory if it `is_dir()`. No check is made that the directory contains a legitimate model snapshot (expected files, correct structure). An attacker can point it at any directory containing a `joint_schema_model.py` (see T-001) or at a directory with tampered weights.
 - **Gap**:
   ```python
@@ -281,12 +286,13 @@ _Per-category context for each threat — scenario, gap, mitigation, and trust-z
 #### T-003: Unreserved media_kwargs forwarded to joint_schema_model
 
 - **Severity**: HIGH
-- **Status**: open
+- **Status**: fixed
 - **Component**: runtime
 - **Flow**: Z2 (HTTP /v1/systemone) → Z3 (joint_schema_model.systemone)
 - **Trust-zone crossing**: Z2 → Z3
 - **First seen**: 2026-10-04
 - **Last confirmed**: 2026-10-04
+- **Resolved**: 2026-10-05 — fixed in #58
 - **Threat scenario**: The `media_kwargs` field in `AdviseRequest` allows the caller to pass arbitrary keyword arguments to `joint_schema_model.systemone` (via the processor). Only the keys in `RESERVED_MEDIA_KWARGS` (`text`, `images`, `videos`, `return_tensors`) are blocked. Any other key passes through unchecked. A malicious or misbehaving agent could use this to tamper with processor behavior, override internal parameters, or trigger unexpected code paths in `joint_schema_model`.
 - **Gap**:
   ```python
@@ -345,23 +351,24 @@ _Per-category context for each threat — scenario, gap, mitigation, and trust-z
 
 ### R — Repudiation
 
-| ID    | Severity | Status | Component | Flow / Component                    | Title                                              | First Seen | Last Confirmed | Resolved |
-|-------|----------|--------|-----------|-------------------------------------|----------------------------------------------------|------------|----------------|----------|
-| R-001 | HIGH     | open   | server    | Z4: process lifecycle               | stop() performs destructive action with no audit log | 2026-10-04 | 2026-10-04   | —        |
-| R-002 | MEDIUM   | open   | mcp       | Z0→Z1: advise tool call             | advise calls not logged with state/questions       | 2026-10-04 | 2026-10-04     | —        |
-| R-003 | MEDIUM   | open   | mcp       | Z1: MCP stderr logging              | MCP logs are human-readable, not structured        | 2026-10-04 | 2026-10-04     | —        |
-| R-004 | MEDIUM   | open   | cli       | Z4: model lifecycle                 | model rm / uninstall --purge-models not logged     | 2026-10-04 | 2026-10-04     | —        |
-| R-005 | INFO     | open   | server    | Z2: /health /metrics access         | No access log on health/metrics endpoints          | 2026-10-04 | 2026-10-04     | —        |
+| ID    | Severity | Status | Component | Flow / Component                    | Title                                              | First Seen | Last Confirmed | Resolved   |
+|-------|----------|--------|-----------|-------------------------------------|----------------------------------------------------|------------|----------------|------------|
+| R-002 | MEDIUM   | open   | mcp       | Z0→Z1: advise tool call             | advise calls not logged with state/questions       | 2026-10-04 | 2026-10-04     | —          |
+| R-003 | MEDIUM   | open   | mcp       | Z1: MCP stderr logging              | MCP logs are human-readable, not structured        | 2026-10-04 | 2026-10-04     | —          |
+| R-004 | MEDIUM   | open   | cli       | Z4: model lifecycle                 | model rm / uninstall --purge-models not logged     | 2026-10-04 | 2026-10-04     | —          |
+| R-005 | INFO     | open   | server    | Z2: /health /metrics access         | No access log on health/metrics endpoints          | 2026-10-04 | 2026-10-04     | —          |
+| R-001 | HIGH     | fixed  | server    | Z4: process lifecycle               | stop() performs destructive action with no audit log | 2026-10-04 | 2026-10-04   | 2026-10-05 |
 
 #### R-001: stop() performs destructive action with no audit log
 
 - **Severity**: HIGH
-- **Status**: open
+- **Status**: fixed
 - **Component**: server
 - **Flow**: Z4 (pidfile) → Z3 (SIGTERM/SIGKILL)
 - **Trust-zone crossing**: Z4 → Z3
 - **First seen**: 2026-10-04
 - **Last confirmed**: 2026-10-04
+- **Resolved**: 2026-10-05 — fixed in #60
 - **Threat scenario**: `process.stop()` sends SIGTERM (and SIGKILL on timeout) to the tracked server PID and deletes the pidfile. No log entry records who stopped the server, what PID was signaled, or when. If the server is stopped unexpectedly (e.g., by a misbehaving agent calling `ember stop` via a shell tool), there is no audit trail to diagnose the event.
 - **Gap**:
   ```python
@@ -582,23 +589,24 @@ _Per-category context for each threat — scenario, gap, mitigation, and trust-z
 
 ### D — Denial of Service
 
-| ID    | Severity | Status | Component | Flow / Component                    | Title                                              | First Seen | Last Confirmed | Resolved |
-|-------|----------|--------|-----------|-------------------------------------|----------------------------------------------------|------------|----------------|----------|
-| D-001 | HIGH     | open   | server    | Z1→Z2: HTTP /v1/systemone           | No rate limiting on inference endpoint             | 2026-10-04 | 2026-10-04     | —        |
-| D-002 | HIGH     | open   | runtime   | Z2→Z3: max_length                   | Default 262 144-token context exhausts MPS memory  | 2026-10-04 | 2026-10-04     | —        |
-| D-003 | MEDIUM   | open   | server    | Z2: uvicorn                         | uvicorn started without concurrency or timeout limits | 2026-10-04 | 2026-10-04   | —        |
-| D-004 | MEDIUM   | open   | server    | Z4: server.log                      | server.log grows without rotation                  | 2026-10-04 | 2026-10-04     | —        |
-| D-005 | MEDIUM   | open   | server    | Z4: autostart TOCTOU                | Multiple MCP autostart calls race to spawn server  | 2026-10-04 | 2026-10-04     | —        |
+| ID    | Severity | Status | Component | Flow / Component                    | Title                                              | First Seen | Last Confirmed | Resolved   |
+|-------|----------|--------|-----------|-------------------------------------|----------------------------------------------------|------------|----------------|------------|
+| D-003 | MEDIUM   | open   | server    | Z2: uvicorn                         | uvicorn started without concurrency or timeout limits | 2026-10-04 | 2026-10-04   | —          |
+| D-004 | MEDIUM   | open   | server    | Z4: server.log                      | server.log grows without rotation                  | 2026-10-04 | 2026-10-04     | —          |
+| D-005 | MEDIUM   | open   | server    | Z4: autostart TOCTOU                | Multiple MCP autostart calls race to spawn server  | 2026-10-04 | 2026-10-04     | —          |
+| D-001 | HIGH     | fixed  | server    | Z1→Z2: HTTP /v1/systemone           | No rate limiting on inference endpoint             | 2026-10-04 | 2026-10-04     | 2026-10-05 |
+| D-002 | HIGH     | fixed  | runtime   | Z2→Z3: max_length                   | Default 262 144-token context exhausts MPS memory  | 2026-10-04 | 2026-10-04     | 2026-10-05 |
 
 #### D-001: No rate limiting on inference endpoint
 
 - **Severity**: HIGH
-- **Status**: open
+- **Status**: fixed
 - **Component**: server
 - **Flow**: Z1 (MCP) → Z2 (HTTP /v1/systemone) → Z3 (Engine)
 - **Trust-zone crossing**: Z1 → Z2 → Z3
 - **First seen**: 2026-10-04
 - **Last confirmed**: 2026-10-04
+- **Resolved**: 2026-10-05 — fixed in #59
 - **Threat scenario**: Any loopback process (not just the MCP server) can flood `POST /v1/systemone` with inference requests. The engine lock serializes requests, so each request blocks the next, but the queue is unbounded. A runaway agent or a malicious loopback process can keep the server busy indefinitely, preventing legitimate use. Combined with D-002 (large `max_length`), each request can be very expensive.
 - **Gap**:
   ```python
@@ -615,12 +623,13 @@ _Per-category context for each threat — scenario, gap, mitigation, and trust-z
 #### D-002: Default 262 144-token context exhausts MPS memory
 
 - **Severity**: HIGH
-- **Status**: open
+- **Status**: fixed
 - **Component**: runtime
 - **Flow**: Z2 (HTTP request) → Z3 (Engine.advise)
 - **Trust-zone crossing**: Z2 → Z3
 - **First seen**: 2026-10-04
 - **Last confirmed**: 2026-10-04
+- **Resolved**: 2026-10-05 — fixed in #59
 - **Threat scenario**: `max_length` defaults to 262 144 tokens (the model's maximum, derived from `config.json`). A caller that sends a request with a very large `state` (e.g., a full codebase dump) can cause the model to allocate a very large KV cache, potentially exhausting MPS unified memory and crashing the server process with an OOM error. There is no per-request token cap.
 - **Gap**:
   ```python
@@ -709,20 +718,21 @@ _Per-category context for each threat — scenario, gap, mitigation, and trust-z
 
 ### E — Elevation of Privilege
 
-| ID    | Severity | Status | Component | Flow / Component                    | Title                                              | First Seen | Last Confirmed | Resolved |
-|-------|----------|--------|-----------|-------------------------------------|----------------------------------------------------|------------|----------------|----------|
-| E-001 | CRITICAL | open   | runtime   | Z4→Z3: EMBER_MODEL_DIR import       | Arbitrary code execution via model-dir import      | 2026-10-04 | 2026-10-04     | —        |
-| E-002 | HIGH     | open   | plugin    | Z4→Z3: EMBER_MCP env var            | EMBER_MCP resolves to arbitrary executable         | 2026-10-04 | 2026-10-04     | —        |
+| ID    | Severity | Status | Component | Flow / Component                    | Title                                              | First Seen | Last Confirmed | Resolved   |
+|-------|----------|--------|-----------|-------------------------------------|----------------------------------------------------|------------|----------------|------------|
+| E-001 | CRITICAL | fixed  | runtime   | Z4→Z3: EMBER_MODEL_DIR import       | Arbitrary code execution via model-dir import      | 2026-10-04 | 2026-10-04     | 2026-10-05 |
+| E-002 | HIGH     | fixed  | plugin    | Z4→Z3: EMBER_MCP env var            | EMBER_MCP resolves to arbitrary executable         | 2026-10-04 | 2026-10-04     | 2026-10-05 |
 
 #### E-001: Arbitrary code execution via model-dir import
 
 - **Severity**: CRITICAL
-- **Status**: open
+- **Status**: fixed
 - **Component**: runtime
 - **Flow**: Z4 (EMBER_MODEL_DIR) → Z3 (Python import → OS)
 - **Trust-zone crossing**: Z4 → Z3
 - **First seen**: 2026-10-04
 - **Last confirmed**: 2026-10-04
+- **Resolved**: 2026-10-05 — fixed in #57
 - **Threat scenario**: An attacker who can set `EMBER_MODEL_DIR` to a directory they control places a malicious `joint_schema_model.py` in that directory. When the model server starts, `joint_module()` imports it as executable Python. The malicious module runs arbitrary OS-level code in the model server process — reading files, spawning processes, exfiltrating data, or establishing persistence. This is a local privilege escalation: the attacker gains the capabilities of the user running the model server.
 - **Gap**: Same root cause as T-001. The EoP angle is that the import executes arbitrary Python code, not just loads data.
   ```python
@@ -745,12 +755,13 @@ _Per-category context for each threat — scenario, gap, mitigation, and trust-z
 #### E-002: EMBER_MCP resolves to arbitrary executable
 
 - **Severity**: HIGH
-- **Status**: open
+- **Status**: fixed
 - **Component**: plugin
 - **Flow**: Z4 (EMBER_MCP env var) → Z3 (opencode spawns the MCP process)
 - **Trust-zone crossing**: Z4 → Z3
 - **First seen**: 2026-10-04
 - **Last confirmed**: 2026-10-04
+- **Resolved**: 2026-10-05 — fixed in #58
 - **Threat scenario**: The opencode plugin resolves the `ember-mcp` command from `process.env.EMBER_MCP` first, before checking the standard install locations. If an attacker can set `EMBER_MCP` in the opencode process environment (e.g., via a malicious `.env` file, a compromised shell profile, or environment injection), they can substitute an arbitrary executable for `ember-mcp`. opencode will spawn this executable as the MCP server, giving it access to the MCP stdio channel and the ability to return crafted tool responses to the agent.
 - **Gap**:
   ```javascript
