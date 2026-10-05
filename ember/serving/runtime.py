@@ -44,8 +44,21 @@ DEFAULT_MODEL_DIR = REPO_ROOT / ".models" / "clef-flash"
 #: Used only if a model's config.json has no max_position_embeddings.
 FALLBACK_MAX_LENGTH = 32768
 
-#: Keys the Clef encoder sets itself; media_kwargs must not override them.
-RESERVED_MEDIA_KWARGS = frozenset({"text", "images", "videos", "return_tensors"})
+#: Explicit allowlist of processor keyword arguments callers may pass through.
+#: Switching from a blocklist to an allowlist (T-003) closes the gap where any
+#: non-reserved key was forwarded unchecked to joint_schema_model.systemone.
+ALLOWED_MEDIA_KWARGS = frozenset(
+    {
+        "min_pixels",
+        "max_pixels",
+        "fps",
+        "min_frames",
+        "max_frames",
+        "do_resize",
+        "size",
+        "do_convert_rgb",
+    }
+)
 
 _JOINT_MODULE: Any = None
 
@@ -320,11 +333,13 @@ class Engine:
         if videos:
             request["videos"] = media.decode_videos(videos)
         if media_kwargs:
-            reserved = RESERVED_MEDIA_KWARGS.intersection(media_kwargs)
-            if reserved:
+            disallowed = set(media_kwargs) - ALLOWED_MEDIA_KWARGS
+            if disallowed:
                 raise ValueError(
-                    "media_kwargs may not set reserved keys: "
-                    + ", ".join(sorted(reserved))
+                    "media_kwargs keys not permitted: "
+                    + ", ".join(sorted(disallowed))
+                    + ". Permitted keys: "
+                    + ", ".join(sorted(ALLOWED_MEDIA_KWARGS))
                 )
             request["media_kwargs"] = media_kwargs
         with self._lock:

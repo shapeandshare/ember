@@ -17,6 +17,7 @@ Env:
 
 from __future__ import annotations
 
+import ipaddress
 import logging
 import os
 import sys
@@ -38,6 +39,53 @@ logging.basicConfig(
 log = logging.getLogger("ember-mcp")
 
 SERVER_URL = os.environ.get("EMBER_SERVER_URL", "http://127.0.0.1:8765").rstrip("/")
+
+
+def validate_server_url(url: str) -> None:
+    """Enforce the loopback-only trust boundary for the ember model server URL.
+
+    ember is a local-first tool; the model server must only be reachable on the
+    loopback interface. Accepting a non-loopback URL would allow an attacker who
+    can set ``EMBER_SERVER_URL`` to redirect all ``advise`` calls — including the
+    full ``state`` payload — to an attacker-controlled server.
+
+    Accepted hosts: ``localhost``, ``127.0.0.0/8`` (the full loopback block),
+    and ``::1`` (IPv6 loopback).
+
+    Parameters
+    ----------
+    url : str
+        The server URL to validate (e.g. ``http://127.0.0.1:8765``).
+
+    Raises
+    ------
+    ValueError
+        If the URL's hostname does not resolve to a loopback address.
+        The message names the offending host, explains the loopback-only
+        design, and points to ``SECURITY.md`` for context.
+    """
+    parsed = urlparse(url)
+    host = parsed.hostname or ""
+    if host in ("localhost",):
+        return
+    try:
+        addr = ipaddress.ip_address(host)
+    except ValueError as exc:
+        raise ValueError(
+            f"EMBER_SERVER_URL host {host!r} is not a loopback address. "
+            "ember only connects to loopback targets (localhost, 127.0.0.0/8, ::1) "
+            "to keep agent state payloads local. "
+            "See SECURITY.md for the loopback-only design rationale."
+        ) from exc
+    if not addr.is_loopback:
+        raise ValueError(
+            f"EMBER_SERVER_URL host {host!r} is not a loopback address. "
+            "ember only connects to loopback targets (localhost, 127.0.0.0/8, ::1) "
+            "to keep agent state payloads local. "
+            "See SECURITY.md for the loopback-only design rationale."
+        )
+
+
 AUTOSTART = os.environ.get("EMBER_AUTOSTART", "1").lower() not in (
     "0",
     "false",
@@ -133,6 +181,11 @@ def advise(input: AdviseInput) -> dict[str, Any]:
 
 def main() -> None:
     """Run the MCP stdio server; blocks until the client disconnects."""
+    try:
+        validate_server_url(SERVER_URL)
+    except ValueError as exc:
+        log.error("startup aborted: %s", exc)
+        sys.exit(1)
     log.info(
         "ember MCP server starting (server_url=%s, autostart=%s)",
         SERVER_URL,

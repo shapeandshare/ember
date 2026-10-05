@@ -197,7 +197,8 @@ def cmd_mcp(args: argparse.Namespace) -> int:
     """
     if args.host or args.port:
         host, port = _host_port(args)
-        os.environ["EMBER_SERVER_URL"] = f"http://{host}:{port}"
+        client_host = "127.0.0.1" if host == "0.0.0.0" else host  # noqa: S104  # nosec B104 - comparing against the string to normalise it, not binding
+        os.environ["EMBER_SERVER_URL"] = f"http://{client_host}:{port}"
     if args.device:
         os.environ["EMBER_DEVICE"] = args.device
     if args.model:
