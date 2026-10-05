@@ -141,8 +141,8 @@ vault/                # project memory (Obsidian): decisions, discoveries, sessi
 | `make eval-snapshot` | Copy the latest run into `benchmark/` for the site to render |
 | `make eval-agent` / `make eval-agent-smoke` | Agent-in-the-loop eval through opencode (opt-in; spends provider credit) |
 | `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000` (needs Docker) |
-| `make release-dry` | Preview next version bump without changes (dry run) |
-| `make release` | Bump version, update CHANGELOG.md, tag, push — run on `main` only |
+| `make release-dry` | Preview the next ember version bump without changes |
+| `make release-ember` / `release-plugin` | Trigger a component release workflow on `main` (bump PR → GitHub Release) |
 | `.venv/bin/ember …` or `.venv/bin/gut …` | Primary CLI, built from this checkout |
 
 ## Architecture (call path)
@@ -562,12 +562,22 @@ spacing values, or component styles outside the design system.
   `evals/**`; tags `v*`) and `release-plugin.yml` (paths `packages/opencode-plugin/**`;
   tags `plugin/v*`) run from `main` only. Each computes the next version from
   conventional commits, commits it, pushes a `ci/bump-*` branch, opens a PR with
-  auto-merge, waits for it to land, then creates the GitHub Release. Two repo settings
-  are load-bearing: the Actions token must be read-write and "Allow GitHub Actions to
-  create and approve pull requests" must be on — the workflows create their PRs with
-  `GITHUB_TOKEN`, never a stored personal token. Bump commit subjects (`release v…`,
+  auto-merge, waits for that PR to actually merge, and only then tags the merged
+  commit and creates the GitHub Release — a blocked or closed PR leaves no tag behind.
+  Reruns are safe: the branch is force-pushed and an open bump PR is reused. If the
+  wait times out because check runs await maintainer approval (the public-repo
+  contributor gate that applied to the bot's first PRs), approve them in the Actions
+  tab and re-run the workflow. The ember side releases on commitizen's rules; the
+  plugin side releases only for `feat` (minor) and `fix`/`perf`/`refactor`/`revert`
+  (patch) commits — `docs`/`chore`/`test`/`ci`/`style`/`build` changes accumulate
+  until a release-worthy commit arrives. Two repo settings are load-bearing: the
+  Actions token must be read-write and "Allow GitHub Actions to create and approve
+  pull requests" must be on — the workflows create their PRs with `GITHUB_TOKEN`,
+  never a stored personal token. Bump commit subjects (`release v…`,
   `release plugin/v…`) are filtered out of the commit scan, and only files under the
   component's own paths trigger the workflow, so a bump never triggers another bump.
+  To cut a release by hand, run `make release-ember` / `make release-plugin`
+  (workflow dispatch); `make release-dry` previews the next ember version.
 - **The Pages site is generated at build.** `site/_docs/` and `site/assets/brand/` come from
   `scripts/build_site_docs.py` (manifest in `site/_data/docs.json`), so they are gitignored and
   must not be committed. To publish a page, add a manifest entry and run `make site`; never hand
