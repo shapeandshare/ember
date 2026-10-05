@@ -15,13 +15,16 @@
 #      reuse the open PR from a previous attempt (rerun-safe).
 #   4. Wait for the PR to actually merge (10 min). If checks await a
 #      maintainer's approval (public-repo contributor gate), the wait says
-#      so; approving and re-running the workflow reuses the same PR.
+#      so; approving and dispatching the workflow resumes cleanly.
 #   5. Only after the merge: verify the merged version, tag the merged
 #      commit, push the tag, create the GitHub Release with index.js +
 #      package.json as assets.
 #
 # Tagging only after the merge means a blocked or closed bump PR leaves no
-# tag behind — nothing to clean up, no orphaned release.
+# tag behind — nothing to clean up, no orphaned release. If a run finds
+# that main already carries a version newer than the last tag (a previous
+# bump PR merged but its release failed), it skips the bump/PR/wait and
+# goes straight to tagging and publishing.
 #
 # Loop prevention: bump commits are filtered from the scan by subject
 # ("release plugin/v*", "release v*"), so even a merge that does trigger
@@ -76,6 +79,28 @@ jobs:
         id: bump
         run: |
           LAST_TAG=$(git tag --list 'plugin/v*' --sort=-version:refname | head -1)
+
+          git fetch origin main --quiet
+          MAIN_VERSION=$(git show origin/main:packages/opencode-plugin/package.json \
+            | node -e "const pkg = JSON.parse(require('fs').readFileSync(0, 'utf8')); process.stdout.write(pkg.version);")
+
+          # A previous attempt may have merged its bump PR but failed before
+          # tagging (for example, when checks awaited maintainer approval and
+          # timed out). If main's version differs from the latest tag's, resume
+          # at the tag step instead of bumping again.
+          if [ -n "$LAST_TAG" ]; then
+            TAG_VERSION=$(git show "${LAST_TAG}:packages/opencode-plugin/package.json" \
+              | node -e "const pkg = JSON.parse(require('fs').readFileSync(0, 'utf8')); process.stdout.write(pkg.version);")
+            if [ "$MAIN_VERSION" != "$TAG_VERSION" ]; then
+              echo "main carries ${MAIN_VERSION} while ${LAST_TAG} carries ${TAG_VERSION} — resuming at the tag step."
+              echo "landed=true" >> "$GITHUB_OUTPUT"
+              echo "tag=plugin/v${MAIN_VERSION}" >> "$GITHUB_OUTPUT"
+              echo "branch=ci/bump-plugin-v${MAIN_VERSION}" >> "$GITHUB_OUTPUT"
+              echo "new_version=${MAIN_VERSION}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "landed=false" >> "$GITHUB_OUTPUT"
 
           CURRENT=$(node -p "require('./packages/opencode-plugin/package.json').version")
 
@@ -147,7 +172,7 @@ jobs:
           fi
 
       - name: Write new version into package.json
-        if: steps.check.outputs.skip == 'false'
+        if: steps.check.outputs.skip == 'false' && steps.bump.outputs.landed != 'true'
         env:
           NEW_VERSION: ${{ steps.bump.outputs.new_version }}
         run: |
@@ -159,7 +184,7 @@ jobs:
           "
 
       - name: Prepend CHANGELOG entry for plugin
-        if: steps.check.outputs.skip == 'false'
+        if: steps.check.outputs.skip == 'false' && steps.bump.outputs.landed != 'true'
         env:
           BUMP_TAG: ${{ steps.bump.outputs.tag }}
         run: |
@@ -200,7 +225,7 @@ jobs:
           mv /tmp/cl-merged.md packages/opencode-plugin/CHANGELOG.md
 
       - name: Commit and push bump branch (no tag yet)
-        if: steps.check.outputs.skip == 'false'
+        if: steps.check.outputs.skip == 'false' && steps.bump.outputs.landed != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
@@ -216,7 +241,7 @@ jobs:
 
       - name: Open or reuse bump PR and enable auto-merge
         id: pr
-        if: steps.check.outputs.skip == 'false'
+        if: steps.check.outputs.skip == 'false' && steps.bump.outputs.landed != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
@@ -239,7 +264,7 @@ jobs:
             echo "Auto-merge already enabled."
 
       - name: Wait for the bump PR to merge (up to 10 min)
-        if: steps.check.outputs.skip == 'false'
+        if: steps.check.outputs.skip == 'false' && steps.bump.outputs.landed != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_URL: ${{ steps.pr.outputs.url }}
@@ -266,8 +291,10 @@ jobs:
             fi
             if [ "$i" -eq 20 ]; then
               echo "Timed out waiting for ${BUMP_TAG}'s bump PR to merge." >&2
-              echo "If checks await approval, approve them in the Actions tab and re-run" >&2
-              echo "this workflow — the open bump PR is reused. No tag was created." >&2
+              echo "If checks await approval, approve them in the Actions tab; once the bump PR" >&2
+              echo "merges, dispatch this workflow again (make release-plugin). It detects the" >&2
+              echo "already-merged version and goes straight to tagging and publishing." >&2
+              echo "No tag was created." >&2
               exit 1
             fi
             sleep 30
@@ -283,8 +310,10 @@ jobs:
           git remote set-url origin \
             "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}"
           git fetch origin main --quiet
-          MERGED_VERSION=$(git show origin/main:packages/opencode-plugin/package.json \
-            | node -e "const pkg = JSON.parse(require('fs').readFileSync(0, 'utf8')); process.stdout.write(pkg.version);")
+          # Build, notes, and assets all come from the merged tree, whether this
+          # run bumped, waited for a merge, or resumed after one.
+          git reset --hard origin/main
+          MERGED_VERSION=$(node -p "require('./packages/opencode-plugin/package.json').version")
           if [ "$MERGED_VERSION" != "$NEW_VERSION" ]; then
             echo "main has ${MERGED_VERSION}, expected ${NEW_VERSION} — aborting." >&2
             exit 1

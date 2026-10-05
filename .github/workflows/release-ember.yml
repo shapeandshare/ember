@@ -11,9 +11,13 @@
 #      reuse the open PR from a previous attempt (rerun-safe).
 #   3. Wait for the PR to actually merge (10 min). If checks await a
 #      maintainer's approval (public-repo contributor gate), the wait says
-#      so; approving and re-running the workflow reuses the same PR.
+#      so; approving and dispatching the workflow resumes cleanly.
 #   4. Only after the merge: verify the merged version, tag the merged
 #      commit, push the tag, build wheel + sdist, create the GitHub Release.
+#
+# Resume path: if a run finds that main already carries a version newer
+# than the last tag (a previous bump PR merged but its release failed), it
+# skips the bump/PR/wait and goes straight to tagging and publishing.
 #
 # Tagging only after the merge means a blocked or closed bump PR leaves no
 # tag behind — nothing to clean up, no orphaned release.
@@ -79,6 +83,28 @@ jobs:
       - name: Bump ember version and generate changelog
         id: bump
         run: |
+          CURRENT=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)
+          git fetch origin main --quiet
+          MAIN_VERSION=$(git show origin/main:pyproject.toml \
+            | sed -n 's/^version = "\(.*\)"/\1/p' | head -1)
+
+          # A previous attempt may have merged its bump PR but failed before
+          # tagging (for example, when checks awaited maintainer approval and
+          # timed out). If main carries a version newer than the last release
+          # tag, resume at the tag step instead of bumping again. (Tags can
+          # point at pre-squash bump commits, so match by name like commitizen
+          # does — git describe cannot see them from main.)
+          if git rev-parse -q --verify "refs/tags/v${CURRENT}" >/dev/null \
+              && [ "$MAIN_VERSION" != "$CURRENT" ]; then
+            echo "main carries ${MAIN_VERSION} while v${CURRENT} is the last release — resuming at the tag step."
+            echo "landed=true" >> "$GITHUB_OUTPUT"
+            echo "tag=v${MAIN_VERSION}" >> "$GITHUB_OUTPUT"
+            echo "branch=ci/bump-v${MAIN_VERSION}" >> "$GITHUB_OUTPUT"
+            echo "new_version=${MAIN_VERSION}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "landed=false" >> "$GITHUB_OUTPUT"
+
           if ! uv run cz bump --changelog --yes; then
             code=$?
             if [ "$code" -eq 21 ]; then
@@ -89,7 +115,7 @@ jobs:
             fi
             exit "$code"
           fi
-          BUMP_TAG=$(git describe --tags --abbrev=0 --match 'v[0-9]*')
+          BUMP_TAG="v$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)"
           echo "tag=${BUMP_TAG}" >> "$GITHUB_OUTPUT"
           echo "branch=ci/bump-${BUMP_TAG}" >> "$GITHUB_OUTPUT"
           echo "new_version=${BUMP_TAG#v}" >> "$GITHUB_OUTPUT"
@@ -106,7 +132,7 @@ jobs:
           fi
 
       - name: Push bump branch (no tag yet)
-        if: steps.check.outputs.skip == 'false'
+        if: steps.check.outputs.skip == 'false' && steps.bump.outputs.landed != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
@@ -118,7 +144,7 @@ jobs:
 
       - name: Open or reuse bump PR and enable auto-merge
         id: pr
-        if: steps.check.outputs.skip == 'false'
+        if: steps.check.outputs.skip == 'false' && steps.bump.outputs.landed != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
@@ -141,7 +167,7 @@ jobs:
             echo "Auto-merge already enabled."
 
       - name: Wait for the bump PR to merge (up to 10 min)
-        if: steps.check.outputs.skip == 'false'
+        if: steps.check.outputs.skip == 'false' && steps.bump.outputs.landed != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_URL: ${{ steps.pr.outputs.url }}
@@ -168,8 +194,10 @@ jobs:
             fi
             if [ "$i" -eq 20 ]; then
               echo "Timed out waiting for ${BUMP_TAG}'s bump PR to merge." >&2
-              echo "If checks await approval, approve them in the Actions tab and re-run" >&2
-              echo "this workflow — the open bump PR is reused. No tag was created." >&2
+              echo "If checks await approval, approve them in the Actions tab; once the bump PR" >&2
+              echo "merges, dispatch this workflow again (make release-ember). It detects the" >&2
+              echo "already-merged version and goes straight to tagging and publishing." >&2
+              echo "No tag was created." >&2
               exit 1
             fi
             sleep 30
@@ -185,8 +213,10 @@ jobs:
           git remote set-url origin \
             "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}"
           git fetch origin main --quiet
-          MERGED_VERSION=$(git show origin/main:pyproject.toml \
-            | sed -n 's/^version = "\(.*\)"/\1/p' | head -1)
+          # Build, notes, and assets all come from the merged tree, whether this
+          # run bumped, waited for a merge, or resumed after one.
+          git reset --hard origin/main
+          MERGED_VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)
           if [ "$MERGED_VERSION" != "$NEW_VERSION" ]; then
             echo "main has ${MERGED_VERSION}, expected ${NEW_VERSION} — aborting." >&2
             exit 1
