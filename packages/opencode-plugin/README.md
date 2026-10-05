@@ -33,6 +33,9 @@ To use this package as an npm dependency instead, add it to your opencode config
 
 It resolves `ember-mcp` at every launch; set `EMBER_MCP` to override the path.
 
-## Version history
+## Versioning
 
-See [CHANGELOG.md](CHANGELOG.md) for a full version history.
+This package versions independently of the `gut` Python distribution and follows
+[Semantic Versioning](https://semver.org/). A `feat` change cuts a minor release and a
+`fix`/`perf`/`refactor` change a patch; documentation and chore changes ride along with
+the next release. See [CHANGELOG.md](CHANGELOG.md) for the full history.
