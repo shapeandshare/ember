@@ -83,30 +83,37 @@ jobs:
       - name: Bump ember version and generate changelog
         id: bump
         run: |
-          CURRENT=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)
           git fetch origin main --quiet
           MAIN_VERSION=$(git show origin/main:pyproject.toml \
             | sed -n 's/^version = "\(.*\)"/\1/p' | head -1)
 
           # A previous attempt may have merged its bump PR but failed before
           # tagging (for example, when checks awaited maintainer approval and
-          # timed out). If main carries a version newer than the last release
-          # tag, resume at the tag step instead of bumping again. (Tags can
-          # point at pre-squash bump commits, so match by name like commitizen
-          # does — git describe cannot see them from main.)
-          if git rev-parse -q --verify "refs/tags/v${CURRENT}" >/dev/null \
-              && [ "$MAIN_VERSION" != "$CURRENT" ]; then
-            echo "main carries ${MAIN_VERSION} while v${CURRENT} is the last release — resuming at the tag step."
-            echo "landed=true" >> "$GITHUB_OUTPUT"
-            echo "tag=v${MAIN_VERSION}" >> "$GITHUB_OUTPUT"
-            echo "branch=ci/bump-v${MAIN_VERSION}" >> "$GITHUB_OUTPUT"
-            echo "new_version=${MAIN_VERSION}" >> "$GITHUB_OUTPUT"
-            exit 0
+          # timed out). If main's version differs from the latest tag's, resume
+          # at the tag step instead of bumping again. Tags are matched by name
+          # (version sort) because older release tags can point at pre-squash
+          # bump commits that git describe cannot reach from main.
+          LAST_TAG=$(git tag --list 'v*' --sort=-version:refname | head -1)
+          if [ -n "$LAST_TAG" ]; then
+            TAG_VERSION=${LAST_TAG#v}
+            if [ "$MAIN_VERSION" != "$TAG_VERSION" ]; then
+              echo "main carries ${MAIN_VERSION} while ${LAST_TAG} carries ${TAG_VERSION} — resuming at the tag step."
+              echo "landed=true" >> "$GITHUB_OUTPUT"
+              echo "tag=v${MAIN_VERSION}" >> "$GITHUB_OUTPUT"
+              echo "branch=ci/bump-v${MAIN_VERSION}" >> "$GITHUB_OUTPUT"
+              echo "new_version=${MAIN_VERSION}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           fi
           echo "landed=false" >> "$GITHUB_OUTPUT"
 
-          if ! uv run cz bump --changelog --yes; then
-            code=$?
+          # Capture cz's exit code directly: `if ! cmd; then code=$?` would
+          # capture the inverted status (0), silently swallowing failures.
+          set +e
+          uv run cz bump --changelog --yes
+          code=$?
+          set -e
+          if [ "$code" -ne 0 ]; then
             if [ "$code" -eq 21 ]; then
               echo "No releasable ember commits since last tag — skipping."
               echo "tag=" >> "$GITHUB_OUTPUT"
