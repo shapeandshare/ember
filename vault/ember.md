@@ -46,6 +46,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-02-opencode-merges-the-dot-opencode-config]]
 - [[2026-10-02-media-refs-are-data-uris-not-host-paths]]
 - [[2026-10-03-self-hosted-vms-cannot-hold-the-model]]
+- [[2026-10-05-release-automation-constraints]]
 
 ### Sessions
 
@@ -56,6 +57,7 @@ Append-only session logs, never pruned.
 - [[2026-10-02-prometheus-metrics]]
 - [[2026-10-03-advise-eval-harness]]
 - [[2026-10-03-eval-benchmark-harness]]
+- [[2026-10-05-per-component-releases]]
 
 ## Reference
 
