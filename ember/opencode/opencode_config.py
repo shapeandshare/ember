@@ -11,6 +11,33 @@ from typing import Any
 
 SCHEMA = "https://opencode.ai/config.json"
 
+#: The only accepted basename for an opencode config file written or removed by ember.
+_ACCEPTED_BASENAME = "opencode.json"
+
+
+def _validate_config_path(path: Path) -> None:
+    """Raise ``ValueError`` unless ``path``'s final component is ``opencode.json``.
+
+    This is the path-traversal sanitizer for the S2083 findings: callers
+    (``write`` and ``remove``) only ever produce paths whose basename is
+    ``opencode.json``, so any other value indicates unexpected or attacker-
+    controlled input.
+
+    Parameters
+    ----------
+    path : Path
+        The config file path to validate.
+
+    Raises
+    ------
+    ValueError
+        If ``path.name`` is not ``opencode.json``.
+    """
+    if path.name != _ACCEPTED_BASENAME:
+        raise ValueError(
+            f"config path must end in {_ACCEPTED_BASENAME!r}; got {path.name!r}"
+        )
+
 
 def global_config_path() -> Path:
     """Return the user-global opencode config path.
@@ -103,7 +130,7 @@ def write(path: Path, host: str, port: int, autostart: str) -> Path:
     Parameters
     ----------
     path : Path
-        Config file to read and overwrite.
+        Config file to read and overwrite.  Must end in ``opencode.json``.
     host : str
         Model server host for ``EMBER_SERVER_URL``.
     port : int
@@ -115,7 +142,13 @@ def write(path: Path, host: str, port: int, autostart: str) -> Path:
     -------
     Path
         ``path``, after writing.
+
+    Raises
+    ------
+    ValueError
+        If ``path`` does not end in ``opencode.json``.
     """
+    _validate_config_path(path)
     existing: dict[str, Any] = {}
     if path.exists():
         try:
@@ -134,7 +167,24 @@ def write(path: Path, host: str, port: int, autostart: str) -> Path:
 
 
 def remove(path: Path) -> bool:
-    """Drop the `mcp.ember` entry; False if it is absent or not plain JSON."""
+    """Drop the ``mcp.ember`` entry; ``False`` if it is absent or not plain JSON.
+
+    Parameters
+    ----------
+    path : Path
+        Config file to modify.  Must end in ``opencode.json``.
+
+    Returns
+    -------
+    bool
+        ``True`` if the entry was present and removed; ``False`` otherwise.
+
+    Raises
+    ------
+    ValueError
+        If ``path`` does not end in ``opencode.json``.
+    """
+    _validate_config_path(path)
     try:
         existing = json.loads(path.read_text())
     except (FileNotFoundError, json.JSONDecodeError):

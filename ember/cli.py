@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import collections.abc
 import json
 import os
 import platform
@@ -17,6 +18,8 @@ from .agent_kit import api as agent_kit
 from .cfg import config, paths
 from .opencode import opencode_config, opencode_plugin
 from .serving import process
+
+_RESULTS_FILE_HELP = "path to *_results.json (default: most recent in results/)"
 
 
 def _emit(obj: object) -> None:
@@ -409,6 +412,99 @@ def cmd_agents_show(args: argparse.Namespace) -> int:
 # ###########################################################################
 # doctor, uninstall
 # ###########################################################################
+def _doctor_check_platform(
+    check: collections.abc.Callable[[str, bool, str], None],
+    info: collections.abc.Callable[[str, str], None],
+) -> None:
+    """Emit the platform and Python version doctor lines.
+
+    Parameters
+    ----------
+    check : Callable[[str, bool, str], None]
+        Emit a pass/fail line and update the ``ok`` flag.
+    info : Callable[[str, str], None]
+        Emit an informational line.
+    """
+    if paths.is_apple_silicon():
+        check("platform", True, "Apple Silicon macOS")
+    else:
+        info(
+            "platform",
+            f"{sys.platform}/{platform.machine()} — unsupported; "
+            "model server requires Apple Silicon macOS",
+        )
+    tested_python = sys.version_info[:2] == (3, 12)
+    check(
+        "python",
+        tested_python,
+        platform.python_version()
+        if tested_python
+        else f"{platform.python_version()} is untested; "
+        "reinstall with `uv tool install --python 3.12 ...`",
+    )
+
+
+def _doctor_check_deps(
+    check: collections.abc.Callable[[str, bool, str], None],
+) -> None:
+    """Emit torch and transformers availability doctor lines.
+
+    Parameters
+    ----------
+    check : Callable[[str, bool, str], None]
+        Emit a pass/fail line and update the ``ok`` flag.
+    """
+    try:
+        # import-placement:allow - doctor availability probe; may not be installed
+        import torch
+
+        mps = torch.backends.mps.is_available()
+        check(
+            "torch",
+            True,
+            f"{torch.__version__} (mps={'yes' if mps else 'no, CPU fallback'})",
+        )
+    except ImportError as exc:
+        check("torch", False, str(exc))
+    try:
+        # import-placement:allow - doctor availability probe; may not be installed
+        import transformers
+
+        check("transformers", True, transformers.__version__)
+    except ImportError as exc:
+        check("transformers", False, str(exc))
+
+
+def _doctor_check_models(
+    check: collections.abc.Callable[[str, bool, str], None],
+    info: collections.abc.Callable[[str, str], None],
+) -> None:
+    """Emit model availability doctor lines for the selected and optional models.
+
+    Parameters
+    ----------
+    check : Callable[[str, bool, str], None]
+        Emit a pass/fail line and update the ``ok`` flag.
+    info : Callable[[str, str], None]
+        Emit an informational line.
+    """
+    selected = config.resolve("model")
+    model_dir = models.resolve_dir(selected)
+    check(
+        f"model {selected}",
+        model_dir is not None,
+        str(model_dir)
+        if model_dir
+        else f"not pulled; run: ember model pull {selected}",
+    )
+    for row in models.list_models():
+        if row["name"] != selected:
+            info(
+                f"model {row['name']} ({row['params']})",
+                row["path"] or "not pulled (optional)",
+            )
+
+
 def cmd_doctor(_: argparse.Namespace) -> int:
     """Check platform, dependencies, model, and server (``ember doctor``).
 
@@ -432,59 +528,9 @@ def cmd_doctor(_: argparse.Namespace) -> int:
     def info(label: str, detail: str) -> None:
         print(f"[info] {label}: {detail}")
 
-    supported = paths.is_apple_silicon()
-    if supported:
-        check("platform", True, "Apple Silicon macOS")
-    else:
-        info(
-            "platform",
-            f"{sys.platform}/{platform.machine()} — unsupported; "
-            "model server requires Apple Silicon macOS",
-        )
-    tested_python = sys.version_info[:2] == (3, 12)
-    check(
-        "python",
-        tested_python,
-        platform.python_version()
-        if tested_python
-        else f"{platform.python_version()} is untested; "
-        "reinstall with `uv tool install --python 3.12 ...`",
-    )
-    try:
-        # import-placement:allow - doctor availability probe; may not be installed
-        import torch
-
-        mps = torch.backends.mps.is_available()
-        check(
-            "torch",
-            True,
-            f"{torch.__version__} (mps={'yes' if mps else 'no, CPU fallback'})",
-        )
-    except (ImportError, ModuleNotFoundError) as exc:
-        check("torch", False, str(exc))
-    try:
-        # import-placement:allow - doctor availability probe; may not be installed
-        import transformers
-
-        check("transformers", True, transformers.__version__)
-    except (ImportError, ModuleNotFoundError) as exc:
-        check("transformers", False, str(exc))
-
-    selected = config.resolve("model")
-    model_dir = models.resolve_dir(selected)
-    check(
-        f"model {selected}",
-        model_dir is not None,
-        str(model_dir)
-        if model_dir
-        else f"not pulled; run: ember model pull {selected}",
-    )
-    for row in models.list_models():
-        if row["name"] != selected:
-            info(
-                f"model {row['name']} ({row['params']})",
-                row["path"] or "not pulled (optional)",
-            )
+    _doctor_check_platform(check, info)
+    _doctor_check_deps(check)
+    _doctor_check_models(check, info)
 
     host, port = config.resolve("host"), int(config.resolve("port"))
     running = process.health(host, port) is not None
@@ -829,7 +875,7 @@ def build_parser() -> argparse.ArgumentParser:
         "results_file",
         nargs="?",
         default=None,
-        help="path to *_results.json (default: most recent in results/)",
+        help=_RESULTS_FILE_HELP,
     )
     p.add_argument(
         "--format",
@@ -853,7 +899,7 @@ def build_parser() -> argparse.ArgumentParser:
         "results_file",
         nargs="?",
         default=None,
-        help="path to *_results.json (default: most recent in results/)",
+        help=_RESULTS_FILE_HELP,
     )
     p.add_argument(
         "--out",
@@ -875,7 +921,7 @@ def build_parser() -> argparse.ArgumentParser:
         "results_file",
         nargs="?",
         default=None,
-        help="path to *_results.json (default: most recent in results/)",
+        help=_RESULTS_FILE_HELP,
     )
     p.set_defaults(func=cmd_eval_snapshot)
 

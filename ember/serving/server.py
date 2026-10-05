@@ -209,7 +209,14 @@ async def metrics() -> Response:
     return Response(content=generate_latest(REGISTRY), media_type=CONTENT_TYPE_LATEST)
 
 
-@app.post("/v1/systemone")
+@app.post(
+    "/v1/systemone",
+    responses={
+        503: {"description": "Model not loaded yet or admission queue full."},
+        413: {"description": "Tokenized input exceeds the per-request cap."},
+        422: {"description": "Malformed questions, media, or kwargs."},
+    },
+)
 def systemone_endpoint(
     req: AdviseRequest,
 ) -> dict[str, Any]:  # async-first:exception - engine lock is synchronous
