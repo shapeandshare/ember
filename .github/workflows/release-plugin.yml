@@ -214,11 +214,16 @@ jobs:
         env:
           BUMP_TAG: ${{ steps.bump.outputs.tag }}
         run: |
+          # Changelog headings carry a date suffix (`## plugin/v0.3.0 (2026-10-05)`),
+          # so match on prefix rather than exact equality.
           awk -v tag="## ${BUMP_TAG}" '
-            $0 == tag { seen=1; next }
+            index($0, tag) == 1 { seen=1; next }
             seen && /^## / { exit }
             seen { print }
           ' packages/opencode-plugin/CHANGELOG.md > plugin-release-notes.md
+          if [ ! -s plugin-release-notes.md ]; then
+            echo "Release ${BUMP_TAG}." > plugin-release-notes.md
+          fi
 
       - name: Create GitHub Release
         if: steps.check.outputs.skip == 'false'
