@@ -50,6 +50,8 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 
 ### Sessions
 
+- [[2026-10-04-sonarcloud-scanning]] — add SonarCloud scanning to CI
+
 Append-only session logs, never pruned.
 
 - [[2026-10-02-ember-rename-and-vault-bootstrap]]
