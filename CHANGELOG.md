@@ -1,3 +1,12 @@
+## v0.3.0 (2026-10-05)
+
+### Feat
+
+- test both release paths end-to-end (#40)
+- **plugin**: add clef and advise to npm keywords (#37)
+- **plugin**: add version history link to README (#33)
+- **ember**: export __all__ from package root (#32)
+
 ## v0.2.0 (2026-10-04)
 
 ### Feat
