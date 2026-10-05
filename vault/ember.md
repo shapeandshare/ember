@@ -36,6 +36,7 @@ Session-level decisions with their context and consequences.
 - [[2026-10-04-restructure-into-sub-packages]]
 - [[2026-10-04-move-eval-harness-to-evals-eval]]
 - [[2026-10-04-constitutional-articles-xi-xv]]
+- [[2026-10-04-version-components-separately]]
 
 ### Discoveries
 
