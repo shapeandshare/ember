@@ -1,3 +1,14 @@
+## v0.3.1 (2026-10-05)
+
+### Fix
+
+- **ember**: audit server stops in the server log (#60)
+- **ember**: bound the advise queue and cap per-request tokens (#59)
+- **ember**: enforce trust boundaries — loopback URL, media kwargs allowlist, EMBER_MCP validation (#58)
+- **ember**: verify model files before import and load (#57)
+- **plugin**: respect EMBER_AUTOSTART from the environment (#48)
+- **plugin**: extract release notes with prefix match (#44)
+
 ## v0.3.0 (2026-10-05)
 
 ### Feat

@@ -34,6 +34,14 @@ class ModelSpec:
         Approximate on-disk size of the pulled weights, in bytes.
     revision : str
         Pinned Hugging Face Hub commit hash.
+    schema_sha256 : str
+        Expected SHA-256 hex digest of ``joint_schema_model.py``.
+        Sourced from the HF raw-file API at the pinned revision.
+        Identical for all current models (same upstream file).
+    head_sha256 : str
+        Expected SHA-256 hex digest of ``joint_head.safetensors``.
+        Sourced from HF LFS metadata at the pinned revision.
+        Differs per model (flash vs full have different heads).
     """
 
     name: str
@@ -42,8 +50,15 @@ class ModelSpec:
     params: str
     approx_bytes: int
     revision: str
+    schema_sha256: str
+    head_sha256: str
 
 
+# SHA-256 provenance:
+#   joint_schema_model.py — HF raw-file API at each pinned revision;
+#     identical for clef-flash@17f0b0a and clef@2f3de3d (same upstream file).
+#   joint_head.safetensors — HF LFS pointer metadata at each pinned revision;
+#     differs per model (separate joint heads for flash/full).
 REGISTRY: dict[str, ModelSpec] = {
     "flash": ModelSpec(
         "flash",
@@ -52,6 +67,8 @@ REGISTRY: dict[str, ModelSpec] = {
         "9B",
         18 * 2**30,
         revision="17f0b0ad64efb65d273590632833508766b2aae6",
+        schema_sha256="0e304cf7c6500e8bb59bef7e2afd2c6373f82596dfb3b57d1aa93c175e2dc3a3",
+        head_sha256="19cdcec8c81dc9212be320fff47462ab342fbc1278be4368fb3da71241cf5ba0",
     ),
     "full": ModelSpec(
         "full",
@@ -60,6 +77,8 @@ REGISTRY: dict[str, ModelSpec] = {
         "27B",
         55 * 2**30,
         revision="2f3de3dd85f379784083b0814d997ab627200f0c",
+        schema_sha256="0e304cf7c6500e8bb59bef7e2afd2c6373f82596dfb3b57d1aa93c175e2dc3a3",
+        head_sha256="a010ac04f078e699988e4049cbea5e62c962393f59fec366640b64e8d69a4953",
     ),
 }
 DEFAULT = "flash"

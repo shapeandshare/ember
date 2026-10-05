@@ -31,7 +31,7 @@ from pydantic import BaseModel, Field
 
 from .. import models
 from ..cfg import config
-from .runtime import Engine
+from .runtime import AdmissionError, Engine, RequestTooLargeError
 
 log = logging.getLogger(__name__)
 
@@ -106,11 +106,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
         return
     raw_length = int(config.resolve("max_length"))
+    raw_request_length = int(config.resolve("max_request_length"))
     _ENGINE = Engine(
         model_dir,
         device=config.resolve("device"),
         max_length=raw_length if raw_length > 0 else None,
         model_name=name,
+        spec=models.get(name),
+        max_request_length=raw_request_length,
     )
     MODEL_INFO.clear()
     MODEL_INFO.labels(
@@ -172,7 +175,14 @@ class AdviseRequest(BaseModel):
         description="Videos, each a list of frame refs in the images format.",
     )
     media_kwargs: dict[str, Any] | None = Field(
-        default=None, description="Optional image/video processor arguments."
+        default=None,
+        description=(
+            "Optional image/video processor arguments. "
+            "Only the following keys are permitted: "
+            "min_pixels, max_pixels, fps, min_frames, max_frames, "
+            "do_resize, size, do_convert_rgb. "
+            "Any other key is rejected with a 422 error."
+        ),
     )
 
 
@@ -218,8 +228,9 @@ def systemone_endpoint(
     Raises
     ------
     HTTPException
-        503 if the model has not finished loading; 422 if ``req`` contains
-        malformed questions or media.
+        503 if the model has not finished loading or the admission queue is
+        full; 413 if the tokenized input exceeds the per-request cap; 422 if
+        ``req`` contains malformed questions, media, or kwargs.
     """
     if _ENGINE is None:
         raise HTTPException(status_code=503, detail="model not loaded yet")
@@ -232,7 +243,11 @@ def systemone_endpoint(
             videos=req.videos,
             media_kwargs=req.media_kwargs,
         )
-    except ValueError as exc:  # malformed questions or media
+    except AdmissionError as exc:  # admission semaphore full — server busy
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except RequestTooLargeError as exc:  # per-request token cap exceeded
+        raise HTTPException(status_code=413, detail=str(exc)) from exc
+    except ValueError as exc:  # malformed questions, media, or kwargs
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     usage = result.get("usage") or {}
     ADVISE_INPUT_TOKENS.inc(int(usage.get("input_tokens", 0) or 0))
@@ -251,6 +266,7 @@ def main() -> None:
         host=config.resolve("host"),
         port=int(config.resolve("port")),
         log_level="info",
+        limit_concurrency=16,
     )
 
 

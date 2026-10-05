@@ -8,6 +8,7 @@ import inspect
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -132,6 +133,179 @@ def test_pinned_model_declares_the_model_maximum():
 
 
 # ###########################################################################
+# S-001: loopback validation helper
+# ###########################################################################
+def test_validate_server_url_accepts_default_loopback():
+    from ember.mcp import mcp_server
+
+    # Must not raise for the default safe URL.
+    mcp_server.validate_server_url("http://127.0.0.1:8765")
+
+
+def test_validate_server_url_accepts_localhost():
+    from ember.mcp import mcp_server
+
+    mcp_server.validate_server_url("http://localhost:8765")
+
+
+def test_validate_server_url_accepts_ipv6_loopback():
+    from ember.mcp import mcp_server
+
+    mcp_server.validate_server_url("http://[::1]:8765")
+
+
+def test_validate_server_url_accepts_loopback_range():
+    from ember.mcp import mcp_server
+
+    # 127.x.x.x is the full loopback block.
+    mcp_server.validate_server_url("http://127.0.0.2:8765")
+
+
+def test_validate_server_url_rejects_remote_host():
+    from ember.mcp import mcp_server
+
+    with pytest.raises(ValueError, match="loopback"):
+        mcp_server.validate_server_url("http://192.168.1.1:8765")
+
+
+def test_validate_server_url_rejects_0_0_0_0():
+    from ember.mcp import mcp_server
+
+    with pytest.raises(ValueError, match="loopback"):
+        mcp_server.validate_server_url("http://0.0.0.0:8765")
+
+
+def test_validate_server_url_rejects_external_hostname():
+    from ember.mcp import mcp_server
+
+    with pytest.raises(ValueError, match="loopback"):
+        mcp_server.validate_server_url("http://example.com:8765")
+
+
+def test_validate_server_url_error_mentions_security_md():
+    from ember.mcp import mcp_server
+
+    with pytest.raises(ValueError, match=r"SECURITY\.md"):
+        mcp_server.validate_server_url("http://10.0.0.1:8765")
+
+
+# ###########################################################################
+# S-001: CLI host normalisation
+# ###########################################################################
+def test_cmd_mcp_normalises_0_0_0_0_to_loopback(monkeypatch, tmp_path):
+    """ember mcp --host 0.0.0.0 must set EMBER_SERVER_URL to 127.0.0.1, not 0.0.0.0."""
+    import argparse
+
+    from ember import cli
+
+    captured: dict[str, str] = {}
+    monkeypatch.setattr(
+        "ember.mcp.mcp_server.main",
+        lambda: captured.update({"url": os.environ.get("EMBER_SERVER_URL", "")}),
+    )
+
+    args = argparse.Namespace(host="0.0.0.0", port=free_port(), device=None, model=None)  # noqa: S104 - testing normalisation of this value, not binding
+    cli.cmd_mcp(args)
+    assert "0.0.0.0" not in captured["url"], (  # noqa: S104 - asserting the value is absent, not binding
+        f"EMBER_SERVER_URL should not contain 0.0.0.0; got {captured['url']!r}"
+    )
+    assert "127.0.0.1" in captured["url"]
+
+
+# ###########################################################################
+# T-003: ALLOWED_MEDIA_KWARGS allowlist
+# ###########################################################################
+def test_allowed_media_kwargs_constant_exists():
+    assert hasattr(runtime, "ALLOWED_MEDIA_KWARGS"), (
+        "runtime must expose ALLOWED_MEDIA_KWARGS"
+    )
+
+
+def test_allowed_media_kwargs_is_frozenset():
+    assert isinstance(runtime.ALLOWED_MEDIA_KWARGS, frozenset)
+
+
+def test_allowed_media_kwargs_contains_expected_keys():
+    expected = {
+        "min_pixels",
+        "max_pixels",
+        "fps",
+        "min_frames",
+        "max_frames",
+        "do_resize",
+        "size",
+        "do_convert_rgb",
+    }
+    assert expected == runtime.ALLOWED_MEDIA_KWARGS
+
+
+def test_check_media_kwargs_passes_for_allowed_key(monkeypatch, tmp_path):
+    """An allowed key must not raise."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    # Patch joint_module to avoid actual model call.
+    fake_response: dict = {
+        "answers": {},
+        "usage": {"input_tokens": 0, "output_tokens": 0},
+    }
+
+    def fake_systemone(*a, **kw):
+        return fake_response
+
+    fake_module = type("M", (), {"systemone": staticmethod(fake_systemone)})()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    # Should not raise.
+    engine.advise("state", {}, media_kwargs={"min_pixels": 256})
+
+
+def test_check_media_kwargs_rejects_unknown_key(monkeypatch, tmp_path):
+    """An unknown key must raise ValueError listing permitted keys."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    fake_response: dict = {
+        "answers": {},
+        "usage": {"input_tokens": 0, "output_tokens": 0},
+    }
+
+    def fake_systemone(*a, **kw):
+        return fake_response
+
+    fake_module = type("M", (), {"systemone": staticmethod(fake_systemone)})()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    with pytest.raises(ValueError, match="not permitted"):
+        engine.advise("state", {}, media_kwargs={"unknown_key": "value"})
+
+
+def test_check_media_kwargs_rejects_previously_reserved_key(monkeypatch, tmp_path):
+    """Previously-reserved keys (text, images, videos, return_tensors) are not on the
+    allowlist and must still be rejected."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    fake_response: dict = {
+        "answers": {},
+        "usage": {"input_tokens": 0, "output_tokens": 0},
+    }
+
+    def fake_systemone(*a, **kw):
+        return fake_response
+
+    fake_module = type("M", (), {"systemone": staticmethod(fake_systemone)})()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    for key in ("text", "images", "videos", "return_tensors"):
+        with pytest.raises(ValueError, match="not permitted"):
+            engine.advise("state", {}, media_kwargs={key: "x"})
+
+
+# ###########################################################################
 # MCP server helpers (imported without loading the model)
 # ###########################################################################
 def test_mcp_server_import_does_not_load_torch():
@@ -185,6 +359,131 @@ def test_tracked_pid_ignores_a_pid_that_is_not_an_ember_server(tmp_path, monkeyp
 def test_stop_without_a_tracked_server_signals_nothing(tmp_path, monkeypatch):
     monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
     assert process.stop("127.0.0.1", free_port()) is False
+
+
+# ###########################################################################
+# stop() audit logging (R-001)
+# ###########################################################################
+def test_stop_writes_sigterm_audit_entry_to_server_log(tmp_path, monkeypatch):
+    """stop() appends a timestamped SIGTERM audit entry to server.log."""
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
+    fake_pid = 99999
+
+    # Fake a tracked server: pid file exists, pid is "alive", is an ember server.
+    # _pid_alive must return True so tracked_pid accepts the pid, then False so
+    # the SIGTERM wait loop exits without spinning.
+    alive_calls = {"count": 0}
+
+    def fake_pid_alive(pid: int) -> bool:
+        alive_calls["count"] += 1
+        return alive_calls["count"] <= 1
+
+    paths.pid_path().write_text(str(fake_pid))
+    monkeypatch.setattr(process, "_pid_alive", fake_pid_alive)
+    monkeypatch.setattr(process, "_is_ember_server", lambda pid: True)
+    monkeypatch.setattr(process, "health", lambda *a, **kw: None)
+
+    kill_calls: list[tuple[int, int]] = []
+
+    def fake_kill(pid: int, sig: int) -> None:
+        kill_calls.append((pid, sig))
+
+    monkeypatch.setattr(process.os, "kill", fake_kill)
+
+    result = process.stop("127.0.0.1", free_port())
+
+    assert result is True
+    log_text = paths.server_log_path().read_text(encoding="utf-8")
+    assert f"stop: signaling pid={fake_pid}" in log_text
+    assert re.search(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", log_text)
+
+
+def test_stop_writes_sigkill_audit_entry_when_escalating(tmp_path, monkeypatch):
+    """stop() appends a SIGKILL escalation entry when the process survives SIGTERM."""
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
+    fake_pid = 99998
+
+    paths.pid_path().write_text(str(fake_pid))
+    # _pid_alive stays True (stubborn process) until SIGKILL is sent.
+    # timeout=0.0 makes the wait loop exit immediately so SIGKILL is triggered.
+    alive_state = {"alive": True}
+
+    def fake_pid_alive(pid: int) -> bool:
+        return alive_state["alive"]
+
+    monkeypatch.setattr(process, "_pid_alive", fake_pid_alive)
+    monkeypatch.setattr(process, "_is_ember_server", lambda pid: True)
+    monkeypatch.setattr(process, "health", lambda *a, **kw: None)
+
+    kill_calls: list[tuple[int, int]] = []
+
+    def fake_kill(pid: int, sig: int) -> None:
+        kill_calls.append((pid, sig))
+        if sig == signal.SIGKILL:
+            alive_state["alive"] = False
+
+    monkeypatch.setattr(process.os, "kill", fake_kill)
+    result = process.stop("127.0.0.1", free_port(), timeout=0.0)
+
+    assert result is True
+    sigs = [s for _, s in kill_calls]
+    assert signal.SIGTERM in sigs
+    assert signal.SIGKILL in sigs
+
+    log_text = paths.server_log_path().read_text(encoding="utf-8")
+    assert f"stop: signaling pid={fake_pid}" in log_text
+    assert f"stop: escalating to SIGKILL for pid={fake_pid}" in log_text
+
+
+def test_stop_writes_no_audit_entry_when_nothing_tracked(tmp_path, monkeypatch):
+    """stop() writes nothing to server.log when no server is tracked."""
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
+    # No pid file → tracked_pid returns None → early return False.
+    result = process.stop("127.0.0.1", free_port())
+
+    assert result is False
+    # Log file should not exist (or be empty) — no audit entry written.
+    log_path = paths.server_log_path()
+    if log_path.exists():
+        assert log_path.read_text(encoding="utf-8") == ""
+
+
+def test_stop_succeeds_even_when_log_write_raises_oserror(tmp_path, monkeypatch):
+    """stop() still signals the pid and returns True when the log append fails."""
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
+    fake_pid = 99997
+
+    paths.pid_path().write_text(str(fake_pid))
+    alive_calls_oserr = {"count": 0}
+
+    def fake_pid_alive_oserr(pid: int) -> bool:
+        alive_calls_oserr["count"] += 1
+        return alive_calls_oserr["count"] <= 1
+
+    monkeypatch.setattr(process, "_pid_alive", fake_pid_alive_oserr)
+    monkeypatch.setattr(process, "_is_ember_server", lambda pid: True)
+    monkeypatch.setattr(process, "health", lambda *a, **kw: None)
+
+    kill_calls: list[tuple[int, int]] = []
+
+    def fake_kill(pid: int, sig: int) -> None:
+        kill_calls.append((pid, sig))
+
+    monkeypatch.setattr(process.os, "kill", fake_kill)
+
+    # Make the log directory read-only so open() raises OSError.
+    log_path = paths.server_log_path()
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path.parent.chmod(0o555)
+
+    try:
+        result = process.stop("127.0.0.1", free_port())
+    finally:
+        log_path.parent.chmod(0o755)
+
+    assert result is True
+    sigs = [s for _, s in kill_calls]
+    assert signal.SIGTERM in sigs
 
 
 def test_start_fails_fast_when_the_model_is_missing(tmp_path, monkeypatch):
@@ -248,3 +547,328 @@ def test_opencode_config_remove_drops_only_our_entry(tmp_path):
     assert "ember" not in remaining_mcp
     assert remaining_mcp["other"] == {"type": "remote", "url": "http://x"}
     assert opencode_config.remove(target) is False
+
+
+# ###########################################################################
+# D-001: bounded admission control (semaphore)
+# ###########################################################################
+def test_max_pending_advise_constant_exists():
+    """D-001: runtime must expose MAX_PENDING_ADVISE."""
+    assert hasattr(runtime, "MAX_PENDING_ADVISE"), (
+        "runtime must expose MAX_PENDING_ADVISE"
+    )
+
+
+def test_max_pending_advise_is_positive_int():
+    """D-001: MAX_PENDING_ADVISE must be a positive integer."""
+    assert isinstance(runtime.MAX_PENDING_ADVISE, int)
+    assert runtime.MAX_PENDING_ADVISE > 0
+
+
+def test_engine_has_admission_semaphore(monkeypatch, tmp_path):
+    """D-001: Engine must carry a threading.Semaphore for admission control."""
+    import threading
+
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    assert hasattr(engine, "_admission"), "Engine must have _admission attribute"
+    assert isinstance(engine._admission, type(threading.Semaphore())), (
+        "_admission must be a threading.Semaphore"
+    )
+
+
+def test_admission_semaphore_capacity_matches_constant(monkeypatch, tmp_path):
+    """D-001: _admission semaphore capacity must equal MAX_PENDING_ADVISE."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    # Drain the semaphore to verify its initial count.
+    acquired = 0
+    while engine._admission.acquire(blocking=False):
+        acquired += 1
+    assert acquired == runtime.MAX_PENDING_ADVISE, (
+        f"semaphore capacity {acquired} != "
+        f"MAX_PENDING_ADVISE {runtime.MAX_PENDING_ADVISE}"
+    )
+    # Release all acquired slots to leave the engine in a clean state.
+    for _ in range(acquired):
+        engine._admission.release()
+
+
+def test_advise_raises_when_admission_full(monkeypatch, tmp_path):
+    """D-001: advise must raise RuntimeError when the admission semaphore is full."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    # Drain all admission slots.
+    for _ in range(runtime.MAX_PENDING_ADVISE):
+        engine._admission.acquire(blocking=False)
+    fake_module = type(
+        "M",
+        (),
+        {"systemone": staticmethod(lambda *a, **kw: {"answers": {}, "usage": {}})},
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    with pytest.raises(runtime.AdmissionError, match="server busy"):
+        engine.advise("state", {})
+    # Restore semaphore.
+    for _ in range(runtime.MAX_PENDING_ADVISE):
+        engine._admission.release()
+
+
+def test_advise_succeeds_when_admission_has_capacity(monkeypatch, tmp_path):
+    """D-001: advise must succeed when the admission semaphore has capacity."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    fake_response: dict = {
+        "answers": {},
+        "usage": {"input_tokens": 5, "output_tokens": 0},
+    }
+    fake_module = type(
+        "M", (), {"systemone": staticmethod(lambda *a, **kw: fake_response)}
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    # Must not raise.
+    result = engine.advise("state", {})
+    assert result == fake_response
+
+
+def test_admission_slot_released_after_successful_advise(monkeypatch, tmp_path):
+    """D-001: the admission slot must be released after a successful advise call."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    fake_response: dict = {"answers": {}, "usage": {}}
+    fake_module = type(
+        "M", (), {"systemone": staticmethod(lambda *a, **kw: fake_response)}
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    engine.advise("state", {})
+    # After the call, all slots must be available again.
+    acquired = 0
+    while engine._admission.acquire(blocking=False):
+        acquired += 1
+    assert acquired == runtime.MAX_PENDING_ADVISE
+    for _ in range(acquired):
+        engine._admission.release()
+
+
+def test_admission_slot_released_after_failed_advise(monkeypatch, tmp_path):
+    """D-001: the admission slot must be released even when advise raises."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+
+    def boom(*a: object, **kw: object) -> dict:
+        raise ValueError("simulated engine failure")
+
+    fake_module = type("M", (), {"systemone": staticmethod(boom)})()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    with pytest.raises(ValueError, match="simulated"):
+        engine.advise("state", {})
+    # Slot must be restored.
+    acquired = 0
+    while engine._admission.acquire(blocking=False):
+        acquired += 1
+    assert acquired == runtime.MAX_PENDING_ADVISE
+    for _ in range(acquired):
+        engine._admission.release()
+
+
+# ###########################################################################
+# D-002: per-request token cap
+# ###########################################################################
+def test_max_request_length_default_in_config():
+    """D-002: config DEFAULTS must include max_request_length = 32768."""
+    from ember.cfg import config as cfg
+
+    assert "max_request_length" in cfg.DEFAULTS, (
+        "DEFAULTS must include max_request_length"
+    )
+    assert cfg.DEFAULTS["max_request_length"] == 32768, (
+        "default max_request_length must be 32768"
+    )
+
+
+def test_max_request_length_env_override(monkeypatch):
+    """D-002: EMBER_MAX_REQUEST_LENGTH env var must override the default."""
+    from ember.cfg import config as cfg
+
+    monkeypatch.setenv("EMBER_MAX_REQUEST_LENGTH", "16384")
+    value = cfg.resolve("max_request_length")
+    assert value == 16384
+
+
+def test_max_request_length_zero_means_no_cap(monkeypatch):
+    """D-002: EMBER_MAX_REQUEST_LENGTH=0 must resolve to 0 (no cap)."""
+    from ember.cfg import config as cfg
+
+    monkeypatch.setenv("EMBER_MAX_REQUEST_LENGTH", "0")
+    value = cfg.resolve("max_request_length")
+    assert value == 0
+
+
+def test_engine_accepts_max_request_length_param(monkeypatch, tmp_path):
+    """D-002: Engine.__init__ must accept a max_request_length parameter."""
+    import inspect
+
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    sig = inspect.signature(runtime.Engine.__init__)
+    assert "max_request_length" in sig.parameters, (
+        "Engine.__init__ must accept max_request_length"
+    )
+
+
+def test_engine_token_cap_rejects_over_limit(monkeypatch, tmp_path):
+    """D-002: advise must raise RequestTooLargeError when input exceeds the cap."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+
+    class FakeTokenizer:
+        def __call__(self, text: str, **kw: object) -> dict:
+            return {"input_ids": list(range(100))}
+
+    class FakeProcessor:
+        tokenizer = FakeTokenizer()
+
+    monkeypatch.setattr(
+        runtime, "load_clef", lambda *a, **kw: (object(), FakeProcessor())
+    )
+    engine = runtime.Engine(model_dir, max_request_length=50)
+    fake_module = type(
+        "M",
+        (),
+        {"systemone": staticmethod(lambda *a, **kw: {"answers": {}, "usage": {}})},
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    with pytest.raises(runtime.RequestTooLargeError, match="50"):
+        engine.advise("some long state text", {})
+
+
+def test_engine_token_cap_error_mentions_actual_length(monkeypatch, tmp_path):
+    """D-002: the rejection error must name both the cap and the actual token count."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+
+    class FakeTokenizer:
+        def __call__(self, text: str, **kw: object) -> dict:
+            return {"input_ids": list(range(200))}
+
+    class FakeProcessor:
+        tokenizer = FakeTokenizer()
+
+    monkeypatch.setattr(
+        runtime, "load_clef", lambda *a, **kw: (object(), FakeProcessor())
+    )
+    engine = runtime.Engine(model_dir, max_request_length=100)
+    fake_module = type(
+        "M",
+        (),
+        {"systemone": staticmethod(lambda *a, **kw: {"answers": {}, "usage": {}})},
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    with pytest.raises(ValueError, match="200"):
+        engine.advise("state", {})
+
+
+def test_engine_token_cap_accepts_under_limit(monkeypatch, tmp_path):
+    """D-002: advise must succeed when tokenized input is within the cap."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+
+    class FakeTokenizer:
+        def __call__(self, text: str, **kw: object) -> dict:
+            return {"input_ids": list(range(30))}
+
+    class FakeProcessor:
+        tokenizer = FakeTokenizer()
+
+    monkeypatch.setattr(
+        runtime, "load_clef", lambda *a, **kw: (object(), FakeProcessor())
+    )
+    engine = runtime.Engine(model_dir, max_request_length=50)
+    fake_response: dict = {
+        "answers": {},
+        "usage": {"input_tokens": 30, "output_tokens": 0},
+    }
+    fake_module = type(
+        "M", (), {"systemone": staticmethod(lambda *a, **kw: fake_response)}
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    result = engine.advise("short state", {})
+    assert result == fake_response
+
+
+def test_engine_token_cap_zero_disables_cap(monkeypatch, tmp_path):
+    """D-002: max_request_length=0 must disable the per-request cap entirely."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+
+    class FakeTokenizer:
+        def __call__(self, text: str, **kw: object) -> dict:
+            # Return a huge token count — should not be rejected when cap is 0.
+            return {"input_ids": list(range(999999))}
+
+    class FakeProcessor:
+        tokenizer = FakeTokenizer()
+
+    monkeypatch.setattr(
+        runtime, "load_clef", lambda *a, **kw: (object(), FakeProcessor())
+    )
+    engine = runtime.Engine(model_dir, max_request_length=0)
+    fake_response: dict = {"answers": {}, "usage": {}}
+    fake_module = type(
+        "M", (), {"systemone": staticmethod(lambda *a, **kw: fake_response)}
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    # Must not raise.
+    result = engine.advise("enormous state", {})
+    assert result == fake_response
+
+
+def test_engine_token_cap_error_mentions_env_var(monkeypatch, tmp_path):
+    """D-002: rejection error must mention EMBER_MAX_REQUEST_LENGTH."""
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+
+    class FakeTokenizer:
+        def __call__(self, text: str, **kw: object) -> dict:
+            return {"input_ids": list(range(100))}
+
+    class FakeProcessor:
+        tokenizer = FakeTokenizer()
+
+    monkeypatch.setattr(
+        runtime, "load_clef", lambda *a, **kw: (object(), FakeProcessor())
+    )
+    engine = runtime.Engine(model_dir, max_request_length=50)
+    fake_module = type(
+        "M",
+        (),
+        {"systemone": staticmethod(lambda *a, **kw: {"answers": {}, "usage": {}})},
+    )()
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    with pytest.raises(ValueError, match="EMBER_MAX_REQUEST_LENGTH"):
+        engine.advise("state", {})

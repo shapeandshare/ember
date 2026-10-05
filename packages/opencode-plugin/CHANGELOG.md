@@ -5,6 +5,12 @@ Versions follow [Semantic Versioning](https://semver.org/); changes follow
 [Conventional Commits](https://www.conventionalcommits.org/) with scope `plugin`.
 
 <!-- next-version -->
+## plugin/v0.3.2 (2026-10-05)
+
+### Fix
+
+- fix(ember): enforce trust boundaries — loopback URL, media kwargs allowlist, EMBER_MCP validation (#58)
+
 ## plugin/v0.3.1 (2026-10-05)
 
 ### Fix
