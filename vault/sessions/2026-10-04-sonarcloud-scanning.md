@@ -25,8 +25,12 @@ Added SonarCloud scanning to the CI pipeline.
   source `ember/`, tests `tests/`, coverage report path `coverage.xml`, exclusions for
   `scripts/`, `site/`, `benchmark/`, `evals/`, `packages/`, `vault/`, `assets/`.
 - `.github/workflows/ci.yml` — new `sonar` job: `ubuntu-latest`, `contents: read` only,
-  `fetch-depth: 0` for blame history, unit tests via `uv run pytest tests/ -m "not model and not evals" --cov=ember --cov-report=xml`,
+  `fetch-depth: 0` for blame history, unit tests via `uv run pytest tests/ -m "not model and not evals" --cov=ember --cov-report=xml --cov-fail-under=0`,
   then `SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0`.
+
+  The `--cov-fail-under=0` keeps the job reporting-only: the coverage ratchet
+  (`fail_under=71`, Article XI) is enforced by `make test-cov` against the local full
+  suite, while this narrower CI subset computes ~70%.
 
 ### Key decision: use sonarqube-scan-action, not sonarcloud-github-action
 
