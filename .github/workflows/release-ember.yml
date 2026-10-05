@@ -1,19 +1,28 @@
 # Release automation — ember Python package (gut wheel, v* tags).
 #
 # Triggers on every push to main that touches ember/** or evals/**. The
-# workflow-level paths filter is the isolation mechanism; no per-job if: is
-# needed, and the broken contains(toJson(commits.*.modified)) pattern is
-# intentionally absent.
+# workflow-level paths filter is the isolation mechanism; no per-job if:
+# is needed.
 #
 # Flow:
-#   1. cz bump --changelog --yes  — bumps pyproject.toml, generates CHANGELOG.
-#   2. Push bump branch + tag; open PR with auto-merge enabled.
-#   3. Poll until the v* tag lands on main (bump PR merged by CI).
-#   4. Build wheel + sdist; create GitHub Release.
+#   1. cz bump — bumps pyproject.toml + uv.lock, generates CHANGELOG, and
+#      creates the local v* tag.
+#   2. Push the bump branch (no tag yet); open a PR with auto-merge, or
+#      reuse the open PR from a previous attempt (rerun-safe).
+#   3. Wait for the PR to actually merge (10 min). If checks await a
+#      maintainer's approval (public-repo contributor gate), the wait says
+#      so; approving and re-running the workflow reuses the same PR.
+#   4. Only after the merge: verify the merged version, tag the merged
+#      commit, push the tag, build wheel + sdist, create the GitHub Release.
 #
-# Loop prevention: the bump commit only changes pyproject.toml (version
-# string), uv.lock, and CHANGELOG.md — none of those match ember/** or
-# evals/**, so the workflow does not re-trigger on the bump push.
+# Tagging only after the merge means a blocked or closed bump PR leaves no
+# tag behind — nothing to clean up, no orphaned release.
+#
+# Loop prevention: the bump commit changes pyproject.toml (version string),
+# uv.lock, and CHANGELOG.md — none of those match ember/** or evals/**, so
+# the bump never re-triggers this workflow. (GitHub also does not start
+# runs from GITHUB_TOKEN-initiated merges; and the PR merges as a squashed
+# commit subject to the same paths filter.)
 #
 # Security posture (per AGENTS.md):
 #   - All uses: pinned to full commit SHAs with # vX.Y.Z comments.
@@ -41,7 +50,7 @@ concurrency:
 
 jobs:
   release-ember:
-    name: ember — bump, PR, wait, release
+    name: ember — bump, PR, merge, tag, release
     if: github.ref == 'refs/heads/main'
     runs-on: macos-latest
     timeout-minutes: 30
@@ -80,8 +89,10 @@ jobs:
             fi
             exit "$code"
           fi
-          echo "tag=$(git describe --tags --abbrev=0 --match 'v[0-9]*')" >> "$GITHUB_OUTPUT"
-          echo "branch=ci/bump-$(git describe --tags --abbrev=0 --match 'v[0-9]*')" >> "$GITHUB_OUTPUT"
+          BUMP_TAG=$(git describe --tags --abbrev=0 --match 'v[0-9]*')
+          echo "tag=${BUMP_TAG}" >> "$GITHUB_OUTPUT"
+          echo "branch=ci/bump-${BUMP_TAG}" >> "$GITHUB_OUTPUT"
+          echo "new_version=${BUMP_TAG#v}" >> "$GITHUB_OUTPUT"
 
       - name: Skip remaining steps if no bump needed
         id: check
@@ -94,7 +105,7 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Push bump branch and tag
+      - name: Push bump branch (no tag yet)
         if: steps.check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -102,40 +113,86 @@ jobs:
         run: |
           git remote set-url origin \
             "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}"
-          git push origin "HEAD:refs/heads/${BUMP_BRANCH}" --tags
+          # --force so a rerun after a blocked attempt reuses the branch.
+          git push --force origin "HEAD:refs/heads/${BUMP_BRANCH}"
 
-      - name: Open bump PR and enable auto-merge
+      - name: Open or reuse bump PR and enable auto-merge
+        id: pr
         if: steps.check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
           BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
           BUMP_TAG: ${{ steps.bump.outputs.tag }}
         run: |
-          PR_URL=$(gh pr create \
-            --title "release ${BUMP_TAG}" \
-            --body "Automated ember version bump to ${BUMP_TAG}. Auto-merges when CI passes." \
-            --base main \
-            --head "${BUMP_BRANCH}")
-          echo "Opened: ${PR_URL}"
-          gh pr merge "${PR_URL}" --auto --squash
+          PR_URL=$(gh pr list --head "${BUMP_BRANCH}" --state open \
+            --json url --jq '.[0].url // empty')
+          if [ -z "$PR_URL" ]; then
+            PR_URL=$(gh pr create \
+              --title "release ${BUMP_TAG}" \
+              --body "Automated ember version bump to ${BUMP_TAG}. Auto-merges when CI passes." \
+              --base main \
+              --head "${BUMP_BRANCH}")
+            echo "Opened: ${PR_URL}"
+          else
+            echo "Reusing open PR: ${PR_URL}"
+          fi
+          echo "url=${PR_URL}" >> "$GITHUB_OUTPUT"
+          gh pr merge "${PR_URL}" --auto --squash || \
+            echo "Auto-merge already enabled."
 
-      - name: Wait for bump PR to land on main (up to 10 min)
+      - name: Wait for the bump PR to merge (up to 10 min)
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+          BUMP_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          HEAD_SHA=$(git rev-parse HEAD)
+          for i in $(seq 1 20); do
+            STATE=$(gh pr view "${PR_URL}" --json state --jq .state 2>/dev/null || echo "")
+            if [ "$STATE" = "MERGED" ]; then
+              echo "Bump PR merged after ${i} poll(s)."
+              exit 0
+            fi
+            if [ "$STATE" = "CLOSED" ]; then
+              echo "Bump PR for ${BUMP_TAG} was closed without merging — aborting." >&2
+              exit 1
+            fi
+            if [ $((i % 5)) -eq 0 ]; then
+              WAITING=$(gh run list --commit "${HEAD_SHA}" --json conclusion \
+                --jq '[.[] | select(.conclusion == "action_required")] | length' \
+                2>/dev/null || echo 0)
+              if [ "$WAITING" != "0" ]; then
+                echo "Note: ${WAITING} check run(s) still await maintainer approval."
+              fi
+            fi
+            if [ "$i" -eq 20 ]; then
+              echo "Timed out waiting for ${BUMP_TAG}'s bump PR to merge." >&2
+              echo "If checks await approval, approve them in the Actions tab and re-run" >&2
+              echo "this workflow — the open bump PR is reused. No tag was created." >&2
+              exit 1
+            fi
+            sleep 30
+          done
+
+      - name: Tag the merged commit and push the tag
         if: steps.check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
           BUMP_TAG: ${{ steps.bump.outputs.tag }}
+          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
         run: |
-          for i in $(seq 1 20); do
-            if git ls-remote --tags origin "refs/tags/${BUMP_TAG}" \
-                | grep -q "${BUMP_TAG}"; then
-              echo "Tag ${BUMP_TAG} confirmed on remote after ${i} polls."
-              break
-            fi
-            if [ "$i" -eq 20 ]; then
-              echo "Timed out waiting for ${BUMP_TAG} on remote." >&2; exit 1
-            fi
-            sleep 30
-          done
+          git remote set-url origin \
+            "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}"
+          git fetch origin main --quiet
+          MERGED_VERSION=$(git show origin/main:pyproject.toml \
+            | sed -n 's/^version = "\(.*\)"/\1/p' | head -1)
+          if [ "$MERGED_VERSION" != "$NEW_VERSION" ]; then
+            echo "main has ${MERGED_VERSION}, expected ${NEW_VERSION} — aborting." >&2
+            exit 1
+          fi
+          git tag -f -a -m "release ${BUMP_TAG}" "${BUMP_TAG}" origin/main
+          git push origin "refs/tags/${BUMP_TAG}"
 
       - name: Build wheel and sdist
         if: steps.check.outputs.skip == 'false'
@@ -143,8 +200,17 @@ jobs:
 
       - name: Extract release notes from CHANGELOG.md
         if: steps.check.outputs.skip == 'false'
+        env:
+          BUMP_TAG: ${{ steps.bump.outputs.tag }}
         run: |
-          awk '/^## v/{if(seen) exit; seen=1} seen' CHANGELOG.md > release-notes.md
+          awk -v tag="## ${BUMP_TAG}" '
+            index($0, tag) == 1 { seen=1; next }
+            seen && /^## / { exit }
+            seen { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "Release ${BUMP_TAG}." > release-notes.md
+          fi
 
       - name: Create GitHub Release
         if: steps.check.outputs.skip == 'false'

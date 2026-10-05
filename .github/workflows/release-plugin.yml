@@ -5,18 +5,28 @@
 # needed.
 #
 # Flow:
-#   1. Compute next semver from conventional commits (feat→minor, fix→patch)
-#      since the last plugin/v* tag.
-#   2. Write new version into package.json; prepend CHANGELOG entry.
-#   3. Commit, tag (plugin/v*), push bump branch; open PR with auto-merge.
-#   4. Poll until the plugin/v* tag lands on main.
-#   5. Create GitHub Release with index.js + package.json as assets.
+#   1. Compute the next semver from conventional commits since the last
+#      plugin/v* tag. Only feat (→ minor) and fix/perf/refactor/revert
+#      (→ patch) commits request a release; docs/chore/test/ci/style/build
+#      changes accumulate until a release-worthy commit arrives.
+#   2. Write the new version into package.json; prepend a grouped
+#      CHANGELOG entry.
+#   3. Push the bump branch (no tag yet); open a PR with auto-merge, or
+#      reuse the open PR from a previous attempt (rerun-safe).
+#   4. Wait for the PR to actually merge (10 min). If checks await a
+#      maintainer's approval (public-repo contributor gate), the wait says
+#      so; approving and re-running the workflow reuses the same PR.
+#   5. Only after the merge: verify the merged version, tag the merged
+#      commit, push the tag, create the GitHub Release with index.js +
+#      package.json as assets.
 #
-# Loop prevention: the bump commit only touches package.json and CHANGELOG.md
-# inside packages/opencode-plugin/ — which DOES match the paths filter.
-# To prevent re-triggering, the bump commit message is "release plugin/v*"
-# (no feat/fix prefix), which produces zero releasable commits for the next
-# run and the bump step exits cleanly with "No commits … skipping".
+# Tagging only after the merge means a blocked or closed bump PR leaves no
+# tag behind — nothing to clean up, no orphaned release.
+#
+# Loop prevention: bump commits are filtered from the scan by subject
+# ("release plugin/v*", "release v*"), so even a merge that does trigger
+# this workflow (paths match) finds no release-worthy commits and skips.
+# (GitHub also does not start runs from GITHUB_TOKEN-initiated merges.)
 #
 # Security posture (per AGENTS.md):
 #   - All uses: pinned to full commit SHAs with # vX.Y.Z comments.
@@ -43,7 +53,7 @@ concurrency:
 
 jobs:
   release-plugin:
-    name: plugin — bump, PR, wait, release
+    name: plugin — bump, PR, merge, tag, release
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -84,21 +94,33 @@ jobs:
           COMMITS=$(printf '%s\n' "$RAW_COMMITS" | grep -v '^release plugin/v' | grep -v '^release v' || true)
 
           if [ -z "$COMMITS" ]; then
-            echo "No releasable commits in packages/opencode-plugin/ since ${LAST_TAG:-<root>} — skipping."
+            echo "No commits touching packages/opencode-plugin/ since ${LAST_TAG:-<root>} — skipping."
             echo "tag=" >> "$GITHUB_OUTPUT"
             echo "branch=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          BUMP_TYPE="patch"
+          # Only feat (minor) and fix/perf/refactor/revert (patch) request a
+          # release; breaking changes bump minor while major stays 0.
+          BUMP_TYPE=""
           while IFS= read -r subject; do
             if echo "$subject" | grep -qE '!:|BREAKING CHANGE'; then
               BUMP_TYPE="minor"
               break
             elif echo "$subject" | grep -qE '^feat(\([^)]*\))?:'; then
               BUMP_TYPE="minor"
+            elif [ -z "$BUMP_TYPE" ] && \
+                echo "$subject" | grep -qE '^(fix|perf|refactor|revert)(\([^)]*\))?:'; then
+              BUMP_TYPE="patch"
             fi
           done <<< "$COMMITS"
+
+          if [ -z "$BUMP_TYPE" ]; then
+            echo "Only non-release commits (docs/chore/test/ci/style/build) since ${LAST_TAG:-<root>} — skipping."
+            echo "tag=" >> "$GITHUB_OUTPUT"
+            echo "branch=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
           case "$BUMP_TYPE" in
@@ -140,17 +162,32 @@ jobs:
         if: steps.check.outputs.skip == 'false'
         env:
           BUMP_TAG: ${{ steps.bump.outputs.tag }}
-          BUMP_TYPE: ${{ steps.bump.outputs.bump_type }}
         run: |
           DATE=$(date -u +%Y-%m-%d)
-          SECTION=$([ "$BUMP_TYPE" = "minor" ] && echo "feat" || echo "fix")
           {
             echo "## ${BUMP_TAG} (${DATE})"
             echo ""
-            echo "### ${SECTION}"
-            echo ""
-            while IFS= read -r line; do echo "- ${line}"; done < /tmp/plugin-commits.txt
-            echo ""
+            FEATS=$(grep -E '^feat' /tmp/plugin-commits.txt || true)
+            if [ -n "$FEATS" ]; then
+              echo "### Feat"
+              echo ""
+              printf '%s\n' "$FEATS" | sed 's/^/- /'
+              echo ""
+            fi
+            FIXES=$(grep -E '^(fix|perf|refactor|revert)' /tmp/plugin-commits.txt || true)
+            if [ -n "$FIXES" ]; then
+              echo "### Fix"
+              echo ""
+              printf '%s\n' "$FIXES" | sed 's/^/- /'
+              echo ""
+            fi
+            MISC=$(grep -vE '^(feat|fix|perf|refactor|revert)' /tmp/plugin-commits.txt || true)
+            if [ -n "$MISC" ]; then
+              echo "### Miscellaneous"
+              echo ""
+              printf '%s\n' "$MISC" | sed 's/^/- /'
+              echo ""
+            fi
           } > /tmp/new-entry.md
           awk '
             /<!-- next-version -->/ {
@@ -162,7 +199,7 @@ jobs:
           ' packages/opencode-plugin/CHANGELOG.md > /tmp/cl-merged.md
           mv /tmp/cl-merged.md packages/opencode-plugin/CHANGELOG.md
 
-      - name: Commit, tag, push bump branch
+      - name: Commit and push bump branch (no tag yet)
         if: steps.check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -174,40 +211,86 @@ jobs:
           git add packages/opencode-plugin/package.json \
                   packages/opencode-plugin/CHANGELOG.md
           git commit -m "release ${BUMP_TAG}"
-          git tag "${BUMP_TAG}"
-          git push origin "HEAD:refs/heads/${BUMP_BRANCH}" --tags
+          # --force so a rerun after a blocked attempt reuses the branch.
+          git push --force origin "HEAD:refs/heads/${BUMP_BRANCH}"
 
-      - name: Open bump PR and enable auto-merge
+      - name: Open or reuse bump PR and enable auto-merge
+        id: pr
         if: steps.check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
           BUMP_BRANCH: ${{ steps.bump.outputs.branch }}
           BUMP_TAG: ${{ steps.bump.outputs.tag }}
         run: |
-          PR_URL=$(gh pr create \
-            --title "release ${BUMP_TAG}" \
-            --body "Automated opencode plugin version bump to ${BUMP_TAG}. Auto-merges when CI passes." \
-            --base main \
-            --head "${BUMP_BRANCH}")
-          echo "Opened: ${PR_URL}"
-          gh pr merge "${PR_URL}" --auto --squash
+          PR_URL=$(gh pr list --head "${BUMP_BRANCH}" --state open \
+            --json url --jq '.[0].url // empty')
+          if [ -z "$PR_URL" ]; then
+            PR_URL=$(gh pr create \
+              --title "release ${BUMP_TAG}" \
+              --body "Automated opencode plugin version bump to ${BUMP_TAG}. Auto-merges when CI passes." \
+              --base main \
+              --head "${BUMP_BRANCH}")
+            echo "Opened: ${PR_URL}"
+          else
+            echo "Reusing open PR: ${PR_URL}"
+          fi
+          echo "url=${PR_URL}" >> "$GITHUB_OUTPUT"
+          gh pr merge "${PR_URL}" --auto --squash || \
+            echo "Auto-merge already enabled."
 
-      - name: Wait for bump PR to land on main (up to 10 min)
+      - name: Wait for the bump PR to merge (up to 10 min)
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+          BUMP_TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          HEAD_SHA=$(git rev-parse HEAD)
+          for i in $(seq 1 20); do
+            STATE=$(gh pr view "${PR_URL}" --json state --jq .state 2>/dev/null || echo "")
+            if [ "$STATE" = "MERGED" ]; then
+              echo "Bump PR merged after ${i} poll(s)."
+              exit 0
+            fi
+            if [ "$STATE" = "CLOSED" ]; then
+              echo "Bump PR for ${BUMP_TAG} was closed without merging — aborting." >&2
+              exit 1
+            fi
+            if [ $((i % 5)) -eq 0 ]; then
+              WAITING=$(gh run list --commit "${HEAD_SHA}" --json conclusion \
+                --jq '[.[] | select(.conclusion == "action_required")] | length' \
+                2>/dev/null || echo 0)
+              if [ "$WAITING" != "0" ]; then
+                echo "Note: ${WAITING} check run(s) still await maintainer approval."
+              fi
+            fi
+            if [ "$i" -eq 20 ]; then
+              echo "Timed out waiting for ${BUMP_TAG}'s bump PR to merge." >&2
+              echo "If checks await approval, approve them in the Actions tab and re-run" >&2
+              echo "this workflow — the open bump PR is reused. No tag was created." >&2
+              exit 1
+            fi
+            sleep 30
+          done
+
+      - name: Tag the merged commit and push the tag
         if: steps.check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
           BUMP_TAG: ${{ steps.bump.outputs.tag }}
+          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
         run: |
-          for i in $(seq 1 20); do
-            if git ls-remote --tags origin | grep -qF "refs/tags/${BUMP_TAG}"; then
-              echo "Tag ${BUMP_TAG} confirmed on remote after ${i} polls."
-              break
-            fi
-            if [ "$i" -eq 20 ]; then
-              echo "Timed out waiting for ${BUMP_TAG} on remote." >&2; exit 1
-            fi
-            sleep 30
-          done
+          git remote set-url origin \
+            "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}"
+          git fetch origin main --quiet
+          MERGED_VERSION=$(git show origin/main:packages/opencode-plugin/package.json \
+            | node -e "const pkg = JSON.parse(require('fs').readFileSync(0, 'utf8')); process.stdout.write(pkg.version);")
+          if [ "$MERGED_VERSION" != "$NEW_VERSION" ]; then
+            echo "main has ${MERGED_VERSION}, expected ${NEW_VERSION} — aborting." >&2
+            exit 1
+          fi
+          git tag -f -a -m "release ${BUMP_TAG}" "${BUMP_TAG}" origin/main
+          git push origin "refs/tags/${BUMP_TAG}"
 
       - name: Extract release notes from plugin CHANGELOG
         if: steps.check.outputs.skip == 'false'
