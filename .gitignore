@@ -28,3 +28,4 @@ vault/.trash/
 /site/results/
 /site/assets/benchmark.css
 /site/_data/benchmark.json
+.coverage
