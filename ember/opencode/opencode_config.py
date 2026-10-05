@@ -47,7 +47,7 @@ def global_config_path() -> Path:
     Path
         ``~/.config/opencode/opencode.json``.
     """
-    return Path.home() / ".config" / "opencode" / "opencode.json"
+    return Path.home() / ".config" / "opencode" / _ACCEPTED_BASENAME
 
 
 def project_config_path(root: Path) -> Path:
@@ -63,7 +63,7 @@ def project_config_path(root: Path) -> Path:
     Path
         ``<root>/opencode.json``.
     """
-    return root / "opencode.json"
+    return root / _ACCEPTED_BASENAME
 
 
 def mcp_command() -> list[str]:

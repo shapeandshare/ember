@@ -413,20 +413,26 @@ def cmd_agents_show(args: argparse.Namespace) -> int:
 # doctor, uninstall
 # ###########################################################################
 def _doctor_check_platform(
-    check: collections.abc.Callable[[str, bool, str], None],
+    check: collections.abc.Callable[[str, bool, str], bool],
     info: collections.abc.Callable[[str, str], None],
-) -> None:
+) -> bool:
     """Emit the platform and Python version doctor lines.
 
     Parameters
     ----------
-    check : Callable[[str, bool, str], None]
-        Emit a pass/fail line and update the ``ok`` flag.
+    check : Callable[[str, bool, str], bool]
+        Emit a pass/fail line and return its result.
     info : Callable[[str, str], None]
         Emit an informational line.
+
+    Returns
+    -------
+    bool
+        ``True`` when every emitted check passed.
     """
+    ok = True
     if paths.is_apple_silicon():
-        check("platform", True, "Apple Silicon macOS")
+        ok = check("platform", True, "Apple Silicon macOS") and ok
     else:
         info(
             "platform",
@@ -434,63 +440,82 @@ def _doctor_check_platform(
             "model server requires Apple Silicon macOS",
         )
     tested_python = sys.version_info[:2] == (3, 12)
-    check(
-        "python",
-        tested_python,
-        platform.python_version()
-        if tested_python
-        else f"{platform.python_version()} is untested; "
-        "reinstall with `uv tool install --python 3.12 ...`",
+    ok = (
+        check(
+            "python",
+            tested_python,
+            platform.python_version()
+            if tested_python
+            else f"{platform.python_version()} is untested; "
+            "reinstall with `uv tool install --python 3.12 ...`",
+        )
+        and ok
     )
+    return ok
 
 
 def _doctor_check_deps(
-    check: collections.abc.Callable[[str, bool, str], None],
-) -> None:
+    check: collections.abc.Callable[[str, bool, str], bool],
+) -> bool:
     """Emit torch and transformers availability doctor lines.
 
     Parameters
     ----------
-    check : Callable[[str, bool, str], None]
-        Emit a pass/fail line and update the ``ok`` flag.
+    check : Callable[[str, bool, str], bool]
+        Emit a pass/fail line and return its result.
+
+    Returns
+    -------
+    bool
+        ``True`` when every emitted check passed.
     """
+    ok = True
     try:
         # import-placement:allow - doctor availability probe; may not be installed
         import torch
 
         mps = torch.backends.mps.is_available()
-        check(
-            "torch",
-            True,
-            f"{torch.__version__} (mps={'yes' if mps else 'no, CPU fallback'})",
+        ok = (
+            check(
+                "torch",
+                True,
+                f"{torch.__version__} (mps={'yes' if mps else 'no, CPU fallback'})",
+            )
+            and ok
         )
     except ImportError as exc:
-        check("torch", False, str(exc))
+        ok = check("torch", False, str(exc)) and ok
     try:
         # import-placement:allow - doctor availability probe; may not be installed
         import transformers
 
-        check("transformers", True, transformers.__version__)
+        ok = check("transformers", True, transformers.__version__) and ok
     except ImportError as exc:
-        check("transformers", False, str(exc))
+        ok = check("transformers", False, str(exc)) and ok
+    return ok
 
 
 def _doctor_check_models(
-    check: collections.abc.Callable[[str, bool, str], None],
+    check: collections.abc.Callable[[str, bool, str], bool],
     info: collections.abc.Callable[[str, str], None],
-) -> None:
+) -> bool:
     """Emit model availability doctor lines for the selected and optional models.
 
     Parameters
     ----------
-    check : Callable[[str, bool, str], None]
-        Emit a pass/fail line and update the ``ok`` flag.
+    check : Callable[[str, bool, str], bool]
+        Emit a pass/fail line and return its result.
     info : Callable[[str, str], None]
         Emit an informational line.
+
+    Returns
+    -------
+    bool
+        ``True`` when the selected model check passed.
     """
     selected = config.resolve("model")
     model_dir = models.resolve_dir(selected)
-    check(
+    ok = check(
         f"model {selected}",
         model_dir is not None,
         str(model_dir)
@@ -503,6 +528,7 @@ def _doctor_check_models(
                 f"model {row['name']} ({row['params']})",
                 row["path"] or "not pulled (optional)",
             )
+    return ok
 
 
 def cmd_doctor(_: argparse.Namespace) -> int:
@@ -518,19 +544,17 @@ def cmd_doctor(_: argparse.Namespace) -> int:
     int
         ``0`` if every check passed, ``1`` otherwise.
     """
-    ok = True
 
-    def check(label: str, good: bool, detail: str) -> None:
-        nonlocal ok
+    def check(label: str, good: bool, detail: str) -> bool:
         print(f"[{'ok' if good else 'FAIL'}] {label}: {detail}")
-        ok = ok and good
+        return good
 
     def info(label: str, detail: str) -> None:
         print(f"[info] {label}: {detail}")
 
-    _doctor_check_platform(check, info)
-    _doctor_check_deps(check)
-    _doctor_check_models(check, info)
+    ok = _doctor_check_platform(check, info)
+    ok = _doctor_check_deps(check) and ok
+    ok = _doctor_check_models(check, info) and ok
 
     host, port = config.resolve("host"), int(config.resolve("port"))
     running = process.health(host, port) is not None
