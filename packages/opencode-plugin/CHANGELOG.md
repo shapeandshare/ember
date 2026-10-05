@@ -5,6 +5,16 @@ Versions follow [Semantic Versioning](https://semver.org/); changes follow
 [Conventional Commits](https://www.conventionalcommits.org/) with scope `plugin`.
 
 <!-- next-version -->
+## plugin/v0.3.1 (2026-10-05)
+
+### Fix
+
+- fix(plugin): respect EMBER_AUTOSTART from the environment (#48)
+
+### Miscellaneous
+
+- docs(plugin): document the standalone versioning policy (#47)
+
 ## plugin/v0.3.0 (2026-10-04)
 
 ### feat
