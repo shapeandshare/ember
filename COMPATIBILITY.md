@@ -101,7 +101,9 @@ about 0.9 to 1.3 seconds for 220 to 360 input tokens.
 - **Numerics differ across devices.** MPS can differ from CPU and CUDA. Cross-check with
   `EMBER_DEVICE=cpu ember restart` when calibrated probabilities matter.
 - **Context length.** `max_length` defaults to the model maximum (262144, from the pinned
-  `config.json`). A value of `0` derives it. It is not a fixed 16384 cap.
+  `config.json`). A value of `0` derives it. It is not a fixed 16384 cap. Individual
+  requests are additionally capped at 32768 tokens by default (`EMBER_MAX_REQUEST_LENGTH`);
+  set it to `0` to allow requests up to the model maximum.
 
 See also: [`README.md`](README.md) for install steps, and
 [`RESPONSIBLE_USE.md`](RESPONSIBLE_USE.md) for what the numbers mean.

@@ -200,6 +200,7 @@ is JSON at `ember config path` (keys `model`, `host`, `port`, `device`, `max_len
 | `EMBER_MODEL` | `flash` | `flash` (9B) or `full` (27B) |
 | `EMBER_MODEL_DIR` | — | Run weights from this directory instead of the pinned cache |
 | `EMBER_MAX_LENGTH` | `0` (the model's maximum: 262144) | Token cap per request; `0` derives it from the model |
+| `EMBER_MAX_REQUEST_LENGTH` | `32768` | Per-request token cap enforced before inference; `0` disables it (uses the model maximum) |
 | `EMBER_SERVER_URL` | `http://127.0.0.1:8765` | Where the MCP server sends requests |
 | `EMBER_AUTOSTART` | `1` | Let the MCP server start the model server on demand |
 | `EMBER_START_TIMEOUT` | `300` | Seconds to wait for the model server to start |

@@ -44,6 +44,30 @@ DEFAULT_MODEL_DIR = REPO_ROOT / ".models" / "clef-flash"
 #: Used only if a model's config.json has no max_position_embeddings.
 FALLBACK_MAX_LENGTH = 32768
 
+#: Maximum number of concurrent advise calls allowed to queue behind the engine
+#: lock (D-001). When all slots are taken, new calls fail fast with a 503-mapped
+#: AdmissionError rather than growing an unbounded queue that pins the server busy.
+#: 4 comfortably covers the MCP server's normal single-call flow while bounding
+#: memory growth from a runaway agent or loopback flood.
+MAX_PENDING_ADVISE = 4
+
+
+class AdmissionError(RuntimeError):
+    """Raised when the admission semaphore is full (D-001).
+
+    Signals that ``MAX_PENDING_ADVISE`` requests are already queued. The HTTP
+    layer maps this to 503 so the agent knows to retry shortly.
+    """
+
+
+class RequestTooLargeError(ValueError):
+    """Raised when tokenized input exceeds the per-request cap (D-002).
+
+    The HTTP layer maps this to 413 so the agent knows to reduce input size
+    or raise ``EMBER_MAX_REQUEST_LENGTH``.
+    """
+
+
 #: Explicit allowlist of processor keyword arguments callers may pass through.
 #: Switching from a blocklist to an allowlist (T-003) closes the gap where any
 #: non-reserved key was forwarded unchecked to joint_schema_model.systemone.
@@ -286,6 +310,25 @@ class Engine:
     """Holds the loaded model and answers advice requests.
 
     MPS inference is not thread-safe; all calls are serialized behind a lock.
+
+    Parameters
+    ----------
+    model_dir : str | os.PathLike[str], optional
+        Directory containing the model snapshot. Defaults to ``DEFAULT_MODEL_DIR``.
+    device : str | None, optional
+        Compute device; resolved by ``pick_device`` when ``None``.
+    dtype : torch.dtype | None, optional
+        Floating-point dtype; resolved by ``pick_dtype`` when ``None``.
+    max_length : int | None, optional
+        Server-level token budget passed to ``joint_schema_model.systemone``.
+        ``None`` derives it from the model's ``config.json``.
+    model_name : str | None, optional
+        Label echoed in responses. Defaults to the model directory name.
+    spec : ModelSpec | None, optional
+        Registry entry for integrity verification.
+    max_request_length : int, optional
+        Per-request token cap enforced after tokenization and before the model
+        forward pass (D-002). ``0`` disables the cap. Defaults to ``0``.
     """
 
     def __init__(
@@ -296,6 +339,7 @@ class Engine:
         max_length: int | None = None,
         model_name: str | None = None,
         spec: _models.ModelSpec | None = None,
+        max_request_length: int = 0,
     ) -> None:
         self.model_dir = Path(model_dir)
         self.model_name = model_name if model_name is not None else self.model_dir.name
@@ -306,11 +350,13 @@ class Engine:
         self.max_length = (
             max_length if max_length is not None else model_max_length(self.model_dir)
         )
+        self.max_request_length = max_request_length
         self._spec = spec
         self.model, self.processor = load_clef(
             self.model_dir, self.device, self.dtype, spec=spec
         )
         self._lock = threading.Lock()
+        self._admission = threading.Semaphore(MAX_PENDING_ADVISE)
 
     def advise(
         self,
@@ -321,7 +367,99 @@ class Engine:
         videos: list[list[media.MediaRef]] | None = None,
         media_kwargs: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Run a Jev/SystemOne request and return the SystemOne response body."""
+        """Run a Jev/SystemOne request and return the SystemOne response body.
+
+        Parameters
+        ----------
+        state : Any
+            The situation to read: a string or JSON value.
+        questions : dict[str, Any]
+            Mapping of question ID to typed question schema.
+        max_length : int | None, optional
+            Override the server-level token budget for this request.
+        images : list[MediaRef] | None, optional
+            Images as data: URIs or ``{content_type, base64}`` objects.
+        videos : list[list[MediaRef]] | None, optional
+            Videos, each a list of frame refs.
+        media_kwargs : dict[str, Any] | None, optional
+            Processor keyword arguments; only allowlisted keys are accepted.
+
+        Returns
+        -------
+        dict[str, Any]
+            SystemOne response body including ``answers`` and ``usage``.
+
+        Raises
+        ------
+        AdmissionError
+            If the admission semaphore is full (server busy — retry shortly).
+        RequestTooLargeError
+            If ``max_request_length`` is positive and the tokenized input
+            exceeds it.
+        ValueError
+            If ``media_kwargs`` contains disallowed keys.
+        """
+        if not self._admission.acquire(blocking=False):
+            raise AdmissionError(
+                f"server busy: {MAX_PENDING_ADVISE} requests already queued. "
+                "Retry shortly."
+            )
+        try:
+            return self._run_advise(
+                state, questions, max_length, images, videos, media_kwargs
+            )
+        finally:
+            self._admission.release()
+
+    def _run_advise(
+        self,
+        state: Any,
+        questions: dict[str, Any],
+        max_length: int | None,
+        images: list[media.MediaRef] | None,
+        videos: list[list[media.MediaRef]] | None,
+        media_kwargs: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        """Execute the advise request after admission is granted.
+
+        Parameters
+        ----------
+        state : Any
+            The situation to read.
+        questions : dict[str, Any]
+            Mapping of question ID to typed question schema.
+        max_length : int | None
+            Per-call token budget override.
+        images : list[MediaRef] | None
+            Image refs.
+        videos : list[list[MediaRef]] | None
+            Video frame refs.
+        media_kwargs : dict[str, Any] | None
+            Processor keyword arguments.
+
+        Returns
+        -------
+        dict[str, Any]
+            SystemOne response body.
+
+        Raises
+        ------
+        RequestTooLargeError
+            If the tokenized input exceeds ``max_request_length``.
+        ValueError
+            If ``media_kwargs`` contains disallowed keys.
+        """
+        if self.max_request_length > 0:
+            text = str(state)
+            tokens = self.processor.tokenizer(text)
+            token_count = len(tokens["input_ids"])
+            if token_count > self.max_request_length:
+                raise RequestTooLargeError(
+                    f"request too large: {token_count} tokens exceeds the "
+                    f"{self.max_request_length}-token per-request cap. "
+                    "Reduce input size or raise EMBER_MAX_REQUEST_LENGTH "
+                    "(set to 0 to use the model maximum)."
+                )
         js = joint_module(self.model_dir, spec=self._spec)
         request: dict[str, Any] = {
             "model": self.model_name,
