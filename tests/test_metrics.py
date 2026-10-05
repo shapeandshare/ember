@@ -98,7 +98,9 @@ def test_model_info_tracks_the_engine_lifecycle(monkeypatch, tmp_path):
         device = "cpu"
         dtype = "float32"
 
-        def __init__(self, model_dir, device=None, max_length=None, model_name=None):
+        def __init__(
+            self, model_dir, device=None, max_length=None, model_name=None, **_kw
+        ):
             self.model_dir = model_dir
             self.model_name = model_name or "fake"
 

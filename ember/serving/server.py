@@ -111,6 +111,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         device=config.resolve("device"),
         max_length=raw_length if raw_length > 0 else None,
         model_name=name,
+        spec=models.get(name),
     )
     MODEL_INFO.clear()
     MODEL_INFO.labels(
