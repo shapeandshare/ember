@@ -13,6 +13,7 @@ import signal
 import subprocess  # nosec B404
 import sys
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -225,6 +226,27 @@ def start(
     )
 
 
+def _append_audit_log(message: str) -> None:
+    """Append a timestamped audit entry to the server log.
+
+    Best-effort: if the log write fails (e.g. the log directory is missing or
+    read-only), a warning is printed to stderr and the caller continues.  A
+    broken log directory must never prevent stopping a runaway server.
+
+    Parameters
+    ----------
+    message : str
+        The audit message to append (without timestamp; one is prepended).
+    """
+    ts = datetime.now(tz=UTC).isoformat(timespec="seconds")
+    line = f"{ts} {message}\n"
+    try:
+        with open(paths.server_log_path(), "ab") as fh:
+            fh.write(line.encode())
+    except OSError as exc:
+        print(f"ember: warning: could not write audit log: {exc}", file=sys.stderr)
+
+
 def stop(
     host: str | None = None, port: int | None = None, timeout: float = 15.0
 ) -> bool:
@@ -232,6 +254,14 @@ def stop(
 
     Signals only the pid recorded by ``start``, after confirming it is
     still an ember server; it never kills by port or by process pattern.
+
+    Before sending ``SIGTERM`` an audit entry is appended to
+    ``paths.server_log_path()`` recording the action and pid.  If the process
+    does not exit within ``timeout`` seconds and ``SIGKILL`` is sent, a second
+    audit entry is appended.  No entry is written when no server is tracked
+    (the early ``return False`` path).  Audit writes are best-effort: an
+    ``OSError`` on the log append is reported to stderr but does not prevent
+    the signal from being sent.
 
     Parameters
     ----------
@@ -256,11 +286,13 @@ def stop(
     pid = tracked_pid(host, port)
     if pid is None:
         return False
+    _append_audit_log(f"stop: signaling pid={pid}")
     os.kill(pid, signal.SIGTERM)
     deadline = time.time() + timeout
     while time.time() < deadline and _pid_alive(pid):
         time.sleep(0.2)
     if _pid_alive(pid):
+        _append_audit_log(f"stop: escalating to SIGKILL for pid={pid}")
         os.kill(pid, signal.SIGKILL)
     paths.pid_path().unlink(missing_ok=True)
     return True
