@@ -7,7 +7,7 @@ tags:
   - domain/governance
   - status/draft
 created: 2026-10-03
-updated: 2026-10-03
+updated: 2026-10-04
 code-refs:
   - .github/workflows/ci.yml
   - .github/workflows/release-ember.yml
@@ -45,9 +45,10 @@ repository and organization settings below are applied in order.
 - Workflows start from `permissions: {}` and grant per job; checkout sets
   `persist-credentials: false`; every job has a timeout and every workflow a
   concurrency group.
-- `release.yml` runs only from `main`, holds the only write permission (`contents`),
-  never restores a cache, uses the preinstalled `gh` instead of a third-party release
-  action, and documents trusted publishing instead of long-lived tokens.
+- `release-ember.yml`/`release-plugin.yml` run only from `main`, hold the only write
+  permissions (`contents` plus `pull-requests` for the bump PR), never restore a cache, use
+  the preinstalled `gh` instead of a third-party release action, and document trusted
+  publishing instead of long-lived tokens.
 - No workflow uses `pull_request_target`, `workflow_run`, org secrets, or self-hosted
   runners. Model-backed tests stay on a maintainer's machine.
 - Vulnerability reports go through private vulnerability reporting, linked from
@@ -64,6 +65,7 @@ repository and organization settings below are applied in order.
 | When | Setting | Who |
 | --- | --- | --- |
 | Applied 2026-10-03 | Default workflow token read-only; Actions may not approve pull requests | repo admin |
+| Revised 2026-10-04 | Default workflow token read-write; "Allow GitHub Actions to create and approve pull requests" enabled — required by the release workflows' bump-PR pattern (GitHub couples create+approve in one setting). Residual risk is low: the ruleset gates on required status checks, which a review approval cannot bypass, and every bump PR ran the full `pr-ready` gate before merging | repo admin |
 | Applied 2026-10-03 | `main` ruleset requires `compile, unit tests, build, install smoke` from GitHub Actions | repo admin |
 | Applied 2026-10-03 | Tag ruleset `release-tags`: `v*` tags cannot be deleted or moved; immutable releases on | repo admin |
 | Done 2026-10-03 | The runner group holding the self-hosted runners does not allow public repositories (narrowing its repository access is optional) | org owner |
@@ -77,6 +79,8 @@ R=repos/shapeandshare/ember
 # After the workflow change merges
 gh api -X PUT $R/actions/permissions --input - <<<'{"enabled":true,"allowed_actions":"selected","sha_pinning_required":true}'
 gh api -X PUT $R/actions/permissions/selected-actions --input - <<<'{"github_owned_allowed":true,"verified_allowed":false,"patterns_allowed":["astral-sh/setup-uv@*","zizmorcore/zizmor-action@*"]}'
+# The release workflows open bump PRs with GITHUB_TOKEN; no personal access token is stored
+gh api -X PUT $R/actions/permissions/workflow --input - <<<'{"default_workflow_permissions":"write","can_approve_pull_request_reviews":true}'
 # Right after going public
 gh api -X PUT $R/actions/permissions/fork-pr-contributor-approval -f approval_policy=all_external_contributors
 gh api -X PATCH $R --input - <<<'{"security_and_analysis":{"secret_scanning":{"status":"enabled"},"secret_scanning_push_protection":{"status":"enabled"}}}'

@@ -1,6 +1,6 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-04 (constitutional Articles XI–XV adopted; Testing section added; Architecture Rules + Docstring Convention + Design System sections added; behavioral principles 9–12 expanded with full TDD workflow; Python conventions expanded with enums, forward refs, solid separators; commit scope discipline added to principle 6; per-component versioning: ember=v*, plugin=plugin/v*)
+**Last updated**: 2026-10-04 (constitutional Articles XI–XV adopted; Testing section added; Architecture Rules + Docstring Convention + Design System sections added; behavioral principles 9–12 expanded with full TDD workflow; Python conventions expanded with enums, forward refs, solid separators; commit scope discipline added to principle 6; per-component versioning live: ember=`v*`, plugin=`plugin/v*`)
 
 ## What this repo is
 
@@ -558,6 +558,16 @@ spacing values, or component styles outside the design system.
   reference org secrets. The `zizmor` job in `ci` enforces this; run
   `uvx zizmor@1.30.1 .github/` before pushing workflow changes. See
   `vault/decisions/2026-10-03-harden-github-before-going-public.md`.
+- **The release workflows open bump PRs.** `release-ember.yml` (paths `ember/**`,
+  `evals/**`; tags `v*`) and `release-plugin.yml` (paths `packages/opencode-plugin/**`;
+  tags `plugin/v*`) run from `main` only. Each computes the next version from
+  conventional commits, commits it, pushes a `ci/bump-*` branch, opens a PR with
+  auto-merge, waits for it to land, then creates the GitHub Release. Two repo settings
+  are load-bearing: the Actions token must be read-write and "Allow GitHub Actions to
+  create and approve pull requests" must be on — the workflows create their PRs with
+  `GITHUB_TOKEN`, never a stored personal token. Bump commit subjects (`release v…`,
+  `release plugin/v…`) are filtered out of the commit scan, and only files under the
+  component's own paths trigger the workflow, so a bump never triggers another bump.
 - **The Pages site is generated at build.** `site/_docs/` and `site/assets/brand/` come from
   `scripts/build_site_docs.py` (manifest in `site/_data/docs.json`), so they are gitignored and
   must not be committed. To publish a page, add a manifest entry and run `make site`; never hand
