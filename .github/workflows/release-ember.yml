@@ -184,6 +184,12 @@ jobs:
               echo "Bump PR for ${BUMP_TAG} was closed without merging — aborting." >&2
               exit 1
             fi
+            MERGE_STATE=$(gh pr view "${PR_URL}" --json mergeStateStatus \
+              --jq .mergeStateStatus 2>/dev/null || echo "")
+            if [ "$MERGE_STATE" = "BEHIND" ]; then
+              echo "Bump branch is behind main — updating it."
+              gh pr update-branch "${PR_URL}" >/dev/null 2>&1 || true
+            fi
             if [ $((i % 5)) -eq 0 ]; then
               WAITING=$(gh run list --commit "${HEAD_SHA}" --json conclusion \
                 --jq '[.[] | select(.conclusion == "action_required")] | length' \
