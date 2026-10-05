@@ -564,11 +564,14 @@ spacing values, or component styles outside the design system.
   tags `plugin/v*`) run from `main` only. Each computes the next version from
   conventional commits, commits it, pushes a `ci/bump-*` branch, opens a PR with
   auto-merge, waits for that PR to actually merge, and only then tags the merged
-  commit and creates the GitHub Release — a blocked or closed PR leaves no tag behind.
-  Reruns are safe: the branch is force-pushed and an open bump PR is reused. If the
-  wait times out because check runs await maintainer approval (the public-repo
-  contributor gate that applied to the bot's first PRs), approve them in the Actions
-  tab and re-run the workflow. The ember side releases on commitizen's rules; the
+  commit and creates the GitHub Release — a blocked or closed PR leaves no tag
+  behind. Reruns are safe: the branch is force-pushed, an open bump PR is reused,
+  and a branch that falls behind main is updated while waiting. If the wait times
+  out because check runs await maintainer approval (the public-repo contributor
+  gate that applied to the bot's first PRs), approve the runs, let the bump PR
+  merge, then dispatch the workflow (`make release-ember` / `make release-plugin`)
+  — it detects the already-merged version on main and goes straight to tagging
+  and publishing. The ember side releases on commitizen's rules; the
   plugin side releases only for `feat` (minor) and `fix`/`perf`/`refactor`/`revert`
   (patch) commits — `docs`/`chore`/`test`/`ci`/`style`/`build` changes accumulate
   until a release-worthy commit arrives. Two repo settings are load-bearing: the

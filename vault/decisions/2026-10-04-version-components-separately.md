@@ -71,10 +71,15 @@ appear in the root changelog only.
   `GITHUB_TOKEN`-initiated merges — three independent guards.
 - Tags are created only after the bump PR merges, so a blocked, closed, or
   timed-out release leaves no tag and no release behind; re-running the workflow
-  force-pushes the same branch and reuses the open PR.
+  force-pushes the same branch, reuses the open PR, and updates a branch that fell
+  behind main while waiting. Tags created from now on point at merged main commits
+  (the lookup matches by tag name, like commitizen, because older tags point at
+  pre-squash bump commits).
 - If the bump PR's checks sit in `action_required` — the public-repo contributor
   gate observed on the bot's first PRs — the wait prints a note and eventually
-  fails with instructions; a maintainer approves the runs and re-runs the workflow.
+  fails with instructions; a maintainer approves the runs, lets the bump PR merge,
+  then dispatches the workflow. A resumed run detects that main already carries the
+  new version and goes straight to tagging and publishing it.
 - Bump PRs pass the full `pr-ready` gate before merging, including the
   workflow-security job; the token change buys no bypass of the ruleset's required
   checks (documented in [[2026-10-03-harden-github-before-going-public]]).
