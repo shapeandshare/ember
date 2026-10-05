@@ -8,6 +8,7 @@ import inspect
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -358,6 +359,131 @@ def test_tracked_pid_ignores_a_pid_that_is_not_an_ember_server(tmp_path, monkeyp
 def test_stop_without_a_tracked_server_signals_nothing(tmp_path, monkeypatch):
     monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
     assert process.stop("127.0.0.1", free_port()) is False
+
+
+# ###########################################################################
+# stop() audit logging (R-001)
+# ###########################################################################
+def test_stop_writes_sigterm_audit_entry_to_server_log(tmp_path, monkeypatch):
+    """stop() appends a timestamped SIGTERM audit entry to server.log."""
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
+    fake_pid = 99999
+
+    # Fake a tracked server: pid file exists, pid is "alive", is an ember server.
+    # _pid_alive must return True so tracked_pid accepts the pid, then False so
+    # the SIGTERM wait loop exits without spinning.
+    alive_calls = {"count": 0}
+
+    def fake_pid_alive(pid: int) -> bool:
+        alive_calls["count"] += 1
+        return alive_calls["count"] <= 1
+
+    paths.pid_path().write_text(str(fake_pid))
+    monkeypatch.setattr(process, "_pid_alive", fake_pid_alive)
+    monkeypatch.setattr(process, "_is_ember_server", lambda pid: True)
+    monkeypatch.setattr(process, "health", lambda *a, **kw: None)
+
+    kill_calls: list[tuple[int, int]] = []
+
+    def fake_kill(pid: int, sig: int) -> None:
+        kill_calls.append((pid, sig))
+
+    monkeypatch.setattr(process.os, "kill", fake_kill)
+
+    result = process.stop("127.0.0.1", free_port())
+
+    assert result is True
+    log_text = paths.server_log_path().read_text(encoding="utf-8")
+    assert f"stop: signaling pid={fake_pid}" in log_text
+    assert re.search(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", log_text)
+
+
+def test_stop_writes_sigkill_audit_entry_when_escalating(tmp_path, monkeypatch):
+    """stop() appends a SIGKILL escalation entry when the process survives SIGTERM."""
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
+    fake_pid = 99998
+
+    paths.pid_path().write_text(str(fake_pid))
+    # _pid_alive stays True (stubborn process) until SIGKILL is sent.
+    # timeout=0.0 makes the wait loop exit immediately so SIGKILL is triggered.
+    alive_state = {"alive": True}
+
+    def fake_pid_alive(pid: int) -> bool:
+        return alive_state["alive"]
+
+    monkeypatch.setattr(process, "_pid_alive", fake_pid_alive)
+    monkeypatch.setattr(process, "_is_ember_server", lambda pid: True)
+    monkeypatch.setattr(process, "health", lambda *a, **kw: None)
+
+    kill_calls: list[tuple[int, int]] = []
+
+    def fake_kill(pid: int, sig: int) -> None:
+        kill_calls.append((pid, sig))
+        if sig == signal.SIGKILL:
+            alive_state["alive"] = False
+
+    monkeypatch.setattr(process.os, "kill", fake_kill)
+    result = process.stop("127.0.0.1", free_port(), timeout=0.0)
+
+    assert result is True
+    sigs = [s for _, s in kill_calls]
+    assert signal.SIGTERM in sigs
+    assert signal.SIGKILL in sigs
+
+    log_text = paths.server_log_path().read_text(encoding="utf-8")
+    assert f"stop: signaling pid={fake_pid}" in log_text
+    assert f"stop: escalating to SIGKILL for pid={fake_pid}" in log_text
+
+
+def test_stop_writes_no_audit_entry_when_nothing_tracked(tmp_path, monkeypatch):
+    """stop() writes nothing to server.log when no server is tracked."""
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
+    # No pid file → tracked_pid returns None → early return False.
+    result = process.stop("127.0.0.1", free_port())
+
+    assert result is False
+    # Log file should not exist (or be empty) — no audit entry written.
+    log_path = paths.server_log_path()
+    if log_path.exists():
+        assert log_path.read_text(encoding="utf-8") == ""
+
+
+def test_stop_succeeds_even_when_log_write_raises_oserror(tmp_path, monkeypatch):
+    """stop() still signals the pid and returns True when the log append fails."""
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
+    fake_pid = 99997
+
+    paths.pid_path().write_text(str(fake_pid))
+    alive_calls_oserr = {"count": 0}
+
+    def fake_pid_alive_oserr(pid: int) -> bool:
+        alive_calls_oserr["count"] += 1
+        return alive_calls_oserr["count"] <= 1
+
+    monkeypatch.setattr(process, "_pid_alive", fake_pid_alive_oserr)
+    monkeypatch.setattr(process, "_is_ember_server", lambda pid: True)
+    monkeypatch.setattr(process, "health", lambda *a, **kw: None)
+
+    kill_calls: list[tuple[int, int]] = []
+
+    def fake_kill(pid: int, sig: int) -> None:
+        kill_calls.append((pid, sig))
+
+    monkeypatch.setattr(process.os, "kill", fake_kill)
+
+    # Make the log directory read-only so open() raises OSError.
+    log_path = paths.server_log_path()
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path.parent.chmod(0o555)
+
+    try:
+        result = process.stop("127.0.0.1", free_port())
+    finally:
+        log_path.parent.chmod(0o755)
+
+    assert result is True
+    sigs = [s for _, s in kill_calls]
+    assert signal.SIGTERM in sigs
 
 
 def test_start_fails_fast_when_the_model_is_missing(tmp_path, monkeypatch):
