@@ -25,6 +25,15 @@ def sandbox(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path / "state"))
+    for name in (
+        "EMBER_SERVER_URL",
+        "EMBER_AUTH_TOKEN",
+        "EMBER_AUTH_HEADER",
+        "EMBER_ALLOW_INSECURE_TRANSPORT",
+        "EMBER_REQUEST_TIMEOUT",
+        "EMBER_SERVER_AUTH_TOKEN",
+    ):
+        monkeypatch.delenv(name, raising=False)
     return tmp_path
 
 
@@ -74,7 +83,75 @@ def test_status_and_stop_are_inert_on_an_unused_port(sandbox, capsys):
     port = str(free_port())
     assert cli.main(["status", "--port", port]) == 1
     assert cli.main(["stop", "--port", port]) == 0
-    assert capsys.readouterr().out.splitlines() == ["not running", "not running"]
+    out = capsys.readouterr().out
+    assert out.splitlines()[-1] == "not running"
+    assert '"reachable": false' in out
+
+
+def test_status_reports_local_endpoint(sandbox, capsys):
+    port = str(free_port())
+    assert cli.main(["status", "--port", port]) == 1
+    body = json.loads(capsys.readouterr().out)
+    assert body["kind"] == "local"
+    assert body["reachable"] is False
+
+
+def test_status_reports_remote_endpoint(sandbox, capsys):
+    assert cli.main(["status", "--server-url", "https://example.invalid"]) == 1
+    body = json.loads(capsys.readouterr().out)
+    assert body["kind"] == "remote"
+    assert body["reachable"] is False
+
+
+def test_status_surfaces_remote_health_fields(sandbox, capsys, monkeypatch):
+    from ember.cfg import endpoint as ep
+
+    remote = ep.Endpoint(
+        url="https://decisions.example",
+        host="decisions.example",
+        scheme="https",
+        is_local=False,
+        allow_insecure_transport=False,
+        request_timeout=5,
+    )
+    monkeypatch.setattr(cli, "_resolve_endpoint", lambda args: remote)
+    monkeypatch.setattr(
+        cli,
+        "_remote_health",
+        lambda endpoint: {"status": "ok", "version": "9.9.9", "auth_required": True},
+    )
+    assert cli.main(["status"]) == 0
+    body = json.loads(capsys.readouterr().out)
+    assert body["kind"] == "remote"
+    assert body["reachable"] is True
+    assert body["contract_version"] == "9.9.9"
+    assert body["remote_auth_required"] is True
+    assert body["auth_configured"] is False
+
+
+def test_status_rejects_plaintext_remote(sandbox, capsys):
+    assert cli.main(["status", "--server-url", "http://192.0.2.1:8765"]) == 1
+    assert "[fail]" in capsys.readouterr().out
+
+
+def test_local_to_remote_is_single_reversible_change(sandbox, capsys):
+    assert cli.main(["status", "--server-url", "https://example.invalid"]) == 1
+    assert json.loads(capsys.readouterr().out)["kind"] == "remote"
+    port = str(free_port())
+    assert cli.main(["status", "--port", port]) == 1
+    assert json.loads(capsys.readouterr().out)["kind"] == "local"
+
+
+def test_config_show_masks_secrets(sandbox, capsys, monkeypatch):
+    monkeypatch.setenv("EMBER_AUTH_TOKEN", "topsecret")
+    monkeypatch.setenv("EMBER_SERVER_AUTH_TOKEN", "server-token")
+    assert cli.main(["config", "show"]) == 0
+    out = capsys.readouterr().out
+    assert "topsecret" not in out
+    assert "server-token" not in out
+    body = json.loads(out)
+    assert body["auth_token"] == "***"
+    assert body["server_auth_token"] == "***"
 
 
 def test_doctor_treats_a_stopped_server_as_information(sandbox, monkeypatch, capsys):

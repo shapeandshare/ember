@@ -1,4 +1,24 @@
 <!--
+SYNC IMPACT REPORT — Remote Inference (Article I redefinition)
+Version change: 1.4.0 → 2.0.0 (MAJOR: Article I redefined from "Local-First and Private" to
+  "Local-First by Default"; a single remote endpoint may be explicitly configured, in which
+  case state, questions, and answers are sent to that endpoint by the user's own choice).
+Date: 2026-10-06
+Reason: feature 001-remote-inference-servers requires optional remote inference; the previous
+  absolute network prohibition is incompatible with the feature and with removing the
+  "never leaves your machine" documentation guarantee.
+Modified principles:
+  - Article I — renamed "Local-First by Default"; local remains the default and the only
+    behavior of an unconfigured install; remote is opt-in via one configured endpoint.
+Added sections: none
+Removed sections: none
+Templates / docs propagated:
+  - ✅ specs/001-remote-inference-servers/ (spec, plan, research, data-model, contracts, tasks)
+  - ☐ README.md, SECURITY.md, RESPONSIBLE_USE.md, ember/agent_kit/* (tracked in tasks.md T020–T022)
+  - ✅ AGENTS.md operationalization paragraph updated in this change
+Follow-up TODOs: docs updates are tracked in the feature's tasks.md, not silently deferred.
+-->
+<!--
 SYNC IMPACT REPORT — Five New Constitutional Articles
 Version change: 1.3.5 → 1.4.0 (MINOR: Articles XI–XV added; coverage ratchet applied; async-first enforced)
 Date: 2026-10-04
@@ -239,16 +259,21 @@ Follow-up TODOs: none
 
 ## Core Principles
 
-### Article I — Local-First and Private
+### Article I — Local-First by Default
 
-Inference MUST run on the user's machine. The decision path (`ember-mcp` → HTTP server →
-model) MUST NOT send `state`, questions, or answers over the network; the only network access is
-the explicit, user-initiated weight download (`ember model pull`, `make download`). Model
-weights MUST stay in the Hugging Face cache or a user-chosen directory, and MUST NOT be
-redistributed from this repository.
+Inference MUST run on the user's machine **by default**, and the decision path
+(`ember-mcp` → HTTP server → model) MUST NOT send `state`, questions, or answers over the
+network **when no remote endpoint is configured**. A user MAY explicitly configure a single
+remote inference endpoint; when one is configured, `state`, questions, and answers are sent to
+that endpoint by the user's own choice. An unconfigured install remains local-only and the
+default endpoint remains loopback. The only other network access is the explicit,
+user-initiated weight download (`ember model pull`, `make download`). Model weights MUST stay
+in the Hugging Face cache or a user-chosen directory, and MUST NOT be redistributed from this
+repository.
 
-Rationale: agents pass sensitive context (code, diffs, logs, user messages) into `state`.
-Keeping it local is the core value proposition.
+Rationale: agents pass sensitive context (code, diffs, logs, user messages) into `state`, so
+local stays the safe default and the core value proposition. Remote inference exists for users
+who cannot host the model (memory, disk, or CI) and is opt-in, explicit, and reversible.
 
 ### Article II — Typed Decisions, Not Text
 
@@ -672,4 +697,4 @@ required by the current work.
 - Reviews MUST check changes against the Articles, with special attention to Article III
   (agent contract) and Article V (pins).
 
-**Version**: 1.4.0 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-04
+**Version**: 2.0.0 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-06

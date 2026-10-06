@@ -86,8 +86,10 @@ the tested minor series. Set `EMBER_MODEL_DIR` to run another weights directory.
 
 ember is Apple-Silicon-first. In the cloud, run it on an Apple Silicon host with the memory
 above, or on any host with the CPU fallback (`EMBER_DEVICE=cpu` — float32, roughly twice the
-memory, much slower). NVIDIA/CUDA is out of scope. The HTTP server binds to loopback with no
-authentication, so exposing it beyond the host needs your own access controls. See
+memory, much slower). NVIDIA/CUDA is out of scope. The HTTP server binds to loopback by
+default; to serve other machines set `EMBER_HOST` and set `EMBER_SERVER_AUTH_TOKEN` to require
+`Authorization: Bearer <token>`. Ember does not terminate TLS — front a remote-serving
+deployment with a proxy. Clients point at it with `EMBER_SERVER_URL`. See
 [COMPATIBILITY.md](COMPATIBILITY.md) and [SECURITY.md](SECURITY.md).
 
 ## Agent onboarding
@@ -182,21 +184,46 @@ paths are rejected — the model server never reads host files or fetches URLs f
 ## Configuration
 
 Settings resolve as **CLI flag > environment variable > config file > default**. The config file
-is JSON at `ember config path` (keys `model`, `host`, `port`, `device`, `max_length`; a
-`max_length` of `0` means the model's own maximum).
+is JSON at `ember config path` (keys `model`, `host`, `port`, `device`, `max_length`,
+`server_url`, `auth_token`, `auth_header`, `allow_insecure_transport`, `request_timeout`,
+`server_auth_token`; a `max_length` of `0` means the model's own maximum).
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `EMBER_HOST` / `EMBER_PORT` | `127.0.0.1` / `8765` | Model server address |
+| `EMBER_HOST` / `EMBER_PORT` | `127.0.0.1` / `8765` | Local model server bind address |
 | `EMBER_DEVICE` | `auto` | `auto`, `mps`, or `cpu` |
 | `EMBER_MODEL` | `flash` | `flash` (9B) or `full` (27B) |
 | `EMBER_MODEL_DIR` | — | Run weights from this directory instead of the pinned cache |
 | `EMBER_MAX_LENGTH` | `0` (the model's maximum: 262144) | Token cap per request; `0` derives it from the model |
 | `EMBER_MAX_REQUEST_LENGTH` | `32768` | Per-request token cap enforced before inference; `0` disables it (uses the model maximum) |
-| `EMBER_SERVER_URL` | `http://127.0.0.1:8765` | Where the MCP server sends requests |
-| `EMBER_AUTOSTART` | `1` | Let the MCP server start the model server on demand |
+| `EMBER_SERVER_URL` | `http://127.0.0.1:8765` | Inference endpoint the client sends to; loopback by default, may be remote |
+| `EMBER_AUTH_TOKEN` | — | Client credential for a remote endpoint |
+| `EMBER_AUTH_HEADER` | `Authorization` | Header carrying the credential; `Authorization` sends `Bearer <token>`, any other name sends the token verbatim |
+| `EMBER_ALLOW_INSECURE_TRANSPORT` | `0` | Allow plaintext `http` to a non-loopback endpoint (off by default) |
+| `EMBER_REQUEST_TIMEOUT` | `300` | Seconds bounding a remote request |
+| `EMBER_SERVER_AUTH_TOKEN` | — | When set, the server requires `Authorization: Bearer <token>` on `/v1/systemone` |
+| `EMBER_AUTOSTART` | `1` | Let the MCP server start a local server on demand (loopback only) |
 | `EMBER_START_TIMEOUT` | `300` | Seconds to wait for the model server to start |
 | `EMBER_STATE_DIR` | Application Support | Where the pid file and logs live |
+
+### Remote inference
+
+Local inference is the default. To use a decision model running on another machine, point the
+client at it:
+
+```bash
+export EMBER_SERVER_URL="https://decisions.example.com"   # a remote ember server
+export EMBER_AUTH_TOKEN="…"                               # optional bearer token
+ember status                                              # reports local/remote + reachability
+```
+
+Credentials may be sent as `Authorization: Bearer <token>` (default) or as a custom header
+(`EMBER_AUTH_HEADER=X-API-KEY`), ordinarily in front of a proxy that translates it. `http` to
+a non-loopback host is refused unless `EMBER_ALLOW_INSECURE_TRANSPORT=1`. To make a server
+accept remote clients, set `EMBER_HOST` (e.g. `0.0.0.0`) and `EMBER_SERVER_AUTH_TOKEN`, and
+terminate TLS at a proxy. `ember status` / `ember doctor` report the endpoint kind,
+reachability, the remote's advertised `auth_required`, and whether a credential is configured;
+reverting to local is a single change (unset these variables).
 
 ## Metrics
 
@@ -230,8 +257,9 @@ ember/
   mcp/                # MCP stdio server and wire types
     mcp_server.py     #   MCP stdio server: advise tool, instructions, ember://guide
     mcp_types.py      #   Pydantic wire types (Question, AdviseInput)
-  cfg/                # configuration and platform paths
+  cfg/                # configuration, endpoint, and platform paths
     config.py         #   config resolution (CLI flag > env > file > default)
+    endpoint.py       #   client endpoint: loopback check, transport guard, auth headers
     paths.py          #   platform-aware app dirs (macOS Library, XDG)
   opencode/           # opencode integration
     opencode_config.py  # generates opencode.json

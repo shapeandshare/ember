@@ -85,6 +85,17 @@ def _write(repo: Path, files: dict[str, str | bytes]) -> None:
             path.write_text(content, encoding="utf-8")
 
 
+def _forwarded_env() -> dict[str, str]:
+    """Return the remote/auth env vars to pass to the MCP child, when set."""
+    names = (
+        "EMBER_AUTH_TOKEN",
+        "EMBER_AUTH_HEADER",
+        "EMBER_ALLOW_INSECURE_TRANSPORT",
+        "EMBER_REQUEST_TIMEOUT",
+    )
+    return {name: os.environ[name] for name in names if os.environ.get(name)}
+
+
 def condition_files(
     condition: str, *, ember_mcp: list[str], server_url: str
 ) -> dict[str, str]:
@@ -100,7 +111,11 @@ def condition_files(
             "ember": {
                 "type": "local",
                 "command": ember_mcp,
-                "environment": {"EMBER_SERVER_URL": server_url, "EMBER_AUTOSTART": "0"},
+                "environment": {
+                    "EMBER_SERVER_URL": server_url,
+                    "EMBER_AUTOSTART": "0",
+                    **_forwarded_env(),
+                },
                 "enabled": True,
             }
         }

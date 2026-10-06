@@ -1,12 +1,12 @@
 ---
 name: ember-advise
-description: Playbook for the ember_advise MCP tool, a local advisor that returns calibrated probabilities. Use when classifying user intent, triaging errors or failing tests, routing work, checking yes/no gates (needs review, safe to retry, specific enough to act), scoring risk, severity, or effort, or weighing approaches; and when designing questions for ember or interpreting its probabilities.
+description: Playbook for the ember_advise MCP tool, a decision advisor (local by default) that returns calibrated probabilities. Use when classifying user intent, triaging errors or failing tests, routing work, checking yes/no gates (needs review, safe to retry, specific enough to act), scoring risk, severity, or effort, or weighing approaches; and when designing questions for ember or interpreting its probabilities.
 ---
 
 # ember-advise
 
 ember is a little buddy for judgment calls. Its `advise` tool (opencode:
-`ember_advise`; Claude Code: `mcp__ember__advise`) runs a local decision model
+`ember_advise`; Claude Code: `mcp__ember__advise`) runs a decision model (local by default)
 (currently Cloudflare's Clef-Flash): you describe a situation in `state`, ask typed
 questions, and it radiates a feeling about every option as a calibrated probability. It
 never writes prose and never decides for you — it advises, you decide.
@@ -15,7 +15,7 @@ never writes prose and never decides for you — it advises, you decide.
 | --- | --- |
 | Latency | ~1 s per call when warm (1–3 questions cost the same); ~5–15 s for the first call while the model loads |
 | Determinism | The same request always gets the same feeling |
-| Privacy | Runs on this machine; `state` and media never leave it |
+| Privacy | Local by default; when a remote endpoint is configured, `state` and media are sent to it |
 | Sees | `state`, any `images`/`videos` you attach, and your questions — no history or web |
 | Returns | Calibrated probabilities over the options you define |
 

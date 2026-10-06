@@ -24,6 +24,23 @@ async function withEnv(name, value, fn) {
   }
 }
 
+async function withEnvMany(values, fn) {
+  const previous = {};
+  for (const [name, value] of Object.entries(values)) {
+    previous[name] = process.env[name];
+    if (value === undefined) delete process.env[name];
+    else process.env[name] = value;
+  }
+  try {
+    return await fn();
+  } finally {
+    for (const [name, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
+}
+
 test("defaults EMBER_AUTOSTART to 1 so the server starts on first call", async () => {
   const env = await withEnv("EMBER_AUTOSTART", undefined, pluginEnvironment);
   assert.equal(env.EMBER_AUTOSTART, "1");
@@ -46,6 +63,38 @@ test("respects an EMBER_SERVER_URL override from the environment", async () => {
     pluginEnvironment,
   );
   assert.equal(env.EMBER_SERVER_URL, "http://127.0.0.1:9999");
+});
+
+test("forwards remote/auth env vars to the MCP child", async () => {
+  const env = await withEnvMany(
+    {
+      EMBER_AUTH_TOKEN: "s3cret",
+      EMBER_AUTH_HEADER: "X-API-KEY",
+      EMBER_ALLOW_INSECURE_TRANSPORT: "true",
+      EMBER_REQUEST_TIMEOUT: "5",
+    },
+    pluginEnvironment,
+  );
+  assert.equal(env.EMBER_AUTH_TOKEN, "s3cret");
+  assert.equal(env.EMBER_AUTH_HEADER, "X-API-KEY");
+  assert.equal(env.EMBER_ALLOW_INSECURE_TRANSPORT, "true");
+  assert.equal(env.EMBER_REQUEST_TIMEOUT, "5");
+});
+
+test("omits unset remote/auth env vars", async () => {
+  const env = await withEnvMany(
+    {
+      EMBER_AUTH_TOKEN: undefined,
+      EMBER_AUTH_HEADER: undefined,
+      EMBER_ALLOW_INSECURE_TRANSPORT: undefined,
+      EMBER_REQUEST_TIMEOUT: undefined,
+    },
+    pluginEnvironment,
+  );
+  assert.equal(env.EMBER_AUTH_TOKEN, undefined);
+  assert.equal(env.EMBER_AUTH_HEADER, undefined);
+  assert.equal(env.EMBER_ALLOW_INSECURE_TRANSPORT, undefined);
+  assert.equal(env.EMBER_REQUEST_TIMEOUT, undefined);
 });
 
 // E-002: EMBER_MCP basename validation

@@ -72,6 +72,8 @@ def test_health_reports_accelerator_and_dtype(base_url: str) -> None:
     assert engine["dtype"] in ("float16", "float32")
     assert engine["model_dir"].endswith("clef-flash")
     assert engine["model"] == "flash"
+    assert body["version"]
+    assert body["auth_required"] is False
 
 
 @pytest.mark.model
@@ -176,3 +178,76 @@ def test_disallowed_data_uri_content_type_rejected(base_url: str) -> None:
 def test_reserved_media_kwargs_key_rejected(base_url: str) -> None:
     resp = _ask(base_url, media_kwargs={"text": "override"})
     assert resp.status_code == 422
+
+
+# ###########################################################################
+# /health contract + optional server auth (in-process; no model required)
+# ###########################################################################
+BODY = {"model": "clef-flash", "state": "x", "questions": {"q": {"type": "noul"}}}
+
+
+def _in_process_client():
+    from ember.serving import server as server_mod
+    from fastapi.testclient import TestClient
+
+    return TestClient(server_mod.app)
+
+
+def test_health_advertises_contract_fields() -> None:
+    resp = _in_process_client().get("/health")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert {"status", "pid", "engine", "version", "auth_required"} <= set(body)
+    assert body["auth_required"] is False
+
+
+def test_health_reports_auth_required_when_token_set(monkeypatch) -> None:
+    monkeypatch.setenv("EMBER_SERVER_AUTH_TOKEN", "secret")
+    assert _in_process_client().get("/health").json()["auth_required"] is True
+
+
+def test_health_and_metrics_need_no_token_when_auth_enabled(monkeypatch) -> None:
+    monkeypatch.setenv("EMBER_SERVER_AUTH_TOKEN", "secret")
+    client = _in_process_client()
+    assert client.get("/health").status_code == 200
+    assert client.get("/metrics").status_code == 200
+
+
+def test_protected_route_rejects_missing_token(monkeypatch) -> None:
+    monkeypatch.setenv("EMBER_SERVER_AUTH_TOKEN", "secret")
+    resp = _in_process_client().post("/v1/systemone", json=BODY)
+    assert resp.status_code == 401
+    assert resp.headers.get("www-authenticate") == "Bearer"
+
+
+def test_protected_route_rejects_wrong_token(monkeypatch) -> None:
+    monkeypatch.setenv("EMBER_SERVER_AUTH_TOKEN", "secret")
+    resp = _in_process_client().post(
+        "/v1/systemone", json=BODY, headers={"Authorization": "Bearer nope"}
+    )
+    assert resp.status_code == 401
+
+
+def test_missing_and_wrong_token_are_indistinguishable(monkeypatch) -> None:
+    monkeypatch.setenv("EMBER_SERVER_AUTH_TOKEN", "secret")
+    client = _in_process_client()
+    missing = client.post("/v1/systemone", json=BODY)
+    wrong = client.post(
+        "/v1/systemone", json=BODY, headers={"Authorization": "Bearer nope"}
+    )
+    assert missing.status_code == wrong.status_code == 401
+    assert missing.json() == wrong.json()
+
+
+def test_protected_route_accepts_valid_token_past_auth(monkeypatch) -> None:
+    monkeypatch.setenv("EMBER_SERVER_AUTH_TOKEN", "secret")
+    resp = _in_process_client().post(
+        "/v1/systemone", json=BODY, headers={"Authorization": "Bearer secret"}
+    )
+    assert resp.status_code != 401
+
+
+def test_auth_disabled_requires_no_token(monkeypatch) -> None:
+    monkeypatch.delenv("EMBER_SERVER_AUTH_TOKEN", raising=False)
+    resp = _in_process_client().post("/v1/systemone", json=BODY)
+    assert resp.status_code != 401

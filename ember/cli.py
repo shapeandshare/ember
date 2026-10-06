@@ -12,10 +12,14 @@ import shutil
 import sys
 import time
 from pathlib import Path
+from typing import Any
+
+import httpx
 
 from . import models
 from .agent_kit import api as agent_kit
 from .cfg import config, paths
+from .cfg import endpoint as endpoint_mod
 from .opencode import opencode_config, opencode_plugin
 from .serving import process
 
@@ -134,25 +138,77 @@ def cmd_restart(args: argparse.Namespace) -> int:
     return 0
 
 
+def _resolve_endpoint(args: argparse.Namespace) -> endpoint_mod.Endpoint:
+    """Resolve the client endpoint from flags or config."""
+    url = getattr(args, "server_url", None)
+    if not url and (getattr(args, "host", None) or getattr(args, "port", None)):
+        host, port = _host_port(args)
+        url = f"http://{host}:{port}"
+    return endpoint_mod.Endpoint.resolve(url=url)
+
+
+def _remote_health(endpoint: endpoint_mod.Endpoint) -> dict[str, Any] | None:
+    """Probe a remote endpoint's ``/health``; return the body or ``None``."""
+    try:
+        resp = httpx.get(
+            f"{endpoint.url}/health", timeout=min(endpoint.request_timeout, 5.0)
+        )
+        if resp.status_code == 200:
+            body: dict[str, Any] = resp.json()
+            return body
+    except (httpx.HTTPError, ValueError):
+        return None
+    return None
+
+
+def _endpoint_status(endpoint: endpoint_mod.Endpoint) -> dict[str, Any]:
+    """Report endpoint kind, reachability, and advertised contract/auth state."""
+    status: dict[str, Any] = {
+        "kind": "local" if endpoint.is_local else "remote",
+        "url": endpoint.url,
+        "reachable": False,
+        "ready": None,
+        "contract_version": None,
+        "remote_auth_required": None,
+        "auth_configured": bool(config.resolve("auth_token")),
+    }
+    body = (
+        process.health(endpoint.host, endpoint.port)
+        if endpoint.is_local
+        else _remote_health(endpoint)
+    )
+    if body is not None:
+        status["reachable"] = True
+        status["ready"] = body.get("status")
+        status["contract_version"] = body.get("version")
+        status["remote_auth_required"] = body.get("auth_required")
+    return status
+
+
 def cmd_status(args: argparse.Namespace) -> int:
-    """Print server health (``ember status``).
+    """Print endpoint health (``ember status``).
 
     Parameters
     ----------
     args : argparse.Namespace
-        Parsed CLI arguments; uses the server flags.
+        Parsed CLI arguments; uses ``--server-url`` or the server flags.
 
     Returns
     -------
     int
-        ``0`` if running, ``1`` if stopped.
+        ``0`` if the endpoint is reachable, ``1`` otherwise.
     """
-    info = process.health(*_host_port(args))
-    if info is None:
-        print("not running")
+    try:
+        endpoint = _resolve_endpoint(args)
+    except (
+        endpoint_mod.InvalidEndpointError,
+        endpoint_mod.InsecureEndpointError,
+    ) as exc:
+        print(f"[fail] {exc}")
         return 1
-    _emit(info)
-    return 0
+    status = _endpoint_status(endpoint)
+    _emit(status)
+    return 0 if status["reachable"] else 1
 
 
 def cmd_logs(args: argparse.Namespace) -> int:
@@ -317,7 +373,7 @@ def cmd_config_path(_: argparse.Namespace) -> int:
 
 
 def cmd_config_show(_: argparse.Namespace) -> int:
-    """Print the effective config (``ember config show``).
+    """Print the effective config with secrets masked (``ember config show``).
 
     Parameters
     ----------
@@ -329,7 +385,11 @@ def cmd_config_show(_: argparse.Namespace) -> int:
     int
         Always ``0``.
     """
-    _emit(config.load())
+    effective = dict(config.load())
+    effective["server_url"] = config.resolve("server_url")
+    for key in ("auth_token", "server_auth_token"):
+        effective[key] = "***" if config.resolve(key) else None
+    _emit(effective)
     return 0
 
 
@@ -531,13 +591,13 @@ def _doctor_check_models(
     return ok
 
 
-def cmd_doctor(_: argparse.Namespace) -> int:
+def cmd_doctor(args: argparse.Namespace) -> int:
     """Check platform, dependencies, model, and server (``ember doctor``).
 
     Parameters
     ----------
-    _ : argparse.Namespace
-        Parsed CLI arguments (unused).
+    args : argparse.Namespace
+        Parsed CLI arguments; uses ``--server-url`` for endpoint reporting.
 
     Returns
     -------
@@ -564,6 +624,26 @@ def cmd_doctor(_: argparse.Namespace) -> int:
         if running
         else "stopped; starts on first use or with `ember start`",
     )
+    info(
+        "server remote",
+        "enabled (binds a non-loopback host)"
+        if not endpoint_mod.is_loopback_host(str(host))
+        else "disabled (loopback by default)",
+    )
+    info(
+        "server auth",
+        "required" if config.resolve("server_auth_token") else "disabled",
+    )
+    try:
+        status = _endpoint_status(_resolve_endpoint(args))
+    except (
+        endpoint_mod.InvalidEndpointError,
+        endpoint_mod.InsecureEndpointError,
+    ) as exc:
+        info("endpoint", f"invalid: {exc}")
+    else:
+        state = "reachable" if status["reachable"] else "unreachable"
+        info("endpoint", f"{status['kind']} {status['url']} ({state})")
     info("opencode", shutil.which("opencode") or "not on PATH")
     return 0 if ok else 1
 
@@ -766,6 +846,13 @@ def _add_server_flags(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def _add_endpoint_flag(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--server-url",
+        help="client inference endpoint (default: configured server_url)",
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the ``ember`` command's argument parser.
 
@@ -784,6 +871,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("doctor", help="check platform, dependencies, model, and server")
+    _add_endpoint_flag(p)
     p.set_defaults(func=cmd_doctor)
 
     p = sub.add_parser("serve", help="run the model server in the foreground")
@@ -799,6 +887,8 @@ def build_parser() -> argparse.ArgumentParser:
     for name, fn, help_text in lifecycle:
         p = sub.add_parser(name, help=help_text)
         _add_server_flags(p)
+        if name == "status":
+            _add_endpoint_flag(p)
         p.set_defaults(func=fn)
 
     p = sub.add_parser("logs", help="follow the model server log")

@@ -23,6 +23,16 @@ DEFAULTS: dict[str, Any] = {
     # Default 32768 guards against accidental MPS OOM from oversized single requests
     # (D-002). Set EMBER_MAX_REQUEST_LENGTH=0 to restore the model-maximum behaviour.
     "max_request_length": 32768,
+    # Remote inference (see specs/001-remote-inference-servers/). `server_url` is where
+    # the client sends advise requests; loopback by default (local-first). The auth_*
+    # keys carry the client credential; `server_auth_token` is the optional token the
+    # HTTP server itself requires. `request_timeout` bounds a remote request.
+    "server_url": "http://127.0.0.1:8765",
+    "auth_token": None,  # nosec B105 - None default: no client credential
+    "auth_header": "Authorization",
+    "allow_insecure_transport": False,
+    "request_timeout": 300,
+    "server_auth_token": None,  # nosec B105 - None default: server auth disabled
 }
 
 

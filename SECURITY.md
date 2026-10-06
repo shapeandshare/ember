@@ -59,9 +59,15 @@ The following areas are in scope for security reports:
 
 ## Security-sensitive design notes
 
-The HTTP server binds to `127.0.0.1` by default and is intended for local use only. It
-**must not** be exposed to external networks. There is no authentication layer on the HTTP
-endpoint; the security boundary is the loopback interface.
+The HTTP server binds to `127.0.0.1` by default. A user may configure a remote inference
+endpoint (`EMBER_SERVER_URL`); the client refuses plaintext `http` to a non-loopback host
+unless `EMBER_ALLOW_INSECURE_TRANSPORT` is set, and a custom credential header is meant for a
+proxy that translates it. To serve other machines, set `EMBER_HOST` and set
+`EMBER_SERVER_AUTH_TOKEN` so `/v1/systemone` requires `Authorization: Bearer <token>`
+(compared with `secrets.compare_digest`); `/health` and `/metrics` stay unauthenticated for
+probes. Ember does not terminate TLS, so front remote-serving deployments with a proxy. When
+`EMBER_SERVER_AUTH_TOKEN` is unset the HTTP endpoint has no authentication layer and the
+security boundary is the network (loopback or an operator-managed proxy).
 
 If you deploy ember in an environment where the loopback interface is shared (e.g., a
 multi-user server or a container with a shared network namespace), you are responsible for

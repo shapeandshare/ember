@@ -34,6 +34,21 @@ function resolveEmberMcp() {
   return ["ember-mcp"];
 }
 
+const REMOTE_ENV_KEYS = [
+  "EMBER_AUTH_TOKEN",
+  "EMBER_AUTH_HEADER",
+  "EMBER_ALLOW_INSECURE_TRANSPORT",
+  "EMBER_REQUEST_TIMEOUT",
+];
+
+function forwardedRemoteEnv() {
+  const env = {};
+  for (const name of REMOTE_ENV_KEYS) {
+    if (process.env[name]) env[name] = process.env[name];
+  }
+  return env;
+}
+
 export const EmberPlugin = async () => ({
   config: async (config) => {
     config.mcp = config.mcp ?? {};
@@ -46,6 +61,7 @@ export const EmberPlugin = async () => ({
         EMBER_SERVER_URL: process.env.EMBER_SERVER_URL ?? "http://127.0.0.1:8765",
         EMBER_AUTOSTART: process.env.EMBER_AUTOSTART ?? "1",
         PATH: process.env.PATH ?? "",
+        ...forwardedRemoteEnv(),
       },
     };
   },
