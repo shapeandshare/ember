@@ -48,10 +48,12 @@ Not intended for:
 
 ## Privacy
 
-Inference runs on your machine. The decision path (`ember-mcp` to the local HTTP server)
-does not send `state`, questions, or answers over the network. The only network access is
-the explicit weight download. The state you pass is processed on this machine and the
-server keeps local logs, so avoid passing secrets you would not keep locally.
+By default, inference runs on your machine and the decision path (`ember-mcp` to the local
+HTTP server) does not send `state`, questions, or answers over the network; the only network
+access is the explicit weight download. If you configure a remote endpoint
+(`EMBER_SERVER_URL`), `state`, questions, and answers are sent to that endpoint — do this only
+for a host you trust, and prefer `https`. The state you pass is processed where the model runs,
+and the server keeps its logs there, so avoid passing secrets you would not keep there.
 
 Model server logs live at `~/Library/Application Support/ember/logs/server.log`.
 

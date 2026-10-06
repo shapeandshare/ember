@@ -34,6 +34,11 @@ def test_pick_device_defaults_to_available_accelerator():
     assert runtime.pick_device() == expected
 
 
+def test_default_model_dir_matches_checkout_model_dir():
+    """runtime and the model registry must agree on the checkout's .models dir."""
+    assert models._dev_dir(models.get("flash")) == runtime.DEFAULT_MODEL_DIR
+
+
 def test_pick_device_explicit_passthrough():
     assert runtime.pick_device("cpu") == "cpu"
     assert runtime.pick_device("mps") == "mps"
@@ -130,63 +135,6 @@ def test_pinned_model_declares_the_model_maximum():
             pytest.fail(f"model dir not present: {model_dir} (EMBER_REQUIRE_MODEL=1)")
         pytest.skip("model dir not present")
     assert runtime.model_max_length(model_dir) == 262144
-
-
-# ###########################################################################
-# S-001: loopback validation helper
-# ###########################################################################
-def test_validate_server_url_accepts_default_loopback():
-    from ember.mcp import mcp_server
-
-    # Must not raise for the default safe URL.
-    mcp_server.validate_server_url("http://127.0.0.1:8765")
-
-
-def test_validate_server_url_accepts_localhost():
-    from ember.mcp import mcp_server
-
-    mcp_server.validate_server_url("http://localhost:8765")
-
-
-def test_validate_server_url_accepts_ipv6_loopback():
-    from ember.mcp import mcp_server
-
-    mcp_server.validate_server_url("http://[::1]:8765")
-
-
-def test_validate_server_url_accepts_loopback_range():
-    from ember.mcp import mcp_server
-
-    # 127.x.x.x is the full loopback block.
-    mcp_server.validate_server_url("http://127.0.0.2:8765")
-
-
-def test_validate_server_url_rejects_remote_host():
-    from ember.mcp import mcp_server
-
-    with pytest.raises(ValueError, match="loopback"):
-        mcp_server.validate_server_url("http://192.168.1.1:8765")
-
-
-def test_validate_server_url_rejects_0_0_0_0():
-    from ember.mcp import mcp_server
-
-    with pytest.raises(ValueError, match="loopback"):
-        mcp_server.validate_server_url("http://0.0.0.0:8765")
-
-
-def test_validate_server_url_rejects_external_hostname():
-    from ember.mcp import mcp_server
-
-    with pytest.raises(ValueError, match="loopback"):
-        mcp_server.validate_server_url("http://example.com:8765")
-
-
-def test_validate_server_url_error_mentions_security_md():
-    from ember.mcp import mcp_server
-
-    with pytest.raises(ValueError, match=r"SECURITY\.md"):
-        mcp_server.validate_server_url("http://10.0.0.1:8765")
 
 
 # ###########################################################################
@@ -316,22 +264,37 @@ def test_mcp_server_import_does_not_load_torch():
     assert result.stdout.strip() == "False", result.stderr
 
 
-def test_mcp_server_ready_false_when_nothing_listening(monkeypatch):
-    # import-placement:allow - deferred; mcp_server imports torch at module load
+def _endpoint(url: str, *, is_local: bool):
+    from urllib.parse import urlparse
+
+    from ember.cfg.endpoint import Endpoint
+
+    parsed = urlparse(url)
+    return Endpoint(
+        url=url,
+        host=parsed.hostname or "127.0.0.1",
+        scheme=parsed.scheme,
+        is_local=is_local,
+        allow_insecure_transport=False,
+        request_timeout=1,
+    )
+
+
+def test_ensure_server_is_a_noop_for_a_remote_endpoint(monkeypatch):
     from ember.mcp import mcp_server
 
-    monkeypatch.setattr(mcp_server, "SERVER_URL", f"http://127.0.0.1:{free_port()}")
-    assert mcp_server._server_ready() is False
+    monkeypatch.setattr(mcp_server, "AUTOSTART", False)
+    remote = _endpoint("https://example.invalid", is_local=False)
+    mcp_server._ensure_server(remote)
 
 
 def test_ensure_server_raises_when_down_and_autostart_disabled(monkeypatch):
-    # import-placement:allow - deferred; mcp_server imports torch at module load
     from ember.mcp import mcp_server
 
-    monkeypatch.setattr(mcp_server, "SERVER_URL", f"http://127.0.0.1:{free_port()}")
+    local = _endpoint(f"http://127.0.0.1:{free_port()}", is_local=True)
     monkeypatch.setattr(mcp_server, "AUTOSTART", False)
     with pytest.raises(RuntimeError, match="not reachable"):
-        mcp_server._ensure_server()
+        mcp_server._ensure_server(local)
 
 
 # ###########################################################################

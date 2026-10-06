@@ -1,34 +1,45 @@
 """ember MCP stdio server: the ``advise`` tool plus its agent guidance.
 
-A thin client. Each tool call goes to the warm model server (``ember.serving.server``).
-When that server is down and EMBER_AUTOSTART is on, it is started through
-``process.start`` — the same model resolution, pid file, and log as
-``ember start``. The model never loads in this process, so the MCP handshake
-stays instant.
+A thin, async client. Each tool call goes to the configured inference endpoint
+(``ember.serving.server`` by default on loopback; a remote endpoint when configured).
+A loopback server is started on demand through ``process.start`` — the same model
+resolution, pid file, and log as ``ember start``. The model never loads in this
+process, so the MCP handshake stays instant.
 
 opencode namespaces tools as ``<server>_<tool>``: with the server key ``ember``
 the tool appears as ``ember_advise`` (Claude Code: ``mcp__ember__advise``).
 
 Env:
-    EMBER_SERVER_URL     default http://127.0.0.1:8765
-    EMBER_AUTOSTART      default 1 (0 disables)
-    EMBER_START_TIMEOUT  default 300 seconds
+    EMBER_SERVER_URL              default http://127.0.0.1:8765 (endpoint)
+    EMBER_AUTH_TOKEN              optional client credential (secret)
+    EMBER_AUTH_HEADER             default Authorization (else a custom header)
+    EMBER_ALLOW_INSECURE_TRANSPORT  default 0 (refuse plaintext to non-local)
+    EMBER_REQUEST_TIMEOUT         default 300 seconds
+    EMBER_AUTOSTART               default 1 (0 disables; loopback only)
+    EMBER_START_TIMEOUT           default 300 seconds
 """
 
 from __future__ import annotations
 
-import ipaddress
+import json
 import logging
 import os
+import ssl
 import sys
 from typing import Any
-from urllib.parse import urlparse
 
+import anyio
 import httpx
 from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 
 from ..agent_kit import api as agent_kit
+from ..cfg.endpoint import (
+    Endpoint,
+    InsecureEndpointError,
+    InvalidEndpointError,
+    build_auth_headers,
+)
 from ..serving import process
 from .mcp_types import AdviseInput
 
@@ -37,54 +48,6 @@ logging.basicConfig(
     level=logging.INFO, stream=sys.stderr, format="[ember-mcp] %(message)s"
 )
 log = logging.getLogger("ember-mcp")
-
-SERVER_URL = os.environ.get("EMBER_SERVER_URL", "http://127.0.0.1:8765").rstrip("/")
-
-
-def validate_server_url(url: str) -> None:
-    """Enforce the loopback-only trust boundary for the ember model server URL.
-
-    ember is a local-first tool; the model server must only be reachable on the
-    loopback interface. Accepting a non-loopback URL would allow an attacker who
-    can set ``EMBER_SERVER_URL`` to redirect all ``advise`` calls — including the
-    full ``state`` payload — to an attacker-controlled server.
-
-    Accepted hosts: ``localhost``, ``127.0.0.0/8`` (the full loopback block),
-    and ``::1`` (IPv6 loopback).
-
-    Parameters
-    ----------
-    url : str
-        The server URL to validate (e.g. ``http://127.0.0.1:8765``).
-
-    Raises
-    ------
-    ValueError
-        If the URL's hostname does not resolve to a loopback address.
-        The message names the offending host, explains the loopback-only
-        design, and points to ``SECURITY.md`` for context.
-    """
-    parsed = urlparse(url)
-    host = parsed.hostname or ""
-    if host in ("localhost",):
-        return
-    try:
-        addr = ipaddress.ip_address(host)
-    except ValueError as exc:
-        raise ValueError(
-            f"EMBER_SERVER_URL host {host!r} is not a loopback address. "
-            "ember only connects to loopback targets (localhost, 127.0.0.0/8, ::1) "
-            "to keep agent state payloads local. "
-            "See SECURITY.md for the loopback-only design rationale."
-        ) from exc
-    if not addr.is_loopback:
-        raise ValueError(
-            f"EMBER_SERVER_URL host {host!r} is not a loopback address. "
-            "ember only connects to loopback targets (localhost, 127.0.0.0/8, ::1) "
-            "to keep agent state payloads local. "
-            "See SECURITY.md for the loopback-only design rationale."
-        )
-
 
 AUTOSTART = os.environ.get("EMBER_AUTOSTART", "1").lower() not in (
     "0",
@@ -114,47 +77,91 @@ def guide() -> str:
     return agent_kit.skill()
 
 
-def _host_port() -> tuple[str, int]:
-    parsed = urlparse(SERVER_URL)
-    return parsed.hostname or "127.0.0.1", parsed.port or 8765
+def _ensure_server(endpoint: Endpoint) -> None:  # async-first:exception - worker thread
+    """Start the local model server on first use, for loopback endpoints only.
 
+    Remote endpoints are never autostarted and are not health-probed here; the
+    advise request itself surfaces reachability failures.
 
-def _server_ready() -> bool:
-    return process.is_up(*_host_port())
+    Parameters
+    ----------
+    endpoint : Endpoint
+        The resolved inference endpoint.
 
-
-def _ensure_server() -> None:
-    if _server_ready():
+    Raises
+    ------
+    RuntimeError
+        If a loopback endpoint is down, ``EMBER_AUTOSTART`` is disabled, or the
+        server fails to start.
+    """
+    if not endpoint.is_local:
+        return
+    if process.is_up(endpoint.host, endpoint.port):
         return
     if not AUTOSTART:
         raise RuntimeError(
-            f"ember server not reachable at {SERVER_URL} and "
-            "EMBER_AUTOSTART=0. Start it with: ember start"
+            f"ember server not reachable at {endpoint.url} and EMBER_AUTOSTART=0. "
+            "Start it with: ember start"
         )
-    host, port = _host_port()
-    log.info("ember server not running; starting it on %s:%s", host, port)
-    process.start(host=host, port=port, timeout=START_TIMEOUT)
+    log.info(
+        "ember server not running; starting it on %s:%s", endpoint.host, endpoint.port
+    )
+    process.start(host=endpoint.host, port=endpoint.port, timeout=START_TIMEOUT)
     log.info("ember server is ready")
 
 
+def _client_error_message(exc: httpx.HTTPError, endpoint: Endpoint) -> str:
+    """Map an httpx failure to a distinct, actionable message.
+
+    Parameters
+    ----------
+    exc : httpx.HTTPError
+        The transport failure raised by the request.
+    endpoint : Endpoint
+        The endpoint that was contacted.
+
+    Returns
+    -------
+    str
+        A message distinguishing timeout, TLS certificate failure, and a plain
+        unreachable endpoint.
+    """
+    if isinstance(exc, httpx.TimeoutException):
+        return (
+            f"ember server timed out after {endpoint.request_timeout}s "
+            f"at {endpoint.url}"
+        )
+    if isinstance(exc.__cause__, ssl.SSLError):
+        return (
+            f"TLS certificate verification failed for {endpoint.url}: {exc.__cause__}"
+        )
+    if isinstance(exc, httpx.ConnectError):
+        return f"ember server not reachable at {endpoint.url}"
+    return f"ember server request failed at {endpoint.url}: {exc}"
+
+
 @mcp.tool()
-def advise(input: AdviseInput) -> dict[str, Any]:
+async def advise(input: AdviseInput) -> dict[str, Any]:
     """Get ember's read on a situation, as calibrated probabilities.
 
-    ember (a local decision model) advises; you decide.
-    Consult it at bounded decision points: intent, triage, routing, yes/no gates, and
-    risk, severity, or effort scores. It sees only what you pass, so include every
-    piece of evidence the call depends on and attach images or video frames as base64
-    `data:` URIs in `images`/`videos` when pixels are the evidence. For 'choice' the
-    answer has the leading option, its confidence, and full probabilities; for 'score'
-    an expected score over the ordered criteria; for 'noul' the probability the
-    proposition is true.
+    ember (a decision model) advises; you decide. Consult it at bounded decision
+    points: intent, triage, routing, yes/no gates, and risk, severity, or effort
+    scores. It sees only what you pass, so include every piece of evidence the call
+    depends on and attach images or video frames as base64 `data:` URIs in
+    `images`/`videos` when pixels are the evidence. For 'choice' the answer has the
+    leading option, its confidence, and full probabilities; for 'score' an expected
+    score over the ordered criteria; for 'noul' the probability the proposition is true.
     """
     # Only ToolError messages reach the agent; anything else is reported generically.
     try:
-        _ensure_server()
-    except RuntimeError as exc:
+        endpoint = Endpoint.resolve()
+    except (InvalidEndpointError, InsecureEndpointError) as exc:
         raise ToolError(str(exc)) from exc
+    if endpoint.is_local:
+        try:
+            await anyio.to_thread.run_sync(_ensure_server, endpoint)
+        except RuntimeError as exc:
+            raise ToolError(str(exc)) from exc
     payload: dict[str, Any] = {
         "model": input.model,
         "state": input.state,
@@ -170,27 +177,46 @@ def advise(input: AdviseInput) -> dict[str, Any]:
     if input.media_kwargs is not None:
         payload["media_kwargs"] = input.media_kwargs
     try:
-        resp = httpx.post(f"{SERVER_URL}/v1/systemone", json=payload, timeout=300.0)
+        async with httpx.AsyncClient(timeout=float(endpoint.request_timeout)) as client:
+            resp = await client.post(
+                f"{endpoint.url}/v1/systemone",
+                json=payload,
+                headers=build_auth_headers(),
+            )
     except httpx.HTTPError as exc:
-        raise ToolError(f"ember server request failed: {exc}") from exc
+        raise ToolError(_client_error_message(exc, endpoint)) from exc
+    if resp.status_code in (401, 403):
+        raise ToolError(
+            f"ember server authentication failed ({resp.status_code}) at "
+            f"{endpoint.url}; check auth_token/auth_header"
+        )
     if resp.status_code >= 400:
         raise ToolError(f"ember server error {resp.status_code}: {resp.text}")
-    answer: dict[str, Any] = resp.json()
+    try:
+        answer: dict[str, Any] = resp.json()
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise ToolError(
+            f"endpoint at {endpoint.url} did not return a valid ember response"
+        ) from exc
+    loaded = str(answer.get("model") or "")
+    # Only an explicitly requested label can mismatch; the schema default is a
+    # placeholder and would otherwise warn on every call.
+    requested = "model" in input.model_fields_set
+    if requested and loaded and input.model and loaded != input.model:
+        answer["warning"] = (
+            f"endpoint loaded model {loaded!r}, not the requested {input.model!r}"
+        )
+        log.warning("%s", answer["warning"])
     return answer
 
 
 def main() -> None:
     """Run the MCP stdio server; blocks until the client disconnects."""
     try:
-        validate_server_url(SERVER_URL)
-    except ValueError as exc:
-        log.exception("startup aborted: %s", exc)
-        sys.exit(1)
-    log.info(
-        "ember MCP server starting (server_url=%s, autostart=%s)",
-        SERVER_URL,
-        AUTOSTART,
-    )
+        url = Endpoint.resolve().url
+    except (InvalidEndpointError, InsecureEndpointError) as exc:
+        url = f"<invalid: {exc}>"
+    log.info("ember MCP server starting (server_url=%s, autostart=%s)", url, AUTOSTART)
     # stdout is the JSON-RPC wire; any non-protocol output corrupts it.
     mcp.run()
 

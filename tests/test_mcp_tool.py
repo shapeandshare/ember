@@ -11,11 +11,19 @@ import asyncio
 import base64
 import io
 import json
+import ssl
+import threading
 import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+import httpx
 import pytest
 from ember.agent_kit import api as agent_kit
+from ember.cfg.endpoint import Endpoint
+from ember.mcp import mcp_server
+from ember.mcp.mcp_types import AdviseInput
 from mcp.client.stdio import stdio_client
+from mcp.server.mcpserver.exceptions import ToolError
 from PIL import Image
 
 from mcp import ClientSession
@@ -186,3 +194,261 @@ def test_mcp_returns_actionable_errors_for_malformed_questions(base_url: str) ->
     result = asyncio.run(_call_advise(mcp_stdin_params(base_url), missing_criteria))
     assert result.is_error is True
     assert "criteria must not be empty" in result.content[0].text
+
+
+# ###########################################################################
+# Direct client tests against a stub endpoint (no model required)
+# ###########################################################################
+class _StubHandler(BaseHTTPRequestHandler):
+    def log_message(self, *args) -> None:
+        return
+
+    def _reply(self, code: int, body: str, content_type: str) -> None:
+        data = body.encode()
+        self.send_response(code)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _record(self) -> None:
+        length = int(self.headers.get("Content-Length", "0") or 0)
+        raw = self.rfile.read(length) if length else b""
+        try:
+            payload = json.loads(raw) if raw else {}
+        except ValueError:
+            payload = {}
+        self.stub.requests.append(
+            {
+                "path": self.path,
+                "headers": {k.lower(): v for k, v in self.headers.items()},
+                "payload": payload,
+            }
+        )
+
+    def do_GET(self) -> None:
+        self._record()
+        if self.path == "/health":
+            self._reply(
+                200,
+                json.dumps(
+                    {
+                        "status": "ok",
+                        "pid": 1,
+                        "engine": None,
+                        "version": "test",
+                        "auth_required": False,
+                    }
+                ),
+                "application/json",
+            )
+        else:
+            self._reply(404, "{}", "application/json")
+
+    def do_POST(self) -> None:
+        self._record()
+        stub = self.stub
+        if stub.raw is not None:
+            self._reply(stub.status, stub.raw, stub.content_type)
+        elif stub.status >= 400:
+            self._reply(stub.status, "nope", "text/plain")
+        else:
+            self._reply(200, json.dumps(stub.payload), "application/json")
+
+
+class _Stub:
+    def __init__(self, status: int, payload: dict, raw: str | None, content_type: str):
+        self.status = status
+        self.payload = payload
+        self.raw = raw
+        self.content_type = content_type
+        self.requests: list[dict] = []
+
+
+@pytest.fixture
+def stub_env(monkeypatch, tmp_path):
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path / "state"))
+    for name in (
+        "EMBER_SERVER_URL",
+        "EMBER_AUTH_TOKEN",
+        "EMBER_AUTH_HEADER",
+        "EMBER_ALLOW_INSECURE_TRANSPORT",
+        "EMBER_REQUEST_TIMEOUT",
+        "EMBER_SERVER_AUTH_TOKEN",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+
+@pytest.fixture
+def stub_server():
+    servers: list[ThreadingHTTPServer] = []
+
+    def make(
+        *,
+        status: int = 200,
+        payload: dict | None = None,
+        raw: str | None = None,
+        content_type: str = "application/json",
+    ):
+        stub = _Stub(
+            status=status,
+            payload=(
+                payload
+                if payload is not None
+                else {"model": "clef-flash", "answers": {}, "usage": {}}
+            ),
+            raw=raw,
+            content_type=content_type,
+        )
+        handler = type("Handler", (_StubHandler,), {"stub": stub})
+        server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        servers.append(server)
+        return f"http://127.0.0.1:{server.server_address[1]}", stub
+
+    yield make
+    for server in servers:
+        server.shutdown()
+        server.server_close()
+
+
+def _call_direct(monkeypatch, url: str, *, images=None, model="clef-flash"):
+    monkeypatch.setenv("EMBER_SERVER_URL", url)
+    monkeypatch.setenv("EMBER_AUTOSTART", "0")
+    fields = {
+        "state": "read this",
+        "questions": {"q": {"type": "noul"}},
+        "model": model,
+    }
+    if images is not None:
+        fields["images"] = images
+    return asyncio.run(mcp_server.advise(AdviseInput(**fields)))
+
+
+def test_client_sends_bearer_token(stub_env, stub_server, monkeypatch):
+    url, stub = stub_server()
+    monkeypatch.setenv("EMBER_AUTH_TOKEN", "s3cret")
+    _call_direct(monkeypatch, url)
+    assert stub.requests[-1]["headers"].get("authorization") == "Bearer s3cret"
+
+
+def test_client_sends_custom_header(stub_env, stub_server, monkeypatch):
+    url, stub = stub_server()
+    monkeypatch.setenv("EMBER_AUTH_TOKEN", "s3cret")
+    monkeypatch.setenv("EMBER_AUTH_HEADER", "X-API-KEY")
+    _call_direct(monkeypatch, url)
+    assert stub.requests[-1]["headers"].get("x-api-key") == "s3cret"
+
+
+def test_auth_failure_hides_secret(stub_env, stub_server, monkeypatch):
+    url, _ = stub_server(status=401)
+    monkeypatch.setenv("EMBER_AUTH_TOKEN", "supersecret")
+    with pytest.raises(ToolError) as excinfo:
+        _call_direct(monkeypatch, url)
+    assert "authentication failed" in str(excinfo.value)
+    assert "supersecret" not in str(excinfo.value)
+
+
+def test_remote_advise_forwards_media(stub_env, stub_server, monkeypatch):
+    url, stub = stub_server()
+    _call_direct(monkeypatch, url, images=[_png_data_uri()])
+    assert stub.requests[-1]["payload"]["images"]
+
+
+def test_request_sent_only_to_configured_endpoint(stub_env, stub_server, monkeypatch):
+    url, stub = stub_server()
+    _call_direct(monkeypatch, url)
+    posts = [r for r in stub.requests if r["path"] == "/v1/systemone"]
+    assert len(posts) == 1
+
+
+def test_client_works_with_no_local_weights(stub_env, stub_server, monkeypatch):
+    url, _ = stub_server()
+    assert _call_direct(monkeypatch, url)["model"] == "clef-flash"
+
+
+def test_unreachable_endpoint_is_actionable(stub_env, monkeypatch):
+    monkeypatch.setattr(mcp_server, "AUTOSTART", False)
+    monkeypatch.setenv("EMBER_SERVER_URL", f"http://127.0.0.1:{free_port()}")
+    with pytest.raises(ToolError, match="not reachable"):
+        asyncio.run(
+            mcp_server.advise(AdviseInput(state="x", questions={"q": {"type": "noul"}}))
+        )
+
+
+def test_insecure_transport_is_refused(stub_env, monkeypatch):
+    monkeypatch.setenv("EMBER_SERVER_URL", "http://192.0.2.1:8765")
+    with pytest.raises(ToolError, match="plaintext"):
+        asyncio.run(
+            mcp_server.advise(AdviseInput(state="x", questions={"q": {"type": "noul"}}))
+        )
+
+
+def test_incompatible_response_is_actionable(stub_env, stub_server, monkeypatch):
+    url, _ = stub_server(raw="not json", content_type="text/html")
+    with pytest.raises(ToolError, match="valid ember response"):
+        _call_direct(monkeypatch, url)
+
+
+def test_model_mismatch_is_reported(stub_env, stub_server, monkeypatch):
+    url, _ = stub_server(payload={"model": "full", "answers": {}, "usage": {}})
+    result = _call_direct(monkeypatch, url, model="clef-flash")
+    assert "warning" in result
+
+
+def test_default_model_label_does_not_warn(stub_env, stub_server, monkeypatch):
+    url, _ = stub_server(payload={"model": "flash", "answers": {}, "usage": {}})
+    monkeypatch.setenv("EMBER_SERVER_URL", url)
+    monkeypatch.setenv("EMBER_AUTOSTART", "0")
+    result = asyncio.run(
+        mcp_server.advise(AdviseInput(state="x", questions={"q": {"type": "noul"}}))
+    )
+    assert "warning" not in result
+
+
+def test_remote_answer_shape_matches_local(stub_env, stub_server, monkeypatch):
+    local_shape = {
+        "model": "clef-flash",
+        "answers": {"q": {"type": "noul", "noul": 0.9}},
+        "usage": {"input_tokens": 1, "output_tokens": 0},
+        "latency_ms": 12.3,
+    }
+    url, _ = stub_server(payload=local_shape)
+    result = _call_direct(monkeypatch, url)
+    assert set(result) >= {"model", "answers", "usage", "latency_ms"}
+    assert result["answers"]["q"]["type"] == "noul"
+    assert 0.0 <= result["answers"]["q"]["noul"] <= 1.0
+    assert result["usage"]["output_tokens"] == 0
+
+
+def _error_endpoint() -> Endpoint:
+    return Endpoint(
+        url="https://example.com",
+        host="example.com",
+        scheme="https",
+        is_local=False,
+        allow_insecure_transport=False,
+        request_timeout=7,
+    )
+
+
+def test_classifier_timeout_names_the_bound():
+    message = mcp_server._client_error_message(
+        httpx.ConnectTimeout("slow"), _error_endpoint()
+    )
+    assert "timed out after 7s" in message
+
+
+def test_classifier_certificate_is_distinct_from_unreachable():
+    exc = httpx.ConnectError("[SSL: CERTIFICATE_VERIFY_FAILED]")
+    exc.__cause__ = ssl.SSLCertVerificationError("certificate verify failed")
+    message = mcp_server._client_error_message(exc, _error_endpoint())
+    assert "certificate" in message.lower()
+
+
+def test_classifier_unreachable_error():
+    message = mcp_server._client_error_message(
+        httpx.ConnectError("connection refused"), _error_endpoint()
+    )
+    assert "not reachable" in message

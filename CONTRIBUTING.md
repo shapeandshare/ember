@@ -1,8 +1,9 @@
 # Contributing to ember
 
-ember is a local MCP server that exposes a decision model (currently Cloudflare's Clef)
-to coding agents. It runs on Apple Silicon (MPS), ships as a uv tool, and integrates with
-opencode and Claude Code via a single `advise` tool. Contributions are welcome.
+ember is an MCP server that exposes a decision model (currently Cloudflare's Clef) to coding
+agents, running locally on Apple Silicon (MPS) by default or against a configured remote
+inference server. It ships as a uv tool and integrates with opencode and Claude Code via a
+single `advise` tool. Contributions are welcome.
 
 The governing document for this project is `.specify/memory/constitution.md`. This file
 operationalizes it. Where the two conflict, the constitution wins.
@@ -299,8 +300,8 @@ Agents may open PRs against this repository under these conditions:
 
 - The PR description must identify the agent system that generated it.
 - The agent must have run `make pr-ready` and `make test` before opening the PR.
-- The agent must use `ember_advise` (via the local MCP server) for triage and risk-gate
-  decisions, following the recipes in `ember/agent_kit/ember-advise/SKILL.md`.
+- The agent must use `ember_advise` (via the MCP server; local by default) for triage and
+  risk-gate decisions, following the recipes in `ember/agent_kit/ember-advise/SKILL.md`.
 - The PR must not be bulk-generated, untested, or in conflict with the constitution.
 
 PRs that violate these conditions will be closed without review.

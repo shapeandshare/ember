@@ -4,8 +4,10 @@
 
 ## What this repo is
 
-`ember` runs decision models (currently Cloudflare's Clef) locally on Apple Silicon (MPS) and
-exposes them to coding agents as one advisory MCP tool, `advise` (opencode: `ember_advise`; Claude
+`ember` runs decision models (currently Cloudflare's Clef) locally on Apple Silicon (MPS) by
+default, or against a single configured remote inference server
+(`EMBER_SERVER_URL`/config `server_url`) when the user opts in, and exposes them to coding
+agents as one advisory MCP tool, `advise` (opencode: `ember_advise`; Claude
 Code: `mcp__ember__advise`). An agent sends a `state` plus typed questions and gets calibrated
 probabilities back — no prose. It ships as the `gut` uv tool (commands `ember`, `gut`,
 `ember-mcp`), a local opencode plugin, and an **agent onboarding kit** that teaches consumers'
@@ -77,8 +79,9 @@ ember/
   mcp/                # MCP stdio server and wire types
     mcp_server.py     #   MCP stdio server: advise tool, instructions, ember://guide
     mcp_types.py      #   Pydantic wire types: Question, AdviseInput
-  cfg/                # configuration and platform paths
+  cfg/                # configuration, endpoint, and platform paths
     config.py         #   config resolution (CLI flag > env > file > default)
+    endpoint.py       #   client endpoint: loopback check, transport guard, auth headers
     paths.py          #   platform-aware app dirs (macOS Library, XDG)
   opencode/           # opencode integration
     opencode_config.py  # generates opencode.json
@@ -638,6 +641,12 @@ MUST pass the constitution check.
 
 ## Recent Changes
 
+- 2026-10-06: remote inference servers: the client (MCP + eval harness) may target a configured
+  remote `server_url` (any endpoint, opt-in), with bearer/custom-header credentials; the
+  server gains optional, disableable bearer auth on `POST /v1/systemone` and `/health` advertises
+  `version`/`auth_required`; `ember/cfg/endpoint.py` added; the MCP `advise` tool is async;
+  loopback-only validation removed; Article I redefined to "Local-First by Default";
+  constitution v2.0.0 (MAJOR). Feature `specs/001-remote-inference-servers/`.
 - 2026-10-04: constitutional Articles XI–XV adopted; Testing section added; Architecture
   Rules + Docstring Convention + Design System sections added; behavioral principles 9–12
   expanded with full TDD workflow; Python conventions expanded with enums, forward refs,

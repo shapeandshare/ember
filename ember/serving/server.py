@@ -13,12 +13,16 @@ from __future__ import annotations
 
 import logging
 import os
+import secrets
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
-from typing import Any
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _dist_version
+from typing import Annotated, Any
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
     CollectorRegistry,
@@ -67,6 +71,57 @@ MODEL_INFO = Gauge(
     ["model", "device", "dtype"],
     registry=REGISTRY,
 )
+
+_bearer_scheme = HTTPBearer(auto_error=False)
+
+
+def _package_version() -> str:
+    """Return the installed distribution version, or ``"unknown"``.
+
+    Returns
+    -------
+    str
+        The version of the ``gut`` distribution, or ``"unknown"`` when it cannot
+        be determined (e.g. running from a source tree).
+    """
+    try:
+        return _dist_version("gut")
+    except PackageNotFoundError:
+        return "unknown"
+
+
+def require_server_auth(
+    credentials: Annotated[
+        HTTPAuthorizationCredentials | None, Depends(_bearer_scheme)
+    ],
+) -> None:
+    """Enforce the optional server bearer token on protected routes.
+
+    A no-op when ``server_auth_token`` is unset (auth disabled, delegated to a
+    proxy). Otherwise the caller must present ``Authorization: Bearer <token>``;
+    a missing or wrong token yields one generic ``401`` with
+    ``WWW-Authenticate: Bearer`` (no oracle). Comparison is constant-time.
+
+    Parameters
+    ----------
+    credentials : HTTPAuthorizationCredentials | None
+        Parsed bearer credentials, or ``None`` when the header is absent.
+
+    Raises
+    ------
+    HTTPException
+        401 when auth is enabled and the token is missing or wrong.
+    """
+    expected = config.resolve("server_auth_token")
+    if not expected:
+        return
+    presented = credentials.credentials if credentials is not None else ""
+    if not secrets.compare_digest(presented.encode(), str(expected).encode()):
+        raise HTTPException(
+            status_code=401,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 @asynccontextmanager
@@ -188,18 +243,23 @@ class AdviseRequest(BaseModel):
 
 @app.get("/health")
 async def health() -> dict[str, Any]:
-    """Report whether the model is loaded, and by which pid.
+    """Report whether the model is loaded, the contract version, and auth need.
 
     Returns
     -------
     dict[str, Any]
-        ``status`` (``"ok"`` or ``"loading"``), ``pid``, and ``engine``
-        (the loaded ``Engine.describe()`` output, or ``None``).
+        ``status`` (``"ok"`` or ``"loading"``), ``pid``, ``engine`` (the loaded
+        ``Engine.describe()`` output, or ``None``), ``version`` (the package
+        version), and ``auth_required`` (whether the server requires a bearer
+        token). ``version``/``auth_required`` are additive and let a client or a
+        third-party implementation learn the contract without a credential.
     """
     return {
         "status": "ok" if _ENGINE is not None else "loading",
         "pid": os.getpid(),
         "engine": _ENGINE.describe() if _ENGINE is not None else None,
+        "version": _package_version(),
+        "auth_required": bool(config.resolve("server_auth_token")),
     }
 
 
@@ -219,6 +279,7 @@ async def metrics() -> Response:
 )
 def systemone_endpoint(
     req: AdviseRequest,
+    _: None = Depends(require_server_auth),
 ) -> dict[str, Any]:  # async-first:exception - engine lock is synchronous
     """Run an advise request against the loaded model and record metrics.
 

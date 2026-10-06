@@ -38,6 +38,7 @@ Session-level decisions with their context and consequences.
 - [[2026-10-04-constitutional-articles-xi-xv]]
 - [[2026-10-04-version-components-separately]]
 - [[2026-10-05-decision-models-are-the-category]]
+- [[2026-10-06-remote-inference-servers]]
 
 ### Discoveries
 

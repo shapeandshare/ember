@@ -1,6 +1,6 @@
 ## Gut feeling: a local advisor
 
-This project has a local advisor, ember, available as the `ember_advise` MCP
+This project has an advisor, ember, available as the `ember_advise` MCP
 tool (Claude Code: `mcp__ember__advise`). Consult it at bounded decision points
 instead of guessing: user intent, error and test-failure triage, routing, yes/no gates, and
 risk, severity, or effort scores. It advises; you decide. Put all evidence in `state`;

@@ -22,7 +22,6 @@ import argparse
 import hashlib
 import importlib.metadata
 import json
-import os
 import platform
 import shutil
 import subprocess
@@ -38,6 +37,13 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 from ember import models  # noqa: E402
+from ember.cfg.endpoint import (  # noqa: E402
+    Endpoint,
+    InsecureEndpointError,
+    InvalidEndpointError,
+    build_auth_headers,
+)
+
 from evals.metrics import aggregate, score_item  # noqa: E402
 
 DATASET_PATH = REPO_ROOT / "evals" / "clef-flash.jsonl"
@@ -45,6 +51,29 @@ RESULTS_DIR = REPO_ROOT / "results"
 DEFAULT_SERVER = "http://127.0.0.1:8765"
 TIMEOUT = 120.0
 PACKAGES = ("gut", "torch", "transformers", "mcp")
+
+
+def _resolve_server(flag: str | None) -> str:
+    """Resolve the server URL: an explicit flag, else the configured endpoint.
+
+    Parameters
+    ----------
+    flag : str | None
+        The ``--server`` value, or ``None`` when unset.
+
+    Returns
+    -------
+    str
+        The flag when given; otherwise the endpoint resolved through
+        ``Endpoint.resolve`` (env > config file > default), falling back to the
+        loopback default when the configured endpoint is invalid or insecure.
+    """
+    if flag:
+        return flag
+    try:
+        return Endpoint.resolve().url
+    except (InvalidEndpointError, InsecureEndpointError):
+        return DEFAULT_SERVER
 
 
 def _git_hash() -> str:
@@ -134,7 +163,12 @@ def _advise(server: str, item: dict[str, Any]) -> dict[str, Any]:
     for key in ("images", "videos", "media_kwargs"):
         if item.get(key) is not None:
             payload[key] = item[key]
-    response = httpx.post(f"{server}/v1/systemone", json=payload, timeout=TIMEOUT)
+    response = httpx.post(
+        f"{server}/v1/systemone",
+        json=payload,
+        timeout=TIMEOUT,
+        headers=build_auth_headers(),
+    )
     response.raise_for_status()
     body: dict[str, Any] = response.json()
     return body
@@ -273,8 +307,8 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--server",
-        default=os.environ.get("EMBER_SERVER_URL", DEFAULT_SERVER),
-        help=f"model server URL (default: {DEFAULT_SERVER})",
+        default=None,
+        help="model server URL (default: the configured endpoint)",
     )
     parser.add_argument("--split", choices=["dev", "test"], default=None)
     parser.add_argument("--category", default=None, help="only this recipe")
@@ -288,7 +322,7 @@ def _build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     return run_evals(
-        args.server,
+        _resolve_server(args.server),
         split=args.split,
         category=args.category,
         dry_run=args.dry_run,

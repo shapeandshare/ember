@@ -1,4 +1,4 @@
-ember is your little buddy for judgment calls: a local decision model (currently Cloudflare's Clef-Flash) behind this server's `advise` tool (opencode: `ember_advise`). It reads a situation and radiates a feeling about each option you define, as calibrated probabilities, in about a second, privately, on this machine. It advises; you decide.
+ember is your little buddy for judgment calls: a decision model (currently Cloudflare's Clef-Flash, local by default) behind this server's `advise` tool (opencode: `ember_advise`). It reads a situation and radiates a feeling about each option you define, as calibrated probabilities, in about a second, on this machine by default. It advises; you decide.
 
 Consult it at bounded decision points: what the user is asking for, why something failed, who owns a problem, yes/no gates (needs human review? safe to retry? specific enough to act on?), and risk, severity, or effort on an ordered scale.
 

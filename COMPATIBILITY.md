@@ -53,12 +53,15 @@ ember is Apple-Silicon-first, so cloud means one of:
 
 Two cloud caveats:
 
-- **The model server has no authentication and binds to `127.0.0.1`.** Exposing it beyond the
-  host is outside the supported threat model; add your own access controls — a private
-  network, an authenticating reverse proxy, or a firewall — if you do. See
-  [`SECURITY.md`](SECURITY.md).
-- **Inference stays local by design.** In the cloud, "local" is the host you provide: nothing
-  in ember sends `state`, questions, or answers to shapeandshare. The privacy note in
+- **The model server binds to `127.0.0.1` by default with no authentication.** To serve
+  remote clients, set `EMBER_HOST` and `EMBER_SERVER_AUTH_TOKEN` (then `/v1/systemone`
+  requires `Authorization: Bearer <token>`; `/health` and `/metrics` stay open). Ember does
+  not terminate TLS — front it with an authenticating reverse proxy. If you leave
+  `EMBER_SERVER_AUTH_TOKEN` unset and expose the host, you are responsible for access control
+  (private network or firewall). See [`SECURITY.md`](SECURITY.md).
+- **Inference runs where you point it.** By default that is your host: nothing in ember sends
+  `state`, questions, or answers to shapeandshare. If you configure a remote endpoint
+  (`EMBER_SERVER_URL`), state is sent to that endpoint — the privacy note in
   [`RESPONSIBLE_USE.md`](RESPONSIBLE_USE.md) then applies to that host, including its logs.
 
 ## Tested stack

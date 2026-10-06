@@ -22,7 +22,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
 import subprocess
 import sys
 import threading
@@ -39,7 +38,8 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from evals.agent import judge, opencode, sandbox, summary  # noqa: E402
 from evals.agent.scenarios import SCENARIOS  # noqa: E402
-from .run_evals import _git_hash, _host  # noqa: E402
+
+from .run_evals import _git_hash, _host, _resolve_server  # noqa: E402
 
 RESULTS_DIR = REPO_ROOT / "results"
 DEFAULT_MODELS = (
@@ -215,6 +215,7 @@ def render(results: dict[str, Any]) -> str:
 def main(argv: list[str] | None = None) -> int:
     """Run (or report on) the agent eval; return an exit code."""
     args = _parser().parse_args(argv)
+    args.server = _resolve_server(args.server)
     if args.report:
         print(render(json.loads(Path(args.report).read_text(encoding="utf-8"))))
         return 0
@@ -368,7 +369,7 @@ def _parser() -> argparse.ArgumentParser:
         "--timeout", type=float, default=420.0, help="seconds per session"
     )
     parser.add_argument(
-        "--server", default=os.environ.get("EMBER_SERVER_URL", "http://127.0.0.1:8765")
+        "--server", default=None, help="server URL (default: the configured endpoint)"
     )
     parser.add_argument("--keep", action="store_true", help="keep sandboxes")
     parser.add_argument("--report", default=None, help="print a results file and exit")
