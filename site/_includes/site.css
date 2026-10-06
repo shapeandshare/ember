@@ -196,8 +196,6 @@ th { color: var(--ember-text); }
 
 hr { border: none; border-top: 1px solid var(--ember-border); margin: 2rem 0; }
 
-.doc-list { list-style: none; padding: 0; display: grid; gap: 0.5rem; }
-.doc-list a { font-size: 1.05rem; }
 
 /* --- benchmark report (rendered natively from benchmark/<run-id>/) ------ */
 .benchmark { min-width: 0; }
