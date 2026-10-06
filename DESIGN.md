@@ -86,7 +86,7 @@ flow. The README's architecture call path is the exception: it is a hand-authore
 SVG plate (`assets/diagrams/call-path-light.svg` and `call-path-dark.svg`),
 referenced with `<picture>` so the website renders it as a figure.
 
-```
+```text
 component-a ──────────────────► component-b
                                       │
                                       ▼
@@ -129,7 +129,7 @@ visually inconsistent with that register.
 The README follows a fixed section order. Do not reorder sections or add new
 top-level sections without updating this document.
 
-```
+```text
 1.  Hero and one-line description
 2.  How it works (architecture rationale + call-path SVG plate + Names table)
 3.  Verified (measured table: model load, warm inference, tool call result)
@@ -273,7 +273,7 @@ The canonical call-path diagram is the SVG plate
 (`assets/diagrams/call-path-light.svg` and `call-path-dark.svg`). The ASCII below
 is its text fallback — keep the two in step:
 
-```
+```text
 agent ──tools/call advise──► ember-mcp (stdio, mcp_server.py)
                                │  initialize.instructions + ember://guide
                                ▼  lazy autostart of a PID-tracked child
@@ -301,7 +301,7 @@ Rules for architecture diagrams:
 
 Conventional commits. Format:
 
-```
+```text
 <type>: <subject>
 ```
 
@@ -317,7 +317,7 @@ Subject rules:
 
 Examples:
 
-```
+```text
 feat: add score question type to advise tool
 fix: prevent double autostart when port is already bound
 docs: update verified table for clef-flash 17f0b0a
@@ -374,7 +374,7 @@ server-configuration variables (`EMBER_HOST`, `EMBER_PORT`,
 
 Targets are grouped by concern with a comment header:
 
-```
+```text
 # environment      — setup, sync, download, init, bootstrap
 # server lifecycle — serve, start, stop, restart, status, logs, mcp
 # quality          — test, test-fast, test-strict, mcp-check, smoke, compile, check, ci

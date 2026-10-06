@@ -5,7 +5,7 @@ tags:
   - type/reference
   - domain/governance
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-05
 ---
 
 # Tag vocabulary
@@ -40,9 +40,9 @@ stable. The `type/*` tag matches the note's `type` field.
 | Tag | Covers |
 | --- | --- |
 | `domain/governance` | Constitution, policies, naming, and the vault itself |
-| `domain/runtime` | Model loading on MPS or CPU, the engine, numerics (`ember/runtime.py`) |
-| `domain/server` | The HTTP model server and its lifecycle (`ember/server.py`, `ember/process.py`) |
-| `domain/mcp` | The MCP server and the `advise` tool contract (`ember/mcp_server.py`) |
+| `domain/runtime` | Model loading on MPS or CPU, the engine, numerics (`ember/serving/runtime.py`) |
+| `domain/server` | The HTTP model server and its lifecycle (`ember/serving/server.py`, `ember/serving/process.py`) |
+| `domain/mcp` | The MCP server and the `advise` tool contract (`ember/mcp/mcp_server.py`) |
 | `domain/agent-kit` | Instructions, the `ember-advise` skill, the AGENTS.md snippet, thresholds |
 | `domain/cli` | The `ember` and `gut` commands (`ember/cli.py`) |
 | `domain/opencode` | opencode config, the generated plugin, the npm plugin package |
