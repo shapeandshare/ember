@@ -1,3 +1,9 @@
+## v0.3.2 (2026-10-05)
+
+### Fix
+
+- **ember**: clear the SonarCloud findings and validate opencode config paths (#64)
+
 ## v0.3.1 (2026-10-05)
 
 ### Fix
