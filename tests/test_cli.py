@@ -196,3 +196,13 @@ def test_eval_commands_require_a_checkout(monkeypatch):
         cli.cmd_eval_run(args)
     with pytest.raises(RuntimeError, match="require a repository checkout"):
         cli.cmd_eval_report(args)
+
+
+def test_resolve_endpoint_uses_http_for_loopback_host() -> None:
+    args = argparse.Namespace(server_url=None, host="127.0.0.1", port=9000)
+    assert cli._resolve_endpoint(args).url == "http://127.0.0.1:9000"
+
+
+def test_resolve_endpoint_uses_https_for_remote_host() -> None:
+    args = argparse.Namespace(server_url=None, host="ember.example.com", port=9000)
+    assert cli._resolve_endpoint(args).url == "https://ember.example.com:9000"

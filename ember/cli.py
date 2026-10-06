@@ -143,7 +143,8 @@ def _resolve_endpoint(args: argparse.Namespace) -> endpoint_mod.Endpoint:
     url = getattr(args, "server_url", None)
     if not url and (getattr(args, "host", None) or getattr(args, "port", None)):
         host, port = _host_port(args)
-        url = f"http://{host}:{port}"
+        scheme = "http" if endpoint_mod.is_loopback_host(host) else "https"
+        url = f"{scheme}://{host}:{port}"
     return endpoint_mod.Endpoint.resolve(url=url)
 
 
