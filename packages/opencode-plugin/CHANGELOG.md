@@ -5,6 +5,12 @@ Versions follow [Semantic Versioning](https://semver.org/); changes follow
 [Conventional Commits](https://www.conventionalcommits.org/) with scope `plugin`.
 
 <!-- next-version -->
+## plugin/v0.4.0 (2026-10-06)
+
+### Feat
+
+- feat(ember): support remote inference servers (#70)
+
 ## plugin/v0.3.2 (2026-10-05)
 
 ### Fix
