@@ -38,7 +38,8 @@ from .. import models as _models
 from . import media
 from .integrity import verify_model_dir
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+# ember/serving/runtime.py -> parents[2] is the checkout root (matches models._dev_dir).
+REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MODEL_DIR = REPO_ROOT / ".models" / "clef-flash"
 
 #: Used only if a model's config.json has no max_position_embeddings.

@@ -74,6 +74,10 @@ async def main() -> int:
                 text = getattr(block, "text", None)
                 if text:
                     print("content:", text)
+            if result.is_error:
+                print("FAIL: advise returned an error", file=sys.stderr)
+                return 1
+    print("OK: MCP end-to-end check passed")
     return 0
 
 
