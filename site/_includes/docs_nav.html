@@ -1,5 +1,5 @@
 <nav class="docs-nav" aria-label="Documentation">
-  <a class="docs-nav-home" href="{{ '/docs/' | relative_url }}">Documentation</a>
+  <span class="docs-nav-home">Documentation</span>
   <ul>
     {%- for doc in site.data.docs %}
     {%- assign durl = '/docs/' | append: doc.slug | append: '/' %}

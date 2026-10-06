@@ -1,0 +1,19 @@
+---
+layout: null
+permalink: /docs/
+sitemap: false
+---
+{%- assign target = '/docs/' | append: site.data.docs[0].slug | append: '/' | relative_url -%}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ember documentation</title>
+<link rel="canonical" href="{{ target }}">
+<meta http-equiv="refresh" content="0; url={{ target }}">
+<meta name="robots" content="noindex">
+</head>
+<body>
+<p><a href="{{ target }}">Continue to the ember documentation</a>.</p>
+</body>
+</html>
