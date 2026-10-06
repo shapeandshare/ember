@@ -141,7 +141,7 @@ def _ensure_server() -> None:
 def advise(input: AdviseInput) -> dict[str, Any]:
     """Get ember's read on a situation, as calibrated probabilities.
 
-    ember (Cloudflare's Clef-Flash model, running locally) advises; you decide.
+    ember (a local decision model) advises; you decide.
     Consult it at bounded decision points: intent, triage, routing, yes/no gates, and
     risk, severity, or effort scores. It sees only what you pass, so include every
     piece of evidence the call depends on and attach images or video frames as base64

@@ -5,7 +5,7 @@ tags:
   - type/moc
   - domain/governance
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-05
 ---
 
 # ember vault
@@ -37,6 +37,7 @@ Session-level decisions with their context and consequences.
 - [[2026-10-04-move-eval-harness-to-evals-eval]]
 - [[2026-10-04-constitutional-articles-xi-xv]]
 - [[2026-10-04-version-components-separately]]
+- [[2026-10-05-decision-models-are-the-category]]
 
 ### Discoveries
 

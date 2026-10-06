@@ -6,9 +6,9 @@
 
 ## What ember is
 
-ember runs Cloudflare's Clef decision model locally and answers typed questions about a
-situation you describe. It returns one calibrated probability per option and generates no
-text. It advises; the agent or person decides.
+ember runs a decision model (currently Cloudflare's Clef) locally and answers typed questions
+about a situation you describe. It returns one calibrated probability per option and generates
+no text. It advises; the agent or person decides.
 
 Intended uses:
 

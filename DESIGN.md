@@ -14,9 +14,9 @@ updated to match.
 ## 1. Project Identity
 
 `ember` (package: `ember`) is a local, private decision oracle for
-coding agents. It runs Cloudflare's Clef decision model on Apple Silicon via MPS
-and exposes it as a single MCP tool. It produces calibrated probabilities, not
-prose. There is no cloud path, no text generation, and no opinion.
+coding agents. It runs decision models (currently Cloudflare's Clef) on Apple
+Silicon via MPS and exposes one as a single MCP tool. It produces calibrated
+probabilities, not prose. There is no cloud path, no text generation, and no opinion.
 
 **Brand voice**: precise, minimal, honest. Numbers over adjectives. The tool
 answers questions; it does not editorialize. Documentation follows the same
@@ -130,59 +130,57 @@ The README follows a fixed section order. Do not reorder sections or add new
 top-level sections without updating this document.
 
 ```
-1.  Title / one-line description
-2.  Badges row
-3.  Why it's built this way (architecture rationale + call-path SVG plate)
-4.  Verified (benchmark table: model load time, warm inference, tool call result)
-5.  Layout (directory tree)
-6.  Install
-7.  CLI (command reference)
-8.  Agent onboarding (channels table + per-agent notes)
-9.  Development setup
-10. Run (server lifecycle)
-11. Make targets (table)
-12. Usage (example tool call + JSON response)
-13. Tests
-14. Caveats
-15. Troubleshooting
-16. License
+1.  Hero and one-line description
+2.  How it works (architecture rationale + call-path SVG plate + Names table)
+3.  Verified (measured table: model load, warm inference, tool call result)
+4.  Install (requirements, install commands, cloud notes)
+5.  Agent onboarding (channels table + per-agent notes)
+6.  CLI (command reference)
+7.  Usage (example tool call + JSON response, text and vision inputs)
+8.  Configuration (resolution order + environment-variable table)
+9.  Metrics (Prometheus endpoint and metric table)
+10. Development (directory tree, clone commands, make-target table)
+11. Tests (unit and model tiers, CI, coverage, benchmark, agent-in-the-loop)
+12. Caveats (known limits that affect correctness or behavior)
+13. Troubleshooting (failure modes with a cause and a fix)
+14. License
+15. Footer links (brand, provenance, project site)
 ```
 
-Every `##` section heading uses plain English, no emoji prefix. The README is a
-technical reference, not a marketing page.
+The README opens with the hero `<picture>` and a bold one-line description; it
+carries no badge row (see §6). Every `##` section heading uses plain English, no
+emoji prefix. The README is a technical reference, not a marketing page.
 
 ### Section conventions
 
-- **Why it's built this way** explains the architectural split (MCP server /
-  HTTP server / model) and includes the call-path SVG plate. This section
-  answers "why not just point opencode at the model directly."
-- **Verified** contains a pipe table with measured numbers from a real run on
-  the reference hardware (M4 Max / 128 GB). Numbers must come from actual
+- **How it works** explains the architectural split (MCP server / HTTP server /
+  model) and includes the call-path SVG plate. It answers "why not just point
+  opencode at the model directly," and ends with the `Names` table.
+- **Verified** contains a pipe table with measured numbers from a real run on the
+  reference hardware (M4 Max / 128 GB). Numbers must come from actual
   measurement, not estimates. Re-measure when the pinned model revision changes.
-- **Layout** is a directory tree code block, not prose.
+- **Development** holds the directory tree as a code block, not prose, followed by
+  a clone-command block and the make-target table.
 - **Make targets** is a pipe table with two columns: target and description.
 - **Caveats** covers known limitations that affect correctness or behavior.
   Not a troubleshooting section.
 - **Troubleshooting** covers failure modes with a cause and a fix.
+- The README ends with a single footer line linking the brand guide, provenance,
+  and project site.
 
 ---
 
 ## 6. Badges
 
-Three badges only, in this order:
+The README carries no badge row. Its opening is the hero artwork and a one-line
+description, so the reader reaches the install steps without a strip of status
+images. Keep the page a technical reference, not a marketing page.
 
-| Badge          | Color     | Links to              |
-|----------------|-----------|-----------------------|
-| Python version | `#3776ab` | python.org/downloads  |
-| License        | `#4a7fa5` | LICENSE file          |
-| CI status      | provider  | CI workflow run       |
-
-No vanity badges: no download counts, no star counts, no "made with" badges, no
-code style badges. The badge row communicates the minimum a contributor needs to
-know before reading further.
-
-Use `style=for-the-badge` on all shields.io badges. Separate badges with
-`&nbsp;`.
+Do not add a badge row without updating this document. If one is ever
+reintroduced, cap it at the three a contributor needs before reading further:
+Python version, license, and CI status. No vanity badges: no download counts, no
+star counts, no "made with" badges, no code style badges. Use
+`style=for-the-badge` on shields.io badges and separate them with `&nbsp;`.
 
 ---
 
@@ -435,7 +433,7 @@ never moves down. New code without tests fails the gate.
 ## 16. Configuration Location
 
 All persistent configuration lives in `~/Library/Application Support/ember`
-on macOS (resolved by `ember/paths.py`). The server binds to
+on macOS (resolved by `ember/cfg/paths.py`). The server binds to
 `127.0.0.1:8765` by default. Both are overridable via environment variables
 (`EMBER_HOST`, `EMBER_PORT`).
 
@@ -507,7 +505,7 @@ When editing any documentation file:
 - [ ] Colors match the four-token palette (§2)
 - [ ] Diagrams are ASCII or hand-authored SVG, not Mermaid (§4)
 - [ ] README section order preserved (§5)
-- [ ] Badge set is exactly three badges (§6)
+- [ ] README carries no badge row (§6)
 - [ ] At most one callout per section (§7)
 - [ ] All tables have a header row and aligned columns (§8)
 - [ ] All code blocks carry a language tag (§9)
@@ -524,6 +522,7 @@ When editing any documentation file:
 |------------|---------------------------------------------------------------|
 | 2026-10-02 | Initial design system: palette, typography, diagram style, README structure, badges, callouts, tables, code blocks, language, architecture diagrams, commits, PRs, Makefile, tooling, config, agent kit, testing, maintenance checklist |
 | 2026-10-02 | Product renamed to `ember` to match the mascot; "gut feeling" stays as flavor text |
+| 2026-10-05 | README structure and badge conventions reconciled with the shipped README: no badge row, and the corrected section order (How it works, Names, Install, Agent onboarding, CLI, Usage, Configuration, Metrics, Development, Tests) |
 
 ## Material provenance
 

@@ -24,6 +24,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from ember import models
 from ember.models import REGISTRY, ModelSpec
 
 # ###########################################################################
@@ -75,6 +76,20 @@ def test_registry_flash_head_sha256_matches_pinned_value():
 
 def test_registry_full_head_sha256_matches_pinned_value():
     assert REGISTRY["full"].head_sha256 == HEAD_SHA256_FULL
+
+
+# ###########################################################################
+# ModelSpec registry — category
+# ###########################################################################
+def test_registry_entries_are_decision_models():
+    assert all(spec.kind == "decision" for spec in REGISTRY.values())
+
+
+def test_list_models_rows_include_kind(monkeypatch):
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: None)
+    rows = models.list_models()
+    assert rows
+    assert all(row["kind"] == "decision" for row in rows)
 
 
 # ###########################################################################

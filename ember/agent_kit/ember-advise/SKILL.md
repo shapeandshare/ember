@@ -6,10 +6,10 @@ description: Playbook for the ember_advise MCP tool, a local advisor that return
 # ember-advise
 
 ember is a little buddy for judgment calls. Its `advise` tool (opencode:
-`ember_advise`; Claude Code: `mcp__ember__advise`) runs Cloudflare's Clef-Flash
-model locally: you describe a situation in `state`, ask typed questions, and it radiates a
-feeling about every option as a calibrated probability. It never writes prose and never
-decides for you — it advises, you decide.
+`ember_advise`; Claude Code: `mcp__ember__advise`) runs a local decision model
+(currently Cloudflare's Clef-Flash): you describe a situation in `state`, ask typed
+questions, and it radiates a feeling about every option as a calibrated probability. It
+never writes prose and never decides for you — it advises, you decide.
 
 | Property | Value |
 | --- | --- |

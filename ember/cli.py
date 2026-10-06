@@ -778,7 +778,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="ember",
         description=(
             "A local gut feeling for coding agents: calibrated advice from "
-            "Cloudflare's Clef model on Apple Silicon."
+            "decision models on Apple Silicon."
         ),
     )
     sub = parser.add_subparsers(dest="command", required=True)

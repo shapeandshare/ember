@@ -11,10 +11,10 @@ Please use the right channel. Questions filed as issues will be redirected to Di
 
 Most problems have a quick answer. Work through this checklist first:
 
-1. **Run `make doctor`** — it reports platform readiness, model availability, and server
+1. **Run `ember doctor`** — it reports platform readiness, model availability, and server
    status in one shot. Include its output in any bug report.
-2. **Run `make status`** — confirms whether the warm server is running and responding.
-3. **Check `make logs`** — the server log often contains the exact error.
+2. **Run `ember status`** — confirms whether the warm server is running and responding.
+3. **Check `ember logs`** — the server log often contains the exact error.
 4. **Read the Troubleshooting section of README.md** — common setup and runtime issues are
    documented there.
 5. **Search existing issues and discussions** — your question may already have an answer.

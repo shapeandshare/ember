@@ -18,7 +18,7 @@ from .cfg import paths
 
 @dataclass(frozen=True)
 class ModelSpec:
-    """A pinned Clef model's registry entry.
+    """A pinned decision model's registry entry.
 
     Attributes
     ----------
@@ -42,6 +42,10 @@ class ModelSpec:
         Expected SHA-256 hex digest of ``joint_head.safetensors``.
         Sourced from HF LFS metadata at the pinned revision.
         Differs per model (flash vs full have different heads).
+    kind : str
+        Model category. ``"decision"`` for the Clef models, which score typed
+        questions instead of generating text. More categories can be added as
+        ember grows beyond decision models.
     """
 
     name: str
@@ -52,6 +56,7 @@ class ModelSpec:
     revision: str
     schema_sha256: str
     head_sha256: str
+    kind: str = "decision"
 
 
 # SHA-256 provenance:
@@ -210,6 +215,7 @@ def list_models() -> list[dict[str, Any]]:
                 "name": name,
                 "repo": spec.repo,
                 "params": spec.params,
+                "kind": spec.kind,
                 "default": name == DEFAULT,
                 "cached": path is not None,
                 "path": str(path) if path else None,

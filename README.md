@@ -3,23 +3,15 @@
   <img src="assets/brand/hero-light.svg" alt="ember — Ember hugs its glowing tummy. Give your agent a gut feeling." width="1200">
 </picture>
 
-<div align="center">
-
-**[→ Project site: shapeandshare.github.io/ember](https://shapeandshare.github.io/ember/)**
-
-</div>
-
-[Brand assets and palette](assets/brand/README.md) · [Provenance and licensing](PROVENANCE.md) · [Project site](https://shapeandshare.github.io/ember/)
-
-**A local gut feeling for coding agents.** ember runs
-[Cloudflare's Clef-Flash](https://huggingface.co/Cloudflare/clef-flash) model on your Apple
+**A local gut feeling for coding agents.** ember runs a decision model (currently
+[Cloudflare's Clef-Flash](https://huggingface.co/Cloudflare/clef-flash)) on your Apple
 Silicon Mac and gives agents one MCP tool, `advise`: describe a situation, ask typed
 questions, and get back a calibrated feeling about every option. It's a little buddy for
 judgment calls — it advises; the agent decides.
 
 ## How it works
 
-Clef is a decision model, not a chat model: it takes a `state` plus a schema of typed
+A decision model is not a chat model: it takes a `state` plus a schema of typed
 questions and returns one probability per option, with no text generation. So ember
 plugs into agents as a **tool**, while their reasoning stays on their normal LLM:
 
@@ -426,3 +418,7 @@ never part of `make check`, `make test`, or CI.
 
 MIT (see `LICENSE`). Cloudflare's Clef weights and `joint_schema_model.py` are Apache-2.0; they
 are downloaded from Hugging Face at runtime, not redistributed here.
+
+---
+
+[Brand assets and palette](assets/brand/README.md) · [Provenance and licensing](PROVENANCE.md) · [Project site](https://shapeandshare.github.io/ember/)

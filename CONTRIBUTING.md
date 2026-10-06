@@ -1,8 +1,8 @@
 # Contributing to ember
 
-ember is a local MCP server that exposes Cloudflare's Clef decision model to coding
-agents. It runs on Apple Silicon (MPS), ships as a uv tool, and integrates with opencode and
-Claude Code via a single `advise` tool. Contributions are welcome.
+ember is a local MCP server that exposes a decision model (currently Cloudflare's Clef)
+to coding agents. It runs on Apple Silicon (MPS), ships as a uv tool, and integrates with
+opencode and Claude Code via a single `advise` tool. Contributions are welcome.
 
 The governing document for this project is `.specify/memory/constitution.md`. This file
 operationalizes it. Where the two conflict, the constitution wins.
@@ -232,13 +232,22 @@ make test-strict  # full suite; fails instead of skipping when weights are missi
 
 ```
 tests/
-  test_runtime.py        # Engine, MPS loader
-  test_server.py         # FastAPI endpoint, request validation
-  test_mcp_tool.py       # MCP tool schema, advise handler
-  test_cli.py            # CLI commands
-  test_agent_kit.py      # kit file sizes, schema consistency
-  test_process.py        # warm-server lifecycle
+  test_runtime_unit.py     # device selection, model max length, MCP isolation
+  test_http_api.py         # /health and /v1/systemone across question types
+  test_mcp_tool.py         # MCP tool schema, advise handler, autostart
+  test_cli.py              # CLI commands and lifecycle on unused ports
+  test_media.py            # data-URI and media decoding
+  test_metrics.py          # Prometheus endpoint
+  test_agent_kit.py        # kit file sizes and schema consistency
+  test_opencode_config.py  # opencode config generation
+  test_opencode_plugin.py  # plugin install and uninstall
+  test_vault_audit.py      # vault checks
+  test_model_integrity.py  # pinned model artifacts
 ```
+
+Model-backed tests (`@pytest.mark.model`) additionally cover the calibration evals
+(`test_advise_evals.py`), the agent-in-the-loop eval (`test_agent_eval.py`), and the
+benchmark dataset and report (`test_eval_benchmark.py`, `test_eval_report.py`).
 
 ---
 
