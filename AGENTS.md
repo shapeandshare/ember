@@ -4,7 +4,7 @@
 
 ## What this repo is
 
-`ember` runs Cloudflare's Clef decision models locally on Apple Silicon (MPS) and
+`ember` runs decision models (currently Cloudflare's Clef) locally on Apple Silicon (MPS) and
 exposes them to coding agents as one advisory MCP tool, `advise` (opencode: `ember_advise`; Claude
 Code: `mcp__ember__advise`). An agent sends a `state` plus typed questions and gets calibrated
 probabilities back — no prose. It ships as the `gut` uv tool (commands `ember`, `gut`,

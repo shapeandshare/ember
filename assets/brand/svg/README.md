@@ -1,4 +1,4 @@
-# Mellow SVG assets
+# Brand SVG assets
 
 Hand-drawn vector reconstruction of the selected `../concepts/mellow-hood-v1.png` concept. These are editable paths, not embedded raster images. Minor curve differences from the generated concept are intentional cleanup.
 

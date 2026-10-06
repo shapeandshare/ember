@@ -1,9 +1,9 @@
 title: ember
 tagline: Give your agent a gut feeling.
 description: >-
-  A local gut feeling for coding agents. ember runs Cloudflare's Clef model on
-  your Apple Silicon Mac and answers typed judgment questions as calibrated
-  probabilities. It advises; the agent decides.
+  A local gut feeling for coding agents. ember runs a decision model (currently
+  Cloudflare's Clef) on your Apple Silicon Mac and answers typed judgment
+  questions as calibrated probabilities. It advises; the agent decides.
 url: "https://shapeandshare.github.io"
 github: "https://github.com/shapeandshare/ember"
 

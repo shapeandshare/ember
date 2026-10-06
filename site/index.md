@@ -1,7 +1,7 @@
 ---
 layout: home
 title: ember
-description: A local gut feeling for coding agents. ember runs Cloudflare's Clef model on your Apple Silicon Mac and answers typed judgment questions as calibrated probabilities.
+description: A local gut feeling for coding agents. ember runs a decision model (currently Cloudflare's Clef) on your Apple Silicon Mac and answers typed judgment questions as calibrated probabilities.
 ---
 {%- assign bench_home = site.data.benchmark.sections[0].anchor | default: "summary" %}
 <picture class="hero-art">
@@ -11,7 +11,7 @@ description: A local gut feeling for coding agents. ember runs Cloudflare's Clef
 
 # Give your agent a gut feeling.
 
-<p class="lede">A local gut feeling for coding agents. ember runs Cloudflare's Clef model on your Apple Silicon Mac and answers typed judgment questions as calibrated probabilities — privately, in about a second.</p>
+<p class="lede">A local gut feeling for coding agents. ember runs a decision model (currently Cloudflare's Clef) on your Apple Silicon Mac and answers typed judgment questions as calibrated probabilities — privately, in about a second.</p>
 
 <ul class="hero-links">
   <li>

@@ -22,8 +22,8 @@ pull the weights with `ember model pull`.
 
 ## Hardware requirements
 
-ember runs Cloudflare's Clef model on Apple Silicon. The model has to fit in unified memory,
-and that is the binding constraint — not CPU speed.
+ember runs decision models (currently Cloudflare's Clef) on Apple Silicon. The model has to
+fit in unified memory, and that is the binding constraint — not CPU speed.
 
 | Model | Parameters | On disk (fp16) | Weight in memory | Unified memory | Verified |
 | --- | --- | --- | --- | --- | --- |

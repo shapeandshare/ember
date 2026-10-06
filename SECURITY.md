@@ -30,13 +30,15 @@ channel. Response times may be longer around public holidays.
 
 The following areas are in scope for security reports:
 
-- **`ember/server.py`**: FastAPI HTTP endpoint bound to `127.0.0.1:8765`. Potential
+- **`ember/serving/server.py`**: FastAPI HTTP endpoint bound to `127.0.0.1:8765`. Potential
   issues include request-validation bypasses, denial-of-service via malformed payloads, or
   unintended exposure of the endpoint beyond localhost.
-- **`ember/mcp_server.py`**: MCP stdio boundary between the agent and the HTTP server.
+- **`ember/serving/media.py`**: base64 media decoding for `images` and `videos`. Potential
+  issues include malformed media references or resource exhaustion during decode.
+- **`ember/mcp/mcp_server.py`**: MCP stdio boundary between the agent and the HTTP server.
   Potential issues include prompt-injection via malformed `state` or `questions` fields, or
   tool-schema confusion that causes an agent to misuse the `advise` tool.
-- **`ember/process.py`**: PID-file lifecycle management. Potential issues include
+- **`ember/serving/process.py`**: PID-file lifecycle management. Potential issues include
   TOCTOU races on the pidfile, privilege-escalation risks, or stale-pidfile attacks.
 - **`ember/cli.py`**: CLI command handling. Potential issues include unsafe subprocess
   invocation patterns or argument-injection vulnerabilities.
