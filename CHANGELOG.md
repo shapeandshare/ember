@@ -1,3 +1,13 @@
+## v0.4.0 (2026-10-06)
+
+### Feat
+
+- **ember**: support remote inference servers (#70)
+
+### Fix
+
+- **site**: open the docs at the overview instead of a contents page (#68)
+
 ## v0.3.2 (2026-10-05)
 
 ### Fix

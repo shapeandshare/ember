@@ -1,6 +1,6 @@
 [project]
 name = "gut"
-version = "0.3.2"
+version = "0.4.0"
 description = "A local gut feeling for coding agents: calibrated advice over MCP from Cloudflare's Clef model on Apple Silicon."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
