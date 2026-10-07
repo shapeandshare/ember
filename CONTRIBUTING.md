@@ -137,7 +137,7 @@ apply to new and modified code; existing violations are tracked as migration deb
 | Concurrency | Sync inference behind the engine lock; async only at I/O boundaries with structured concurrency |
 | Entry points | One composition root per subsystem; ember deliberately has no application-wide God class |
 | Writes | Idempotent and guarded; `.tmp` + `os.replace()` for files that could clobber |
-| Tests (Article XI) | Tests ship in the same commit as the code they cover; `fail_under = 71` is the ratchet floor — never lower it; run `make test-cov` to verify |
+| Tests (Article XI) | Tests ship in the same commit as the code they cover; `fail_under = 81` is the ratchet floor — never lower it; run `make test-cov` to verify |
 | Async-first (Article XII) | New FastAPI route handlers are `async def`; sync engine calls carry `# async-first:exception - engine lock is synchronous` |
 | Layered architecture (Article XIII) | MCP layer → HTTP layer → Engine layer; no primitives cross layer boundaries; cross-layer data is Pydantic or plain dict |
 | Pit of success (Article XIV) | Server returns 503 when model not loaded (never crashes); CPU is always the fallback device; setup is idempotent |
@@ -159,7 +159,8 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/).
 [optional footer]
 ```
 
-**Types:** `feat`, `fix`, `docs`, `chore`, `test`, `refactor`, `perf`, `ci`
+**Types:** `feat`, `fix`, `docs`, `chore`, `test`, `refactor`, `perf`, `ci`, `build`,
+`style`, `revert` (commitizen `cz_conventional_commits`)
 
 **Scopes:** every commit touching a specific component MUST carry its scope in
 parentheses. The valid scopes are:

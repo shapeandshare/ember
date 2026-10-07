@@ -10,11 +10,12 @@ from collections.abc import Mapping, Sequence
 from html import escape
 from typing import Any
 
+from .. import brand, document
 from . import blocks as b
 from .markup import Citations, md_code, md_fence, md_literal, to_markdown
-from .. import brand, document
+from .tone import Tone
 
-TONE_LABEL = {"good": "Holds", "warn": "Watch", "info": "Note"}
+TONE_LABEL = {Tone.GOOD: "Holds", Tone.WARN: "Watch", Tone.INFO: "Note"}
 
 
 class _Writer:

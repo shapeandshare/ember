@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 import sys
 from pathlib import Path
 
@@ -24,6 +23,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
 from evals import analysis  # noqa: E402
+from evals.export import copy_atomic, write_atomic  # noqa: E402
 
 RESULTS_DIR = REPO / "results"
 BENCHMARK_DIR = REPO / "benchmark"
@@ -44,17 +44,15 @@ def snapshot(results_path: Path) -> Path:
     model = analysis.build(results_path)
     meta = model["meta"]
     run_id = meta["run_id"]
-    out = BENCHMARK_DIR / run_id
+    out = BENCHMARK_DIR / str(run_id)
     out.mkdir(parents=True, exist_ok=True)
 
-    shutil.copyfile(results_path, out / "results.json")
-    shutil.copyfile(results_path.with_name(meta["trace_file"]), out / "trace.jsonl")
+    copy_atomic(results_path, out / "results.json")
+    copy_atomic(results_path.with_name(meta["trace_file"]), out / "trace.jsonl")
     dataset = analysis.dataset_for(results_path, meta["dataset"])
     if dataset.exists():
-        shutil.copyfile(dataset, out / "dataset.jsonl")
-    (out / "model.json").write_text(
-        json.dumps(model, indent=2) + "\n", encoding="utf-8"
-    )
+        copy_atomic(dataset, out / "dataset.jsonl")
+    write_atomic(out / "model.json", json.dumps(model, indent=2) + "\n")
     return out
 
 

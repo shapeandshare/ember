@@ -14,6 +14,8 @@ import sys
 import pytest
 from ember import cli, models
 from ember.agent_kit import api as agent_kit
+from ember.commands import endpoint as endpoint_cmd
+from ember.commands import lifecycle
 from ember.opencode import opencode_config, opencode_plugin
 from ember.serving import process
 
@@ -114,10 +116,10 @@ def test_status_surfaces_remote_health_fields(sandbox, capsys, monkeypatch):
         allow_insecure_transport=False,
         request_timeout=5,
     )
-    monkeypatch.setattr(cli, "_resolve_endpoint", lambda args: remote)
+    monkeypatch.setattr(lifecycle, "resolve_endpoint", lambda args: remote)
     monkeypatch.setattr(
-        cli,
-        "_remote_health",
+        endpoint_cmd,
+        "remote_health",
         lambda endpoint: {"status": "ok", "version": "9.9.9", "auth_required": True},
     )
     assert cli.main(["status"]) == 0
@@ -200,9 +202,64 @@ def test_eval_commands_require_a_checkout(monkeypatch):
 
 def test_resolve_endpoint_uses_http_for_loopback_host() -> None:
     args = argparse.Namespace(server_url=None, host="127.0.0.1", port=9000)
-    assert cli._resolve_endpoint(args).url == "http://127.0.0.1:9000"
+    assert endpoint_cmd.resolve_endpoint(args).url == "http://127.0.0.1:9000"
 
 
 def test_resolve_endpoint_uses_https_for_remote_host() -> None:
     args = argparse.Namespace(server_url=None, host="ember.example.com", port=9000)
-    assert cli._resolve_endpoint(args).url == "https://ember.example.com:9000"
+    assert endpoint_cmd.resolve_endpoint(args).url == "https://ember.example.com:9000"
+
+
+def test_endpoint_resolve_endpoint_uses_http_for_loopback_host() -> None:
+    from ember.commands.endpoint import resolve_endpoint
+
+    args = argparse.Namespace(server_url=None, host="127.0.0.1", port=9001)
+    assert resolve_endpoint(args).url == "http://127.0.0.1:9001"
+
+
+def test_endpoint_resolve_endpoint_uses_https_for_remote_host() -> None:
+    from ember.commands.endpoint import resolve_endpoint
+
+    args = argparse.Namespace(server_url=None, host="ember.example.com", port=9001)
+    assert resolve_endpoint(args).url == "https://ember.example.com:9001"
+
+
+def test_endpoint_remote_health_returns_none_on_connection_error() -> None:
+    from ember.cfg.endpoint import Endpoint
+    from ember.commands.endpoint import remote_health
+
+    ep = Endpoint(
+        url="http://127.0.0.1:1",
+        host="127.0.0.1",
+        scheme="http",
+        is_local=True,
+        allow_insecure_transport=True,
+        request_timeout=1.0,
+    )
+    assert remote_health(ep) is None
+
+
+def test_endpoint_status_marks_reachable_when_health_returns_body(
+    monkeypatch,
+) -> None:
+    from ember.cfg.endpoint import Endpoint
+    from ember.commands import endpoint as ep_mod
+
+    ep = Endpoint(
+        url="http://127.0.0.1:1",
+        host="127.0.0.1",
+        scheme="http",
+        is_local=False,
+        allow_insecure_transport=True,
+        request_timeout=1.0,
+    )
+    monkeypatch.setattr(
+        ep_mod,
+        "remote_health",
+        lambda _: {"status": "ok", "version": "1.0.0", "auth_required": False},
+    )
+    status = ep_mod.endpoint_status(ep)
+    assert status["reachable"] is True
+    assert status["ready"] == "ok"
+    assert status["contract_version"] == "1.0.0"
+    assert status["remote_auth_required"] is False

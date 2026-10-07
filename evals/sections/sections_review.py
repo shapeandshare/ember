@@ -28,11 +28,12 @@ from ..render.blocks import (
     num,
 )
 from ..render.markup import figure_id
+from ..render.tone import Tone
 from .sections_front import Built, Report, recipe_title
 
 TONES = {
-    "acted on a wrong answer": "bad",
-    "acted, flagged for verification": "warn",
+    "acted on a wrong answer": Tone.BAD,
+    "acted, flagged for verification": Tone.WARN,
 }
 
 
@@ -107,7 +108,7 @@ def _miss_card(report: Report, miss: Mapping[str, Any]) -> Card:
     return Card(
         title=f"{miss['id']}: {miss['question']}",
         tag=f"{recipe_title(report, miss['category'])} · {miss['split']}",
-        tone=TONES.get(miss["kit_outcome"], "info"),
+        tone=TONES.get(miss["kit_outcome"], Tone.INFO),
         facts=(
             ("Gold", cell(f"{miss.get('gold_text', miss['gold'])} ({miss['gold']})")),
             (

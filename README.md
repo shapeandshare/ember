@@ -247,7 +247,8 @@ included — `/metrics` shows only the table above.
 
 ```
 ember/
-  cli.py              # the `ember` command (alias `gut`)
+  cli.py              # the `ember` command (alias `gut`): argparse wiring + main()
+  commands/           # subcommand handlers: lifecycle, doctor, models, agents, eval, config
   models.py           # pinned model registry + pull/list/rm
   serving/            # HTTP model server, MPS runtime, lifecycle, media
     server.py         #   FastAPI: POST /v1/systemone, GET /health (reports pid)
@@ -339,15 +340,16 @@ make ci           # bootstrap + check + test-strict
 `8765`), keeps state in temporary directories, stops only the processes it started, and never
 invokes the opencode CLI or touches global opencode config.
 
-**CI** (`.github/workflows/ci.yml`) runs `uv sync --locked`, `make check`, `uv build`, and an
-install smoke of the built wheel on a hosted Apple Silicon runner, and audits the workflows
-with [zizmor](https://docs.zizmor.sh). Model-backed tests are
+**CI** (`.github/workflows/ci.yml`) runs `uv sync --locked` and then, as separate jobs, format
+and lint, `mypy --strict`, bandit, `make check`, `uv build` plus an install smoke of the built
+wheel on a hosted Apple Silicon runner, a SonarCloud scan (needs the `SONAR_TOKEN` repository
+secret), and a [zizmor](https://docs.zizmor.sh) audit of the workflows. Model-backed tests are
 **not** run in CI: the ~19 GB fp16 model does not fit the available runners (hosted or the
 org's 8 GiB self-hosted VMs), so run `make test` locally for model-affecting changes.
 
 **Coverage is tracked and gated** (constitution Article XI). Run `make test-cov` to see the
 full report. The enforced floor (`fail_under` in `pyproject.toml`) is the current measured
-level and may only increase — currently **71 %**. Lowering it requires explicit, recorded
+level and may only increase — currently **81 %**. Lowering it requires explicit, recorded
 approval per Article XI §11.2.
 
 ### Benchmark

@@ -12,18 +12,24 @@ from html import escape
 from pathlib import Path
 from typing import Any
 
-from . import blocks as b
-from .markup import Citations, to_html
 from .. import brand, document
 from ..charts import svg
+from . import blocks as b
+from .markup import Citations, to_html
+from .tone import Tone
 
 CSS = Path(__file__).with_name("report.css")
-TONE_LABEL = {"good": "Holds", "warn": "Watch", "info": "Note", "bad": "Wrong action"}
+TONE_LABEL = {
+    Tone.GOOD: "Holds",
+    Tone.WARN: "Watch",
+    Tone.INFO: "Note",
+    Tone.BAD: "Wrong action",
+}
 ICONS = {
-    "good": '<path d="M3.5 8.5l3 3 6-7"/>',
-    "bad": '<path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/>',
-    "warn": '<path d="M8 2.5l6 11H2z"/><path d="M8 6.8v3M8 11.9v.1"/>',
-    "info": '<circle cx="8" cy="8" r="6"/><path d="M8 7.4v4M8 4.9v.1"/>',
+    Tone.GOOD: '<path d="M3.5 8.5l3 3 6-7"/>',
+    Tone.BAD: '<path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/>',
+    Tone.WARN: '<path d="M8 2.5l6 11H2z"/><path d="M8 6.8v3M8 11.9v.1"/>',
+    Tone.INFO: '<circle cx="8" cy="8" r="6"/><path d="M8 7.4v4M8 4.9v.1"/>',
 }
 SCRIPT = """
 (() => {

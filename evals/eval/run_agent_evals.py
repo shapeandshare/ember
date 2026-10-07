@@ -37,7 +37,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 from evals.agent import judge, opencode, sandbox, summary  # noqa: E402
+from evals.agent.condition import Condition  # noqa: E402
 from evals.agent.scenarios import SCENARIOS  # noqa: E402
+from evals.export import write_atomic  # noqa: E402
 
 from .run_evals import _git_hash, _host, _resolve_server  # noqa: E402
 
@@ -74,7 +76,7 @@ def _preflight(server: str, models: list[str], conditions: list[str]) -> dict[st
     for model in models:
         keys.update(opencode.provider_env(model))
     engine: dict[str, Any] = {}
-    if any(c != "none" for c in conditions):
+    if any(c != Condition.NONE for c in conditions):
         try:
             engine = httpx.get(f"{server}/health", timeout=5).json().get("engine") or {}
         except httpx.HTTPError as exc:
@@ -342,7 +344,7 @@ def main(argv: list[str] | None = None) -> int:
     }
     results = {"config": config, "summary": summary.summarize(records)}
     results_path = RESULTS_DIR / f"{run_id}_results.json"
-    results_path.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
+    write_atomic(results_path, json.dumps(results, indent=2) + "\n")
     print("\n" + render(results))
     print(f"\n  trace   {trace_path}\n  results {results_path}")
     return 0

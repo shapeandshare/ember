@@ -264,6 +264,15 @@ def test_mcp_server_import_does_not_load_torch():
     assert result.stdout.strip() == "False", result.stderr
 
 
+def test_cli_import_does_not_load_torch():
+    # The cli.py split must not pull torch in at parser-build time.
+    code = "import sys, ember.cli; print('torch' in sys.modules)"
+    result = subprocess.run(  # noqa: S603 - this interpreter with a literal script
+        [sys.executable, "-c", code], capture_output=True, text=True, timeout=60
+    )
+    assert result.stdout.strip() == "False", result.stderr
+
+
 def _endpoint(url: str, *, is_local: bool):
     from urllib.parse import urlparse
 
@@ -359,6 +368,22 @@ def test_stop_writes_sigterm_audit_entry_to_server_log(tmp_path, monkeypatch):
     log_text = paths.server_log_path().read_text(encoding="utf-8")
     assert f"stop: signaling pid={fake_pid}" in log_text
     assert re.search(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", log_text)
+
+
+def test_audit_log_failure_logs_warning_instead_of_printing(
+    tmp_path, monkeypatch, caplog, capsys
+):
+    """A failed audit-log write is reported through logging, not print (§10.13)."""
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path / "missing" / "dir"))
+    monkeypatch.setattr(
+        process.paths, "server_log_path", lambda: tmp_path / "nope" / "server.log"
+    )
+
+    with caplog.at_level("WARNING", logger=process.__name__):
+        process._append_audit_log("stop: signaling pid=1")
+
+    assert "could not write audit log" in caplog.text
+    assert capsys.readouterr().err == ""
 
 
 def test_stop_writes_sigkill_audit_entry_when_escalating(tmp_path, monkeypatch):

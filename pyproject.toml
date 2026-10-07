@@ -149,5 +149,5 @@ source = ["ember"]
 omit = ["tests/*", "scripts/*"]
 
 [tool.coverage.report]
-fail_under = 71
+fail_under = 81
 show_missing = true
