@@ -264,6 +264,15 @@ def test_mcp_server_import_does_not_load_torch():
     assert result.stdout.strip() == "False", result.stderr
 
 
+def test_cli_import_does_not_load_torch():
+    # The cli.py split must not pull torch in at parser-build time.
+    code = "import sys, ember.cli; print('torch' in sys.modules)"
+    result = subprocess.run(  # noqa: S603 - this interpreter with a literal script
+        [sys.executable, "-c", code], capture_output=True, text=True, timeout=60
+    )
+    assert result.stdout.strip() == "False", result.stderr
+
+
 def _endpoint(url: str, *, is_local: bool):
     from urllib.parse import urlparse
 
