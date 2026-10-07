@@ -247,7 +247,8 @@ included — `/metrics` shows only the table above.
 
 ```
 ember/
-  cli.py              # the `ember` command (alias `gut`)
+  cli.py              # the `ember` command (alias `gut`): argparse wiring + main()
+  commands/           # subcommand handlers: lifecycle, doctor, models, agents, eval, config
   models.py           # pinned model registry + pull/list/rm
   serving/            # HTTP model server, MPS runtime, lifecycle, media
     server.py         #   FastAPI: POST /v1/systemone, GET /health (reports pid)

@@ -10,8 +10,9 @@ Modified principles:
     tree); coverage paragraph defers to Article XI (it still said "not yet gated, 60%");
     commit types match commitizen.
   - Article X §10.11 — `# async-first:exception` listed among exception tags.
-  - Article X §10.18 — cli.py recorded at 1086 lines (the growth past 929 broke §10.18);
-    nine unrecorded oversize modules and two evals/ magic-string sets recorded as debt.
+  - Article X §10.18 — cli.py was found at 1086 lines (the growth past 929 broke §10.18);
+    nine unrecorded oversize modules recorded as debt; cli.py split and the two evals/
+    magic-string sets converted to StrEnums, both then removed from the debt list.
   - Article XII — §12.1 defers to §12.2; deprecated `asyncio.get_event_loop` and the anyio-2
     `run_sync_in_worker_thread` name replaced with `anyio.to_thread.run_sync`; §12.3 matches
     the async `advise` tool; §12.4 made decidable.
@@ -29,7 +30,8 @@ Templates / docs propagated:
   - ✅ AGENTS.md, README.md, CONTRIBUTING.md, SECURITY.md (CI description, commit types,
     in-scope files)
   - ✅ vault/discoveries/2026-10-06-constitution-consistency-audit.md
-Follow-up TODOs: split ember/cli.py; StrEnum for evals conditions/tones (recorded in §10.18).
+Follow-up TODOs: none. Resolved after the audit (same date): ember/cli.py split into
+  ember/cli.py + ember/commands/; Condition and Tone enums in evals/ (§10.18 updated).
 -->
 <!--
 SYNC IMPACT REPORT — Remote Inference (Article I redefinition)
@@ -510,21 +512,16 @@ darkfactory, infrastructure, k8s.platform) harvested on 2026-10-03.
   existence-guarded; a file write that could clobber another writes a sibling `.tmp` first and
   installs it with `os.replace()`.
 - §10.18 **Migration debt.** Known existing violations, tracked here and never increased:
-  `ember/cli.py` is 1086 lines, over the 400-line ceiling (it was 788 at adoption and 929 when
-  last recorded — that growth broke this section and MUST NOT continue);
   modules over the 400-line ceiling that predate recording here: `ember/serving/runtime.py`
   (507), `evals/agent/scenarios.py` (905, scenario data), `evals/analysis.py` (793),
   `evals/sections/sections_results.py` (506), `evals/charts/charts_calibration.py` (504),
   `evals/report_text.py` (447), `evals/metrics.py` (414), `evals/charts/charts.py` (412),
-  `evals/eval/report_evals.py` (408); §10.7 magic-string sets in `evals/`: the agent-eval
-  condition names (`evals/agent/sandbox.py` `CONDITIONS`, compared as literals in
-  `summary.py`, `report.py`, `sections_agent.py`) and the report tone vocabulary
-  (`good`/`warn`/`info`/`bad` in `evals/render/blocks.py`, `render_html.py`,
-  `render_markdown.py`) are not yet `StrEnum`s; `ember/cli.py` defers
-  `from .serving import server` and `from .mcp import mcp_server` inside subcommand
-  functions to avoid loading torch at CLI startup — this violates §10.5's "internal ember
-  modules MUST NOT be lazy-imported" and is tracked here until `cli.py` is split into
-  per-subcommand entry points; `ember/mcp/mcp_types.py` declares two Pydantic models
+  `evals/eval/report_evals.py` (408); `ember/commands/lifecycle.py` defers
+  `from ..serving import server` and `from ..mcp import mcp_server` inside the `serve` and
+  `mcp` handlers (tagged `# import-placement:allow`) to avoid loading torch at CLI startup —
+  this violates §10.5's "internal ember modules MUST NOT be lazy-imported" and stays tracked
+  until those entry points no longer share a process with the CLI parser;
+  `ember/mcp/mcp_types.py` declares two Pydantic models
   (`Question` and `AdviseInput`) — `Question` is a sub-schema field type of `AdviseInput`
   with no independent callers, satisfying the spirit of §10.2's tight-coupling principle
   though not the letter of the exception; `evals/render/blocks.py` declares 17 frozen
@@ -536,8 +533,11 @@ darkfactory, infrastructure, k8s.platform) harvested on 2026-10-03.
   require four separate files for a 201-line script; and most modules are function-oriented
   rather than one-class-per-file. NumPy docstrings (ruff `D`) and the
   `py.typed` marker are now enforced for `ember/`; `evals/` and `tests/` are exempt from
-  ruff `D`. Each remaining item is paid down as its file is next touched — splitting
-  `ember/cli.py` is the priority. Previously tracked items now resolved:
+  ruff `D`. Each remaining item is paid down as its file is next touched. Previously
+  tracked items now resolved: `ember/cli.py` (1086 lines, split into a 141-line composition
+  root plus `ember/commands/`, every module under 400 lines, 2026-10-06); the `evals/`
+  agent-condition and report-tone magic-string sets (`Condition` in
+  `evals/agent/condition.py`, `Tone` in `evals/render/tone.py`, 2026-10-06);
   `ember/mcp/mcp_server.py` two-class violation (classes moved to `ember/mcp/mcp_types.py`
   on 2026-10-04); `evals/agent/opencode.py` two-class violation (`ToolCall` →
   `tool_call.py`, `Transcript` → `transcript.py`, 2026-10-04); `evals/agent/sandbox.py`

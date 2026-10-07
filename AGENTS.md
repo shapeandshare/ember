@@ -69,7 +69,8 @@ after changing brand assets. Do not invent missing provenance or license facts.
 
 ```
 ember/
-  cli.py              # `ember` / `gut` command: lifecycle, models, doctor, init, agents
+  cli.py              # `ember` / `gut` composition root: argparse wiring + main()
+  commands/           # subcommand handlers: lifecycle, doctor, models, agents, eval, config
   models.py           # pinned model registry + pull/list/rm
   serving/            # HTTP model server, MPS runtime, lifecycle, media
     server.py         #   FastAPI: POST /v1/systemone, GET /health (reports pid)

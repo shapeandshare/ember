@@ -11,6 +11,8 @@ updated: "2026-10-06"
 code-refs:
   - .specify/memory/constitution.md
   - ember/serving/process.py
+  - ember/cli.py
+  - ember/commands/lifecycle.py
   - evals/export.py
   - evals/eval/run_evals.py
   - evals/eval/run_agent_evals.py
@@ -56,7 +58,9 @@ handlers, prints, and writes were grepped.
 ## Relevance
 
 Re-run this audit after any amendment. The debt list must be re-measured, not copied
-forward. Splitting `cli.py` and adding the evals `StrEnum`s remain open.
+forward. Follow-ups done the same day: `cli.py` split into `ember/cli.py` and
+`ember/commands/`, and `Condition`/`Tone` enums in `evals/`. Still open: the nine oversize
+modules and the deliberate lazy imports in `commands/lifecycle.py`.
 
 ## References
 

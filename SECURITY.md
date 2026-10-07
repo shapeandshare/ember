@@ -44,7 +44,7 @@ The following areas are in scope for security reports:
   tool-schema confusion that causes an agent to misuse the `advise` tool.
 - **`ember/serving/process.py`**: PID-file lifecycle management. Potential issues include
   TOCTOU races on the pidfile, privilege-escalation risks, or stale-pidfile attacks.
-- **`ember/cli.py`**: CLI command handling. Potential issues include unsafe subprocess
+- **`ember/cli.py`, `ember/commands/`**: CLI command handling. Potential issues include unsafe subprocess
   invocation patterns or argument-injection vulnerabilities.
 - **Dependency vulnerabilities** in the pinned ranges declared in `pyproject.toml` and
   `uv.lock`, particularly in `torch`, `transformers`, `fastapi`, `uvicorn`, and `mcp`.
