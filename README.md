@@ -33,7 +33,7 @@ plugs into agents as a **tool**, while their reasoning stays on their normal LLM
 | Distribution (`uv tool install`, PyPI) | `gut`, because `ember` is taken on PyPI |
 | CLI | `ember` (short alias: `gut`) |
 | MCP server / command | `ember` / `ember-mcp` |
-| Tool | `advise` — opencode: `ember_advise`; Claude Code: `mcp__ember__advise` |
+| Tool | `advise` — opencode: `ember_advise`; Claude Code: `mcp__ember__advise`; Kilo Code: `ember_advise` |
 | Playbook skill / MCP resource | `ember-advise` / `ember://guide` |
 | Environment variables | `EMBER_*` |
 
@@ -98,15 +98,16 @@ Installing the tool is half the job; the other half is making agents **want** to
 at the right moments and read its answers sensibly. `ember/agent_kit/` ships that
 guidance through every channel each agent actually reads:
 
-| Channel | opencode | Claude Code | Codex CLI | How you get it |
-| --- | --- | --- | --- | --- |
-| MCP server instructions (when to consult, how to ask, how to read answers) | ✅ in the system prompt | ✅ (2 KB cap) | — | built in, nothing to do |
-| `ember://guide` resource (full playbook) | ✅ via `read_mcp_resource` | ✅ | — | built in |
-| `ember-advise` skill (playbook, loaded on demand) | ✅ | ✅ | ✅ | `ember agents install --agent <agent>` |
-| AGENTS.md / CLAUDE.md policy block | ✅ | ✅ (CLAUDE.md) | ✅ | `ember agents show snippet >> AGENTS.md` |
+| Channel | opencode | Kilo Code | Claude Code | Codex CLI | How you get it |
+| --- | --- | --- | --- | --- | --- |
+| MCP server instructions (when to consult, how to ask, how to read answers) | ✅ in the system prompt | ✅ in the system prompt | ✅ (2 KB cap) | — | built in, nothing to do |
+| `ember://guide` resource (full playbook) | ✅ via `read_mcp_resource` | ✅ via `read_mcp_resource` | ✅ | — | built in |
+| `ember-advise` skill (playbook, loaded on demand) | ✅ | ✅ | ✅ | ✅ | `ember agents install --agent <agent>` |
+| AGENTS.md / CLAUDE.md policy block | ✅ | ✅ | ✅ (CLAUDE.md) | ✅ | `ember agents show snippet >> AGENTS.md` |
 
 ```bash
 ember init --opencode                  # opencode: config entry, plugin, and skill
+ember init --kilocode                  # Kilo Code: kilo.json entry and skill
 ember agents install --agent claude    # .claude/skills/ember-advise/SKILL.md
 ember agents install --agent codex     # .agents/skills/... (opencode reads this too)
 ember agents show snippet >> AGENTS.md # then edit the project policy at the end
@@ -123,6 +124,9 @@ Agent-specific notes:
 
 - opencode reads skills from `.opencode/skills`, `.claude/skills`, and `.agents/skills`, so
   install one copy per project to avoid duplicate listings.
+- Kilo Code: `ember init --kilocode` writes the `mcp.ember` entry to `kilo.json` (same
+  config shape as opencode) and installs the skill to `.kilo/skills/ember-advise/SKILL.md`;
+  the tool appears as `ember_advise`. Kilo Code also reads `AGENTS.md` automatically.
 - Claude Code: register the server with `claude mcp add ember -- ember-mcp`; the
   tool appears as `mcp__ember__advise`.
 - Codex CLI support for MCP server instructions and resources is unconfirmed, so rely on the
@@ -144,9 +148,9 @@ ember uninstall [--purge-models]  # also removes global opencode/skill installs
 ember model pull [flash|full]     # flash = 9B (default), full = 27B
 ember model list | path [name] | rm [name]
 
-# opencode and agents
-ember init [--opencode] [--global]
-ember agents install [--agent opencode|claude|codex] [--global]
+# opencode, Kilo Code, and agents
+ember init [--opencode] [--kilocode] [--global] [--server-url URL] [--auth-header NAME]
+ember agents install [--agent opencode|claude|codex|kilocode] [--global]
 ember agents show instructions|skill|snippet
 ember mcp                         # the MCP stdio server agents launch
 ```
@@ -224,6 +228,24 @@ accept remote clients, set `EMBER_HOST` (e.g. `0.0.0.0`) and `EMBER_SERVER_AUTH_
 terminate TLS at a proxy. `ember status` / `ember doctor` report the endpoint kind,
 reachability, the remote's advertised `auth_required`, and whether a credential is configured;
 reverting to local is a single change (unset these variables).
+
+#### Bootstrapping a client against a hosted endpoint
+
+`ember init` can generate the `mcp.ember` entry for a remote endpoint directly, instead of
+hand-editing the generated `opencode.json` / `kilo.json`:
+
+```bash
+ember init --opencode --kilocode \
+  --server-url https://decisions.example.com \
+  --auth-header X-API-KEY        # omit for the default Authorization: Bearer header
+```
+
+This writes `EMBER_SERVER_URL` (and `EMBER_AUTH_HEADER`, if given) into the config file and
+forces `EMBER_AUTOSTART=0` — there is nothing local to autostart. **The credential itself is
+never written to the file**: export `EMBER_AUTH_TOKEN` in the shell that launches the agent
+(or your GUI app's environment) instead, so a secret never lands in a config file that might
+be project-committed. Without `--server-url`, `ember init` behaves exactly as before (a local
+loopback entry).
 
 ## Metrics
 

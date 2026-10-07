@@ -188,4 +188,5 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         state = "reachable" if status["reachable"] else "unreachable"
         info("endpoint", f"{status['kind']} {status['url']} ({state})")
     info("opencode", shutil.which("opencode") or "not on PATH")
+    info("kilo", shutil.which("kilo") or "not on PATH")
     return 0 if ok else 1

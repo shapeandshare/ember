@@ -6,8 +6,9 @@ A loopback server is started on demand through ``process.start`` — the same mo
 resolution, pid file, and log as ``ember start``. The model never loads in this
 process, so the MCP handshake stays instant.
 
-opencode namespaces tools as ``<server>_<tool>``: with the server key ``ember``
-the tool appears as ``ember_advise`` (Claude Code: ``mcp__ember__advise``).
+opencode and Kilo Code both namespace tools as ``<server>_<tool>``: with the
+server key ``ember`` the tool appears as ``ember_advise`` (Claude Code:
+``mcp__ember__advise``).
 
 Env:
     EMBER_SERVER_URL              default http://127.0.0.1:8765 (endpoint)

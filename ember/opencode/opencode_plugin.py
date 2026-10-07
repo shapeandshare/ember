@@ -36,18 +36,33 @@ export const EmberPlugin = async () => ({
 )
 
 
-def render(command: list[str], server_url: str, autostart: str = "1") -> str:
+def render(
+    command: list[str],
+    server_url: str,
+    autostart: str = "1",
+    auth_header: str | None = None,
+) -> str:
     """Render the opencode plugin's JavaScript source.
+
+    Never embeds a credential: ``auth_header`` names the header a remote
+    endpoint expects, but the token itself must be exported as
+    ``EMBER_AUTH_TOKEN`` in the shell that launches opencode — writing a
+    secret into this generated, potentially project-committed file is
+    avoided on purpose.
 
     Parameters
     ----------
     command : list[str]
         Argv used to launch the MCP server.
     server_url : str
-        Value for the ``EMBER_SERVER_URL`` environment variable.
+        Value for the ``EMBER_SERVER_URL`` environment variable; local or
+        remote.
     autostart : str, optional
         Value for the ``EMBER_AUTOSTART`` environment variable. Defaults to
         ``"1"``.
+    auth_header : str | None, optional
+        The header name a remote endpoint expects the credential on. Only
+        meaningful when ``server_url`` is remote; never paired with a token.
 
     Returns
     -------
@@ -58,6 +73,8 @@ def render(command: list[str], server_url: str, autostart: str = "1") -> str:
         "EMBER_SERVER_URL": server_url,
         "EMBER_AUTOSTART": autostart,
     }
+    if auth_header:
+        environment["EMBER_AUTH_HEADER"] = auth_header
     if os.environ.get("PATH"):
         environment["PATH"] = os.environ["PATH"]
     return _TEMPLATE.substitute(
@@ -94,6 +111,8 @@ def install(
     server_url: str,
     scope: str = "project",
     project_root: Path | None = None,
+    autostart: str = "1",
+    auth_header: str | None = None,
 ) -> Path:
     """Render and write the opencode plugin file.
 
@@ -102,12 +121,19 @@ def install(
     command : list[str]
         Argv used to launch the MCP server.
     server_url : str
-        Value for the ``EMBER_SERVER_URL`` environment variable.
+        Value for the ``EMBER_SERVER_URL`` environment variable; local or
+        remote.
     scope : str, optional
         ``"project"`` (default) or ``"global"``.
     project_root : Path | None, optional
         Root to install under when ``scope`` is ``"project"``; defaults to
         the current working directory.
+    autostart : str, optional
+        Value for the ``EMBER_AUTOSTART`` environment variable. Defaults to
+        ``"1"``.
+    auth_header : str | None, optional
+        The header name a remote endpoint expects the credential on. See
+        ``render``; never paired with a token value.
 
     Returns
     -------
@@ -118,6 +144,8 @@ def install(
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / PLUGIN_FILENAME
     tmp = path.with_suffix(".tmp")
-    tmp.write_text(render(command, server_url), encoding="utf-8")
+    tmp.write_text(
+        render(command, server_url, autostart, auth_header), encoding="utf-8"
+    )
     os.replace(tmp, path)
     return path

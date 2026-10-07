@@ -16,6 +16,7 @@ from ember import cli, models
 from ember.agent_kit import api as agent_kit
 from ember.commands import endpoint as endpoint_cmd
 from ember.commands import lifecycle
+from ember.kilocode import kilocode_config
 from ember.opencode import opencode_config, opencode_plugin
 from ember.serving import process
 
@@ -58,6 +59,7 @@ def test_agents_show_prints_the_kit(what, loader, capsys):
         ("opencode", ".opencode/skills"),
         ("claude", ".claude/skills"),
         ("codex", ".agents/skills"),
+        ("kilocode", ".kilo/skills"),
     ],
 )
 def test_agents_install_writes_project_skill(sandbox, agent, root):
@@ -79,6 +81,49 @@ def test_init_opencode_registers_server_plugin_and_skill(sandbox):
     assert (
         sandbox / ".opencode/skills/ember-advise/SKILL.md"
     ).read_text() == agent_kit.skill()
+
+
+def test_init_kilocode_registers_server_and_skill(sandbox):
+    assert cli.main(["init", "--kilocode"]) == 0
+    config = json.loads((sandbox / "kilo.json").read_text())
+    assert config["mcp"]["ember"]["type"] == "local"
+    assert (
+        sandbox / ".kilo/skills/ember-advise/SKILL.md"
+    ).read_text() == agent_kit.skill()
+
+
+def test_init_kilocode_with_server_url_bootstraps_a_remote_endpoint(sandbox):
+    assert (
+        cli.main(
+            [
+                "init",
+                "--kilocode",
+                "--server-url",
+                "https://decisions.example.com",
+                "--auth-header",
+                "X-API-KEY",
+            ]
+        )
+        == 0
+    )
+    config = json.loads((sandbox / "kilo.json").read_text())
+    env = config["mcp"]["ember"]["environment"]
+    assert env["EMBER_SERVER_URL"] == "https://decisions.example.com"
+    assert env["EMBER_AUTH_HEADER"] == "X-API-KEY"
+    assert "EMBER_AUTH_TOKEN" not in env
+    assert "token" not in (sandbox / "kilo.json").read_text().lower()
+
+
+def test_init_opencode_with_server_url_bootstraps_a_remote_endpoint(sandbox):
+    assert (
+        cli.main(
+            ["init", "--opencode", "--server-url", "https://decisions.example.com"]
+        )
+        == 0
+    )
+    config = json.loads((sandbox / "opencode.json").read_text())
+    env = config["mcp"]["ember"]["environment"]
+    assert env["EMBER_SERVER_URL"] == "https://decisions.example.com"
 
 
 def test_status_and_stop_are_inert_on_an_unused_port(sandbox, capsys):
@@ -165,6 +210,7 @@ def test_doctor_treats_a_stopped_server_as_information(sandbox, monkeypatch, cap
 
 def test_uninstall_removes_global_installs_and_keeps_other_config(sandbox):
     assert cli.main(["init", "--opencode", "--global"]) == 0
+    assert cli.main(["init", "--kilocode", "--global"]) == 0
     global_config = opencode_config.global_config_path()
     config = json.loads(global_config.read_text())
     config["model"] = "keep-me"
@@ -175,9 +221,13 @@ def test_uninstall_removes_global_installs_and_keeps_other_config(sandbox):
         opencode_plugin.plugin_dir("global") / opencode_plugin.PLUGIN_FILENAME
     ).exists()
     assert not agent_kit.skill_path("opencode", "global").exists()
+    assert not agent_kit.skill_path("kilocode", "global").exists()
     remaining = json.loads(global_config.read_text())
     assert remaining["model"] == "keep-me"
     assert "ember" not in remaining["mcp"]
+
+    kilo_config = kilocode_config.global_config_path()
+    assert "ember" not in json.loads(kilo_config.read_text()).get("mcp", {})
 
 
 def test_eval_commands_require_a_checkout(monkeypatch):

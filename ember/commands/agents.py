@@ -10,19 +10,28 @@ from pathlib import Path
 from .. import models as models_mod
 from ..agent_kit import api as agent_kit
 from ..cfg import paths
+from ..kilocode import kilocode_config
 from ..opencode import opencode_config, opencode_plugin
 from ..serving import process
 from .endpoint import host_port
 
 
 def cmd_init(args: argparse.Namespace) -> int:
-    """Register the MCP server with opencode (``ember init``).
+    """Register the MCP server with opencode and/or Kilo Code (``ember init``).
+
+    When ``args.server_url`` is given, bootstraps the client against that
+    remote endpoint instead of a local loopback server: ``EMBER_AUTOSTART`` is
+    forced off (there is nothing local to autostart) and, if ``args.auth_header``
+    is set, its name is recorded. The credential itself is never written to a
+    config file — export ``EMBER_AUTH_TOKEN`` in the shell that launches the
+    agent instead.
 
     Parameters
     ----------
     args : argparse.Namespace
         Parsed CLI arguments; uses the server flags plus ``args.global_``,
-        ``args.opencode``, and ``args.no_autostart``.
+        ``args.opencode``, ``args.kilocode``, ``args.no_autostart``,
+        ``args.server_url``, and ``args.auth_header``.
 
     Returns
     -------
@@ -30,7 +39,9 @@ def cmd_init(args: argparse.Namespace) -> int:
         Always ``0``.
     """
     host, port = host_port(args)
-    autostart = "0" if args.no_autostart else "1"
+    server_url = getattr(args, "server_url", None)
+    auth_header = getattr(args, "auth_header", None)
+    autostart = "0" if (args.no_autostart or server_url) else "1"
     scope = "global" if args.global_ else "project"
     target = (
         opencode_config.global_config_path()
@@ -38,15 +49,39 @@ def cmd_init(args: argparse.Namespace) -> int:
         else opencode_config.project_config_path(Path.cwd())
     )
     command = opencode_config.mcp_command()
-    print(f"wrote {opencode_config.write(target, host, port, autostart)}")
+    written = opencode_config.write(
+        target, host, port, autostart, server_url, auth_header
+    )
+    print(f"wrote {written}")
+    if server_url:
+        print(f"  remote endpoint: {server_url}")
+        print("  export EMBER_AUTH_TOKEN in your shell if the endpoint requires one")
     if args.opencode:
-        local_url = f"http://{host}:{port}"  # NOSONAR - loopback server only
-        plugin = opencode_plugin.install(command, local_url, scope=scope)
+        effective_url = server_url or f"http://{host}:{port}"  # NOSONAR - local default
+        plugin = opencode_plugin.install(
+            command,
+            effective_url,
+            scope=scope,
+            autostart=autostart,
+            auth_header=auth_header,
+        )
         print(f"installed opencode plugin: {plugin}")
         skill = agent_kit.install_skill("opencode", scope, Path.cwd())
         print(f"installed {agent_kit.SKILL_NAME} skill: {skill}")
+    if args.kilocode:
+        kilo_target = (
+            kilocode_config.global_config_path()
+            if args.global_
+            else kilocode_config.project_config_path(Path.cwd())
+        )
+        kilo_written = kilocode_config.write(
+            kilo_target, host, port, autostart, server_url, auth_header
+        )
+        print(f"wrote {kilo_written}")
+        skill = agent_kit.install_skill("kilocode", scope, Path.cwd())
+        print(f"installed {agent_kit.SKILL_NAME} skill: {skill}")
     print(f"  command: {command}")
-    print("restart opencode to pick up changes")
+    print("restart opencode/kilo to pick up changes")
     return 0
 
 
@@ -125,13 +160,15 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
             print(f"removed {skill_dir}")
     if opencode_config.remove(opencode_config.global_config_path()):
         print(f"removed mcp.ember from {opencode_config.global_config_path()}")
+    if kilocode_config.remove(kilocode_config.global_config_path()):
+        print(f"removed mcp.ember from {kilocode_config.global_config_path()}")
     for directory in {paths.state_dir(), paths.config_dir()}:
         shutil.rmtree(directory, ignore_errors=True)
         print(f"removed {directory}")
 
     print(
         "project installs are left in place: in each initialized project, remove the "
-        "`mcp.ember` entry from opencode.json, "
+        "`mcp.ember` entry from opencode.json and/or kilo.json, "
         f".opencode/plugins/{opencode_plugin.PLUGIN_FILENAME}, "
         f"and any {agent_kit.SKILL_NAME} skill directories"
     )

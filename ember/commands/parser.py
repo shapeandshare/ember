@@ -191,8 +191,22 @@ def register_agents(
         action="store_true",
         help="also install the opencode plugin and skill",
     )
+    p.add_argument(
+        "--kilocode",
+        action="store_true",
+        help="also register the server in kilo.json and install the skill",
+    )
     p.add_argument("--no-autostart", action="store_true")
     add_server_flags(p)
+    add_endpoint_flag(p)
+    p.add_argument(
+        "--auth-header",
+        help=(
+            "header name a remote --server-url expects the credential on "
+            "(default: Authorization). Never written with a token value — "
+            "export EMBER_AUTH_TOKEN in the shell that launches the agent"
+        ),
+    )
     p.set_defaults(func=cmd_init)
 
     agents = sub.add_parser(
