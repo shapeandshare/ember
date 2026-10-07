@@ -11,6 +11,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from .tone import Tone
+
 
 @dataclass(frozen=True)
 class Para:
@@ -47,7 +49,7 @@ class Code:
 class Callout:
     """A toned finding: ``good``, ``warn``, or ``info``."""
 
-    tone: str
+    tone: Tone
     title: str
     text: str
 
@@ -59,7 +61,7 @@ class Kpi:
     label: str
     value: str
     note: str = ""
-    tone: str = "info"
+    tone: Tone = Tone.INFO
 
 
 @dataclass(frozen=True)
@@ -123,7 +125,7 @@ class Card:
 
     title: str
     tag: str
-    tone: str
+    tone: Tone
     facts: tuple[tuple[str, Cell], ...]
     body: tuple[Block, ...] = ()
 

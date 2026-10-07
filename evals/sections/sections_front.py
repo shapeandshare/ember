@@ -27,6 +27,7 @@ from ..render.blocks import (
     num,
     pct,
 )
+from ..render.tone import Tone
 
 Report = Mapping[str, Any]
 Built = tuple[str, str, list[Block]]
@@ -203,7 +204,7 @@ def _recipe_card(recipe: Mapping[str, Any]) -> Card:
     return Card(
         title=str(recipe.get("title", recipe["category"])),
         tag=recipe["category"],
-        tone="info",
+        tone=Tone.INFO,
         facts=(
             ("When", cell(recipe.get("when", ""))),
             ("State", cell(recipe.get("state", ""))),

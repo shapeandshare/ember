@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+from ..agent.condition import Condition
 from ..agent.report import short
 from ..charts import charts, charts_agent
 from ..render.blocks import (
@@ -21,6 +22,7 @@ from ..render.blocks import (
     num,
     pct,
 )
+from ..render.tone import Tone
 from .sections_front import Built
 
 Report = Mapping[str, Any]
@@ -46,7 +48,8 @@ def _kpis(agent: Report) -> Kpis:
     groups = _groups(agent)
     items = []
     for model in agent["config"]["models"]:
-        full, none = groups.get((model, "full")), groups.get((model, "none"))
+        full = groups.get((model, Condition.FULL))
+        none = groups.get((model, Condition.NONE))
         if full:
             items.append(
                 Kpi(
@@ -73,7 +76,7 @@ def _kpis(agent: Report) -> Kpis:
                 pct(overall["accuracy"]),
                 f"95% CI [{low * 100:.1f}, {high * 100:.1f}] "
                 f"over {summary['valid']} sessions",
-                tone="good" if overall["accuracy"] >= 0.90 else "warn",
+                tone=Tone.GOOD if overall["accuracy"] >= 0.90 else Tone.WARN,
             ),
         )
     if overall.get("wrong_actions") is not None:
@@ -82,7 +85,7 @@ def _kpis(agent: Report) -> Kpis:
                 "Wrong actions, default policy",
                 str(overall["wrong_actions"]),
                 f"of {summary['valid']} sessions where kit signal was clear",
-                tone="warn" if overall["wrong_actions"] else "good",
+                tone=Tone.WARN if overall["wrong_actions"] else Tone.GOOD,
             )
         )
     items.append(
@@ -283,7 +286,7 @@ def agent_section(report: Report) -> Built:
             ),
         ]
 
-    ember_conditions = [c for c in config["conditions"] if c != "none"]
+    ember_conditions = [c for c in config["conditions"] if c != Condition.NONE]
     asked_rows = tuple(
         (
             code(recipe),

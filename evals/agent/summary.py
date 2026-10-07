@@ -12,6 +12,7 @@ from collections.abc import Sequence
 from typing import Any
 
 from .. import metrics
+from .condition import Condition
 
 Record = dict[str, Any]
 
@@ -118,11 +119,11 @@ def summarize(records: Sequence[Record]) -> Record:
 
     deltas = []
     for (model, condition), rows in sorted(groups.items()):
-        if condition == "none":
+        if condition == Condition.NONE:
             continue
         base = {
             (r["scenario"], r["trial"]): r["action_ok"]
-            for r in groups.get((model, "none"), [])
+            for r in groups.get((model, Condition.NONE), [])
         }
         pairs = [
             float(r["action_ok"]) - float(base[(r["scenario"], r["trial"])])

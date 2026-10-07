@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from . import metrics, report_text
+from .render.tone import Tone
 
 EVALS_DIR = Path(__file__).resolve().parent
 Record = dict[str, Any]
@@ -533,7 +534,7 @@ def _findings(
     low, high = overall["accuracy_ci"]
     findings.append(
         {
-            "tone": "info",
+            "tone": Tone.INFO,
             "title": "Overall accuracy",
             "text": f"{_pct(overall['accuracy'])} of {overall['questions']} "
             "questions were "
@@ -550,7 +551,7 @@ def _findings(
         right = sum(row["correct"] for row in acting)
         findings.append(
             {
-                "tone": "good" if right == acted else "warn",
+                "tone": Tone.GOOD if right == acted else Tone.WARN,
                 "title": "Answers past the kit's thresholds",
                 "text": f"{right} of {acted} answers that cleared the kit's act-on-it "
                 "thresholds (choice confidence >= 0.85; noul P >= 0.80 or "
@@ -565,7 +566,7 @@ def _findings(
         trusted = sum(q["band"] == "trust" for q in choice_misses)
         findings.append(
             {
-                "tone": "good" if trusted == 0 else "warn",
+                "tone": Tone.GOOD if trusted == 0 else Tone.WARN,
                 "title": "Where the choice misses fell",
                 "text": f"{trusted} of {len(choice_misses)} choice misses cleared "
                 f"the 0.85 trust line; the most confident miss ({top['id']}, "
@@ -587,7 +588,7 @@ def _findings(
         text += f" and {policy['extra_label']} {extra} times."
         findings.append(
             {
-                "tone": "warn" if wrong else "good",
+                "tone": Tone.WARN if wrong else Tone.GOOD,
                 "title": policy["title"],
                 "text": text,
             }
@@ -609,7 +610,7 @@ def _findings(
         )
         findings.append(
             {
-                "tone": "warn" if gap < -0.05 else "info",
+                "tone": Tone.WARN if gap < -0.05 else Tone.INFO,
                 "title": f"{label} calibration",
                 "text": f"{label} answers are {direction}: mean top-label confidence "
                 f"{mean_conf:.2f} against {_pct(accuracy)} accuracy (ECE "
@@ -629,7 +630,7 @@ def _findings(
         ):
             findings.append(
                 {
-                    "tone": "info",
+                    "tone": Tone.INFO,
                     "title": f"{qid} answers shrink toward the middle",
                     "text": f"On the 0 to {top_level} scale, gold "
                     f"'{lowest['label']}' items average "
@@ -645,7 +646,7 @@ def _findings(
         (weak, w), (strong, s) = ranked[0], ranked[-1]
         findings.append(
             {
-                "tone": "info",
+                "tone": Tone.INFO,
                 "title": "Strongest and weakest questions",
                 "text": f"{strong} is strongest at {_pct(s['accuracy'])}; "
                 f"{weak} is weakest at "
@@ -661,7 +662,7 @@ def _findings(
         )
         findings.append(
             {
-                "tone": "info" if overlap else "warn",
+                "tone": Tone.INFO if overlap else Tone.WARN,
                 "title": "dev and test agree" if overlap else "dev and test differ",
                 "text": f"dev scored {_pct(dev['accuracy'])} and test "
                 f"{_pct(test['accuracy'])}; "

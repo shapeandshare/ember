@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import Any
 
 from .. import metrics
+from ..render.tone import Tone
+from .condition import Condition
 from .sandbox import CONDITION_LABELS
 from .scenarios import RECIPE_QUESTIONS, SCENARIOS
 
@@ -122,13 +124,13 @@ def _findings(summary: Record, records: list[Record]) -> list[Record]:
     findings: list[Record] = []
     groups = {(g["model"], g["condition"]): g for g in summary["groups"]}
     for delta in summary["deltas"]:
-        if delta["condition"] != "full":
+        if delta["condition"] != Condition.FULL:
             continue
         model = delta["model"]
-        with_kit = groups[(model, "full")]["action"]
-        without = groups.get((model, "none"), {}).get("action")
+        with_kit = groups[(model, Condition.FULL)]["action"]
+        without = groups.get((model, Condition.NONE), {}).get("action")
         low, high = delta["ci"]
-        tone = "good" if low > 0 else "warn" if high < 0 else "info"
+        tone = Tone.GOOD if low > 0 else Tone.WARN if high < 0 else Tone.INFO
         findings.append(
             {
                 "tone": tone,
@@ -144,14 +146,14 @@ def _findings(summary: Record, records: list[Record]) -> list[Record]:
     consults = [
         (g, g["consult"])
         for g in summary["groups"]
-        if g["condition"] != "none" and g["consult"]
+        if g["condition"] != Condition.NONE and g["consult"]
     ]
     if consults:
         low_g, low = min(consults, key=lambda x: x[1]["rate"])
         high_g, high = max(consults, key=lambda x: x[1]["rate"])
         findings.append(
             {
-                "tone": "warn" if low["rate"] < 0.5 else "info",
+                "tone": Tone.WARN if low["rate"] < 0.5 else Tone.INFO,
                 "title": "How often agents consult ember",
                 "text": "At decision points, consultation ranged from "
                 f"{_pct(low['rate'])} "
@@ -162,14 +164,14 @@ def _findings(summary: Record, records: list[Record]) -> list[Record]:
         )
     by_recipe: dict[str, list[bool]] = defaultdict(list)
     for r in records:
-        if r["valid"] and r["condition"] != "none" and r["kind"] == "decision":
+        if r["valid"] and r["condition"] != Condition.NONE and r["kind"] == "decision":
             by_recipe[r["recipe"]].append(bool(r["consulted"]))
     if by_recipe:
         rates = {k: sum(v) / len(v) for k, v in by_recipe.items()}
         weakest = min(rates, key=rates.__getitem__)
         findings.append(
             {
-                "tone": "info",
+                "tone": Tone.INFO,
                 "title": "Where consultation is weakest",
                 "text": "Across ember conditions, consultation was lowest for "
                 f"{weakest} ({_pct(rates[weakest])}) and highest for "
@@ -185,7 +187,7 @@ def _findings(summary: Record, records: list[Record]) -> list[Record]:
         share = sum(fidelity) / len(fidelity)
         findings.append(
             {
-                "tone": "warn" if share < 0.7 else "good",
+                "tone": Tone.WARN if share < 0.7 else Tone.GOOD,
                 "title": "Do agents ask the kit's questions?",
                 "text": f"{_pct(share)} of consultations asked every question of the "
                 "kit's recipe; the rest wrote their own question sets, which ember has "
@@ -199,7 +201,7 @@ def _findings(summary: Record, records: list[Record]) -> list[Record]:
     if followed:
         findings.append(
             {
-                "tone": "info",
+                "tone": Tone.INFO,
                 "title": "Do agents follow ember?",
                 "text": "When ember's answer implied an action under the kit's "
                 "rules, the "
@@ -210,12 +212,12 @@ def _findings(summary: Record, records: list[Record]) -> list[Record]:
     over = [
         r["consulted"]
         for r in records
-        if r["valid"] and r["kind"] == "control" and r["condition"] != "none"
+        if r["valid"] and r["kind"] == "control" and r["condition"] != Condition.NONE
     ]
     if over:
         findings.append(
             {
-                "tone": "info",
+                "tone": Tone.INFO,
                 "title": "Unneeded consultations",
                 "text": "On control tasks with no judgment call, agents consulted "
                 "ember "

@@ -22,15 +22,16 @@ from typing import Any
 
 from ember.agent_kit import api as agent_kit
 
+from .condition import Condition
 from .snapshot import Snapshot
 from .template import TEMPLATE, TEST_COMMAND
 
-CONDITIONS = ("none", "mcp", "skill", "full")
+CONDITIONS = tuple(Condition)
 CONDITION_LABELS = {
-    "none": "no ember",
-    "mcp": "ember MCP (instructions only)",
-    "skill": "MCP + ember-advise skill",
-    "full": "MCP + skill + AGENTS.md policy",
+    Condition.NONE: "no ember",
+    Condition.MCP: "ember MCP (instructions only)",
+    Condition.SKILL: "MCP + ember-advise skill",
+    Condition.FULL: "MCP + skill + AGENTS.md policy",
 }
 IGNORED = (".git", ".opencode", "__pycache__")
 GIT_IDENTITY = {
@@ -97,16 +98,18 @@ def _forwarded_env() -> dict[str, str]:
 
 
 def condition_files(
-    condition: str, *, ember_mcp: list[str], server_url: str
+    condition: str | Condition, *, ember_mcp: list[str], server_url: str
 ) -> dict[str, str]:
     """Return the opencode files that define ``condition`` inside the repo."""
+    if isinstance(condition, str):
+        condition = Condition(condition)
     config: dict[str, Any] = {
         "$schema": "https://opencode.ai/config.json",
         "autoupdate": False,
         "share": "disabled",
         "permission": {"edit": "allow", "bash": "allow", "webfetch": "deny"},
     }
-    if condition != "none":
+    if condition != Condition.NONE:
         config["mcp"] = {
             "ember": {
                 "type": "local",
@@ -120,15 +123,19 @@ def condition_files(
             }
         }
     files = {"opencode.json": json.dumps(config, indent=2) + "\n"}
-    if condition in ("skill", "full"):
+    if condition in (Condition.SKILL, Condition.FULL):
         files[f".opencode/skills/{agent_kit.SKILL_NAME}/SKILL.md"] = agent_kit.skill()
-    if condition == "full":
+    if condition == Condition.FULL:
         files["AGENTS.md"] = agent_kit.snippet()
     return files
 
 
 def create(
-    scenario: dict[str, Any], condition: str, *, ember_mcp: list[str], server_url: str
+    scenario: dict[str, Any],
+    condition: str | Condition,
+    *,
+    ember_mcp: list[str],
+    server_url: str,
 ) -> Sandbox:
     """Build the sandbox for one session and return its paths."""
     root = Path(tempfile.mkdtemp(prefix="ember-agent-eval-"))
