@@ -40,7 +40,9 @@ def cmd_init(args: argparse.Namespace) -> int:
     command = opencode_config.mcp_command()
     print(f"wrote {opencode_config.write(target, host, port, autostart)}")
     if args.opencode:
-        plugin = opencode_plugin.install(command, f"http://{host}:{port}", scope=scope)
+        # NOSONAR - the plugin URL is this machine's loopback model server
+        local_url = f"http://{host}:{port}"
+        plugin = opencode_plugin.install(command, local_url, scope=scope)
         print(f"installed opencode plugin: {plugin}")
         skill = agent_kit.install_skill("opencode", scope, Path.cwd())
         print(f"installed {agent_kit.SKILL_NAME} skill: {skill}")
