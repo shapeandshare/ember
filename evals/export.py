@@ -21,14 +21,16 @@ from .agent import report as agent_report
 from .render import render_html, render_markdown
 
 
-def _write(path: Path, content: str) -> None:
+def write_atomic(path: Path, content: str) -> None:
+    """Write ``content`` to ``path`` via a sibling ``.tmp`` and ``os.replace``."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".tmp")
     temporary.write_text(content, encoding="utf-8")
     os.replace(temporary, path)
 
 
-def _copy(source: Path, target: Path) -> None:
+def copy_atomic(source: Path, target: Path) -> None:
+    """Copy ``source`` to ``target`` via a sibling ``.tmp`` and ``os.replace``."""
     target.parent.mkdir(parents=True, exist_ok=True)
     temporary = target.with_name(target.name + ".tmp")
     shutil.copyfile(source, temporary)
@@ -52,16 +54,18 @@ def export(
     shutil.rmtree(out / "figures", ignore_errors=True)
     shutil.rmtree(out / "data", ignore_errors=True)
     for name, svg in figures.items():
-        _write(out / "figures" / name, svg)
-    _write(out / "report.md", markdown)
-    _write(out / "report.html", render_html.render(report))
-    _copy(results_path, out / "data" / "results.json")
-    _copy(results_path.with_name(meta["trace_file"]), out / "data" / "trace.jsonl")
+        write_atomic(out / "figures" / name, svg)
+    write_atomic(out / "report.md", markdown)
+    write_atomic(out / "report.html", render_html.render(report))
+    copy_atomic(results_path, out / "data" / "results.json")
+    copy_atomic(
+        results_path.with_name(meta["trace_file"]), out / "data" / "trace.jsonl"
+    )
     dataset = analysis.dataset_for(results_path, meta["dataset"])
     if dataset.exists():
-        _copy(dataset, out / "data" / "dataset.jsonl")
+        copy_atomic(dataset, out / "data" / "dataset.jsonl")
     if agent_path is not None:
-        _copy(agent_path, out / "data" / "agent_results.json")
+        copy_atomic(agent_path, out / "data" / "agent_results.json")
         trace = agent_path.with_name(report["agent"]["config"]["trace"])
-        _copy(trace, out / "data" / "agent_trace.jsonl")
+        copy_atomic(trace, out / "data" / "agent_trace.jsonl")
     return out

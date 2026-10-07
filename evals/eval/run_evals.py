@@ -44,6 +44,7 @@ from ember.cfg.endpoint import (  # noqa: E402
     build_auth_headers,
 )
 
+from evals.export import write_atomic  # noqa: E402
 from evals.metrics import aggregate, score_item  # noqa: E402
 
 DATASET_PATH = REPO_ROOT / "evals" / "clef-flash.jsonl"
@@ -282,9 +283,9 @@ def run_evals(
         "n_errors": errors,
         "latency_ms": _latency(latencies),
     }
-    results_path.write_text(
+    write_atomic(
+        results_path,
         json.dumps({"config": config, "summary": summary}, indent=2) + "\n",
-        encoding="utf-8",
     )
 
     overall = summary["overall"]
