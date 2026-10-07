@@ -1,17 +1,18 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-04 (constitutional Articles XI–XV adopted; Testing section added; Architecture Rules + Docstring Convention + Design System sections added; behavioral principles 9–12 expanded with full TDD workflow; Python conventions expanded with enums, forward refs, solid separators; commit scope discipline added to principle 6; per-component versioning live: ember=`v*`, plugin=`plugin/v*`)
+**Last updated**: 2026-10-07 (`ember init` can bootstrap clients against a hosted/remote endpoint: `--server-url`/`--auth-header` on `ember init`, never writing the credential to disk)
 
 ## What this repo is
 
 `ember` runs decision models (currently Cloudflare's Clef) locally on Apple Silicon (MPS) by
 default, or against a single configured remote inference server
 (`EMBER_SERVER_URL`/config `server_url`) when the user opts in, and exposes them to coding
-agents as one advisory MCP tool, `advise` (opencode: `ember_advise`; Claude
-Code: `mcp__ember__advise`). An agent sends a `state` plus typed questions and gets calibrated
-probabilities back — no prose. It ships as the `gut` uv tool (commands `ember`, `gut`,
-`ember-mcp`), a local opencode plugin, and an **agent onboarding kit** that teaches consumers'
-agents to use the tool well.
+agents as one advisory MCP tool, `advise` (opencode: `ember_advise`; Kilo Code:
+`ember_advise`; Claude Code: `mcp__ember__advise`). An agent sends a `state` plus typed
+questions and gets calibrated probabilities back — no prose. It ships as the `gut` uv tool
+(commands `ember`, `gut`, `ember-mcp`), a local opencode plugin, and an **agent onboarding
+kit** that teaches consumers' agents to use the tool well. Kilo Code is a first-class
+supported harness alongside opencode.
 
 `.specify/memory/constitution.md` governs this repo. This file operationalizes it; where the
 two conflict, the constitution wins and this file MUST be updated.
@@ -87,6 +88,8 @@ ember/
   opencode/           # opencode integration
     opencode_config.py  # generates opencode.json
     opencode_plugin.py  # installs the npm plugin
+  kilocode/           # Kilo Code integration
+    kilocode_config.py  # generates kilo.json (mcp.ember entry; reuses opencode's entry builder)
   agent_kit/          # consumer onboarding kit (single source of truth)
     api.py            #   public API: instructions(), skill(), snippet(), install_skill()
     instructions.md   #   MCP initialize.instructions (≤ 2 KB)
@@ -643,6 +646,25 @@ MUST pass the constitution check.
 
 ## Recent Changes
 
+- 2026-10-07: `ember init` bootstraps clients against a hosted/remote endpoint:
+  new `--server-url`/`--auth-header` flags on `ember init`; `opencode_config.build_entry`/
+  `write` and `kilocode_config.write` accept `server_url`/`auth_header` and emit
+  `EMBER_SERVER_URL`/`EMBER_AUTH_HEADER` for the remote case (`EMBER_AUTOSTART` forced
+  to `0`); `opencode_plugin.render`/`install` gained the same `auth_header` parameter
+  so `ember init --opencode --server-url ...` also bootstraps the generated plugin.
+  The credential itself is **never** written to `kilo.json`/`opencode.json`/the plugin
+  file — `EMBER_AUTH_TOKEN` must be exported in the shell that launches the agent.
+  Consulted `ember_advise` on the design (`should_build_cli_support` P=0.60,
+  `token_in_config_file_acceptable` P=0.02 — confirming never embed the token).
+  README's Remote inference section documents the new flags.
+- 2026-10-07: Kilo Code adopted as a first-class supported harness: `kilocode` added to
+  `agent_kit.api._SKILL_ROOTS` (skill installs to `.kilo/skills/ember-advise/SKILL.md`
+  project-local, `~/.config/kilo/skills/...` global); `ember/kilocode/kilocode_config.py`
+  writes/removes the `mcp.ember` entry in `kilo.json` (same entry shape as opencode's,
+  reusing `opencode_config.build_entry`); `ember init --kilocode` registers the server and
+  installs the skill in one step; `ember uninstall` cleans up the global `kilo.json` entry;
+  README and CLI help updated. No constitution change — purely additive to the existing
+  agent onboarding kit pattern.
 - 2026-10-06: remote inference servers: the client (MCP + eval harness) may target a configured
   remote `server_url` (any endpoint, opt-in), with bearer/custom-header credentials; the
   server gains optional, disableable bearer auth on `POST /v1/systemone` and `/health` advertises

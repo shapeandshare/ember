@@ -92,36 +92,71 @@ def build_vault_entry() -> dict[str, Any]:
     }
 
 
-def build_entry(host: str, port: int, autostart: str) -> dict[str, Any]:
-    """Build the ``mcp.ember`` entry for an opencode config file.
+def build_entry(
+    host: str,
+    port: int,
+    autostart: str,
+    server_url: str | None = None,
+    auth_header: str | None = None,
+) -> dict[str, Any]:
+    """Build the ``mcp.ember`` entry for an opencode or Kilo Code config file.
+
+    The two tools share the same MCP entry shape, so
+    :mod:`ember.kilocode.kilocode_config` reuses this builder for ``kilo.json``.
+
+    Never embeds a credential: a bootstrapped remote entry names the header to
+    send (``EMBER_AUTH_HEADER``) but leaves ``EMBER_AUTH_TOKEN`` for the user to
+    export in their shell, so a secret is never written to a config file that
+    may be project-committed (constitution: avoid secrets at rest in VCS).
 
     Parameters
     ----------
     host : str
-        Model server host for ``EMBER_SERVER_URL``.
+        Model server host for ``EMBER_SERVER_URL`` when ``server_url`` is not
+        given.
     port : int
-        Model server port for ``EMBER_SERVER_URL``.
+        Model server port for ``EMBER_SERVER_URL`` when ``server_url`` is not
+        given.
     autostart : str
         Value for ``EMBER_AUTOSTART`` (``"1"`` or ``"0"``).
+    server_url : str | None, optional
+        A remote inference endpoint. When given, it replaces the local
+        ``http://{host}:{port}`` URL — bootstrapping a client against a
+        hosted server instead of a local one.
+    auth_header : str | None, optional
+        The header name a remote endpoint expects the credential on (e.g.
+        ``"X-API-KEY"``). Only written when ``server_url`` is given. Never
+        paired with a token value — export ``EMBER_AUTH_TOKEN`` in the shell
+        that launches the agent instead.
 
     Returns
     -------
     dict[str, Any]
         The ``mcp.ember`` entry.
     """
+    environment = {
+        "EMBER_SERVER_URL": server_url or f"http://{host}:{port}",  # NOSONAR
+        "EMBER_AUTOSTART": autostart,
+    }
+    if server_url and auth_header:
+        environment["EMBER_AUTH_HEADER"] = auth_header
     return {
         "type": "local",
         "command": mcp_command(),
         "enabled": True,
         "timeout": 30000,
-        "environment": {
-            "EMBER_SERVER_URL": f"http://{host}:{port}",
-            "EMBER_AUTOSTART": autostart,
-        },
+        "environment": environment,
     }
 
 
-def write(path: Path, host: str, port: int, autostart: str) -> Path:
+def write(
+    path: Path,
+    host: str,
+    port: int,
+    autostart: str,
+    server_url: str | None = None,
+    auth_header: str | None = None,
+) -> Path:
     """Merge the ``mcp.ember`` entry into an opencode config file.
 
     Preserves any other existing keys in ``path``; creates the file and its
@@ -132,11 +167,19 @@ def write(path: Path, host: str, port: int, autostart: str) -> Path:
     path : Path
         Config file to read and overwrite.  Must end in ``opencode.json``.
     host : str
-        Model server host for ``EMBER_SERVER_URL``.
+        Model server host for ``EMBER_SERVER_URL`` when ``server_url`` is not
+        given.
     port : int
-        Model server port for ``EMBER_SERVER_URL``.
+        Model server port for ``EMBER_SERVER_URL`` when ``server_url`` is not
+        given.
     autostart : str
         Value for ``EMBER_AUTOSTART`` (``"1"`` or ``"0"``).
+    server_url : str | None, optional
+        A remote inference endpoint to bootstrap the client against, in place
+        of the local ``http://{host}:{port}`` URL. See ``build_entry``.
+    auth_header : str | None, optional
+        The header name a remote endpoint expects the credential on. See
+        ``build_entry``; never paired with a token value.
 
     Returns
     -------
@@ -158,7 +201,7 @@ def write(path: Path, host: str, port: int, autostart: str) -> Path:
     existing.setdefault("$schema", SCHEMA)
     mcp = existing.setdefault("mcp", {})
     mcp.setdefault("vault", build_vault_entry())
-    mcp["ember"] = build_entry(host, port, autostart)
+    mcp["ember"] = build_entry(host, port, autostart, server_url, auth_header)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(existing, indent=2) + "\n", encoding="utf-8")

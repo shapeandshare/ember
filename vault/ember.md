@@ -5,7 +5,7 @@ tags:
   - type/moc
   - domain/governance
 created: 2026-10-02
-updated: 2026-10-05
+updated: 2026-10-07
 ---
 
 # ember vault
@@ -39,6 +39,8 @@ Session-level decisions with their context and consequences.
 - [[2026-10-04-version-components-separately]]
 - [[2026-10-05-decision-models-are-the-category]]
 - [[2026-10-06-remote-inference-servers]]
+- [[2026-10-07-kilo-code-first-class-harness]]
+- [[2026-10-07-bootstrap-clients-against-hosted-endpoints]]
 
 ### Discoveries
 

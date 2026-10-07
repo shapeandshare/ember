@@ -18,6 +18,7 @@ _SKILL_ROOTS: dict[str, tuple[str, str]] = {
     "opencode": (".opencode/skills", ".config/opencode/skills"),
     "claude": (".claude/skills", ".claude/skills"),
     "codex": (".agents/skills", ".agents/skills"),
+    "kilocode": (".kilo/skills", ".config/kilo/skills"),
 }
 AGENTS = tuple(_SKILL_ROOTS)
 
@@ -69,7 +70,7 @@ def skill_path(
     ----------
     agent : str
         One of the keys in ``_SKILL_ROOTS`` (``"opencode"``, ``"claude"``,
-        ``"codex"``).
+        ``"codex"``, ``"kilocode"``).
     scope : str, optional
         ``"project"`` (default) for a project-local install, or ``"global"``
         for the user's home directory.

@@ -51,10 +51,13 @@ def test_skill_paths_per_agent_and_scope(tmp_path, monkeypatch):
         ("opencode", "project"): tmp_path / ".opencode/skills/ember-advise/SKILL.md",
         ("claude", "project"): tmp_path / ".claude/skills/ember-advise/SKILL.md",
         ("codex", "project"): tmp_path / ".agents/skills/ember-advise/SKILL.md",
+        ("kilocode", "project"): tmp_path / ".kilo/skills/ember-advise/SKILL.md",
         ("opencode", "global"): tmp_path
         / "home/.config/opencode/skills/ember-advise/SKILL.md",
         ("claude", "global"): tmp_path / "home/.claude/skills/ember-advise/SKILL.md",
         ("codex", "global"): tmp_path / "home/.agents/skills/ember-advise/SKILL.md",
+        ("kilocode", "global"): tmp_path
+        / "home/.config/kilo/skills/ember-advise/SKILL.md",
     }
     for (agent, scope), path in expected.items():
         assert agent_kit.skill_path(agent, scope, tmp_path) == path
@@ -63,3 +66,7 @@ def test_skill_paths_per_agent_and_scope(tmp_path, monkeypatch):
 def test_install_skill_writes_the_packaged_playbook(tmp_path):
     path = agent_kit.install_skill("codex", "project", tmp_path)
     assert path.read_text(encoding="utf-8") == agent_kit.skill()
+
+
+def test_kilocode_is_a_first_class_supported_agent():
+    assert "kilocode" in agent_kit.AGENTS

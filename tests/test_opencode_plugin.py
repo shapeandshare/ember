@@ -28,3 +28,16 @@ def test_install_project_scope(tmp_path, monkeypatch):
     text = path.read_text()
     assert "/x/ember-mcp" in text
     assert "9000" in text
+
+
+def test_render_supports_a_remote_endpoint_with_auth_header(monkeypatch):
+    monkeypatch.setenv("PATH", "/bin")
+    output = opencode_plugin.render(
+        ["/x/ember-mcp"],
+        "https://decisions.example.com",
+        autostart="0",
+        auth_header="X-API-KEY",
+    )
+    assert "https://decisions.example.com" in output
+    assert "X-API-KEY" in output
+    assert "token" not in output.lower()

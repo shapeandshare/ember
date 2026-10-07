@@ -5,7 +5,7 @@ description: Playbook for the ember_advise MCP tool, a decision advisor (local b
 
 # ember-advise
 
-ember is a little buddy for judgment calls. Its `advise` tool (opencode:
+ember is a little buddy for judgment calls. Its `advise` tool (opencode/Kilo Code:
 `ember_advise`; Claude Code: `mcp__ember__advise`) runs a decision model (local by default)
 (currently Cloudflare's Clef-Flash): you describe a situation in `state`, ask typed
 questions, and it radiates a feeling about every option as a calibrated probability. It
