@@ -199,8 +199,7 @@ def cmd_mcp(args: argparse.Namespace) -> int:
     if args.host or args.port:
         host, port = host_port(args)
         client_host = "127.0.0.1" if host == "0.0.0.0" else host  # noqa: S104  # nosec B104 - comparing against the string to normalise it, not binding
-        # NOSONAR - the MCP client URL is this machine's loopback model server
-        client_url = f"http://{client_host}:{port}"
+        client_url = f"http://{client_host}:{port}"  # NOSONAR - loopback only
         os.environ["EMBER_SERVER_URL"] = client_url
     if args.device:
         os.environ["EMBER_DEVICE"] = args.device
