@@ -8,6 +8,7 @@ confirming it is still an ember server; it never kills by port or by pattern.
 
 from __future__ import annotations
 
+import logging
 import os
 import signal
 import subprocess  # nosec B404
@@ -21,6 +22,8 @@ import httpx
 
 from .. import models
 from ..cfg import config, paths
+
+_LOG = logging.getLogger(__name__)
 
 
 def health(host: str, port: int, timeout: float = 2.0) -> dict[str, Any] | None:
@@ -231,7 +234,7 @@ def _append_audit_log(message: str) -> None:
     """Append a timestamped audit entry to the server log.
 
     Best-effort: if the log write fails (e.g. the log directory is missing or
-    read-only), a warning is printed to stderr and the caller continues.  A
+    read-only), a warning is logged and the caller continues.  A
     broken log directory must never prevent stopping a runaway server.
 
     Parameters
@@ -245,7 +248,7 @@ def _append_audit_log(message: str) -> None:
         with open(paths.server_log_path(), "ab") as fh:
             fh.write(line.encode())
     except OSError as exc:
-        print(f"ember: warning: could not write audit log: {exc}", file=sys.stderr)
+        _LOG.warning("could not write audit log: %s", exc)
 
 
 def stop(

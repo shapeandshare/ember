@@ -361,6 +361,22 @@ def test_stop_writes_sigterm_audit_entry_to_server_log(tmp_path, monkeypatch):
     assert re.search(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", log_text)
 
 
+def test_audit_log_failure_logs_warning_instead_of_printing(
+    tmp_path, monkeypatch, caplog, capsys
+):
+    """A failed audit-log write is reported through logging, not print (§10.13)."""
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path / "missing" / "dir"))
+    monkeypatch.setattr(
+        process.paths, "server_log_path", lambda: tmp_path / "nope" / "server.log"
+    )
+
+    with caplog.at_level("WARNING", logger=process.__name__):
+        process._append_audit_log("stop: signaling pid=1")
+
+    assert "could not write audit log" in caplog.text
+    assert capsys.readouterr().err == ""
+
+
 def test_stop_writes_sigkill_audit_entry_when_escalating(tmp_path, monkeypatch):
     """stop() appends a SIGKILL escalation entry when the process survives SIGTERM."""
     monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
