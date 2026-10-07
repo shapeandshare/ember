@@ -23,7 +23,7 @@ Modified principles:
   - 2.0.0 Sync Impact Report — doc-propagation tasks are T023–T025 (done), not T020–T022.
 Added sections: none
 Removed sections: none
-  - Article XI §11.2 — floor ratcheted 71% → 81% (measured 81.12% by `make test-cov`).
+  - Article XI §11.2 — floor ratcheted 71% → 81% (measured 81.93% by `make test-cov`).
 Code changes in the same change: process.py audit-log warning uses logging (§10.13);
   evals result/snapshot writes are atomic (§10.17).
 Templates / docs propagated:

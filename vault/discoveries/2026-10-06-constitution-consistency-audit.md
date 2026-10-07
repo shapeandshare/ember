@@ -52,8 +52,8 @@ handlers, prints, and writes were grepped.
   - AGENTS.md and README undercounted the CI jobs (no SonarCloud).
   - AGENTS.md called `make test-cov` the full suite; it is the unit suite.
   - SECURITY.md omitted `ember/cfg/endpoint.py`.
-  - The `ci.yml` sonar comment still says `make test-cov` runs "the local full suite". It
-    was left alone because pushing workflow changes needs the `workflow` token scope.
+  - The `ci.yml` sonar comment said `make test-cov` runs "the local full suite"; corrected
+    to "the local unit suite", alongside its `fail_under` value (71 → 81).
 
 ## Relevance
 
