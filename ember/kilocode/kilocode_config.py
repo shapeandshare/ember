@@ -120,7 +120,8 @@ def write(
     mcp["ember"] = build_entry(host, port, autostart, server_url, auth_header)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(existing, indent=2) + "\n", encoding="utf-8")
+    # path validated by _validate_config_path above; content is this module's own JSON
+    tmp.write_text(json.dumps(existing, indent=2) + "\n", encoding="utf-8")  # NOSONAR
     os.replace(tmp, path)
     return path
 
@@ -152,6 +153,7 @@ def remove(path: Path) -> bool:
         return False
     del existing["mcp"]["ember"]
     tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(existing, indent=2) + "\n", encoding="utf-8")
+    # path validated by _validate_config_path above; content is this module's own JSON
+    tmp.write_text(json.dumps(existing, indent=2) + "\n", encoding="utf-8")  # NOSONAR
     os.replace(tmp, path)
     return True

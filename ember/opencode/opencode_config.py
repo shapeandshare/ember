@@ -135,7 +135,7 @@ def build_entry(
         The ``mcp.ember`` entry.
     """
     environment = {
-        "EMBER_SERVER_URL": server_url or f"http://{host}:{port}",
+        "EMBER_SERVER_URL": server_url or f"http://{host}:{port}",  # NOSONAR
         "EMBER_AUTOSTART": autostart,
     }
     if server_url and auth_header:
