@@ -44,7 +44,7 @@ def snapshot(results_path: Path) -> Path:
     model = analysis.build(results_path)
     meta = model["meta"]
     run_id = meta["run_id"]
-    out = BENCHMARK_DIR / run_id
+    out = BENCHMARK_DIR / str(run_id)
     out.mkdir(parents=True, exist_ok=True)
 
     copy_atomic(results_path, out / "results.json")
