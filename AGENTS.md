@@ -133,7 +133,7 @@ vault/                # project memory (Obsidian): decisions, discoveries, sessi
 | `make security` | Run bandit security scan |
 | `make pr-ready` | Format, lint, typecheck, security, compile, unit tests — run before every PR |
 | `make test` | Full suite including model-backed tests (~30 s) |
-| `make test-cov` | Full suite with coverage report |
+| `make test-cov` | Unit suite (`-m "not model"`) with coverage report and the `fail_under` gate |
 | `make test-strict` | Full suite; fails instead of skipping when weights are missing |
 | `make start` / `stop` / `restart` / `status` / `logs` | Warm-server lifecycle |
 | `make init` / `make opencode` | Regenerate `opencode.json` / install the local plugin and skill |
@@ -242,7 +242,7 @@ Rules for changing it:
 
    **Enforcement** — `make test` MUST pass before any task is marked complete. A single new
    failure outside pre-existing conditions reverts the work to Red phase. Run `make test-cov`
-   after every session; `fail_under = 71` is the ratchet floor — never lower it.
+   after every session; `fail_under = 81` is the ratchet floor — never lower it.
 
 10. **Simplest solution first** (Article XV). Before designing an implementation, identify the
     simplest viable approach. Document in the commit or vault if a more complex path was
@@ -550,8 +550,9 @@ spacing values, or component styles outside the design system.
   `ember_advise_*` / `ember_model_info` together with the README and `tests/test_metrics.py`.
   They live in a dedicated `CollectorRegistry`, so only ember metrics are exposed — no
   `python_*`/`process_*` collectors.
-- **Model-backed tests are local-only.** CI runs only `make check` (unit) plus a build/install
-  smoke: the ~19 GB fp16 model fits neither hosted runners nor the org's 8 GiB self-hosted
+- **Model-backed tests are local-only.** CI runs format/lint, typecheck, security,
+  `make check` (unit), a build/install smoke, a SonarCloud scan (`SONAR_TOKEN` repository
+  secret), and zizmor — no model-backed tests: the ~19 GB fp16 model fits neither hosted runners nor the org's 8 GiB self-hosted
   Apple Silicon VMs (the server OOMs on MPS). Run `make test` locally for model-affecting
   changes. See `vault/discoveries/2026-10-03-self-hosted-vms-cannot-hold-the-model.md`.
 - **Pushing `.github/workflows/` changes over HTTPS** needs a gh token with the `workflow` scope.
@@ -611,7 +612,7 @@ spacing values, or component styles outside the design system.
   `ember/` (tests and scripts are exempt) and `ember/py.typed` ships, so keep new public
   modules, classes, and functions documented or `make lint` fails.
 - **Tests ship with the code that needs them** (Article XI). A commit that adds behaviour
-  without a test is incomplete. Run `make test-cov` after; `fail_under = 71` is the ratchet
+  without a test is incomplete. Run `make test-cov` after; `fail_under = 81` is the ratchet
   floor — never lower it.
 - **New FastAPI route handlers are `async def`** (Article XII §12.1). Sync handlers that
   call the engine carry `# async-first:exception - engine lock is synchronous`. Any new

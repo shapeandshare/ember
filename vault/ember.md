@@ -49,6 +49,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-02-media-refs-are-data-uris-not-host-paths]]
 - [[2026-10-03-self-hosted-vms-cannot-hold-the-model]]
 - [[2026-10-05-release-automation-constraints]]
+- [[2026-10-06-constitution-consistency-audit]]
 
 ### Sessions
 
