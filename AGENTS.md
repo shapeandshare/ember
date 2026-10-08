@@ -533,8 +533,9 @@ spacing values, or component styles outside the design system.
 - **Never pass `device_map={"": "mps"}`** — it segfaults. `runtime.load_clef` loads on CPU and
   moves the module to MPS; keep it that way.
 - **stdout is the MCP wire.** Log to stderr only in `mcp_server.py`; never `print`.
-- **`opencode.json`, `.opencode/plugins/ember.js`, and `.opencode/skills/ember-advise/` are per-machine** (absolute paths and the
-  installer's `PATH`). They are gitignored; regenerate them, never commit them.
+- **`opencode.json`, `.opencode/plugins/ember.js`, `.opencode/skills/ember-advise/`, and
+  `.kilo/jetbrains.json` are per-machine** (absolute paths and the installer's `PATH`). They
+  are gitignored; regenerate them, never commit them.
 - **`.opencode/opencode.json` is shared and committed.** Put shared opencode settings (such
   as the `vault` MCP server) there; opencode merges it with the per-machine root file.
 - **The `advise` input is wrapped in `input`.** mcp v2 does not flatten a single model parameter.
