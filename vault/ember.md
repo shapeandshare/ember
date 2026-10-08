@@ -41,6 +41,12 @@ Session-level decisions with their context and consequences.
 - [[2026-10-06-remote-inference-servers]]
 - [[2026-10-07-kilo-code-first-class-harness]]
 - [[2026-10-07-bootstrap-clients-against-hosted-endpoints]]
+- [[2026-10-07-anaconda-models-as-preferred-provider]]
+- [[2026-10-08-outerbounds-hosted-s3-model-location]]
+- [[2026-10-08-article-v-redefined-model-loading]]
+- [[2026-10-08-optional-s3-credentials-iam-role]]
+- [[2026-10-08-simplify-remove-anaconda-s3-registry-entries]]
+- [[2026-10-08-outerbounds-deployment-and-cuda-support]]
 
 ### Discoveries
 
@@ -52,6 +58,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-03-self-hosted-vms-cannot-hold-the-model]]
 - [[2026-10-05-release-automation-constraints]]
 - [[2026-10-06-constitution-consistency-audit]]
+- [[2026-10-08-config-show-ignored-env-overrides]]
 
 ### Sessions
 

@@ -30,7 +30,12 @@ def test_pick_device_defaults_to_available_accelerator():
     # import-placement:allow - deferred; torch must not load at module collect time
     import torch
 
-    expected = "mps" if torch.backends.mps.is_available() else "cpu"
+    if torch.backends.mps.is_available():
+        expected = "mps"
+    elif torch.cuda.is_available():
+        expected = "cuda"
+    else:
+        expected = "cpu"
     assert runtime.pick_device() == expected
 
 
@@ -42,6 +47,33 @@ def test_default_model_dir_matches_checkout_model_dir():
 def test_pick_device_explicit_passthrough():
     assert runtime.pick_device("cpu") == "cpu"
     assert runtime.pick_device("mps") == "mps"
+    assert runtime.pick_device("cuda") == "cuda"
+
+
+def test_pick_device_prefers_mps_over_cuda_when_both_available(monkeypatch):
+    """Constitution Article VI ("Apple Silicon and CUDA"): MPS is the
+    local-first default; a host with both backends available (unusual, but
+    not impossible in a mocked test) still prefers MPS."""
+    monkeypatch.setattr(runtime.torch.backends.mps, "is_available", lambda: True)
+    monkeypatch.setattr(runtime.torch.cuda, "is_available", lambda: True)
+    assert runtime.pick_device("auto") == "mps"
+
+
+def test_pick_device_falls_back_to_cuda_when_mps_unavailable(monkeypatch):
+    """The hosted-deployment case (e.g. Outerbounds): Linux compute has no
+    MPS, so an available CUDA GPU must be selected instead of falling
+    straight through to CPU."""
+    monkeypatch.setattr(runtime.torch.backends.mps, "is_available", lambda: False)
+    monkeypatch.setattr(runtime.torch.cuda, "is_available", lambda: True)
+    assert runtime.pick_device("auto") == "cuda"
+
+
+def test_pick_device_falls_back_to_cpu_when_neither_accelerator_available(
+    monkeypatch,
+):
+    monkeypatch.setattr(runtime.torch.backends.mps, "is_available", lambda: False)
+    monkeypatch.setattr(runtime.torch.cuda, "is_available", lambda: False)
+    assert runtime.pick_device("auto") == "cpu"
 
 
 def test_pick_dtype_is_fp16_on_mps_fp32_on_cpu():
@@ -50,6 +82,15 @@ def test_pick_dtype_is_fp16_on_mps_fp32_on_cpu():
 
     assert runtime.pick_dtype("mps") == torch.float16
     assert runtime.pick_dtype("cpu") == torch.float32
+
+
+def test_pick_dtype_is_fp16_on_cuda():
+    """Constitution Article VI: CUDA uses float16 by default, matching MPS —
+    not float32 (the CPU-only rule)."""
+    # import-placement:allow - deferred; torch must not load at module collect time
+    import torch
+
+    assert runtime.pick_dtype("cuda") == torch.float16
 
 
 def test_load_clef_missing_dir_raises():
@@ -66,6 +107,19 @@ def test_joint_module_exposes_expected_api():
     module = runtime.joint_module(model_dir)
     for attr in ("systemone", "load_release_model", "encode_record", "collate_records"):
         assert hasattr(module, attr), f"joint_schema_model missing {attr}"
+
+
+@pytest.mark.model
+def test_engine_loads_through_unmodified_loader():
+    """Engine/load_clef load the default model dir with no registry-specific
+    branching — skipped when weights are not pulled locally."""
+    model_dir = runtime.DEFAULT_MODEL_DIR
+    if not model_dir.is_dir():
+        if os.environ.get("EMBER_REQUIRE_MODEL") == "1":
+            pytest.fail(f"model dir not present: {model_dir} (EMBER_REQUIRE_MODEL=1)")
+        pytest.skip("model dir not present")
+    engine = runtime.Engine(model_dir)
+    assert engine.model_dir == model_dir
 
 
 def test_model_max_length_reads_text_config(tmp_path):
@@ -481,14 +535,62 @@ def test_start_fails_fast_when_the_model_is_missing(tmp_path, monkeypatch):
         process.start(host="127.0.0.1", port=free_port(), timeout=5)
 
 
+def test_start_fails_fast_in_the_parent_process_when_hosted_uri_is_malformed(
+    tmp_path, monkeypatch
+):
+    """process.start() MUST check ember.serving.hosted.resolve() before
+    spawning the server subprocess, so a malformed EMBER_MODEL_S3_URI fails
+    fast in the parent `ember start` invocation rather than spawning a child
+    that crashes during its own startup."""
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
+    monkeypatch.setenv("EMBER_MODEL_S3_URI", "not-a-valid-uri")
+    with pytest.raises(RuntimeError, match="EMBER_MODEL_S3_URI"):
+        process.start(host="127.0.0.1", port=free_port(), timeout=5)
+
+
+def test_start_uses_hosted_model_dir_when_configured(tmp_path, monkeypatch):
+    """When the hosted path resolves successfully, process.start() must use
+    its model_dir to spawn the server, never falling through to the
+    REGISTRY-based model-pulled check (which would otherwise require a
+    REGISTRY entry — the hosted path has none)."""
+    from ember.serving import hosted
+
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
+    fake_dir = tmp_path / "hosted-model"
+    fake_dir.mkdir()
+    fake_source = hosted.HostedModelSource(
+        uri="s3://my-bucket/clef-flash", model_dir=fake_dir
+    )
+    monkeypatch.setattr(hosted, "resolve", lambda: fake_source)
+
+    captured: dict[str, object] = {}
+
+    def _fake_spawn(model_dir, host, port, device):
+        captured["model_dir"] = model_dir
+        raise RuntimeError("stop before actually spawning a subprocess")
+
+    monkeypatch.setattr(process, "spawn", _fake_spawn)
+
+    with pytest.raises(RuntimeError, match="stop before actually spawning"):
+        process.start(host="127.0.0.1", port=free_port(), timeout=5)
+
+    assert captured["model_dir"] == fake_dir
+
+
 # ###########################################################################
 # models and opencode configuration
 # ###########################################################################
-def test_model_revisions_are_pinned_commits():
+def test_model_revisions_are_full_commit_shas_when_set():
+    """revision is optional (constitution Article V, "Model Loading" — ember
+    supports any model that can run, not a hand-maintained allowlist of
+    pinned, hash-verified weights); when a REGISTRY entry does set one (as
+    every current entry does, for download targeting), it must be a full
+    commit SHA, not a branch name or partial hash."""
     for spec in models.REGISTRY.values():
-        assert re.fullmatch(r"[0-9a-f]{40}", spec.revision), (
-            f"{spec.name} is not pinned"
-        )
+        if spec.revision is not None:
+            assert re.fullmatch(r"[0-9a-f]{40}", spec.revision), (
+                f"{spec.name}'s revision is set but not a full commit SHA"
+            )
 
 
 def test_model_dir_override_applies_to_the_run_not_the_listing(tmp_path, monkeypatch):

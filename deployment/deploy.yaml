@@ -1,0 +1,93 @@
+# Outerbounds App Deployment contract for ember.
+#
+# Deploy with:
+#   outerbounds app deploy --config-file deployment/deploy.yaml --package-src-path . --readiness-condition async
+#
+# ember runs as the model server itself here (`ember serve`), not a client —
+# this pod *is* the EMBER_SERVER_URL a remote client points at. Regenerate
+# deployment/requirements.txt before every deploy (`make deployment-requirements`);
+# Outerbounds' Fast Bakery resolves dependencies from it, not from pyproject.toml
+# directly.
+#
+# GPU (constitution Article VI, "Apple Silicon and CUDA"): Outerbounds compute is
+# Linux, so there is no MPS here — EMBER_DEVICE=cuda targets an attached NVIDIA
+# GPU. torch's default PyPI wheel already includes CUDA support on Linux; no
+# special index or extra is needed. Set EMBER_DEVICE=cpu instead (and size
+# `resources` roughly 2x larger — CPU loads in float32) if no GPU compute pool
+# is available yet.
+
+name: ember
+port: 8765
+
+tags:
+  - team: <your-team>
+  - owner: <your-email>
+
+# EMBER_MODEL_S3_URI names the exact model location directly — there is no
+# REGISTRY lookup for this path (constitution Article V, "Model Loading"; see
+# ember/serving/hosted.py). EMBER_AUTOSTART=0 because this pod itself is the
+# server; nothing should try to spawn another one. EMBER_SERVER_AUTH_TOKEN is
+# supplied as a secret (below), never written here — remote clients present it
+# via EMBER_AUTH_HEADER (e.g. "x-api-key") + EMBER_AUTH_TOKEN, the same two
+# client-side config keys that already exist for any remote endpoint (see
+# README.md "Remote inference").
+environment:
+  EMBER_HOST: "0.0.0.0"
+  EMBER_PORT: "8765"
+  EMBER_DEVICE: "cuda"
+  EMBER_MODEL_S3_URI: "s3://<your-bucket>/<prefix>"
+  EMBER_AUTOSTART: "0"
+
+# Secret contract (Outerbounds integration name is deployment-specific — adjust
+# to match your org's convention, e.g. "ember-<environment>"):
+#   EMBER_SERVER_AUTH_TOKEN       → the bearer/API-key value a remote client must
+#                                   present; /health and /metrics stay open
+#                                   regardless (see ember/serving/server.py).
+#   EMBER_ANACONDA_S3_ACCESS_KEY_ID / EMBER_ANACONDA_S3_SECRET_ACCESS_KEY
+#                                 → OPTIONAL. Omit entirely when the compute
+#                                   pool already has an IAM role with S3 read
+#                                   access to the EMBER_MODEL_S3_URI bucket —
+#                                   boto3's default credential chain picks it
+#                                   up automatically (matching model-foundry's
+#                                   own Metaflow-managed S3 access pattern; see
+#                                   vault/decisions/2026-10-08-optional-s3-credentials-iam-role.md).
+#                                   Set both only if no role is attached.
+secrets:
+  - ember-<environment>
+
+# `ember serve` runs the model server in the foreground — the correct mode
+# for a container (no pidfile/background lifecycle; `ember start` is for a
+# developer's own machine, not here).
+commands:
+  - ember serve
+
+# Fast Bakery resolves these from requirements.txt at build time.
+dependencies:
+  python: "3.12"
+  from_requirements_file: deployment/requirements.txt
+
+# Sized for `flash` (9B) on CUDA in float16 (~18 GiB weights + activations/KV
+# cache headroom). Double disk/memory roughly for `full` (27B), or if running
+# EMBER_DEVICE=cpu instead (float32 is ~2x the float16 footprint).
+resources:
+  cpu: "4"
+  memory: "32Gi"
+  disk: "30Gi"
+  gpu: "1"
+
+# <CONFIRM> Create a GPU-backed compute pool before deploying (Outerbounds UI →
+# Compute). CPU-only deployments should remove `resources.gpu` above, set
+# EMBER_DEVICE=cpu, and point this at a CPU pool instead.
+compute_pools:
+  - <your-gpu-pool>
+
+replicas:
+  fixed: 1
+
+# Non-interactive: a remote agent authenticates with EMBER_AUTH_HEADER/
+# EMBER_AUTH_TOKEN (x-api-key or Authorization: Bearer), not a browser
+# session — this is an API server, not a UI app.
+auth:
+  type: None
+
+generate_static_url: true

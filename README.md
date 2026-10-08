@@ -3,11 +3,11 @@
   <img src="assets/brand/hero-light.svg" alt="ember — Ember hugs its glowing tummy. Give your agent a gut feeling." width="1200">
 </picture>
 
-**A local gut feeling for coding agents.** ember runs a decision model (currently
-[Cloudflare's Clef-Flash](https://huggingface.co/Cloudflare/clef-flash)) on your Apple
-Silicon Mac and gives agents one MCP tool, `advise`: describe a situation, ask typed
-questions, and get back a calibrated feeling about every option. It's a little buddy for
-judgment calls — it advises; the agent decides.
+**A local gut feeling for coding agents.** ember runs a decision model — Cloudflare's
+Clef-Flash, from its [public Hugging Face repo](https://huggingface.co/Cloudflare/clef-flash)
+— on your Apple Silicon Mac and gives agents one MCP tool, `advise`: describe a situation,
+ask typed questions, and get back a calibrated feeling about every option. It's a little
+buddy for judgment calls — it advises; the agent decides.
 
 ## How it works
 
@@ -37,7 +37,13 @@ plugs into agents as a **tool**, while their reasoning stays on their normal LLM
 | Playbook skill / MCP resource | `ember-advise` / `ember://guide` |
 | Environment variables | `EMBER_*` |
 
-"Clef" always refers to Cloudflare's upstream model, never to this product.
+"Clef" always refers to Cloudflare's upstream model, never to this product. Select a model
+with `ember model pull <name>` / `EMBER_MODEL=<name>`; run `ember model list` to see every
+registered entry (`flash`, `full`).
+
+A hosted deployment (e.g. [Outerbounds](https://outerbounds.com)) that supplies the model's
+S3 location directly at start time doesn't use this registry at all — see "Hosted deployment:
+a model location supplied at start time" below.
 
 ## Verified
 
@@ -53,7 +59,9 @@ On a MacBook Pro **M4 Max / 128 GB**, torch 2.14.1, transformers 5.18.0, mcp 2.3
 
 ### Requirements
 
-- **Apple Silicon Mac** (M-series) on macOS. Intel Macs and NVIDIA/CUDA are out of scope.
+- **Apple Silicon Mac** (M-series) on macOS for local use (MPS). Intel Macs remain out of
+  scope. For a hosted deployment on NVIDIA/CUDA compute (e.g. Outerbounds), see "Hosted
+  deployment" below and `deployment/README.md`.
 - **Unified memory** above the model's size: 32 GB or more for `flash` (9B), 64 GB or more
   for `full` (27B). Only 128 GB has been verified.
 - **Disk**: about 18 GiB for `flash` or 55 GiB for `full`, in Hugging Face's shared cache
@@ -78,17 +86,25 @@ install from `git+ssh://git@github.com/shapeandshare/ember`.
 Restart opencode and the agent gains `ember_advise`. The model server stays **lazy** —
 it starts on the first tool call (or with `ember start`).
 
-Everything is pinned for reproducibility: `flash` to the commit verified on MPS (`17f0b0a`),
-`full` to its release commit (`2f3de3d`, not yet verified locally), and torch/torchvision to
-the tested minor series. Set `EMBER_MODEL_DIR` to run another weights directory.
+`flash` targets the commit verified on MPS (`17f0b0a`) and `full` its release commit
+(`2f3de3d`, not yet verified locally) as a download convenience, and torch/torchvision are
+pinned to the tested minor series — but ember does not restrict itself to a hand-maintained
+allowlist of individually verified weights; it runs any model that fits its loader contract
+(constitution Article V, "Model Loading"). Set `EMBER_MODEL_DIR` to run another weights
+directory.
 
 ### Cloud
 
-ember is Apple-Silicon-first. In the cloud, run it on an Apple Silicon host with the memory
-above, or on any host with the CPU fallback (`EMBER_DEVICE=cpu` — float32, roughly twice the
-memory, much slower). NVIDIA/CUDA is out of scope. The HTTP server binds to loopback by
-default; to serve other machines set `EMBER_HOST` and set `EMBER_SERVER_AUTH_TOKEN` to require
-`Authorization: Bearer <token>`. Ember does not terminate TLS — front a remote-serving
+ember is Apple-Silicon-first locally, and supports NVIDIA GPUs for hosted deployment
+(constitution Article VI, "Apple Silicon and CUDA") — three devices total: run it on an
+Apple Silicon host with the memory above (MPS), on an NVIDIA GPU host (`EMBER_DEVICE=cuda`,
+float16 — see "Hosted deployment: a model location supplied at start time" and
+`deployment/README.md` for a full Outerbounds example), or on any host with the CPU fallback
+(`EMBER_DEVICE=cpu` — float32, roughly twice the memory, much slower). The HTTP server binds
+to loopback by default; to serve other machines set `EMBER_HOST` and set
+`EMBER_SERVER_AUTH_TOKEN` to require `Authorization: Bearer <token>` (or any header name via
+`EMBER_AUTH_HEADER`, e.g. `x-api-key`, on the client side). Ember does not terminate TLS —
+front a remote-serving
 deployment with a proxy. Clients point at it with `EMBER_SERVER_URL`. See
 [COMPATIBILITY.md](COMPATIBILITY.md) and [SECURITY.md](SECURITY.md).
 
@@ -145,7 +161,7 @@ ember config path | show
 ember uninstall [--purge-models]  # also removes global opencode/skill installs
 
 # models
-ember model pull [flash|full]     # flash = 9B (default), full = 27B
+ember model pull [flash|full]      # flash = 9B (default)
 ember model list | path [name] | rm [name]
 
 # opencode, Kilo Code, and agents
@@ -195,8 +211,8 @@ is JSON at `ember config path` (keys `model`, `host`, `port`, `device`, `max_len
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `EMBER_HOST` / `EMBER_PORT` | `127.0.0.1` / `8765` | Local model server bind address |
-| `EMBER_DEVICE` | `auto` | `auto`, `mps`, or `cpu` |
-| `EMBER_MODEL` | `flash` | `flash` (9B) or `full` (27B) |
+| `EMBER_DEVICE` | `auto` | `auto`, `mps`, `cuda`, or `cpu` |
+| `EMBER_MODEL` | `flash` | `flash` (9B, default) or `full` (27B), both from Cloudflare's public Hugging Face repos |
 | `EMBER_MODEL_DIR` | — | Run weights from this directory instead of the pinned cache |
 | `EMBER_MAX_LENGTH` | `0` (the model's maximum: 262144) | Token cap per request; `0` derives it from the model |
 | `EMBER_MAX_REQUEST_LENGTH` | `32768` | Per-request token cap enforced before inference; `0` disables it (uses the model maximum) |
@@ -209,6 +225,35 @@ is JSON at `ember config path` (keys `model`, `host`, `port`, `device`, `max_len
 | `EMBER_AUTOSTART` | `1` | Let the MCP server start a local server on demand (loopback only) |
 | `EMBER_START_TIMEOUT` | `300` | Seconds to wait for the model server to start |
 | `EMBER_STATE_DIR` | Application Support | Where the pid file and logs live |
+| `EMBER_MODEL_S3_URI` | — | An `s3://bucket/prefix` URI naming the exact model location to load — for a deployment (e.g. Outerbounds) that supplies the model's S3 location at start time instead of a `REGISTRY` key. See "Hosted deployment: a model location supplied at start time" below. |
+| `EMBER_ANACONDA_S3_ACCESS_KEY_ID` / `EMBER_ANACONDA_S3_SECRET_ACCESS_KEY` | — | AWS credentials for `EMBER_MODEL_S3_URI`. **Optional** — when unset, boto3's own default credential chain applies (an IAM role attached to the compute, e.g. Outerbounds; env vars; `~/.aws/credentials`). Set explicitly only where no role is attached (e.g. a local developer machine) |
+| `EMBER_ANACONDA_S3_REGION` | — | AWS region passed to the S3 client |
+
+### Hosted deployment: a model location supplied at start time
+
+Some deployments (e.g. an [Outerbounds](https://outerbounds.com) app) supply the model's S3
+location directly at start time, rather than selecting a `REGISTRY` entry. Set:
+
+```sh
+export EMBER_MODEL_S3_URI=s3://my-bucket/clef-flash
+export EMBER_DEVICE=cuda   # Outerbounds compute is Linux — no MPS; cuda is the GPU path
+ember serve                # foreground, container-friendly (not `ember start`)
+```
+
+No AWS credentials need to be set explicitly when the compute already has an IAM role
+attached (the expected case on Outerbounds, matching `model-foundry`'s own Metaflow-managed
+S3 access) — boto3's default credential chain picks it up automatically. Set
+`EMBER_ANACONDA_S3_ACCESS_KEY_ID`/`_SECRET_ACCESS_KEY` explicitly only where no role is
+attached.
+
+This is checked once at startup, before the server begins serving, and takes priority over
+`EMBER_MODEL`/the `model` config key entirely — there is no `REGISTRY` lookup for this path.
+ember supports any model that can run under its loader contract (constitution Article V,
+"Model Loading"); it is not a hand-maintained allowlist of individually hash-verified weights,
+so a URI-supplied location loads directly, with no pin or hash to check against.
+
+A complete Outerbounds deployment example — `deploy.yaml`, a generated `requirements.txt`,
+and a `make deployment-requirements` target — lives in [`deployment/`](deployment/README.md).
 
 ### Remote inference
 

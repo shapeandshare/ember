@@ -139,6 +139,72 @@ def test_model_rm_removes_with_yes(monkeypatch, capsys):
 
 
 # ###########################################################################
+# Registry entries are first-class peers (flash/full, both Hugging-Face-
+# sourced; there is no hosted/S3 REGISTRY entry — EMBER_MODEL_S3_URI bypasses
+# REGISTRY entirely, see tests/test_hosted.py)
+# ###########################################################################
+def test_model_list_real_call_includes_flash(monkeypatch, capsys):
+    """A real (non-monkeypatched) list_models() call includes flash with
+    correct metadata."""
+    monkeypatch.setattr(models_mod, "resolve_dir", lambda *a, **kw: None)
+    assert models_cmd.cmd_model_list(_ns()) == 0
+    rows = json.loads(capsys.readouterr().out)
+    names = {row["name"] for row in rows}
+    assert "flash" in names
+    flash_row = next(row for row in rows if row["name"] == "flash")
+    assert flash_row["repo"] == "Cloudflare/clef-flash"
+    assert flash_row["params"] == "9B"
+    assert flash_row["kind"] == "decision"
+    assert flash_row["default"] is True
+
+
+def test_model_list_real_call_includes_full(monkeypatch, capsys):
+    monkeypatch.setattr(models_mod, "resolve_dir", lambda *a, **kw: None)
+    assert models_cmd.cmd_model_list(_ns()) == 0
+    rows = json.loads(capsys.readouterr().out)
+    names = {row["name"] for row in rows}
+    assert "full" in names
+    full_row = next(row for row in rows if row["name"] == "full")
+    assert full_row["params"] == "27B"
+    assert full_row["kind"] == "decision"
+    assert full_row["default"] is False
+
+
+@pytest.mark.parametrize("name", ["flash", "full"])
+def test_model_pull_reports_path_for_any_registry_entry(name, monkeypatch, capsys):
+    """pull/path/rm behave identically for every registry entry."""
+    monkeypatch.setattr(
+        models_mod, "pull", lambda name, allow_low_disk=False: Path("/m")
+    )
+    assert models_cmd.cmd_model_pull(_ns(name=name, allow_low_disk=True)) == 0
+    assert "/m" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("name", ["flash", "full"])
+def test_model_path_reports_pulled_for_any_registry_entry(name, monkeypatch, capsys):
+    monkeypatch.setattr(models_mod, "resolve_dir", lambda n: Path(f"/models/{n}"))
+    assert models_cmd.cmd_model_path(_ns(name=name)) == 0
+    assert f"/models/{name}" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("name", ["flash", "full"])
+def test_model_rm_removes_any_registry_entry_with_yes(name, monkeypatch, capsys):
+    monkeypatch.setattr(models_mod, "remove", lambda n: f"removed {n}")
+    assert models_cmd.cmd_model_rm(_ns(name=name, yes=True)) == 0
+    assert f"removed {name}" in capsys.readouterr().out
+
+
+def test_model_pull_unknown_name_lists_valid_choices(capsys):
+    """Spec FR-004 acceptance scenario 3 — the unknown-model error already
+    iterates REGISTRY generically (cli.main catches the KeyError raised by
+    models.get())."""
+    assert cli.main(["model", "pull", "not-a-real-model"]) == 1
+    err = capsys.readouterr().err
+    assert "flash" in err
+    assert "full" in err
+
+
+# ###########################################################################
 # lifecycle commands
 # ###########################################################################
 def test_host_port_prefers_args_over_config():
@@ -200,6 +266,36 @@ def test_cmd_serve_raises_when_model_not_pulled(sandbox, monkeypatch):
     args = _ns(model="flash", host=None, port=None, device=None)
     with pytest.raises(SystemExit, match="is not pulled"):
         lifecycle.cmd_serve(args)
+
+
+def test_cmd_serve_uses_hosted_model_dir_when_configured(sandbox, monkeypatch):
+    """A hosted deployment (e.g. Outerbounds) runs `ember serve` directly, in
+    the foreground, with EMBER_MODEL_S3_URI set and no REGISTRY entry ever
+    pulled. cmd_serve MUST NOT require models.resolve_dir() to succeed in
+    that case — it must check ember.serving.hosted.resolve() first, the same
+    way server.py's lifespan() and process.start() already do."""
+    from ember.serving import hosted
+
+    fake_dir = sandbox / "hosted-model"
+    fake_dir.mkdir()
+    fake_source = hosted.HostedModelSource(
+        uri="s3://my-bucket/clef-flash", model_dir=fake_dir
+    )
+    monkeypatch.setattr(hosted, "resolve", lambda: fake_source)
+
+    def _fail_if_called(name):
+        raise AssertionError(
+            "resolve_dir must not be consulted when hosted.resolve() succeeds"
+        )
+
+    monkeypatch.setattr(models_mod, "resolve_dir", _fail_if_called)
+    ran: list[bool] = []
+    _stub(monkeypatch, ember.serving, "server", lambda: ran.append(True))
+
+    args = _ns(model=None, host=None, port=None, device=None)
+    assert lifecycle.cmd_serve(args) == 0
+    assert ran == [True]
+    assert os.environ["EMBER_MODEL_DIR"] == str(fake_dir)
 
 
 def test_cmd_mcp_sets_client_url_for_a_wildcard_host(monkeypatch):

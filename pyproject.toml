@@ -26,6 +26,11 @@ dependencies = [
     "mcp>=2.3,<3",
     "httpx>=0.28,<1",
     "prometheus-client>=0.21,<1",
+    # boto3 is the standard client for the AWS S3 bucket an Anaconda-sourced
+    # REGISTRY entry downloads from when ember runs on Anaconda's hosted
+    # platform (ember/models.py `ModelSource.ANACONDA_S3`, ember/cfg/anaconda_s3.py;
+    # see specs/002-anaconda-models-provider/research.md R3-addendum-3).
+    "boto3>=1.40,<2",
 ]
 
 [project.urls]
@@ -52,6 +57,7 @@ dev = [
     "mypy>=1.13",
     "bandit[toml]>=1.8",
     "commitizen>=4.0",
+    "boto3-stubs[s3]>=1.43.109",
 ]
 
 [tool.pytest.ini_options]

@@ -1,16 +1,20 @@
-"""ember runtime: loads a SystemOne-compatible model on Apple Silicon (MPS).
+"""ember runtime: loads a SystemOne-compatible model on MPS, CUDA, or CPU.
 
 Wraps Cloudflare's shipped ``joint_schema_model.py`` with a loader that works
 around a segfault seen when ``device_map={"": "mps"}`` is passed to
 ``from_pretrained`` under torch 2.14 / transformers 5.18. Loading on CPU and then
-moving the module to MPS is stable.
+moving the module to the target device is stable — this applies to MPS (where
+the direct ``device_map`` load segfaults) and is reused for CUDA (which has no
+such issue, but a single code path is simpler than two — constitution
+Article XV §15.3). See constitution Article VI ("Apple Silicon and CUDA").
 
 Fixes applied:
   * PYTORCH_ENABLE_MPS_FALLBACK=1 so unimplemented MPS ops fall back to CPU
     instead of erroring (the Qwen3.5 Gated DeltaNet layers use a pure-PyTorch
     fallback path; a few ops may still be missing).
-  * CPU -> MPS load (avoids the loader segfault).
-  * float16 on MPS, float32 on CPU.
+  * CPU -> target-device load (avoids the MPS loader segfault; CUDA has no
+    such constraint but shares the same load path).
+  * float16 on MPS and CUDA, float32 on CPU.
   * pad_token_id fallback to eos (some models leave it null in config).
 
 One model per process. ``joint_schema_model`` is imported by a fixed module name
@@ -34,9 +38,7 @@ os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 
 import torch
 
-from .. import models as _models
 from . import media
-from .integrity import verify_model_dir
 
 # ember/serving/runtime.py -> parents[2] is the checkout root (matches models._dev_dir).
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -121,73 +123,25 @@ def model_max_length(model_dir: str | os.PathLike[str] = DEFAULT_MODEL_DIR) -> i
     return result if result > 0 else FALLBACK_MAX_LENGTH
 
 
-def _classify_dir(
-    model_dir: Path,
-    hint: _models.ModelSpec | None = None,
-) -> tuple[_models.ModelSpec, bool]:
-    """Return the best-matching registry spec and whether the dir is official.
-
-    "Official" means the directory is the one the registry itself resolves to
-    for a given spec (checkout ``.models/<dir>`` or the HF-cache snapshot at
-    the pinned revision).  The HF-cache layout
-    ``~/.cache/huggingface/hub/models--Cloudflare--clef-flash/snapshots/<sha>``
-    does not match on ``dir_name`` alone, so we compare against the path
-    ``models.resolve_dir`` returns with ``override=False``.
-
-    Parameters
-    ----------
-    model_dir : Path
-        Directory to classify.
-    hint : ModelSpec | None, optional
-        Caller-supplied spec.  When provided it is returned as-is; only the
-        ``official`` flag is still computed so the correct enforcement level
-        applies.  Degrades to ``(hint, False)`` when ``resolve_dir`` raises.
-
-    Returns
-    -------
-    tuple[ModelSpec, bool]
-        ``(spec, True)`` when ``model_dir`` matches the registry's own
-        resolution for that spec; ``(spec, False)`` otherwise.
-    """
-    resolved = model_dir.resolve()
-    for spec in _models.REGISTRY.values():
-        try:
-            official_path = _models.resolve_dir(spec.name, override=False)
-        except Exception:
-            official_path = None
-        if official_path is not None and resolved == official_path.resolve():
-            return hint if hint is not None else spec, True
-    return hint if hint is not None else _models.REGISTRY[_models.DEFAULT], False
-
-
-def joint_module(
-    model_dir: Path,
-    spec: _models.ModelSpec | None = None,
-) -> Any:
+def joint_module(model_dir: Path) -> Any:
     """Import Cloudflare's ``joint_schema_model`` from the model directory.
+
+    Constitution Article V ("Model Loading"): ember supports any model that
+    can run under its loader contract; this performs no integrity
+    verification of ``model_dir`` before importing from it.
 
     Parameters
     ----------
     model_dir : Path
         Directory containing ``joint_schema_model.py``.
-    spec : ModelSpec | None, optional
-        Registry entry supplying pinned hashes for integrity verification.
-        When ``None``, the spec is resolved from the registry by directory name.
 
     Returns
     -------
     Any
         The imported ``joint_schema_model`` module.
-
-    Raises
-    ------
-    RuntimeError
-        If integrity verification fails (missing files or hash mismatch).
     """
     global _JOINT_MODULE
     if _JOINT_MODULE is None:
-        resolved_spec, official = _classify_dir(model_dir, hint=spec)
-        verify_model_dir(model_dir, resolved_spec, official=official)
         path = str(model_dir.resolve())
         if path not in sys.path:
             sys.path.insert(0, path)
@@ -204,17 +158,25 @@ def pick_device(requested: str | None = None) -> str:
     Parameters
     ----------
     requested : str | None, optional
-        ``"mps"``, ``"cpu"``, or ``"auto"``/``None`` to detect automatically.
+        ``"mps"``, ``"cuda"``, ``"cpu"``, or ``"auto"``/``None`` to detect
+        automatically.
 
     Returns
     -------
     str
         ``requested`` if given and not ``"auto"``; otherwise ``"mps"`` when
-        available, else ``"cpu"``.
+        available (constitution Article VI: Apple Silicon is the
+        local-first default), else ``"cuda"`` when available (the hosted-
+        deployment path, e.g. Outerbounds compute, which is Linux and has
+        no MPS), else ``"cpu"``.
     """
     if requested and requested != "auto":
         return requested
-    return "mps" if torch.backends.mps.is_available() else "cpu"
+    if torch.backends.mps.is_available():
+        return "mps"
+    if torch.cuda.is_available():
+        return "cuda"
+    return "cpu"
 
 
 def pick_dtype(device: str) -> torch.dtype:
@@ -228,16 +190,16 @@ def pick_dtype(device: str) -> torch.dtype:
     Returns
     -------
     torch.dtype
-        ``torch.float16`` on MPS, ``torch.float32`` otherwise.
+        ``torch.float16`` on MPS or CUDA, ``torch.float32`` otherwise
+        (constitution Article VI).
     """
-    return torch.float16 if device == "mps" else torch.float32
+    return torch.float16 if device in ("mps", "cuda") else torch.float32
 
 
 def load_clef(
     model_dir: str | os.PathLike[str] = DEFAULT_MODEL_DIR,
     device: str | None = None,
     dtype: torch.dtype | None = None,
-    spec: _models.ModelSpec | None = None,
 ) -> tuple[Any, Any]:
     """Load a SystemOne-compatible backbone + joint schema head + processor.
 
@@ -250,9 +212,6 @@ def load_clef(
         Compute device; resolved by ``pick_device`` when ``None``.
     dtype : torch.dtype | None, optional
         Floating-point dtype; resolved by ``pick_dtype`` when ``None``.
-    spec : ModelSpec | None, optional
-        Registry entry for integrity verification. When ``None``, resolved
-        from the registry by directory name.
 
     Returns
     -------
@@ -263,14 +222,12 @@ def load_clef(
     ------
     FileNotFoundError
         If ``model_dir`` does not exist.
-    RuntimeError
-        If integrity verification fails before any model code is loaded.
     """
     model_dir = Path(model_dir)
     if not model_dir.is_dir():
         raise FileNotFoundError(f"model dir not found: {model_dir}")
 
-    js = joint_module(model_dir, spec=spec)
+    js = joint_module(model_dir)
     device = pick_device(device)
     if dtype is None:
         dtype = pick_dtype(device)
@@ -325,8 +282,6 @@ class Engine:
         ``None`` derives it from the model's ``config.json``.
     model_name : str | None, optional
         Label echoed in responses. Defaults to the model directory name.
-    spec : ModelSpec | None, optional
-        Registry entry for integrity verification.
     max_request_length : int, optional
         Per-request token cap enforced after tokenization and before the model
         forward pass (D-002). ``0`` disables the cap. Defaults to ``0``.
@@ -339,7 +294,6 @@ class Engine:
         dtype: torch.dtype | None = None,
         max_length: int | None = None,
         model_name: str | None = None,
-        spec: _models.ModelSpec | None = None,
         max_request_length: int = 0,
     ) -> None:
         self.model_dir = Path(model_dir)
@@ -352,10 +306,7 @@ class Engine:
             max_length if max_length is not None else model_max_length(self.model_dir)
         )
         self.max_request_length = max_request_length
-        self._spec = spec
-        self.model, self.processor = load_clef(
-            self.model_dir, self.device, self.dtype, spec=spec
-        )
+        self.model, self.processor = load_clef(self.model_dir, self.device, self.dtype)
         self._lock = threading.Lock()
         self._admission = threading.Semaphore(MAX_PENDING_ADVISE)
 
@@ -461,7 +412,7 @@ class Engine:
                     "Reduce input size or raise EMBER_MAX_REQUEST_LENGTH "
                     "(set to 0 to use the model maximum)."
                 )
-        js = joint_module(self.model_dir, spec=self._spec)
+        js = joint_module(self.model_dir)
         request: dict[str, Any] = {
             "model": self.model_name,
             "state": state,

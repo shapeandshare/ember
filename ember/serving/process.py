@@ -22,6 +22,7 @@ import httpx
 
 from .. import models
 from ..cfg import config, paths
+from . import hosted
 
 _LOG = logging.getLogger(__name__)
 
@@ -197,7 +198,12 @@ def start(
     ------
     RuntimeError
         If the model is not pulled, the server process exits during
-        startup, or it does not become healthy within ``timeout``.
+        startup, or it does not become healthy within ``timeout``; or if
+        ``EMBER_MODEL_S3_URI`` is malformed or its download fails (see
+        :mod:`ember.serving.hosted`). The hosted check runs here, in the
+        parent process, before spawning the server subprocess, so a
+        misconfiguration fails fast rather than spawning a child that then
+        crashes during its own startup.
     """
     host = host or config.resolve("host")
     port = int(port or config.resolve("port"))
@@ -206,12 +212,17 @@ def start(
     if info is not None:
         return int(info.get("pid") or 0)
 
-    name = model or config.resolve("model")
-    model_dir = models.resolve_dir(name)
-    if model_dir is None:
-        raise RuntimeError(
-            f"model {name!r} is not pulled; run: ember model pull {name}"
-        )
+    hosted_source = hosted.resolve()
+    model_dir: Path | None
+    if hosted_source is not None:
+        model_dir = hosted_source.model_dir
+    else:
+        name = model or config.resolve("model")
+        model_dir = models.resolve_dir(name)
+        if model_dir is None:
+            raise RuntimeError(
+                f"model {name!r} is not pulled; run: ember model pull {name}"
+            )
 
     proc = spawn(model_dir, host, port, device)
     deadline = time.time() + timeout

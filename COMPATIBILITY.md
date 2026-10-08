@@ -7,18 +7,28 @@ when testing a new model revision, dependency series, or device.
 
 ## Tested models
 
-| Model | Registry key | HF repository | Parameters | On disk | Modality | License | Pinned revision | Verified |
+| Model | Registry key | Source | Parameters | On disk | Modality | License | Revision | Verified |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Clef-Flash | `flash` | Cloudflare/clef-flash | 9B | about 18 GiB | Text and vision | Apache-2.0 | `17f0b0ad...` | Yes, locally |
-| Clef | `full` | Cloudflare/clef | 27B | about 55 GiB | Text and vision | Apache-2.0 | `2f3de3dd...` | Not locally |
+| Clef-Flash | `flash` | Cloudflare/clef-flash (Hugging Face Hub) | 9B | about 18 GiB | Text and vision | Apache-2.0 | `17f0b0ad...` | Yes, locally |
+| Clef | `full` | Cloudflare/clef (Hugging Face Hub) | 27B | about 55 GiB | Text and vision | Apache-2.0 | `2f3de3dd...` | Not locally |
 
 Registry keys live in `ember/models.py` (`REGISTRY`). Select a model with `EMBER_MODEL`, or
-pull the weights with `ember model pull`.
+pull the weights with `ember model pull`. `flash` is the default registry entry. ember does
+not verify downloaded weights against a hash (constitution Article V, "Model Loading") — it
+supports any model that fits its loader contract, not a hand-maintained allowlist of
+individually pinned, hash-verified weights.
 
-> **Warning:** `full` (27B) is pinned but not verified on this hardware. Expect a longer
-> load and much larger memory use. The 8 GiB self-hosted CI runners cannot hold it, and the
-> ~19 GB fp16 `flash` model does not fit the hosted runners either, so model-backed tests
-> run locally only.
+A hosted deployment (e.g. Outerbounds) that supplies the model's location directly at start
+time via `EMBER_MODEL_S3_URI` doesn't use this registry at all — see README.md "Hosted
+deployment: a model location supplied at start time." AWS credentials
+(`EMBER_ANACONDA_S3_ACCESS_KEY_ID`/`_SECRET_ACCESS_KEY`, see README.md) for that path are
+optional — boto3's default credential chain (an attached IAM role, e.g. on Outerbounds; env
+vars; `~/.aws/credentials`) applies when they are unset.
+
+> **Warning:** `full` (27B) is not verified on this hardware. Expect a longer load and much
+> larger memory use. The 8 GiB self-hosted CI runners cannot hold it, and the ~19 GB fp16
+> `flash` model does not fit the hosted runners either, so model-backed tests run locally
+> only.
 
 ## Hardware requirements
 
@@ -30,8 +40,9 @@ fit in unified memory, and that is the binding constraint — not CPU speed.
 | `flash` | 9B | about 18 GiB | float16 | 32 GB or more | 128 GB (M4 Max) |
 | `full` | 27B | about 55 GiB | float16 | 64 GB or more | not yet |
 
-- **Apple Silicon Mac (M-series) on macOS**, arm64. Intel Macs and NVIDIA/CUDA are out of
-  scope (Article VI).
+- **Apple Silicon Mac (M-series) on macOS**, arm64, for local use (MPS). Intel Macs remain
+  out of scope. NVIDIA GPUs (CUDA) are supported for hosted deployment (Article VI, "Apple
+  Silicon and CUDA") — see "Running in the cloud" below.
 - **Unified memory** must exceed the weights with headroom for activations and the KV cache.
   An 8 GiB host fails to load `flash` with an MPS out-of-memory error at the ~9 GiB allocator
   cap. 32 GB or more is the practical floor for `flash`.
@@ -42,14 +53,18 @@ fit in unified memory, and that is the binding constraint — not CPU speed.
 
 ## Running in the cloud
 
-ember is Apple-Silicon-first, so cloud means one of:
+ember is Apple-Silicon-first locally and supports NVIDIA GPUs for hosted deployment
+(constitution Article VI, "Apple Silicon and CUDA"). Cloud means one of:
 
 - **An Apple Silicon host** (a cloud Mac) with the unified memory above. This is the tested
   MPS path.
+- **An NVIDIA GPU host**, with `EMBER_DEVICE=cuda` — float16, matching MPS's memory/dtype
+  rules (not the CPU float32 numbers below). This is the hosted-deployment path (e.g.
+  Outerbounds compute, which is Linux and has no MPS); see `deployment/README.md` for a
+  full example. Not yet verified against real NVIDIA hardware — see "Tested stack" below.
 - **Any host via the CPU fallback**, with `EMBER_DEVICE=cpu`. It loads in float32, so plan for
   roughly twice the memory (`flash` about 36 GiB, `full` about 110 GiB) and much slower
   inference. Image and video inputs are expected to work, only slower.
-- **NVIDIA/CUDA is out of scope** (Article VI). On a CUDA host, ember falls back to CPU.
 
 Two cloud caveats:
 
@@ -63,14 +78,20 @@ Two cloud caveats:
   `state`, questions, or answers to shapeandshare. If you configure a remote endpoint
   (`EMBER_SERVER_URL`), state is sent to that endpoint — the privacy note in
   [`RESPONSIBLE_USE.md`](RESPONSIBLE_USE.md) then applies to that host, including its logs.
+- **A deployment platform (e.g. Outerbounds) can supply the model's S3 location directly at
+  start time** via `EMBER_MODEL_S3_URI`, instead of selecting a `REGISTRY` entry — ember
+  supports any model that fits its loader contract (constitution Article V, "Model Loading"),
+  not a hand-maintained allowlist of individually pinned, hash-verified weights. See
+  README.md "Hosted deployment: a model location supplied at start time."
 
 ## Tested stack
 
 | Component | Version | Notes |
 | --- | --- | --- |
-| macOS | Apple Silicon (arm64) | Intel and CUDA are out of scope |
+| macOS | Apple Silicon (arm64) | Local use (MPS); Intel is out of scope |
+| Linux | x86_64 / aarch64 | Hosted deployment (CUDA); `torch`'s default PyPI wheel already bundles CUDA support here, no special index needed |
 | Python | 3.12 | managed by uv (`.python-version`) |
-| torch | 2.14.1 | MPS backend, float16; float32 on CPU |
+| torch | 2.14.1 | MPS/CUDA backend, float16; float32 on CPU |
 | torchvision | 0.29.1 | required by the Clef image processor |
 | transformers | 5.18.0 | model and processor |
 | mcp | 2.3.0 | MCP stdio server |
@@ -78,15 +99,18 @@ Two cloud caveats:
 | uvicorn | 0.54.0 | ASGI server |
 
 torch and torchvision are pinned to the tested minor series because MPS behavior is
-version-sensitive. Widening the range is a constitution-governed change.
+version-sensitive. Widening the range is a constitution-governed change. CUDA support has
+not yet been exercised against real NVIDIA hardware — the code path is implemented and unit
+tested (`ember/serving/runtime.py::pick_device`/`pick_dtype`), but no model-backed run on a
+CUDA host has been recorded here yet. Update this note once one has.
 
 ## Capability matrix
 
-| Capability | MPS (default) | CPU (`EMBER_DEVICE=cpu`) |
-| --- | --- | --- |
-| Text advice | Verified, float16 | Verified, float32 |
-| Image inputs | Verified | Expected, slower |
-| Video frame inputs | Verified | Expected, slower |
+| Capability | MPS (default) | CUDA (`EMBER_DEVICE=cuda`) | CPU (`EMBER_DEVICE=cpu`) |
+| --- | --- | --- | --- |
+| Text advice | Verified, float16 | Not yet verified, float16 | Verified, float32 |
+| Image inputs | Verified | Expected, not yet verified | Expected, slower |
+| Video frame inputs | Verified | Expected, not yet verified | Expected, slower |
 
 Observed on the tested hardware: model load in about 5 seconds, and a warm request in
 about 0.9 to 1.3 seconds for 220 to 360 input tokens.
@@ -97,7 +121,9 @@ about 0.9 to 1.3 seconds for 220 to 360 input tokens.
   for Apple Silicon, so it runs the pure-PyTorch path. Two "falling back" log lines are
   expected. The result is correct, only slower.
 - **`device_map={"": "mps"}` segfaults.** The loader loads on CPU and then moves the module
-  to MPS. Do not pass a device map.
+  to the target device (MPS or CUDA). Do not pass a device map directly — this constraint is
+  MPS-specific; CUDA has no equivalent issue but shares the same CPU-then-move code path
+  (constitution Article XV, simplest viable solution).
 - **Media must be inline.** `images` and `videos` accept base64 `data:` URIs or
   `{content_type, base64}` objects. Remote URLs and local paths are rejected by design, so
   an agent cannot make the server read host files or fetch URLs.
