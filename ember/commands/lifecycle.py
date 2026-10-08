@@ -8,16 +8,23 @@ import json
 import os
 import sys
 import time
+from pathlib import Path
 
 from .. import models
 from ..cfg import config, paths
 from ..cfg import endpoint as endpoint_mod
-from ..serving import process
+from ..serving import hosted, process
 from .endpoint import endpoint_status, host_port, resolve_endpoint
 
 
 def _apply_server_env(args: argparse.Namespace) -> None:
     """Set environment variables consumed by the model server process.
+
+    Checks ``ember.serving.hosted.resolve()`` first: a hosted deployment
+    (e.g. Outerbounds) runs ``ember serve`` directly, in the foreground,
+    with ``EMBER_MODEL_S3_URI`` set and no ``REGISTRY`` entry ever pulled —
+    the same precedence ``server.py``'s ``lifespan()`` and
+    ``ember.serving.process.start()`` already apply.
 
     Parameters
     ----------
@@ -27,12 +34,20 @@ def _apply_server_env(args: argparse.Namespace) -> None:
     Raises
     ------
     SystemExit
-        If the requested model has not been pulled.
+        If neither a hosted model location nor a pulled registry entry is
+        available.
     """
-    name = args.model or config.resolve("model")
-    model_dir = models.resolve_dir(name)
-    if model_dir is None:
-        raise SystemExit(f"model {name!r} is not pulled; run: ember model pull {name}")
+    hosted_source = hosted.resolve()
+    model_dir: Path | None
+    if hosted_source is not None:
+        model_dir = hosted_source.model_dir
+    else:
+        name = args.model or config.resolve("model")
+        model_dir = models.resolve_dir(name)
+        if model_dir is None:
+            raise SystemExit(
+                f"model {name!r} is not pulled; run: ember model pull {name}"
+            )
     host, port = host_port(args)
     os.environ["EMBER_MODEL_DIR"] = str(model_dir)
     os.environ["EMBER_HOST"] = host

@@ -11,7 +11,7 @@
 #     shared/python.mk   — sync, compile, lint, format, typecheck, security, pr-ready
 #     shared/testing.mk  — test, test-fast, test-strict, test-cov, mcp-check, smoke
 #     shared/server.mk   — serve, start, stop, restart, status, logs, mcp, mcp-list, doctor
-#     shared/release.mk  — download, init, opencode, setup, bootstrap, check, ci, clean, clean-model
+#     shared/release.mk  — download, init, opencode, setup, bootstrap, check, ci, clean, clean-model, deployment-requirements
 #     shared/vault.mk    — vault-audit
 #     shared/site.mk     — site, site-serve (Jekyll GitHub Pages)
 SHELL := /bin/bash

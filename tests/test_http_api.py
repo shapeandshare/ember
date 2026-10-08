@@ -251,3 +251,66 @@ def test_auth_disabled_requires_no_token(monkeypatch) -> None:
     monkeypatch.delenv("EMBER_SERVER_AUTH_TOKEN", raising=False)
     resp = _in_process_client().post("/v1/systemone", json=BODY)
     assert resp.status_code != 401
+
+
+# ###########################################################################
+# Constitution Article V "Unverified hosted-deployment exception": the
+# lifespan() startup path checks ember.serving.hosted.resolve() first, before
+# falling back to the normal REGISTRY-based path. TestClient(app) drives the
+# real lifespan context manager (Starlette wraps it synchronously), so this
+# exercises the actual dispatch, not a reimplementation of it — Engine()
+# itself is mocked out to avoid a real torch/model load in this unit test.
+# ###########################################################################
+def test_lifespan_uses_hosted_source_when_configured(monkeypatch) -> None:
+    from ember.serving import hosted, runtime
+    from ember.serving import server as server_mod
+
+    fake_source = hosted.HostedModelSource(
+        uri="s3://my-bucket/clef-flash",
+        model_dir=__import__("pathlib").Path("/fake/model/dir"),
+    )
+    monkeypatch.setattr(hosted, "resolve", lambda: fake_source)
+
+    captured: dict[str, object] = {}
+
+    class _FakeEngine:
+        def __init__(self, model_dir, **kwargs):
+            captured["model_dir"] = model_dir
+            captured.update(kwargs)
+            self.device = "cpu"
+            self.dtype = "float32"
+
+        def describe(self):
+            return {"model": "s3://my-bucket/clef-flash"}
+
+    monkeypatch.setattr(server_mod, "Engine", _FakeEngine)
+    monkeypatch.setattr(runtime, "Engine", _FakeEngine)
+
+    with _in_process_client() as client:
+        resp = client.get("/health")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["status"] == "ok"
+        assert body["engine"]["model"] == "s3://my-bucket/clef-flash"
+
+    assert captured["model_dir"] == fake_source.model_dir
+    assert "spec" not in captured
+    assert "skip_integrity" not in captured
+
+
+def test_lifespan_falls_back_to_registry_when_hosted_not_configured(
+    monkeypatch,
+) -> None:
+    """When EMBER_MODEL_S3_URI is unset, hosted.resolve() returns None and the
+    existing REGISTRY-based path is completely unaffected — this is a
+    regression lock, not new behavior."""
+    from ember.serving import hosted
+
+    monkeypatch.setattr(hosted, "resolve", lambda: None)
+    resp = _in_process_client().get("/health")
+    assert resp.status_code == 200
+    # Either "ok" (weights present) or "loading" (not pulled) — both are the
+    # pre-existing, unaffected REGISTRY-based behavior; what matters is that
+    # no hosted-path field leaks in when hosted.resolve() returned None.
+    body = resp.json()
+    assert body["status"] in ("ok", "loading")

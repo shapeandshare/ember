@@ -10,6 +10,7 @@ logs/
 /opencode.json
 /.opencode/plugins/ember.js
 /.opencode/skills/ember-advise/
+/.kilo/jetbrains.json
 .DS_Store
 .idea/
 .omo/

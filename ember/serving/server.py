@@ -35,6 +35,7 @@ from pydantic import BaseModel, Field
 
 from .. import models
 from ..cfg import config
+from . import hosted
 from .runtime import AdmissionError, Engine, RequestTooLargeError
 
 log = logging.getLogger(__name__)
@@ -141,35 +142,47 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     Raises
     ------
     RuntimeError
-        If the configured model is not found on disk.
+        If the configured model is not found on disk, or if
+        ``EMBER_MODEL_S3_URI`` is malformed or its download fails (see
+        :mod:`ember.serving.hosted`).
     """
     global _ENGINE
-    name = config.resolve("model")
-    model_dir = models.resolve_dir(name)
-    if model_dir is None:
-        # Article XIV §14.1 — pit of success: start in unloaded state rather
-        # than crashing. POST /v1/systemone returns 503; GET /health returns
-        # {"status": "loading"}. process.start() already validates weights
-        # before spawning, so ember start / MCP autostart still fail fast with
-        # an actionable error message via that path.
-        log.warning(
-            "model %r not found — server starting in unloaded state "
-            "(advise calls will return 503). Run: ember model pull %s",
-            name,
-            name,
-        )
-        yield
-        return
+    hosted_source = hosted.resolve()
     raw_length = int(config.resolve("max_length"))
     raw_request_length = int(config.resolve("max_request_length"))
-    _ENGINE = Engine(
-        model_dir,
-        device=config.resolve("device"),
-        max_length=raw_length if raw_length > 0 else None,
-        model_name=name,
-        spec=models.get(name),
-        max_request_length=raw_request_length,
-    )
+    if hosted_source is not None:
+        name = hosted_source.uri
+        _ENGINE = Engine(
+            hosted_source.model_dir,
+            device=config.resolve("device"),
+            max_length=raw_length if raw_length > 0 else None,
+            model_name=name,
+            max_request_length=raw_request_length,
+        )
+    else:
+        name = config.resolve("model")
+        model_dir = models.resolve_dir(name)
+        if model_dir is None:
+            # Article XIV §14.1 — pit of success: start in unloaded state rather
+            # than crashing. POST /v1/systemone returns 503; GET /health returns
+            # {"status": "loading"}. process.start() already validates weights
+            # before spawning, so ember start / MCP autostart still fail fast
+            # with an actionable error message via that path.
+            log.warning(
+                "model %r not found — server starting in unloaded state "
+                "(advise calls will return 503). Run: ember model pull %s",
+                name,
+                name,
+            )
+            yield
+            return
+        _ENGINE = Engine(
+            model_dir,
+            device=config.resolve("device"),
+            max_length=raw_length if raw_length > 0 else None,
+            model_name=name,
+            max_request_length=raw_request_length,
+        )
     MODEL_INFO.clear()
     MODEL_INFO.labels(
         model=name,

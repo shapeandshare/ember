@@ -11,7 +11,7 @@ import sys
 from .. import models as models_mod
 from ..cfg import config, paths
 from ..cfg import endpoint as endpoint_mod
-from ..serving import process
+from ..serving import hosted, process
 from .endpoint import endpoint_status, resolve_endpoint
 
 
@@ -104,6 +104,11 @@ def _doctor_check_models(
 ) -> bool:
     """Emit model availability doctor lines for the selected and optional models.
 
+    When ``EMBER_MODEL_S3_URI`` is configured (constitution Article V,
+    "Model Loading"), that operator-supplied location is checked first,
+    instead of the normal ``REGISTRY``-based report (there is no ``REGISTRY``
+    entry for this path).
+
     Parameters
     ----------
     check : Callable[[str, bool, str], bool]
@@ -116,6 +121,13 @@ def _doctor_check_models(
     bool
         ``True`` when the selected model check passed.
     """
+    hosted_source = hosted.resolve()
+    if hosted_source is not None:
+        return check(
+            f"model {hosted_source.uri}",
+            hosted_source.model_dir.is_dir(),
+            str(hosted_source.model_dir),
+        )
     selected = config.resolve("model")
     model_dir = models_mod.resolve_dir(selected)
     ok = check(

@@ -72,7 +72,7 @@ after changing brand assets. Do not invent missing provenance or license facts.
 ember/
   cli.py              # `ember` / `gut` composition root: argparse wiring + main()
   commands/           # subcommand handlers: lifecycle, doctor, models, agents, eval, config
-  models.py           # pinned model registry + pull/list/rm
+  models.py           # model registry + pull/list/rm
   serving/            # HTTP model server, MPS runtime, lifecycle, media
     server.py         #   FastAPI: POST /v1/systemone, GET /health (reports pid)
     runtime.py        #   MPS-safe loader (CPU load → .to("mps")) + Engine
@@ -533,8 +533,9 @@ spacing values, or component styles outside the design system.
 - **Never pass `device_map={"": "mps"}`** — it segfaults. `runtime.load_clef` loads on CPU and
   moves the module to MPS; keep it that way.
 - **stdout is the MCP wire.** Log to stderr only in `mcp_server.py`; never `print`.
-- **`opencode.json`, `.opencode/plugins/ember.js`, and `.opencode/skills/ember-advise/` are per-machine** (absolute paths and the
-  installer's `PATH`). They are gitignored; regenerate them, never commit them.
+- **`opencode.json`, `.opencode/plugins/ember.js`, `.opencode/skills/ember-advise/`, and
+  `.kilo/jetbrains.json` are per-machine** (absolute paths and the installer's `PATH`). They
+  are gitignored; regenerate them, never commit them.
 - **`.opencode/opencode.json` is shared and committed.** Put shared opencode settings (such
   as the `vault` MCP server) there; opencode merges it with the per-machine root file.
 - **The `advise` input is wrapped in `input`.** mcp v2 does not flatten a single model parameter.
@@ -646,6 +647,44 @@ MUST pass the constitution check.
 
 ## Recent Changes
 
+- 2026-10-08: removed the `ANACONDA_S3` `REGISTRY`-entry subsystem (simplification): per
+  direct maintainer pushback ("this is like shaving the yacht, do we actually need this
+  level of complexity?"), `anaconda-flash`/`anaconda-clef` `REGISTRY` entries, the
+  `ModelSource` `StrEnum`, `ModelSpec.source`/`s3_bucket`/`s3_prefix` fields, and the shared
+  `anaconda_s3_bucket` config key are all removed — `EMBER_MODEL_S3_URI` (added the same day,
+  see the entry below) already solves the hosted-deployment case completely on its own by
+  bypassing `REGISTRY` entirely, making a parallel named-registry path for the identical
+  weights unnecessary. `REGISTRY` reverted to Hugging-Face-sourced entries only
+  (`flash`/`full`); `DEFAULT` reverted to `"flash"`. `ember/cfg/anaconda_s3.py` kept only its
+  generic `s3_client()`/`download_prefix()` primitives (still used by
+  `ember/serving/hosted.py`); its `ModelSpec`-specific `download()` wrapper is gone.
+  `specs/002-anaconda-models-provider/` is marked superseded (not deleted) for an honest
+  historical record. See
+  `vault/decisions/2026-10-08-simplify-remove-anaconda-s3-registry-entries.md`.
+- 2026-10-08: Article V redefined from "Reproducibility by Pinning" to "Model Loading"
+  (constitution v3.0.0, MAJOR): per direct maintainer direction ("we do not need pinned
+  models as we will support any that can run and will likely not be able to manage/pin
+  them all"), the mandatory `REGISTRY` SHA-256 schema/head hash-verification requirement is
+  removed — `ember/serving/integrity.py` deleted; `ModelSpec.schema_sha256`/`head_sha256`
+  fields removed; `revision` made optional (`str | None`, a download-targeting convenience
+  only, not a verified pin). `runtime.joint_module()`/`load_clef()`/`Engine.__init__()` no
+  longer verify a model directory before importing `joint_schema_model.py` — `_classify_dir`
+  and the `skip_integrity` parameter are removed entirely (nothing left to skip).
+  `ember/serving/hosted.py`'s `EMBER_MODEL_S3_URI` path (added the same day for Outerbounds
+  hosted deployments) no longer requires the `EMBER_MODEL_S3_UNVERIFIED=1` acknowledgment —
+  unverified loading is now the normal behavior for every model source, not an exception.
+  Dependency pinning (`uv.lock`, `uv sync --locked`) is unchanged. README/COMPATIBILITY
+  updated; `tests/test_model_integrity.py` reduced to registry-structure and S3-download-
+  dispatch coverage (the hash/classification test groups removed).
+- 2026-10-08: Outerbounds hosted deployment support: `ember/serving/hosted.py` resolves
+  `EMBER_MODEL_S3_URI` (an `s3://bucket/prefix` URI) once at process startup, independent of
+  `REGISTRY`/`EMBER_MODEL`, reusing `ember/cfg/anaconda_s3.py`'s download primitive (split
+  into a spec-independent `download_prefix()`). Wired into both `ember/serving/process.py`'s
+  `start()` (parent-process fail-fast before spawning) and `ember/serving/server.py`'s
+  `lifespan()` (direct `ember serve`/platform-launched startup). `ember doctor` reports the
+  hosted location when configured. Originally gated behind constitution Article V's
+  "Unverified hosted-deployment exception" (added then superseded the same day — see the
+  entry above).
 - 2026-10-07: `ember init` bootstraps clients against a hosted/remote endpoint:
   new `--server-url`/`--auth-header` flags on `ember init`; `opencode_config.build_entry`/
   `write` and `kilocode_config.write` accept `server_url`/`auth_header` and emit

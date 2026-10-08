@@ -28,6 +28,12 @@ def cmd_config_path(_: argparse.Namespace) -> int:
 def cmd_config_show(_: argparse.Namespace) -> int:
     """Print the effective config with secrets masked (``ember config show``).
 
+    Every key is resolved through ``config.resolve()`` (flag > env > config
+    file > default precedence), not just read from the config file, so an
+    ``EMBER_*`` environment-variable override is always reflected — a
+    config-file-only read would silently hide an active env var override
+    (found during critical review, 2026-10-08).
+
     Parameters
     ----------
     _ : argparse.Namespace
@@ -38,9 +44,17 @@ def cmd_config_show(_: argparse.Namespace) -> int:
     int
         Always ``0``.
     """
-    effective = dict(config.load())
-    effective["server_url"] = config.resolve("server_url")
-    for key in ("auth_token", "server_auth_token"):
-        effective[key] = "***" if config.resolve(key) else None
+    secret_keys = {
+        "auth_token",
+        "server_auth_token",
+        "anaconda_s3_access_key_id",
+        "anaconda_s3_secret_access_key",
+    }
+    effective = {
+        key: (
+            "***" if key in secret_keys and config.resolve(key) else config.resolve(key)
+        )
+        for key in config.DEFAULTS
+    }
     print(json.dumps(effective, indent=2))
     return 0

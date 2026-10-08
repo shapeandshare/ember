@@ -189,16 +189,84 @@ def test_local_to_remote_is_single_reversible_change(sandbox, capsys):
     assert json.loads(capsys.readouterr().out)["kind"] == "local"
 
 
+def test_doctor_labels_a_configured_anaconda_hosted_endpoint_as_remote(
+    sandbox, monkeypatch, capsys
+):
+    """US3 T019: spec FR-005/SC-004; contracts/hosted-endpoint.md rule 7 — this is a
+    regression lock proving the existing (001) endpoint-status reporting already
+    distinguishes remote from local with no new code needed for an Anaconda-hosted
+    endpoint, which is just another non-loopback server_url."""
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
+    assert cli.main(["doctor", "--server-url", "https://anaconda-hosted.example"]) == 0
+    out = capsys.readouterr().out
+    assert "[info] endpoint: remote https://anaconda-hosted.example" in out
+
+
+def test_doctor_labels_the_default_loopback_endpoint_as_local(
+    sandbox, monkeypatch, capsys
+):
+    """US3 T019 (counterpart): no endpoint configured -> local, unambiguous."""
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
+    assert cli.main(["doctor"]) == 0
+    out = capsys.readouterr().out
+    assert "[info] endpoint: local http://127.0.0.1:8765" in out
+
+
+def test_doctor_makes_no_remote_http_call_when_unconfigured(
+    sandbox, monkeypatch, capsys
+):
+    """US3 T021: spec SC-005 — an unconfigured install must never reach
+    endpoint_cmd.remote_health (the only outbound-to-a-remote-host call on this
+    path); only the local loopback process.health probe may run."""
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
+
+    def _fail_if_called(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError(
+            "remote_health must not be called for an unconfigured (local) endpoint"
+        )
+
+    monkeypatch.setattr(endpoint_cmd, "remote_health", _fail_if_called)
+    assert cli.main(["doctor"]) == 0
+
+
 def test_config_show_masks_secrets(sandbox, capsys, monkeypatch):
     monkeypatch.setenv("EMBER_AUTH_TOKEN", "topsecret")
     monkeypatch.setenv("EMBER_SERVER_AUTH_TOKEN", "server-token")
+    monkeypatch.setenv("EMBER_ANACONDA_S3_ACCESS_KEY_ID", "AKIAFAKE")
+    monkeypatch.setenv("EMBER_ANACONDA_S3_SECRET_ACCESS_KEY", "fakesecretkey")
     assert cli.main(["config", "show"]) == 0
     out = capsys.readouterr().out
     assert "topsecret" not in out
     assert "server-token" not in out
+    assert "AKIAFAKE" not in out
+    assert "fakesecretkey" not in out
     body = json.loads(out)
     assert body["auth_token"] == "***"
     assert body["server_auth_token"] == "***"
+    assert body["anaconda_s3_access_key_id"] == "***"
+    assert body["anaconda_s3_secret_access_key"] == "***"
+
+
+def test_config_show_reflects_env_var_overrides_for_every_key(
+    sandbox, capsys, monkeypatch
+):
+    """Critical review finding (2026-10-08): `ember config show` only applied
+    env-var precedence to `server_url` and the four masked secret keys —
+    every other DEFAULTS key (including `anaconda_s3_region`) silently showed
+    its config-file/default value even when overridden by an EMBER_* env
+    var, with no visible indication the override was being ignored.
+    `config.resolve()` already implements the correct flag > env > file >
+    default precedence; `cmd_config_show` MUST use it for every key, not
+    just a hardcoded subset."""
+    monkeypatch.setenv("EMBER_HOST", "192.0.2.1")
+    monkeypatch.setenv("EMBER_ANACONDA_S3_REGION", "us-west-2")
+    assert cli.main(["config", "show"]) == 0
+    body = json.loads(capsys.readouterr().out)
+    assert body["host"] == "192.0.2.1"
+    assert body["anaconda_s3_region"] == "us-west-2"
 
 
 def test_doctor_treats_a_stopped_server_as_information(sandbox, monkeypatch, capsys):
@@ -206,6 +274,42 @@ def test_doctor_treats_a_stopped_server_as_information(sandbox, monkeypatch, cap
     monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
     assert cli.main(["doctor"]) == 0
     assert "[info] server: stopped" in capsys.readouterr().out
+
+
+def test_doctor_defaults_to_flash_when_unconfigured(sandbox, monkeypatch, capsys):
+    """An unconfigured install resolves to the default registry entry."""
+    monkeypatch.delenv("EMBER_MODEL", raising=False)
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
+    assert cli.main(["doctor"]) == 0
+    out = capsys.readouterr().out
+    assert models.DEFAULT == "flash"
+    assert f"[ok] model {models.DEFAULT}:" in out
+
+
+def test_doctor_respects_explicit_flash_override(sandbox, monkeypatch, capsys):
+    """Spec FR-003/FR-011; contracts/model-registry.md rule 11: explicit choice wins."""
+    monkeypatch.setenv("EMBER_MODEL", "flash")
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
+    assert cli.main(["doctor"]) == 0
+    out = capsys.readouterr().out
+    assert "model flash" in out
+
+
+def test_doctor_reports_the_hosted_s3_uri_when_configured(sandbox, monkeypatch, capsys):
+    """When EMBER_MODEL_S3_URI is configured (constitution Article V, "Model
+    Loading"), doctor reports that location instead of a REGISTRY entry."""
+    from ember.serving import hosted
+
+    fake_source = hosted.HostedModelSource(
+        uri="s3://my-bucket/clef-flash", model_dir=sandbox
+    )
+    monkeypatch.setattr(hosted, "resolve", lambda: fake_source)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
+    assert cli.main(["doctor"]) == 0
+    out = capsys.readouterr().out
+    assert "s3://my-bucket/clef-flash" in out
 
 
 def test_uninstall_removes_global_installs_and_keeps_other_config(sandbox):

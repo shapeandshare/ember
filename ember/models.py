@@ -3,6 +3,11 @@
 Weights live in HuggingFace's cache by default so they are shared with other HF
 tools. A source checkout's ``.models/<dir>`` wins if present (dev convenience),
 and ``EMBER_MODEL_DIR`` overrides everything.
+
+A hosted deployment that supplies its own S3 model location does not use this
+registry at all — see ``EMBER_MODEL_S3_URI`` / :mod:`ember.serving.hosted`,
+which resolves and loads a model directly from that URI, independent of
+``REGISTRY``.
 """
 
 from __future__ import annotations
@@ -18,7 +23,14 @@ from .cfg import paths
 
 @dataclass(frozen=True)
 class ModelSpec:
-    """A pinned decision model's registry entry.
+    """A decision model's registry entry.
+
+    Constitution Article V ("Model Loading"): ember supports any model that
+    can run under its loader contract, not a hand-maintained allowlist of
+    individually hash-verified weights. A ``ModelSpec`` is a directory entry
+    (name, Hugging Face repo, size) for discoverability and
+    ``pull``/``list``/``rm`` — not a security gate; no field here is used for
+    integrity verification.
 
     Attributes
     ----------
@@ -32,16 +44,10 @@ class ModelSpec:
         Human-readable parameter count (e.g. ``"9B"``).
     approx_bytes : int
         Approximate on-disk size of the pulled weights, in bytes.
-    revision : str
-        Pinned Hugging Face Hub commit hash.
-    schema_sha256 : str
-        Expected SHA-256 hex digest of ``joint_schema_model.py``.
-        Sourced from the HF raw-file API at the pinned revision.
-        Identical for all current models (same upstream file).
-    head_sha256 : str
-        Expected SHA-256 hex digest of ``joint_head.safetensors``.
-        Sourced from HF LFS metadata at the pinned revision.
-        Differs per model (flash vs full have different heads).
+    revision : str | None
+        Optional Hugging Face Hub commit/branch/tag to download — a
+        convenience for targeting a specific known-good version, not a
+        verified pin. ``None`` fetches the repo's default branch.
     kind : str
         Model category. ``"decision"`` for the Clef models, which score typed
         questions instead of generating text. More categories can be added as
@@ -53,17 +59,10 @@ class ModelSpec:
     dir_name: str
     params: str
     approx_bytes: int
-    revision: str
-    schema_sha256: str
-    head_sha256: str
+    revision: str | None = None
     kind: str = "decision"
 
 
-# SHA-256 provenance:
-#   joint_schema_model.py — HF raw-file API at each pinned revision;
-#     identical for clef-flash@17f0b0a and clef@2f3de3d (same upstream file).
-#   joint_head.safetensors — HF LFS pointer metadata at each pinned revision;
-#     differs per model (separate joint heads for flash/full).
 REGISTRY: dict[str, ModelSpec] = {
     "flash": ModelSpec(
         "flash",
@@ -72,8 +71,6 @@ REGISTRY: dict[str, ModelSpec] = {
         "9B",
         18 * 2**30,
         revision="17f0b0ad64efb65d273590632833508766b2aae6",
-        schema_sha256="0e304cf7c6500e8bb59bef7e2afd2c6373f82596dfb3b57d1aa93c175e2dc3a3",
-        head_sha256="19cdcec8c81dc9212be320fff47462ab342fbc1278be4368fb3da71241cf5ba0",
     ),
     "full": ModelSpec(
         "full",
@@ -82,8 +79,6 @@ REGISTRY: dict[str, ModelSpec] = {
         "27B",
         55 * 2**30,
         revision="2f3de3dd85f379784083b0814d997ab627200f0c",
-        schema_sha256="0e304cf7c6500e8bb59bef7e2afd2c6373f82596dfb3b57d1aa93c175e2dc3a3",
-        head_sha256="a010ac04f078e699988e4049cbea5e62c962393f59fec366640b64e8d69a4953",
     ),
 }
 DEFAULT = "flash"
@@ -125,7 +120,8 @@ def resolve_dir(name: str | None = None, *, override: bool = True) -> Path | Non
     """Return the local directory to run a model from, or None if it is not present.
 
     ``EMBER_MODEL_DIR`` (when ``override`` is true) names the directory for the
-    model being run; otherwise a checkout's ``.models/<dir>`` wins, then the HF cache.
+    model being run; otherwise a checkout's ``.models/<dir>`` wins, then the
+    Hugging Face Hub cache.
     """
     spec = get(name)
     env_dir = os.environ.get("EMBER_MODEL_DIR")
@@ -160,7 +156,7 @@ def _disk_ok(target: Path, required: int) -> tuple[bool, str]:
 
 
 def pull(name: str | None = None, allow_low_disk: bool = False) -> Path:
-    """Download (or verify) a model's pinned revision into the HF cache."""
+    """Download a model into its local cache (or return it if already present)."""
     spec = get(name)
     dev = _dev_dir(spec)
     if dev.is_dir():

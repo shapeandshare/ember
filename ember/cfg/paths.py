@@ -8,6 +8,7 @@ Hugging Face's own cache so they are shared with other HF-based tools.
 
 from __future__ import annotations
 
+import hashlib
 import os
 import platform
 import sys
@@ -146,3 +147,36 @@ def hf_hub_cache() -> Path:
         return Path(os.environ["HF_HOME"]) / "hub"
     base = os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache"))
     return Path(base) / "huggingface" / "hub"
+
+
+def hosted_model_cache(uri: str) -> Path:
+    """Return the local cache directory for an ``EMBER_MODEL_S3_URI`` download.
+
+    A hosting platform (e.g. Outerbounds) supplies the model's S3 location as
+    a URI at start time, with no ``REGISTRY`` entry and therefore no stable
+    ``dir_name`` to key a cache directory by. The URI itself is hashed
+    (SHA-256, truncated) into a short, filesystem-safe, deterministic
+    directory name instead, so the same URI always resolves to the same
+    local path and re-running ``ember start`` against an unchanged URI does
+    not re-download.
+
+    Unlike ``config_dir()``/``state_dir()``/``log_dir()`` (needed by every
+    ember invocation and safe to create eagerly), this directory is relevant
+    only when ``EMBER_MODEL_S3_URI`` is configured. It is therefore a pure
+    path computation, like ``hf_hub_cache()`` — the caller
+    (``ember.serving.hosted.resolve()``) is responsible for creating it.
+
+    Parameters
+    ----------
+    uri : str
+        The full ``s3://bucket/prefix`` URI.
+
+    Returns
+    -------
+    Path
+        ``<XDG cache home>/ember/hosted-models/<sha256-prefix-of-uri>``. Not
+        created as a side effect of calling this function.
+    """
+    digest = hashlib.sha256(uri.encode("utf-8")).hexdigest()[:16]
+    base = os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache"))
+    return Path(base) / APP_NAME / "hosted-models" / digest

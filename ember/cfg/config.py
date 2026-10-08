@@ -13,6 +13,10 @@ from typing import Any
 from . import paths
 
 DEFAULTS: dict[str, Any] = {
+    # MUST match ember.models.DEFAULT (ember/models.py). Not derived automatically:
+    # ember/cfg/config.py MUST NOT import ember/models.py (Article XIII layering —
+    # cfg is the shared/config layer models.py itself depends on). Update both
+    # together when changing the default registry entry.
     "model": "flash",
     "host": "127.0.0.1",
     "port": 8765,
@@ -33,6 +37,19 @@ DEFAULTS: dict[str, Any] = {
     "allow_insecure_transport": False,
     "request_timeout": 300,
     "server_auth_token": None,  # nosec B105 - None default: server auth disabled
+    # AWS S3 connection for EMBER_MODEL_S3_URI (see ember.serving.hosted): a
+    # hosted deployment (e.g. Outerbounds) that supplies the model's S3
+    # location directly at start time, independent of REGISTRY. These keys
+    # are OPTIONAL: when unset (never baked in by default), the S3 client is
+    # constructed with no explicit credentials at all and boto3's own default
+    # credential chain applies — the expected case for a hosted deployment
+    # with an IAM role attached to the compute, matching model-foundry's own
+    # Metaflow-managed S3 access pattern. Set them explicitly only when
+    # running somewhere without an attached role (e.g. a local developer
+    # machine).
+    "anaconda_s3_access_key_id": None,  # nosec B105 - None default: no credential
+    "anaconda_s3_secret_access_key": None,  # nosec B105 - None default: no credential
+    "anaconda_s3_region": None,
 }
 
 

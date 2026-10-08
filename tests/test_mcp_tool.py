@@ -161,6 +161,32 @@ def test_mcp_autostart_launches_server_on_configured_port(tmp_path) -> None:
             terminate_pid(int(pidfile.read_text().strip()))
 
 
+def test_ensure_server_never_autostarts_for_a_non_loopback_endpoint(
+    monkeypatch,
+) -> None:
+    """US3 T020: spec Clarification 5/FR-007; contracts/hosted-endpoint.md rules 2
+    and 6 — an Anaconda-hosted endpoint is just another non-loopback server_url, and
+    the existing `_ensure_server` guard (`if not endpoint.is_local: return`) already
+    makes autostart/fallback impossible for it. This locks that in directly rather
+    than relying on an unreachable real network call to prove the negative."""
+
+    def _fail_if_called(*_args: object, **_kwargs: object) -> bool:
+        raise AssertionError(
+            "process.is_up must not be consulted for a remote endpoint"
+        )
+
+    monkeypatch.setattr(mcp_server.process, "is_up", _fail_if_called)
+    remote = Endpoint(
+        url="https://anaconda-hosted.example",
+        host="anaconda-hosted.example",
+        scheme="https",
+        is_local=False,
+        allow_insecure_transport=False,
+        request_timeout=5,
+    )
+    mcp_server._ensure_server(remote)  # must return immediately, no exception
+
+
 def test_mcp_advertises_instructions_and_guide_resource() -> None:
     """Agents learn the tool from initialize.instructions and the ember://guide
     resource, neither of which needs the model server."""

@@ -9,7 +9,7 @@ from .. import models as models_mod
 
 
 def cmd_model_pull(args: argparse.Namespace) -> int:
-    """Download a model's pinned weights (``ember model pull``).
+    """Download a model's weights (``ember model pull``).
 
     Parameters
     ----------

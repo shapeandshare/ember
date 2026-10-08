@@ -1,4 +1,188 @@
 <!--
+SYNC IMPACT REPORT — CUDA Support Added for Outerbounds Hosted Deployment
+Version change: 3.0.1 → 3.1.0 (MINOR: a new supported platform is added alongside MPS; the
+  existing MPS/CPU behavior and Article VI's existing MUSTs are unchanged)
+Date: 2026-10-08
+Reason: Direct maintainer direction: ember will be deployed hosted on Outerbounds, and GPU
+  support there is "absolutely" wanted, "full in scope" (not CPU-only for now). Outerbounds
+  compute is Linux, not macOS — MPS is unavailable there by definition — so a hosted,
+  GPU-accelerated deployment requires CUDA, which Article VI's original text explicitly
+  scoped out "until this Article is amended." This amendment adds CUDA as a third supported
+  device alongside MPS (still Apple-Silicon-only) and CPU (the universal fallback), with its
+  own float16/bfloat16 dtype rule mirroring MPS's — CUDA has no equivalent of the
+  `device_map={"": "mps"}` segfault MPS requires a workaround for, so CUDA loads normally
+  via `device_map={"": "cuda"}` once weights are confirmed compatible.
+Modified principles:
+  - Article VI — retitled "Apple Silicon and CUDA"; CUDA added as a supported platform
+    (float16 by default, matching MPS) alongside the existing MPS-first/CPU-fallback
+    behavior, which is unchanged. The MPS-specific `device_map={"": "mps"}` segfault
+    workaround remains MPS-only; it does not apply to CUDA's own `device_map={"": "cuda"}`
+    loading path.
+Added sections: none
+Removed sections: none
+Templates / docs propagated:
+  - ✅ ember/serving/runtime.py (pick_device/pick_dtype gain a cuda branch)
+  - ✅ pyproject.toml (torch install docs for the CUDA wheel variant)
+  - ✅ README.md / COMPATIBILITY.md (CUDA device docs, Outerbounds deployment)
+  - ✅ deployment/ (new: deploy.yaml, requirements.txt generation)
+  - ✅ vault/decisions/ (new decision note)
+Follow-up TODOs: CUDA has not yet been verified against real NVIDIA hardware (no model-backed
+  test run on CUDA exists at amendment time) — COMPATIBILITY.md records this as "not yet
+  verified," matching the existing precedent for `full` on MPS.
+-->
+<!--
+SYNC IMPACT REPORT — Simplification: ANACONDA_S3 Registry Subsystem Removed
+Version change: 3.0.0 → 3.0.1 (PATCH: stale fact corrected in Article V's body text; the
+  principle itself — ember supports any runnable model, REGISTRY is not a security gate —
+  is unchanged)
+Date: 2026-10-08
+Reason: Direct maintainer pushback: "this is like shaving the yacht, do we actually need
+  this level of complexity?" The `ANACONDA_S3` `REGISTRY`-entry subsystem (named
+  `anaconda-flash`/`anaconda-clef` entries, a `ModelSource` enum, `s3_bucket`/`s3_prefix`
+  fields, a shared `anaconda_s3_bucket` config key, and per-entry S3 dispatch in
+  `pull()`/`resolve_dir()`/`remove()`) is removed entirely: `EMBER_MODEL_S3_URI` (added the
+  same day) already solves the hosted-deployment case completely on its own, by bypassing
+  `REGISTRY` entirely — a parallel named-registry path for the identical weights was
+  unnecessary complexity on top of it. `REGISTRY` now holds only Hugging-Face-sourced entries
+  (`flash`/`full`); `DEFAULT` reverted to `"flash"`. Article V's body text named `HUGGING_FACE`
+  and `ANACONDA_S3` as the two model sources — `ANACONDA_S3` as a `REGISTRY`-entry source no
+  longer exists, so that sentence is corrected to describe the actual two paths: `REGISTRY`
+  entries (always Hugging-Face-sourced) and an operator-supplied `EMBER_MODEL_S3_URI`
+  (independent of `REGISTRY`). No principle changed — this is a factual correction, not a
+  redefinition, hence PATCH.
+Modified principles:
+  - Article V — corrected a stale implementation detail (removed the `ANACONDA_S3` source
+    name, now described generically); the "any runnable model, no hash verification,
+    REGISTRY is not a security gate" principle itself is unchanged.
+Added sections: none
+Removed sections: none
+Templates / docs propagated:
+  - ✅ README.md / COMPATIBILITY.md (anaconda-flash/anaconda-clef removed; DEFAULT reverted)
+  - ✅ specs/002-anaconda-models-provider/ marked superseded (spec.md, plan.md headers)
+  - ✅ vault/decisions/ (new decision note)
+Follow-up TODOs: none.
+-->
+<!--
+SYNC IMPACT REPORT — Article V Redefined: Drop Mandatory Pinning, Support Any Runnable Model
+Version change: 2.1.0 → 3.0.0 (MAJOR: Article V's core principle is redefined, not merely
+  extended — the mandatory REGISTRY SHA-256 hash-verification requirement is removed)
+Date: 2026-10-08
+Reason: Direct maintainer direction: "we do not need pinned models as we will support any
+  that can run and will likely not be able to manage/pin them all." ember is expected to run
+  an open-ended set of models (hosted-S3-supplied, future REGISTRY entries, etc.) that cannot
+  realistically each be hand-pinned with maintained SHA-256 hashes in `ember/models.py`. The
+  2.1.0 amendment (same day) had already carved out a narrow, explicit, opt-in exception for
+  exactly this reason on the `EMBER_MODEL_S3_URI` hosted path — this amendment generalizes
+  that reasoning: unverified loading becomes the normal behavior for every model path, not an
+  exceptional one requiring a second acknowledgment env var. `ModelSpec.revision` is kept
+  (now optional) because it serves a distinct, non-security purpose — targeting a specific
+  Hugging Face commit/branch/tag for `snapshot_download`, not verifying file integrity — and
+  remains useful for the still-tested `flash`/`full`/`anaconda-flash`/`anaconda-clef` entries.
+Modified principles:
+  - Article V — retitled "Model Loading" (from "Reproducibility by Pinning"); the mandatory
+    "MUST be pinned... in REGISTRY" + SHA-256 schema/head hash verification requirement is
+    removed. `ModelSpec.revision` MAY optionally target a specific upstream commit/branch/tag
+    for download purposes (not verified); dependency-range pinning (`uv.lock`, `uv sync
+    --locked`) is UNCHANGED and still required — this amendment is scoped to model weights
+    only, not the dependency-pinning half of the old Article V. The 2.1.0
+    "Unverified hosted-deployment exception" paragraph (EMBER_MODEL_S3_UNVERIFIED=1 gate) is
+    removed as redundant: there is no longer a verified default for it to be an exception to.
+Added sections: none
+Removed sections: none
+Templates / docs propagated:
+  - ✅ ember/serving/integrity.py removed; ember/models.py, ember/serving/runtime.py,
+    ember/serving/hosted.py, ember/serving/server.py, ember/serving/process.py,
+    ember/commands/doctor.py simplified to match
+  - ✅ README.md / COMPATIBILITY.md / AGENTS.md pinning language updated
+  - ✅ vault/decisions/ (new decision note; the 2.1.0 exception note marked superseded, not
+    deleted, per the vault's never-prune protocol)
+Follow-up TODOs: none.
+-->
+<!--
+SYNC IMPACT REPORT — Outerbounds Hosted Deployment: Explicit Unverified-URI Escape Hatch
+Version change: 2.0.3 → 2.1.0 (MINOR: new, narrow exception added to Article V; the core
+  pinning requirement is unchanged and still the default for every other path)
+Date: 2026-10-08
+Reason: Running ember as an Outerbounds-deployed app means the platform supplies the model's
+  S3 location at deploy/start time (a single `s3://bucket/prefix` URI — matching
+  `model-foundry`'s own S3-URI deployment convention, see
+  `../model-foundry/src/api/storage/_base.py` and `deployment/deploy.dev.yaml`), not a
+  REGISTRY key. A URI-only load has no way to supply a pinned revision/hash in advance, so
+  loading it as-is would violate Article V's "MUST be pinned... in REGISTRY" as written. Per
+  explicit human direction (not an agent-initiated weakening — Governance requires this),
+  Article V gains a narrow, explicit, opt-in exception rather than a silent bypass: a second,
+  distinct environment variable MUST be set to acknowledge the integrity trade-off, the
+  resulting state MUST be visibly reported wherever the model is surfaced (never
+  indistinguishable from a normal pinned load), and resolution happens once at process
+  startup (fail-fast before serving), not lazily per-request.
+Modified principles:
+  - Article V — added the "Unverified hosted-deployment exception" paragraph: a
+    `EMBER_MODEL_S3_URI` pointing at an S3 location MAY be loaded without a REGISTRY entry or
+    hash verification, but ONLY when `EMBER_MODEL_S3_UNVERIFIED=1` is also set; absent that
+    second variable, ember MUST fail fast at startup rather than silently falling back to a
+    pinned entry or silently skipping verification. The loaded/reported model state MUST
+    include an explicit "unverified" marker (`ember doctor`, `/health`) for as long as this
+    path is active. This does not change the pinning requirement for any other path (REGISTRY
+    entries, `EMBER_MODEL`, the existing `ANACONDA_S3`/`HUGGING_FACE` sources).
+Added sections: none
+Removed sections: none
+Templates / docs propagated:
+  - ✅ README.md / COMPATIBILITY.md (new env vars documented)
+  - ✅ vault/decisions/ (new decision note recording this amendment's rationale)
+Follow-up TODOs: none.
+-->
+<!--
+SYNC IMPACT REPORT — Anaconda Models Feature: Migration Debt Paid Down
+Version change: 2.0.2 → 2.0.3 (PATCH: migration-debt entry removed after being resolved in
+  the same feature; no principle added, removed, or weakened)
+Date: 2026-10-08
+Reason: /speckit.implement on specs/002-anaconda-models-provider/ (tasks.md T032) split the
+  S3-compatible download logic (`_s3_client`/`_download_anaconda_s3`, now
+  `s3_client`/`download`) out of `ember/models.py` into a new module,
+  `ember/cfg/anaconda_s3.py` — mirroring the existing precedent that `ember/cfg/paths.py`
+  already owns `anaconda_s3_cache()`. `ember/models.py` is now 360 lines, under the Article X
+  §10.3 400-line ceiling; the new module is 150 lines with 100% test coverage. The §10.18
+  entry added for this debt earlier in the same feature (2.0.1 → 2.0.2) is removed per that
+  Article's own "paid down as its file is next touched" rule — the debt no longer exists.
+Modified principles:
+  - Article X §10.18 — removed the `ember/models.py` (470 lines) entry added in the prior
+    amendment; the file no longer exceeds the sizing ceiling.
+Added sections: none
+Removed sections: none
+Templates / docs propagated:
+  - ✅ specs/002-anaconda-models-provider/plan.md (Constitution Check re-evaluation updated to
+    "PASS (resolved 2026-10-08)"; Complexity Tracking table's sizing-violation row removed)
+  - ✅ specs/002-anaconda-models-provider/tasks.md (T032 marked done)
+Follow-up TODOs: none.
+-->
+<!--
+SYNC IMPACT REPORT — Anaconda Models Feature: Migration Debt Recorded
+Version change: 2.0.1 → 2.0.2 (PATCH: new migration-debt entry recorded; no principle added,
+  removed, or weakened)
+Date: 2026-10-08
+Reason: /speckit.analyze on specs/002-anaconda-models-provider/ found that implementation
+  (the ModelSource StrEnum + direct S3-compatible/boto3 download path added for Anaconda
+  catalog entries) grew ember/models.py to 470 lines, over Article X §10.3's 400-line
+  ceiling, without a corresponding §10.18 migration-debt record. Per §10.18's own rule
+  ("known existing violations... never increased... recorded here"), a file that newly
+  crosses the ceiling in a change must be recorded in the same change, not left silently
+  growing. No principle text changed; this amendment only adds ember/models.py to the
+  existing debt list, mirroring the existing runtime.py/evals/* entries.
+Modified principles:
+  - Article X §10.18 — added `ember/models.py` (470 lines) to the migration-debt list, with
+    the originating feature and a suggested resolution (split the S3-compatible download
+    logic into its own module) for a future contributor to pick up.
+Added sections: none
+Removed sections: none
+Templates / docs propagated:
+  - ✅ specs/002-anaconda-models-provider/plan.md (Constitution Check re-evaluation already
+    documents this finding as "CONDITIONAL PASS, action required")
+  - ✅ specs/002-anaconda-models-provider/tasks.md (new follow-up task T032)
+Follow-up TODOs: a future contributor splitting ember/models.py's S3-compatible download
+  logic into its own module (e.g. ember/models_s3.py) should remove this entry from §10.18
+  at that time, per the Article's own "paid down as its file is next touched" rule.
+-->
+<!--
 SYNC IMPACT REPORT — Consistency Audit
 Version change: 2.0.0 → 2.0.1 (PATCH: clarifications and stale facts; no principle added,
   removed, or weakened)
@@ -350,19 +534,38 @@ of `make check`, `make test`, or CI.
 
 Rationale: users run several opencode instances and their own servers on the same host.
 
-### Article V — Reproducibility by Pinning
+### Article V — Model Loading
 
-Model weights MUST be pinned to Hugging Face commit SHAs in `REGISTRY`. Dependency ranges MUST
-be anchored to tested versions, `uv.lock` MUST be committed, and CI MUST install with
-`uv sync --locked`. Bumping a model revision or widening a dependency range MUST be accompanied
-by green model-backed tests and re-measured agent-kit numbers (§3.3).
+ember supports any model that can run under its loader contract (a
+`Qwen3_5ForConditionalGeneration`-shaped backbone + `joint_schema_model.py` + a joint head),
+not a hand-maintained allowlist of individually pinned, hash-verified weights. `REGISTRY`
+entries (`ember/models.py`) are a directory of known-good Hugging Face Hub sources (name,
+repo, size) for discoverability and `ember model pull`/`list`/`rm`, not a security gate —
+`joint_schema_model.py` is imported and executed from whatever directory is resolved, with no
+SHA-256 integrity check, for a `REGISTRY` entry or for an operator-supplied
+`EMBER_MODEL_S3_URI` (a hosted deployment's own model location, independent of `REGISTRY` —
+see `ember/serving/hosted.py`). A `ModelSpec` MAY set `revision` to target a specific Hugging
+Face commit/branch/tag for `snapshot_download` — this is a download convenience, not a
+verified pin, and MAY be left unset (fetches the repo's default branch).
 
-### Article VI — Apple Silicon First
+Dependency ranges MUST still be anchored to tested versions, `uv.lock` MUST be committed, and
+CI MUST install with `uv sync --locked` — this Article's dependency-pinning requirement is
+unchanged; only the model-weight hash-verification requirement is removed. Bumping a model's
+`revision` or widening a dependency range MUST be accompanied by green model-backed tests and
+re-measured agent-kit numbers (§3.3) whenever the change could affect behavior.
 
-The supported platform is macOS on Apple Silicon with the MPS backend in float16, falling back to
-CPU in float32. Weights MUST be loaded on CPU and then moved to MPS; `device_map={"": "mps"}`
-MUST NOT be used (it segfaults with the pinned stack). CUDA and other platforms are out of scope
-until this Article is amended.
+### Article VI — Apple Silicon and CUDA
+
+Three devices are supported: MPS (macOS on Apple Silicon, float16 — the local-first default),
+CUDA (NVIDIA GPUs, float16 — the hosted-deployment path, e.g. Outerbounds compute, which is
+Linux and has no MPS), and CPU (float32, the universal fallback available wherever torch
+runs). `EMBER_DEVICE=auto` selects MPS or CUDA when available, else CPU.
+
+Weights MUST be loaded on CPU and then moved to the target accelerator; `device_map={"":
+"mps"}` MUST NOT be used for MPS (it segfaults with the pinned stack) — this constraint is
+MPS-specific and does not apply to CUDA, which loads normally via `device_map={"": "cuda"}`.
+Other accelerator platforms (e.g. AMD ROCm, Intel XPU) remain out of scope until this Article
+is amended again.
 
 ### Article VII — Verification Over Assertion
 
@@ -513,7 +716,9 @@ darkfactory, infrastructure, k8s.platform) harvested on 2026-10-03.
   installs it with `os.replace()`.
 - §10.18 **Migration debt.** Known existing violations, tracked here and never increased:
   modules over the 400-line ceiling that predate recording here: `ember/serving/runtime.py`
-  (507), `evals/agent/scenarios.py` (905, scenario data), `evals/analysis.py` (793),
+  (445, reduced from 507 on 2026-10-08 when Article V's redefinition removed
+  `_classify_dir`/`skip_integrity` — still over the ceiling, but smaller; not yet paid down
+  fully), `evals/agent/scenarios.py` (905, scenario data), `evals/analysis.py` (793),
   `evals/sections/sections_results.py` (506), `evals/charts/charts_calibration.py` (504),
   `evals/report_text.py` (447), `evals/metrics.py` (414), `evals/charts/charts.py` (412),
   `evals/eval/report_evals.py` (408); `ember/commands/lifecycle.py` defers
@@ -541,7 +746,11 @@ darkfactory, infrastructure, k8s.platform) harvested on 2026-10-03.
   `ember/mcp/mcp_server.py` two-class violation (classes moved to `ember/mcp/mcp_types.py`
   on 2026-10-04); `evals/agent/opencode.py` two-class violation (`ToolCall` →
   `tool_call.py`, `Transcript` → `transcript.py`, 2026-10-04); `evals/agent/sandbox.py`
-  two-class violation (`Snapshot` → `snapshot.py`, 2026-10-04).
+  two-class violation (`Snapshot` → `snapshot.py`, 2026-10-04); `ember/models.py` briefly at
+  470 lines after the `specs/002-anaconda-models-provider/` feature added the `ModelSource`
+  enum and a direct S3-compatible download path (recorded 2026-10-08), resolved the same day
+  by splitting the download logic into `ember/cfg/anaconda_s3.py` — `ember/models.py` is now
+  360 lines.
 
 Rationale: ember's sibling repositories converge on these conventions, and adopting them keeps
 agent-written changes consistent across the family. Where ember's runtime differs — synchronous
@@ -618,7 +827,7 @@ MCP layer        (ember/mcp/)                     ← agent-facing; no model pri
 HTTP layer       (ember/serving/server.py,        ← REST API + lifecycle; no MCP concepts
                   ember/serving/process.py)
 Engine layer     (ember/serving/runtime.py,       ← model I/O; no HTTP/MCP concepts
-                  media.py, integrity.py)
+                  media.py, hosted.py)
 Shared           (ember/cfg/, ember/models.py)    ← configuration and model registry
 ```
 
@@ -661,7 +870,7 @@ enhanced capabilities MUST silently degrade, never crash or block.
   for a model that is not pulled and prints an actionable message naming
   `ember model pull`; a server process that comes up without a loadable model stays up and
   answers `503` on `POST /v1/systemone`. Neither path ends in a traceback.
-- §14.2 **Device fallback.** `EMBER_DEVICE=auto` is the default; it selects MPS when
+- §14.2 **Device fallback.** `EMBER_DEVICE=auto` is the default; it selects MPS or CUDA when
   available and CPU otherwise. CPU is the always-available fallback on every platform the
   server runs on; supported platforms remain those of Article VI.
 - §14.3 **Graceful 503.** When the model has not finished loading, `POST /v1/systemone`
@@ -752,6 +961,6 @@ required by the current work.
   top of this file and bumps the version: MAJOR for removing or redefining a principle, MINOR
   for adding a principle or section, PATCH for clarifications.
 - Reviews MUST check changes against the Articles, with special attention to Article III
-  (agent contract) and Article V (pins).
+  (agent contract) and Article V (model loading).
 
-**Version**: 2.0.1 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-06
+**Version**: 3.1.0 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-08
