@@ -16,28 +16,54 @@ Loading") for why no integrity hash is checked against that location.
 
 ## Prerequisites
 
-1. **A GPU-backed compute pool** (Outerbounds UI → Compute) for the CUDA path
-   in `deploy.yaml` (constitution Article VI, "Apple Silicon and CUDA" — CUDA
-   is the hosted-deployment device; MPS is Apple-Silicon-only and unavailable
-   on Outerbounds' Linux compute). A CPU-only pool works too — see "CPU-only
-   deployment" below.
+1. **A GPU-backed compute pool sized for the model**, not just "has a GPU"
+   (Outerbounds UI → Compute) for the CUDA path in `deploy.yaml` (constitution
+   Article VI, "Apple Silicon and CUDA" — CUDA is the hosted-deployment
+   device; MPS is Apple-Silicon-only and unavailable on Outerbounds' Linux
+   compute). A CPU-only pool works too — see "CPU-only deployment" below.
+   Two distinct resources must both fit, and Outerbounds only validates one
+   of them at deploy time:
+   - **System RAM** (`resources.memory` in `deploy.yaml`) is checked by the
+     scheduler at deploy time — an undersized pool fails immediately with
+     `AppCreationFailedException: ... memory requirement <X>Gi exceeds
+     available <Y>Ki`. This happened against two different pools during this
+     deployment's own setup (`ai-services-pool`, `dep-inf`), both capped
+     around 14-15 GiB *schedulable* memory regardless of their advertised
+     instance size — always confirm actual available memory, don't assume it
+     matches the nominal instance type.
+   - **GPU VRAM** (not a Kubernetes-schedulable resource; AWS instance choice
+     is the only lever) is **not validated at deploy time at all** — an
+     undersized GPU is silently accepted by the scheduler and only fails
+     later, at model-load time inside the running pod, as a CUDA
+     out-of-memory error in that pod's own logs. See "Choosing the model and
+     sizing GPU memory" below before picking an instance type.
 2. **An S3 bucket containing the model's files** (`config.json`,
    `joint_schema_model.py`, `joint_head.safetensors`,
    `joint_head_config.json`, `model.safetensors.index.json`, and the
    sharded `model-*.safetensors` weight files — the same shape
    `ember/models.py` downloads for `flash`/`full` from Hugging Face).
-3. **A secret integration** (named to match your org's `{repo}-{environment}`
-   convention) holding:
-   - `EMBER_SERVER_AUTH_TOKEN` — the API key/bearer value remote clients must
-     present. Required for any deployment reachable outside a fully trusted
-     network — `/health` and `/metrics` stay open regardless.
-   - `EMBER_ANACONDA_S3_ACCESS_KEY_ID` / `EMBER_ANACONDA_S3_SECRET_ACCESS_KEY`
-     — **optional**. Omit entirely when the compute pool already has an IAM
-     role with read access to the bucket; boto3's default credential chain
-     picks it up automatically (see
-     `vault/decisions/2026-10-08-optional-s3-credentials-iam-role.md`). Set
-     both only if no role is attached.
-4. **Outerbounds CLI configured** and authenticated against your workspace.
+3. **No secret integration needed for the common case.** `deploy.yaml` ships
+   with `secrets: []`:
+   - Access control is `auth.type: API` (below) — Outerbounds gates the
+     endpoint with each caller's own existing platform token, so ember's own
+     optional `EMBER_SERVER_AUTH_TOKEN` bearer-auth layer is intentionally
+     left unset for this deployment.
+   - S3 access relies on an IAM role attached to the compute pool; boto3's
+     default credential chain picks it up automatically (see
+     `vault/decisions/2026-10-08-optional-s3-credentials-iam-role.md`). Only
+     add a secret integration with `EMBER_ANACONDA_S3_ACCESS_KEY_ID`/
+     `EMBER_ANACONDA_S3_SECRET_ACCESS_KEY` if no role is attached.
+4. **Outerbounds CLI configured** and authenticated against your workspace and
+   perimeter. `outerbounds` is already in this repo's `dev` dependency group
+   (`make setup`/`make sync` installs it into `.venv`), so `uv run outerbounds
+   ...` works right away — no separate `pip install` needed:
+
+   ```sh
+   # Token comes from the merced workspace's Setup page (Getting Started → Workspace).
+   uv run outerbounds configure <token from the merced workspace's Setup page>
+   uv run outerbounds perimeter list                 # confirm "default" is available
+   uv run outerbounds perimeter switch --id default  # target the default perimeter
+   ```
 
 ## Deploy
 
@@ -46,10 +72,10 @@ Loading") for why no integrity hash is checked against that location.
 # Fast Bakery resolves the exact dependency set CI/tests ran against.
 make deployment-requirements
 
-# Fill in deployment/deploy.yaml's <CONFIRM>/<your-...> placeholders first
-# (compute pool name, bucket/prefix, team/owner tags, secret integration name),
-# then:
-outerbounds app deploy \
+# Fill in deployment/deploy.yaml's remaining <CONFIRM-...> placeholders first
+# (compute pool name, team/owner tags — the model's S3 location is already
+# filled in below), then:
+uv run outerbounds app deploy \
   --config-file deployment/deploy.yaml \
   --package-src-path . \
   --readiness-condition async
@@ -64,11 +90,16 @@ possible.
 ## Connecting a client
 
 Point a remote agent at the deployed URL (the one `outerbounds app deploy`
-prints, or your `generate_static_url: true` stable URL):
+prints, or your `generate_static_url: true` stable URL). Because `auth.type:
+API` is set, Outerbounds requires each caller's own platform token as
+`x-api-key` (not an ember-minted `EMBER_SERVER_AUTH_TOKEN` — see
+[Writing your first Deployment](https://docs.outerbounds.com/outerbounds/first-inference-deployment/)
+for how to obtain it, e.g. `METAFLOW_SERVICE_AUTH_KEY` from your local
+Metaflow config, or a minted machine-user token for a non-interactive caller):
 
 ```sh
 ember init --opencode --server-url https://<your-app>.outerbounds.app --auth-header x-api-key
-export EMBER_AUTH_TOKEN=<the same value as EMBER_SERVER_AUTH_TOKEN above>
+export EMBER_AUTH_TOKEN=<your own Outerbounds/Metaflow API token>
 ```
 
 `EMBER_AUTH_TOKEN` is **never** written to `opencode.json`/`kilo.json`/the
@@ -87,6 +118,29 @@ numbers in [`COMPATIBILITY.md`](../COMPATIBILITY.md#hardware-requirements)
 32 GB+ total is the practical floor on MPS and a reasonable floor on CUDA too;
 `full` 27B needs roughly 55 GiB, 64 GB+ total). An undersized GPU fails with a
 CUDA out-of-memory error at load time, not a graceful degradation.
+
+**System RAM and GPU VRAM are sized independently, and only one is a single
+AWS "instance size" knob.** `load_clef()` (`ember/serving/runtime.py`) loads
+the model on CPU first, then moves it to the GPU — so system RAM must
+transiently hold the full float16 weights too, which is why
+`deploy.yaml`'s `resources.memory` matches the GPU VRAM floor rather than
+being a much smaller "just for the OS" number. Concretely, for `flash` on
+AWS's G5 family (1x NVIDIA A10G, 24 GB VRAM / ~22.3 GiB usable — **every**
+g5.*xlarge single-GPU size has the identical GPU and VRAM; only system RAM,
+vCPU, and disk scale with size):
+
+| Instance | GPU VRAM | System RAM | Fits `flash`? |
+| --- | --- | --- | --- |
+| `g5.2xlarge` | 24 GB (~22.3 GiB usable) | 32 GiB | VRAM: tight (~4 GiB headroom). RAM: matches the request almost exactly — little schedulable margin, risks the same "memory exceeds available" failure as an undersized pool. |
+| `g5.4xlarge` | 24 GB (~22.3 GiB usable) | 64 GiB | VRAM: same tight ~4 GiB headroom as `g5.2xlarge` — bigger instance size does **not** add VRAM within the same GPU model. RAM: real margin below the 32Gi request. |
+| `g6e.xlarge`+ (NVIDIA L40S) | 48 GB | varies | VRAM: comfortable headroom — AWS's own recommended upgrade path from G5 for memory-bound LLM serving. Not yet used or verified for this deployment. |
+
+A10G's ~22.3 GiB usable VRAM leaving only ~4 GiB for `flash`'s activations and
+KV-cache is a **genuinely tight fit, not yet verified against real NVIDIA
+hardware** (see COMPATIBILITY.md) — if the pod's own logs show a CUDA
+out-of-memory error after the Kubernetes scheduler already accepted the
+deployment, the fix is a bigger-VRAM GPU model (e.g. L40S/G6e), not a bigger
+instance size of the same GPU.
 
 Three independent settings control what actually loads and how much memory it
 needs:
@@ -115,4 +169,11 @@ No GPU compute pool yet? Edit `deploy.yaml`:
 
 `deployment/requirements.txt` is generated, not hand-maintained — never edit
 it directly. Run `make deployment-requirements` after any `pyproject.toml`/
-`uv.lock` change and commit the regenerated file alongside it.
+`uv.lock` change and commit the regenerated file alongside it. The target runs
+`uv export` (pinned to `uv.lock`, `--no-emit-project` so ember's own local-path
+self-reference isn't included) and then `scripts/freeze_deployment_requirements.py`,
+which resolves every PEP 508 environment marker (e.g. `; sys_platform ==
+'linux'`) against the Outerbounds deployment's actual target (Linux x86_64,
+CPython 3.12) and drops non-matching lines (Windows/emscripten-only packages)
+— Outerbounds' Fast Bakery requirements parser rejects markers outright,
+unlike `pip`.

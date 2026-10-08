@@ -130,6 +130,7 @@ vault/                # project memory (Obsidian): decisions, discoveries, sessi
 | Command | Purpose |
 | --- | --- |
 | `make bootstrap` | Deps + pinned weights + `opencode.json` + readiness check |
+| `make setup` | Deps only (no model weights; use `make download` or `make bootstrap` for weights) |
 | `make check` | Fast pre-commit gate: compile + unit tests, no model load |
 | `make lint` | Run ruff lint checks |
 | `make format` | Run ruff formatter |

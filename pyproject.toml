@@ -58,6 +58,12 @@ dev = [
     "bandit[toml]>=1.8",
     "commitizen>=4.0",
     "boto3-stubs[s3]>=1.43.109",
+    # outerbounds is the CLI used to run `outerbounds app deploy` for the
+    # Outerbounds hosted-deployment contract (deployment/deploy.yaml,
+    # deployment/README.md). It is a contributor-machine deploy tool only —
+    # never imported by ember itself, never used in CI, never present on the
+    # deployed pod (see deployment/requirements.txt, generated separately).
+    "outerbounds>=0.12,<1",
 ]
 
 [tool.pytest.ini_options]
