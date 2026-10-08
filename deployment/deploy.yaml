@@ -20,40 +20,29 @@ name: ember
 port: 8765
 
 tags:
-  - team: <your-team>
-  - owner: <your-email>
+  - team: AISAGE
+  - owner: jburt@anaconda.com
 
 # EMBER_MODEL_S3_URI names the exact model location directly — there is no
 # REGISTRY lookup for this path (constitution Article V, "Model Loading"; see
 # ember/serving/hosted.py). EMBER_AUTOSTART=0 because this pod itself is the
 # server; nothing should try to spawn another one. EMBER_SERVER_AUTH_TOKEN is
-# supplied as a secret (below), never written here — remote clients present it
-# via EMBER_AUTH_HEADER (e.g. "x-api-key") + EMBER_AUTH_TOKEN, the same two
-# client-side config keys that already exist for any remote endpoint (see
-# README.md "Remote inference").
+# deliberately NOT set — access control is handled by Outerbounds' own
+# `auth.type: API` below (every platform user already has a personal
+# Outerbounds/Metaflow token), so ember's own optional bearer-auth layer would
+# be redundant for this deployment.
 environment:
   EMBER_HOST: "0.0.0.0"
   EMBER_PORT: "8765"
   EMBER_DEVICE: "cuda"
-  EMBER_MODEL_S3_URI: "s3://<your-bucket>/<prefix>"
+  EMBER_MODEL_S3_URI: "s3://obp-0ttxc8-metaflow/metaflow/model-pipelines-dev/Cloudflare__clef-flash/artifacts/model_file"
   EMBER_AUTOSTART: "0"
 
-# Secret contract (Outerbounds integration name is deployment-specific — adjust
-# to match your org's convention, e.g. "ember-<environment>"):
-#   EMBER_SERVER_AUTH_TOKEN       → the bearer/API-key value a remote client must
-#                                   present; /health and /metrics stay open
-#                                   regardless (see ember/serving/server.py).
-#   EMBER_ANACONDA_S3_ACCESS_KEY_ID / EMBER_ANACONDA_S3_SECRET_ACCESS_KEY
-#                                 → OPTIONAL. Omit entirely when the compute
-#                                   pool already has an IAM role with S3 read
-#                                   access to the EMBER_MODEL_S3_URI bucket —
-#                                   boto3's default credential chain picks it
-#                                   up automatically (matching model-foundry's
-#                                   own Metaflow-managed S3 access pattern; see
-#                                   vault/decisions/2026-10-08-optional-s3-credentials-iam-role.md).
-#                                   Set both only if no role is attached.
-secrets:
-  - ember-<environment>
+# No secrets needed: EMBER_MODEL_S3_URI downloads via the compute pool's
+# attached IAM role (boto3's default credential chain — see
+# vault/decisions/2026-10-08-optional-s3-credentials-iam-role.md), and
+# `auth.type: API` below (not an ember-side token) gates request access.
+secrets: []
 
 # `ember serve` runs the model server in the foreground — the correct mode
 # for a container (no pidfile/background lifecycle; `ember start` is for a
@@ -69,25 +58,63 @@ dependencies:
 # Sized for `flash` (9B) on CUDA in float16 (~18 GiB weights + activations/KV
 # cache headroom). Double disk/memory roughly for `full` (27B), or if running
 # EMBER_DEVICE=cpu instead (float32 is ~2x the float16 footprint).
+#
+# Targets a g5.4xlarge node (1x NVIDIA A10G, 24 GB VRAM / ~22.3 GiB usable;
+# 64 GiB system RAM; 16 vCPU) — chosen after two earlier pools
+# (ai-services-pool, dep-inf) both rejected this capsule with "memory
+# requirement 32Gi exceeds available ~14-15Gi", meaning their underlying
+# nodes' *schedulable* memory (after Kubernetes/system overhead) was far
+# below the 32Gi system-RAM request. g5.4xlarge's 64Gi total gives real
+# headroom below that ceiling, unlike g5.2xlarge's 32Gi (which would match
+# this request almost exactly, leaving little schedulable margin again).
+#
+# IMPORTANT — the VRAM ceiling does NOT improve with a bigger instance size
+# within the same GPU model: every g5.*xlarge single-GPU size (g5.2xlarge
+# through g5.16xlarge) has the identical 1x A10G, 24 GB VRAM (~22.3 GiB
+# usable). flash's ~18 GiB of float16 weights alone leaves only ~4 GiB of
+# VRAM headroom for activations/KV-cache on ANY of these sizes — this is a
+# genuinely tight fit, not yet verified against real NVIDIA hardware (see
+# COMPATIBILITY.md). If inference OOMs on the GPU (not at the Kubernetes
+# scheduling level — a different failure, surfaced in this pod's own logs as
+# a CUDA out-of-memory error), the fix is a bigger-VRAM GPU model entirely
+# (e.g. L40S/G6e at 48 GB), not a bigger instance size of the same A10G.
+#
+# cpu is intentionally moderate, not maxed to g5.4xlarge's full 16 vCPU —
+# inference itself runs on the GPU; the CPU only handles request routing,
+# tokenization, and the one-time S3 model download at startup, none of which
+# is CPU-intensive. Lowering cpu does NOT address a memory-constrained
+# compute pool (Kubernetes schedules cpu/memory independently) — if
+# `outerbounds app deploy` reports a pool's memory is insufficient, the pool
+# itself needs more RAM, not a smaller cpu request.
 resources:
   cpu: "4"
   memory: "32Gi"
   disk: "30Gi"
   gpu: "1"
 
-# <CONFIRM> Create a GPU-backed compute pool before deploying (Outerbounds UI →
-# Compute). CPU-only deployments should remove `resources.gpu` above, set
-# EMBER_DEVICE=cpu, and point this at a CPU pool instead.
-compute_pools:
-  - <your-gpu-pool>
+# compute_pools is OPTIONAL (see docs.outerbounds.com/outerbounds/inference-deep-dive
+# "Targeting compute pools") — left commented out here so Outerbounds
+# auto-selects any eligible pool in the merced workspace's default perimeter
+# that has "Inference deployments" enabled (Compute Pool UI → Advanced
+# Routing) and can satisfy `resources` above. ai-services-pool and dep-inf
+# were both explicitly tried and rejected ("memory requirement 32Gi exceeds
+# available ~14-15Gi") — they are NOT viable regardless of whether a pool is
+# named here or left to auto-select. Pin an explicit pool only if you need
+# cost tracking, compute isolation, or a specific GPU class (see the docs
+# section above) and have confirmed it actually has enough schedulable memory
+# and VRAM for `flash` (see the `resources` comment above) — e.g.:
+#   compute_pools:
+#     - <your-g5-4xlarge-or-larger-pool>
 
 replicas:
   fixed: 1
 
-# Non-interactive: a remote agent authenticates with EMBER_AUTH_HEADER/
-# EMBER_AUTH_TOKEN (x-api-key or Authorization: Bearer), not a browser
-# session — this is an API server, not a UI app.
+# API auth, not Browser/None: Outerbounds gates the endpoint with each
+# caller's own platform token (no ember-side EMBER_SERVER_AUTH_TOKEN needed —
+# see the `environment` comment above). A remote client attaches it as
+# `x-api-key: <METAFLOW_SERVICE_AUTH_KEY>` per Outerbounds' own API-auth
+# contract (docs.outerbounds.com/outerbounds/first-inference-deployment).
 auth:
-  type: None
+  type: API
 
 generate_static_url: true

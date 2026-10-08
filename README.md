@@ -361,8 +361,8 @@ committed: it registers the `vault` MCP server that agents use to read and write
 | Target | What it does |
 | --- | --- |
 | `make help` | List all targets (default) |
-| `make bootstrap` | From a fresh clone: `setup` + `init` + `doctor` |
-| `make setup` / `sync` / `download` | Deps + weights / deps only / pinned weights to `.models/` |
+| `make bootstrap` | From a fresh clone: `setup` + `download` + `init` + `doctor` |
+| `make setup` / `sync` / `download` | Deps only / deps only (alias) / pinned weights to `.models/` |
 | `make init` / `make opencode` | `ember init` / `ember init --opencode` for this checkout |
 | `make serve` / `start` / `stop` / `restart` / `status` / `logs` | Model-server lifecycle via the CLI |
 | `make mcp` / `make mcp-list` | Run the MCP server / `opencode mcp list` |

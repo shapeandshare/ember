@@ -30,3 +30,5 @@ vault/.trash/
 /site/assets/benchmark.css
 /site/_data/benchmark.json
 .coverage
+# Outerbounds CLI's local deploy-state/image-build cache (per-machine).
+.ob_apps/
