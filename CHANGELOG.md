@@ -1,3 +1,9 @@
+## v0.6.0 (2026-10-08)
+
+### Feat
+
+- **ember**: Outerbounds hosted deployment with CUDA support and S3 model loading (#76)
+
 ## v0.5.0 (2026-10-07)
 
 ### Feat
