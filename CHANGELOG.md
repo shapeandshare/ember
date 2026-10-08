@@ -1,3 +1,9 @@
+## v0.5.0 (2026-10-07)
+
+### Feat
+
+- **ember**: add Kilo Code support and remote endpoint bootstrap (#74)
+
 ## v0.4.0 (2026-10-06)
 
 ### Feat
