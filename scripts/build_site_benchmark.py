@@ -62,8 +62,8 @@ def build() -> int:
     shutil.rmtree(OUT, ignore_errors=True)
     OUT.mkdir(parents=True)
     (SITE / "assets").mkdir(exist_ok=True)
-    # The report hero gradient is provided site-wide by `.page-body` (site.css),
-    # so drop it here to avoid a second, narrower band under the nav.
+    # The report hero gradient is provided site-wide by the page background
+    # (`body` in site.css), so drop it here to avoid a second, narrower band.
     hero_override = "\n.hero { background: none; border-bottom: 0; }\n"
     (SITE / "assets" / "benchmark.css").write_text(
         render_html.css() + hero_override, encoding="utf-8"
