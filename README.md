@@ -438,7 +438,7 @@ committed: it registers the `vault` MCP server that agents use to read and write
 | `make ci` | `bootstrap` + `check` + `test-strict` |
 | `make doctor` | `ember doctor` |
 | `make vault-audit` | Check `vault/` notes: frontmatter, tags, wikilinks, code-refs, orphans |
-| `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000` (needs Docker) |
+| `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000`, rebuilt and reloaded in the browser on every edit (needs Docker) |
 | `make release-dry` | Preview the next ember version bump without changes |
 | `make release-ember` / `make release-plugin` | Trigger a component release workflow on `main` (bump PR → GitHub Release) |
 | `make clean` / `make clean-model` | Caches and build output / weights (`EMBER_FORCE=1` skips the prompt) |
