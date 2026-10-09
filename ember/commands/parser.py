@@ -183,7 +183,8 @@ def register_agents(
         Handler for ``ember uninstall``.
     """
     p = sub.add_parser(
-        "init", help="register the MCP server with opencode (writes opencode.json)"
+        "init",
+        help="register the MCP server with coding agents (always writes opencode.json)",
     )
     p.add_argument("--global", dest="global_", action="store_true")
     p.add_argument(
@@ -195,6 +196,13 @@ def register_agents(
         "--kilocode",
         action="store_true",
         help="also register the server in kilo.json and install the skill",
+    )
+    p.add_argument(
+        "--codex",
+        action="store_true",
+        help=(
+            "also register the server in Codex CLI's config.toml and install the skill"
+        ),
     )
     p.add_argument("--no-autostart", action="store_true")
     add_server_flags(p)

@@ -9,11 +9,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+import tomllib
+from pathlib import Path
 
 import pytest
 from ember import cli, models
 from ember.agent_kit import api as agent_kit
+from ember.codex import codex_config
 from ember.commands import endpoint as endpoint_cmd
 from ember.commands import lifecycle
 from ember.kilocode import kilocode_config
@@ -35,6 +39,9 @@ def sandbox(tmp_path, monkeypatch):
         "EMBER_ALLOW_INSECURE_TRANSPORT",
         "EMBER_REQUEST_TIMEOUT",
         "EMBER_SERVER_AUTH_TOKEN",
+        # Harness config-dir overrides would redirect "global" paths to the host.
+        "CODEX_HOME",
+        "CLAUDE_CONFIG_DIR",
     ):
         monkeypatch.delenv(name, raising=False)
     return tmp_path
@@ -129,6 +136,73 @@ def test_init_opencode_with_server_url_bootstraps_a_remote_endpoint(sandbox):
     config = json.loads((sandbox / "opencode.json").read_text())
     env = config["mcp"]["ember"]["environment"]
     assert env["EMBER_SERVER_URL"] == "https://decisions.example.com"
+
+
+def test_init_codex_registers_server_and_skill(sandbox):
+    assert cli.main(["init", "--codex"]) == 0
+    parsed = tomllib.loads((sandbox / ".codex/config.toml").read_text())
+    assert parsed["mcp_servers"]["ember"]["command"]
+    assert (
+        sandbox / ".agents/skills/ember-advise/SKILL.md"
+    ).read_text() == agent_kit.skill()
+
+
+def test_init_codex_notes_that_codex_ignores_an_untrusted_project(sandbox, capsys):
+    assert cli.main(["init", "--codex"]) == 0
+    assert "until you trust this project" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    ("relative", "content", "flags"),
+    [
+        ("opencode.json", "{not json", []),
+        ("kilo.json", "// comment\n{}", ["--kilocode"]),
+        (".codex/config.toml", "this = is [ not toml", ["--codex"]),
+    ],
+)
+def test_init_reports_an_unparseable_config_as_an_error_and_keeps_it(
+    sandbox, capsys, relative, content, flags
+):
+    target = sandbox / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(content)
+    assert cli.main(["init", *flags]) == 1
+    assert "error:" in capsys.readouterr().err
+    assert target.read_text() == content
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root ignores directory permissions")
+def test_init_reports_an_unwritable_project_as_an_error(sandbox, monkeypatch, capsys):
+    project = sandbox / "read-only"
+    project.mkdir()
+    monkeypatch.chdir(project)
+    project.chmod(0o555)
+    try:
+        assert cli.main(["init"]) == 1
+    finally:
+        project.chmod(0o755)
+    assert "error:" in capsys.readouterr().err
+
+
+def test_init_codex_confirms_a_trusted_project(sandbox, capsys):
+    trust = codex_config.global_config_path()
+    trust.parent.mkdir(parents=True)
+    key = json.dumps(str(Path.cwd()))
+    trust.write_text(f'[projects.{key}]\ntrust_level = "trusted"\n')
+    assert cli.main(["init", "--codex"]) == 0
+    out = capsys.readouterr().out
+    assert "this project is trusted" in out
+    assert "until you trust this project" not in out
+
+
+def test_doctor_reports_where_ember_is_registered(sandbox, monkeypatch, capsys):
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
+    assert cli.main(["init", "--codex"]) == 0
+    capsys.readouterr()
+    assert cli.main(["doctor"]) == 0
+    expected = f"[info] codex registration: project {Path.cwd() / '.codex/config.toml'}"
+    assert expected in capsys.readouterr().out
 
 
 def test_status_and_stop_are_inert_on_an_unused_port(sandbox, capsys):
@@ -337,6 +411,19 @@ def test_uninstall_removes_global_installs_and_keeps_other_config(sandbox):
 
     kilo_config = kilocode_config.global_config_path()
     assert "ember" not in json.loads(kilo_config.read_text()).get("mcp", {})
+
+
+def test_uninstall_removes_global_codex_entry(sandbox):
+    assert cli.main(["init", "--codex", "--global"]) == 0
+    codex_global = codex_config.global_config_path()
+    text = codex_global.read_text()
+    assert "[mcp_servers.other]" not in text  # sanity: nothing pre-seeded yet
+    codex_global.write_text(text + '\n[mcp_servers.other]\ncommand = "other-server"\n')
+
+    assert cli.main(["uninstall"]) == 0
+    remaining = tomllib.loads(codex_global.read_text())
+    assert "ember" not in remaining.get("mcp_servers", {})
+    assert remaining["mcp_servers"]["other"]["command"] == "other-server"
 
 
 def test_eval_commands_require_a_checkout(monkeypatch):
