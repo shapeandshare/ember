@@ -72,9 +72,9 @@ On a MacBook Pro **M4 Max / 128 GB**, torch 2.14.1, transformers 5.18.0, mcp 2.3
 ```bash
 uv tool install --python 3.12 "gut @ git+https://github.com/shapeandshare/ember"
 
-ember model pull          # ~18 GB, resumable, disk-space checked
-ember doctor              # platform, dependencies, model, server, and agent registration
-ember init --opencode     # register with opencode: config, plugin, and skill
+ember model pull                   # ~18 GB, resumable, disk-space checked
+ember doctor                       # platform, dependencies, model, server, and agent registration
+ember init --opencode --global     # register with opencode for every repo on this machine
 ```
 
 Keep `--python 3.12`: uv otherwise picks your newest interpreter, which the pinned
@@ -83,8 +83,20 @@ torch/transformers stack is not tested on.
 The repository is public, so the install above needs no credentials. To use SSH instead,
 install from `git+ssh://git@github.com/shapeandshare/ember`.
 
-Restart opencode and the agent gains `ember_advise`. The model server stays **lazy** —
-it starts on the first tool call (or with `ember start`).
+Restart opencode and every repo on this machine gains `ember_advise`. The model server
+stays **lazy** — it starts on the first tool call (or with `ember start`).
+
+**Per-project skill and policy** (run once in each repo you want ember-aware agents):
+
+```bash
+cd /path/to/your/repo
+ember agents install --agent opencode  # installs the ember-advise playbook skill
+ember agents show snippet >> AGENTS.md # then edit the project policy block at the end
+```
+
+The skill teaches the agent *when* to consult ember and *how* to ask; the AGENTS.md snippet
+adds a project-specific policy you customize (e.g. "check change risk before every push").
+See [Agent onboarding](#agent-onboarding) below for all harnesses and options.
 
 `flash` targets the commit verified on MPS (`17f0b0a`) and `full` its release commit
 (`2f3de3d`, not yet verified locally) as a download convenience, and torch/torchvision are
