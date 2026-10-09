@@ -139,6 +139,11 @@ skips = [
 [tool.commitizen]
 name = "cz_conventional_commits"
 version_provider = "uv"
+# Files that carry the release version; each bump rewrites them, and
+# tests/test_distribution.py keeps the list complete.
+version_files = [
+    "server.json:\"version\"",
+]
 update_changelog_on_bump = true
 major_version_zero = true
 tag_format = "v$version"

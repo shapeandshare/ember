@@ -1,0 +1,51 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.shapeandshare/ember",
+  "title": "ember",
+  "description": "Calibrated advice for coding agents: typed questions in, probabilities out. Apple Silicon.",
+  "websiteUrl": "https://shapeandshare.github.io/ember/",
+  "repository": {
+    "url": "https://github.com/shapeandshare/ember",
+    "source": "github"
+  },
+  "version": "0.6.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "ember-advise",
+      "version": "0.6.0",
+      "runtimeHint": "uvx",
+      "runtimeArguments": [
+        {
+          "type": "named",
+          "name": "--python",
+          "value": "3.12"
+        }
+      ],
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ],
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "EMBER_SERVER_URL",
+          "description": "Inference endpoint; defaults to the local model server at http://127.0.0.1:8765",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "EMBER_AUTH_TOKEN",
+          "description": "Credential for a remote inference endpoint",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
