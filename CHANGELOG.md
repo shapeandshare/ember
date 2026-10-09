@@ -1,8 +1,13 @@
 ## v0.6.0 (2026-10-08)
 
+The release run for #76 timed out before tagging, and the resumed run tagged `main` after
+#79 merged, so v0.6.0 also ships #78 and #79.
+
 ### Feat
 
 - **ember**: Outerbounds hosted deployment with CUDA support and S3 model loading (#76)
+- **ember**: fix Outerbounds hosted deployment for real-world use (#78)
+- **ember**: Codex CLI registration, per-harness doctor report, and safe ember init (#79)
 
 ## v0.5.0 (2026-10-07)
 
