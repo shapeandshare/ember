@@ -15,6 +15,10 @@
 #   4. Only after the merge: verify the merged version, tag the commit that
 #      set it (never main's head, which may carry later PRs), push the tag,
 #      build wheel + sdist from that tree, create the GitHub Release.
+#   5. publish-pypi uploads that release's wheel + sdist to PyPI as `ember-advise`
+#      through Trusted Publishing: PyPI exchanges the job's OIDC token for a
+#      short-lived upload token, so no PyPI credential is stored anywhere.
+#      If it fails, re-run the failed job; files PyPI already has are skipped.
 #
 # Resume path: if a run finds that main already carries a version newer
 # than the last tag (a previous bump PR merged but its release failed), it
@@ -32,6 +36,7 @@
 # Security posture (per AGENTS.md):
 #   - All uses: pinned to full commit SHAs with # vX.Y.Z comments.
 #   - permissions: {} at workflow level; each job grants only what it needs.
+#     Only publish-pypi gets id-token: write, and it never checks out code.
 #   - checkout uses persist-credentials: false throughout.
 #   - No pull_request_target, workflow_run, or self-hosted runners.
 #   - No stored secrets beyond GITHUB_TOKEN (auto-provisioned per run).
@@ -62,6 +67,8 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -272,6 +279,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
+        id: release
         if: steps.check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -281,3 +289,37 @@ jobs:
             --verify-tag \
             --title "$RELEASE_TAG" \
             --notes-file release-notes.md
+          echo "tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+
+  publish-pypi:
+    name: ember — publish to PyPI
+    needs: release-ember
+    if: needs.release-ember.outputs.tag != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # PyPI's trusted publisher for `ember-advise` names this workflow file and this
+    # environment; add required reviewers to the environment to gate uploads.
+    environment:
+      name: pypi
+      url: https://pypi.org/project/ember-advise/
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+
+      # Publish the exact files attached to the GitHub Release.
+      - name: Download the release's wheel and sdist
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.release-ember.outputs.tag }}
+        run: |
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern 'ember_advise-*' --dir dist
+          ls -l dist
+
+      - name: Publish to PyPI (Trusted Publishing)
+        run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/ dist/*
