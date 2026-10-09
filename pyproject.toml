@@ -46,6 +46,10 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["ember"]
 
+# The sdist ships the package, not the repository (benchmark data, site, vault).
+[tool.hatch.build.targets.sdist]
+include = ["/ember", "/README.md", "/LICENSE", "/THIRD_PARTY_NOTICES.md"]
+
 [dependency-groups]
 dev = [
     "pytest>=8.0",
