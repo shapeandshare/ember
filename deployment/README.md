@@ -1,8 +1,7 @@
 # Deploying ember to Outerbounds
 
 Deploy ember's model server itself (not a client) to Outerbounds, so an agent
-elsewhere can reach it over `EMBER_SERVER_URL`. This mirrors
-[`model-foundry`](https://github.com/anaconda/model-foundry)'s own
+elsewhere can reach it over `EMBER_SERVER_URL`. This follows the standard
 [Outerbounds App](https://docs.outerbounds.com/) deployment contract.
 
 ## What this deploys
@@ -27,7 +26,7 @@ Loading") for why no integrity hash is checked against that location.
      scheduler at deploy time — an undersized pool fails immediately with
      `AppCreationFailedException: ... memory requirement <X>Gi exceeds
      available <Y>Ki`. This happened against two different pools during this
-     deployment's own setup (`ai-services-pool`, `dep-inf`), both capped
+     deployment's own setup, both capped
      around 14-15 GiB *schedulable* memory regardless of their advertised
      instance size — always confirm actual available memory, don't assume it
      matches the nominal instance type.
@@ -51,16 +50,16 @@ Loading") for why no integrity hash is checked against that location.
    - S3 access relies on an IAM role attached to the compute pool; boto3's
      default credential chain picks it up automatically (see
      `vault/decisions/2026-10-08-optional-s3-credentials-iam-role.md`). Only
-     add a secret integration with `EMBER_ANACONDA_S3_ACCESS_KEY_ID`/
-     `EMBER_ANACONDA_S3_SECRET_ACCESS_KEY` if no role is attached.
+     add a secret integration with `EMBER_S3_ACCESS_KEY_ID`/
+     `EMBER_S3_SECRET_ACCESS_KEY` if no role is attached.
 4. **Outerbounds CLI configured** and authenticated against your workspace and
    perimeter. `outerbounds` is already in this repo's `dev` dependency group
    (`make setup`/`make sync` installs it into `.venv`), so `uv run outerbounds
    ...` works right away — no separate `pip install` needed:
 
    ```sh
-   # Token comes from the merced workspace's Setup page (Getting Started → Workspace).
-   uv run outerbounds configure <token from the merced workspace's Setup page>
+   # Token comes from your workspace's Setup page (Getting Started → Workspace).
+   uv run outerbounds configure <token from your workspace's Setup page>
    uv run outerbounds perimeter list                 # confirm "default" is available
    uv run outerbounds perimeter switch --id default  # target the default perimeter
    ```
@@ -72,9 +71,8 @@ Loading") for why no integrity hash is checked against that location.
 # Fast Bakery resolves the exact dependency set CI/tests ran against.
 make deployment-requirements
 
-# Fill in deployment/deploy.yaml's remaining <CONFIRM-...> placeholders first
-# (compute pool name, team/owner tags — the model's S3 location is already
-# filled in below), then:
+# Fill in deployment/deploy.yaml's placeholders first (team/owner tags and the
+# model's S3 location), then:
 uv run outerbounds app deploy \
   --config-file deployment/deploy.yaml \
   --package-src-path . \
