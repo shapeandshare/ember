@@ -11,17 +11,23 @@ repository point at its blob on GitHub.
 Only the copy step knows this mapping, so ``site/_docs/`` and the copied brand
 assets are generated output and are gitignored.
 
+``jekyll serve`` watches only ``site/``, so ``make site-serve`` also runs this
+script with ``--watch``: it rebuilds whenever a document or asset changes.
+
 Usage
 -----
-    python3 scripts/build_site_docs.py
+    python3 scripts/build_site_docs.py           # build once
+    python3 scripts/build_site_docs.py --watch   # then rebuild on every change
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import shutil
 import sys
+import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -136,5 +142,53 @@ def main() -> int:
     return 0
 
 
+def _watched() -> list[Path]:
+    """List every file a build reads: the manifest, its documents, and the assets."""
+    sources = [REPO / entry["source"] for entry in _load_manifest()]
+    return [SITE / "_data" / "docs.json", *sources, *(REPO / a for a in ASSETS)]
+
+
+def _stamp(paths: list[Path]) -> dict[Path, int]:
+    """Map each path to its modification time in nanoseconds, or -1 once it is gone."""
+    stamp: dict[Path, int] = {}
+    for path in paths:
+        try:
+            stamp[path] = path.stat().st_mtime_ns
+        except FileNotFoundError:
+            stamp[path] = -1
+    return stamp
+
+
+def watch(interval: float = 0.5) -> None:
+    """Rebuild whenever a file the build reads changes, until interrupted.
+
+    Run it after a build: it rebuilds only for the changes it sees.
+    """
+    paths = _watched()
+    stamp = _stamp(paths)
+    while True:
+        time.sleep(interval)
+        current = _stamp(paths)
+        if current == stamp:
+            continue
+        stamp = current
+        try:
+            main()
+            paths = _watched()  # the manifest may now list other documents
+        except (OSError, ValueError, KeyError) as error:
+            # A half-finished edit, such as broken JSON in the manifest, must not
+            # stop the preview: report it, and rebuild on the next change.
+            print(f"error: {error}", file=sys.stderr)
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    parser = argparse.ArgumentParser(description="Assemble the site's docs.")
+    parser.add_argument(
+        "--watch",
+        action="store_true",
+        help="after a build, keep rebuilding whenever a document or asset changes",
+    )
+    if parser.parse_args().watch:
+        watch()
+    else:
+        raise SystemExit(main())

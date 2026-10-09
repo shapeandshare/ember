@@ -7,7 +7,7 @@ tags:
   - domain/brand
   - status/draft
 created: 2026-10-03
-updated: 2026-10-03
+updated: 2026-10-09
 code-refs:
   - site/_config.yml
   - site/_data/docs.json
@@ -76,3 +76,8 @@ shell), reusing the report's content styles (`evals/report.css`) as the site ass
 `benchmark.css`. The run produces the data; the website renders the HTML. `ember eval
 export` still writes a portable single-file HTML for external reviewers, which the site no
 longer uses.
+
+The landing page's benchmark numbers come from the same model: `scripts/build_site_benchmark.py`
+writes display-ready `headline` figures into `site/_data/benchmark.json`, and its decision
+examples quote the agent kit's observed outputs; `tests/test_site_benchmark.py` and
+`tests/test_site_landing.py` keep both honest (2026-10-09).

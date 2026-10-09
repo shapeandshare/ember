@@ -41,7 +41,8 @@ The mascot's gradients add complementary orange and peach shades.
 ## Theme integration
 
 Load `tokens.css` and use `var(--ember-surface)`, `var(--ember-text)`,
-`var(--ember-muted)`, `var(--ember-accent)`, and `var(--ember-border)`.
+`var(--ember-muted)`, `var(--ember-accent)`, and `var(--ember-border)`, plus
+`var(--ember-on-accent)` for text on a filled accent.
 The stylesheet defaults to system preference. Set `data-theme="light"` or
 `data-theme="dark"` on the root HTML element to override it.
 

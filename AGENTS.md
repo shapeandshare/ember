@@ -155,7 +155,7 @@ vault/                # project memory (Obsidian): decisions, discoveries, sessi
 | `make eval-run` / `make eval-export` | Model benchmark (`evals/clef-flash.jsonl`) / reviewer report bundle |
 | `make eval-snapshot` | Copy the latest run into `benchmark/` for the site to render |
 | `make eval-agent` / `make eval-agent-smoke` | Agent-in-the-loop eval through opencode (opt-in; spends provider credit) |
-| `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000` (needs Docker) |
+| `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000`, rebuilt and reloaded in the browser on every edit (needs Docker) |
 | `make release-dry` | Preview the next ember version bump without changes |
 | `make release-ember` / `release-plugin` | Trigger a component release workflow on `main` (bump PR → GitHub Release) |
 | `.venv/bin/ember …` or `.venv/bin/gut …` | Primary CLI, built from this checkout |
