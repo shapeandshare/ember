@@ -70,7 +70,7 @@ def test_health_reports_accelerator_and_dtype(base_url: str) -> None:
     engine = body["engine"]
     assert engine["device"] in ("mps", "cpu")
     assert engine["dtype"] in ("float16", "float32")
-    assert engine["model_dir"].endswith("clef-flash")
+    assert "model_dir" not in engine, "I-001: model_dir must not appear in /health"
     assert engine["model"] == "flash"
     assert body["version"]
     assert body["auth_required"] is False
@@ -326,3 +326,38 @@ def test_health_version_is_the_installed_distribution_version() -> None:
     )["project"]["name"]
     body = _in_process_client().get("/health").json()
     assert body["version"] == importlib.metadata.version(name)
+
+
+# ###########################################################################
+# T-004: host config must be validated against loopback when auth is disabled
+# ###########################################################################
+def test_lifespan_raises_on_non_loopback_host_without_auth(monkeypatch) -> None:
+    """T-004: Starting the server on a non-loopback address without
+    EMBER_SERVER_AUTH_TOKEN must raise RuntimeError (fail-fast before ready).
+    Exposing the unauthenticated inference endpoint beyond loopback removes the
+    only security boundary."""
+    monkeypatch.setenv("EMBER_HOST", "0.0.0.0")  # noqa: S104
+    monkeypatch.delenv("EMBER_SERVER_AUTH_TOKEN", raising=False)
+    from ember.serving import server as server_mod
+    from fastapi.testclient import TestClient
+
+    with pytest.raises(RuntimeError, match=r"EMBER_HOST|non-loopback|auth"):
+        with TestClient(server_mod.app):
+            pass
+
+
+def test_lifespan_allows_non_loopback_host_when_auth_is_enabled(monkeypatch) -> None:
+    """T-004: A non-loopback host is allowed when EMBER_SERVER_AUTH_TOKEN is
+    set — the bearer-auth layer becomes the security boundary."""
+    monkeypatch.setenv("EMBER_HOST", "0.0.0.0")  # noqa: S104
+    monkeypatch.setenv("EMBER_SERVER_AUTH_TOKEN", "secret")
+    resp = _in_process_client().get("/health")
+    assert resp.status_code == 200
+
+
+def test_lifespan_allows_loopback_host_without_auth(monkeypatch) -> None:
+    """T-004: The default loopback address must continue to work without auth."""
+    monkeypatch.setenv("EMBER_HOST", "127.0.0.1")
+    monkeypatch.delenv("EMBER_SERVER_AUTH_TOKEN", raising=False)
+    resp = _in_process_client().get("/health")
+    assert resp.status_code == 200
