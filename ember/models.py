@@ -12,6 +12,7 @@ which resolves and loads a model directly from that URI, independent of
 
 from __future__ import annotations
 
+import logging
 import os
 import shutil
 from dataclasses import dataclass
@@ -19,6 +20,8 @@ from pathlib import Path
 from typing import Any
 
 from .cfg import paths
+
+_log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -227,7 +230,9 @@ def remove(name: str | None = None) -> str:
     dev = _dev_dir(spec)
     if dev.is_dir():
         shutil.rmtree(dev)
-        return f"removed {dev}"
+        msg = f"removed {dev}"
+        _log.info("model remove: %s", msg)
+        return msg
     try:
         # import-placement:allow - deferred to remove(); avoids HF import at module load
         from huggingface_hub import scan_cache_dir
@@ -240,8 +245,13 @@ def remove(name: str | None = None) -> str:
             for rev in repo.revisions
         ]
         if not revisions:
-            return f"{spec.repo} is not cached"
+            msg = f"{spec.repo} is not cached"
+            _log.info("model remove: %s (nothing to delete)", spec.repo)
+            return msg
         cache.delete_revisions(*revisions).execute()
-        return f"removed {spec.repo} from HF cache"
+        msg = f"removed {spec.repo} from HF cache"
+        _log.info("model remove: %s", msg)
+        return msg
     except Exception as exc:  # pragma: no cover - best effort
+        _log.warning("model remove: could not remove %s: %s", spec.repo, exc)
         return f"could not remove {spec.repo}: {exc}"
