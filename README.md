@@ -226,8 +226,8 @@ is JSON at `ember config path` (keys `model`, `host`, `port`, `device`, `max_len
 | `EMBER_START_TIMEOUT` | `300` | Seconds to wait for the model server to start |
 | `EMBER_STATE_DIR` | Application Support | Where the pid file and logs live |
 | `EMBER_MODEL_S3_URI` | — | An `s3://bucket/prefix` URI naming the exact model location to load — for a deployment (e.g. Outerbounds) that supplies the model's S3 location at start time instead of a `REGISTRY` key. See "Hosted deployment: a model location supplied at start time" below. |
-| `EMBER_ANACONDA_S3_ACCESS_KEY_ID` / `EMBER_ANACONDA_S3_SECRET_ACCESS_KEY` | — | AWS credentials for `EMBER_MODEL_S3_URI`. **Optional** — when unset, boto3's own default credential chain applies (an IAM role attached to the compute, e.g. Outerbounds; env vars; `~/.aws/credentials`). Set explicitly only where no role is attached (e.g. a local developer machine) |
-| `EMBER_ANACONDA_S3_REGION` | — | AWS region passed to the S3 client |
+| `EMBER_S3_ACCESS_KEY_ID` / `EMBER_S3_SECRET_ACCESS_KEY` | — | AWS credentials for `EMBER_MODEL_S3_URI`. **Optional** — when unset, boto3's own default credential chain applies (an IAM role attached to the compute, e.g. Outerbounds; env vars; `~/.aws/credentials`). Set explicitly only where no role is attached (e.g. a local developer machine) |
+| `EMBER_S3_REGION` | — | AWS region passed to the S3 client |
 
 ### Hosted deployment: a model location supplied at start time
 
@@ -241,9 +241,8 @@ ember serve                # foreground, container-friendly (not `ember start`)
 ```
 
 No AWS credentials need to be set explicitly when the compute already has an IAM role
-attached (the expected case on Outerbounds, matching `model-foundry`'s own Metaflow-managed
-S3 access) — boto3's default credential chain picks it up automatically. Set
-`EMBER_ANACONDA_S3_ACCESS_KEY_ID`/`_SECRET_ACCESS_KEY` explicitly only where no role is
+attached (the expected case on Outerbounds) — boto3's default credential chain picks it up automatically. Set
+`EMBER_S3_ACCESS_KEY_ID`/`_SECRET_ACCESS_KEY` explicitly only where no role is
 attached.
 
 This is checked once at startup, before the server begins serving, and takes priority over
