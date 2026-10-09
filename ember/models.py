@@ -12,6 +12,7 @@ which resolves and loads a model directly from that URI, independent of
 
 from __future__ import annotations
 
+import logging
 import os
 import shutil
 from dataclasses import dataclass
@@ -19,6 +20,8 @@ from pathlib import Path
 from typing import Any
 
 from .cfg import paths
+
+_log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)

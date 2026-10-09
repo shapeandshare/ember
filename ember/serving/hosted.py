@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlparse
 
-from ..cfg import paths, s3
+from ..cfg import config, paths, s3
 
 _URI_ENV = "EMBER_MODEL_S3_URI"
 
@@ -94,5 +94,8 @@ def resolve() -> HostedModelSource | None:
     bucket, prefix = _parse_uri(uri)
     model_dir = paths.hosted_model_cache(uri)
     if not model_dir.is_dir() or not any(model_dir.iterdir()):
-        s3.download_prefix(bucket, prefix, model_dir, f"{_URI_ENV}={uri!r}")
+        max_bytes = int(config.resolve("s3_max_bytes") or 0)
+        s3.download_prefix(
+            bucket, prefix, model_dir, f"{_URI_ENV}={uri!r}", max_bytes=max_bytes
+        )
     return HostedModelSource(uri=uri, model_dir=model_dir)

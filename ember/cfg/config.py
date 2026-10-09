@@ -50,6 +50,10 @@ DEFAULTS: dict[str, Any] = {
     "s3_access_key_id": None,  # nosec B105 - None default: no credential
     "s3_secret_access_key": None,  # nosec B105 - None default: no credential
     "s3_region": None,
+    # D-006: total S3 prefix size cap before downloading. 0 disables the check.
+    # Default 100 GB is generous for any current model while catching
+    # misconfigured prefixes pointing at an entire bucket's worth of data.
+    "s3_max_bytes": 100 * 1024 * 1024 * 1024,
 }
 
 

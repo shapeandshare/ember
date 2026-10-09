@@ -182,6 +182,37 @@ def test_engine_model_name_explicit_and_fallback(tmp_path, monkeypatch):
     assert engine_empty.model_name == ""
 
 
+# ###########################################################################
+# I-001: Engine.describe() must not leak model_dir (filesystem path)
+# ###########################################################################
+def test_engine_describe_omits_model_dir(tmp_path, monkeypatch):
+    """I-001: Engine.describe() must not include model_dir — /health forwards
+    this to any loopback caller, disclosing the full filesystem path."""
+    model_dir = tmp_path / "my-model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    description = engine.describe()
+    assert "model_dir" not in description, (
+        "Engine.describe() must not expose model_dir (I-001: path disclosure)"
+    )
+
+
+def test_engine_describe_still_has_required_fields(tmp_path, monkeypatch):
+    """I-001: removing model_dir must not drop the fields callers depend on."""
+    model_dir = tmp_path / "my-model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir)
+    description = engine.describe()
+    for field in ("model", "device", "dtype", "max_length"):
+        assert field in description, (
+            f"Engine.describe() missing required field: {field}"
+        )
+
+
 def test_pinned_model_declares_the_model_maximum():
     model_dir = runtime.DEFAULT_MODEL_DIR
     if not model_dir.is_dir():
@@ -217,6 +248,47 @@ def test_cmd_mcp_normalises_0_0_0_0_to_loopback(monkeypatch, tmp_path):
 # ###########################################################################
 # T-003: ALLOWED_MEDIA_KWARGS allowlist
 # ###########################################################################
+# ###########################################################################
+# I-003: model dir must be removed from sys.path after joint_schema_model import
+# ###########################################################################
+def test_joint_module_removes_model_dir_from_sys_path_after_import(
+    tmp_path, monkeypatch
+):
+    """I-003: joint_module() must remove the model directory from sys.path
+    after importing joint_schema_model so tracebacks do not leak the path."""
+    import builtins
+    import sys
+
+    model_dir = tmp_path / "my-model"
+    model_dir.mkdir()
+    fake_module = type("FakeJSM", (), {})()
+
+    monkeypatch.setattr(runtime, "_JOINT_MODULE", None)
+    sys.modules.pop("joint_schema_model", None)
+
+    real_import = builtins.__import__
+
+    def patched_import(name: str, *args: object, **kwargs: object) -> object:
+        if name == "joint_schema_model":
+            sys.modules["joint_schema_model"] = fake_module  # type: ignore[assignment]
+            return fake_module
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", patched_import)
+
+    model_path = str(model_dir.resolve())
+    while model_path in sys.path:
+        sys.path.remove(model_path)
+
+    runtime.joint_module(model_dir)
+
+    assert model_path not in sys.path, (
+        "I-003: joint_module() must remove model_dir from sys.path after import"
+    )
+    sys.modules.pop("joint_schema_model", None)
+    monkeypatch.setattr(runtime, "_JOINT_MODULE", None)
+
+
 def test_allowed_media_kwargs_constant_exists():
     assert hasattr(runtime, "ALLOWED_MEDIA_KWARGS"), (
         "runtime must expose ALLOWED_MEDIA_KWARGS"
@@ -526,6 +598,71 @@ def test_stop_succeeds_even_when_log_write_raises_oserror(tmp_path, monkeypatch)
     assert result is True
     sigs = [s for _, s in kill_calls]
     assert signal.SIGTERM in sigs
+
+
+# ###########################################################################
+# D-005: _spawn_locked() must serialise spawn vs already-up paths
+# ###########################################################################
+def test_spawn_locked_skips_spawn_when_server_already_up(tmp_path, monkeypatch):
+    """D-005: _spawn_locked() must return None (no spawn) when is_up() is True
+    inside the lock — the second concurrent caller path."""
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
+
+    spawn_calls: list[int] = []
+
+    def fake_spawn(
+        model_dir: object, host: object, p: object, device: object
+    ) -> object:
+        spawn_calls.append(1)
+
+        class _FakeProc:
+            pid = 42
+
+        return _FakeProc()
+
+    monkeypatch.setattr(process, "spawn", fake_spawn)
+    monkeypatch.setattr(process, "is_up", lambda h, p: True)
+
+    result = process._spawn_locked(tmp_path / "model", "127.0.0.1", free_port(), "cpu")
+
+    assert result is None, "_spawn_locked() must return None when is_up() is True"
+    assert len(spawn_calls) == 0, "D-005: spawn must not be called when server is up"
+
+
+def test_spawn_locked_calls_spawn_when_server_is_down(tmp_path, monkeypatch):
+    """D-005: _spawn_locked() must call spawn() and return the process when
+    is_up() is False inside the lock — the first-caller path."""
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path))
+
+    class _FakeProc:
+        pid = 99
+
+    monkeypatch.setattr(process, "spawn", lambda *a, **kw: _FakeProc())
+    monkeypatch.setattr(process, "is_up", lambda h, p: False)
+
+    fake_dir = tmp_path / "model"
+    fake_dir.mkdir()
+    result = process._spawn_locked(fake_dir, "127.0.0.1", free_port(), "cpu")
+
+    assert result is not None, "_spawn_locked() must return process when down"
+    assert result.pid == 99
+
+
+# ###########################################################################
+# D-004: spawn() must create server.log for subprocess output
+# ###########################################################################
+def test_spawn_creates_server_log_file(tmp_path, monkeypatch):
+    """D-004: spawn() must create server.log so subprocess output is captured.
+    Log file rotation for the subprocess must be handled by an external
+    logrotate configuration (RotatingFileHandler only rotates via emit(),
+    which the child process never calls through the parent handler)."""
+    monkeypatch.setenv("EMBER_STATE_DIR", str(tmp_path / "state"))
+    proc = process.spawn(tmp_path / "no-model", "127.0.0.1", free_port(), "cpu")
+    try:
+        assert paths.server_log_path().exists(), "D-004: spawn() must create server.log"
+    finally:
+        proc.terminate()
+        proc.wait(timeout=15)
 
 
 def test_start_fails_fast_when_the_model_is_missing(tmp_path, monkeypatch):
@@ -962,3 +1099,29 @@ def test_engine_token_cap_error_mentions_env_var(monkeypatch, tmp_path):
     monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
     with pytest.raises(ValueError, match="EMBER_MAX_REQUEST_LENGTH"):
         engine.advise("state", {})
+
+
+# ###########################################################################
+# R-004: cmd_model_rm must write an audit entry to stderr
+# ###########################################################################
+def test_model_rm_writes_audit_entry_to_stderr(tmp_path, monkeypatch, capsys):
+    """R-004: cmd_model_rm must emit an audit entry to stderr so there is a
+    persistent record of destructive model lifecycle operations that survives
+    regardless of the root logger level in normal CLI use."""
+    import argparse
+
+    from ember.commands.models import cmd_model_rm
+
+    model_dir = tmp_path / "clef-flash"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(models, "_repo_root", lambda: tmp_path)
+
+    args = argparse.Namespace(name="flash", yes=True)
+    ret = cmd_model_rm(args)
+
+    assert ret == 0
+    err = capsys.readouterr().err
+    assert "flash" in err.lower() or "remov" in err.lower(), (
+        "R-004: cmd_model_rm must write an audit entry to stderr"
+    )

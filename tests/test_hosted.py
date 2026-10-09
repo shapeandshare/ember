@@ -50,11 +50,21 @@ def test_resolve_downloads_and_returns_dir_when_not_cached(
 
     captured: dict[str, object] = {}
 
-    def _fake_download_prefix(bucket: str, prefix: str, dest: Path, label: str) -> Path:
+    monkeypatch.setenv("EMBER_S3_MAX_BYTES", "12345678")
+
+    def _fake_download_prefix(
+        bucket: str,
+        prefix: str,
+        dest: Path,
+        label: str,
+        max_bytes: int = 0,
+        **_kw: object,
+    ) -> Path:
         captured["bucket"] = bucket
         captured["prefix"] = prefix
         captured["dest"] = dest
         captured["label"] = label
+        captured["max_bytes"] = max_bytes
         dest.mkdir(parents=True, exist_ok=True)
         (dest / "config.json").write_text("{}")
         return dest
@@ -69,6 +79,9 @@ def test_resolve_downloads_and_returns_dir_when_not_cached(
     assert captured["bucket"] == "my-bucket"
     assert captured["prefix"] == "clef-flash"
     assert "s3://my-bucket/clef-flash" in str(captured["label"])
+    assert captured["max_bytes"] == 12345678, (
+        "hosted.resolve() must forward EMBER_S3_MAX_BYTES as max_bytes"
+    )
 
 
 def test_resolve_skips_download_when_already_cached(

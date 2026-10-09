@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import ssl
 import sys
 from typing import Any
@@ -44,11 +45,46 @@ from ..cfg.endpoint import (
 from ..serving import process
 from .mcp_types import AdviseInput
 
+_PATH_RE = re.compile(r"(/[^\s:]+|[A-Za-z]:\\[^\s:]+)")
+_TRACEBACK_RE = re.compile(r"Traceback \(most recent call last\)", re.IGNORECASE)
+
+
+def _redact(text: str) -> str:
+    """Strip filesystem paths and traceback markers from an error message.
+
+    Prevents internal paths and stack traces from leaking to the calling agent
+    via ToolError messages (I-002).
+
+    Parameters
+    ----------
+    text : str
+        The raw error string to clean.
+
+    Returns
+    -------
+    str
+        The input with filesystem paths replaced by ``<path>`` and any
+        traceback header stripped.
+    """
+    text = _PATH_RE.sub("<path>", text)
+    text = _TRACEBACK_RE.sub("<traceback>", text)
+    return text
+
+
 # stdout is the JSON-RPC wire; log to stderr only.
-logging.basicConfig(
-    level=logging.INFO, stream=sys.stderr, format="[ember-mcp] %(message)s"
-)
+# R-003: configure the named logger directly (not basicConfig, which is a no-op
+# when any handler already exists) so the timestamp format is always present.
 log = logging.getLogger("ember-mcp")
+if not log.handlers:
+    _handler = logging.StreamHandler(sys.stderr)
+    _handler.setFormatter(
+        logging.Formatter(
+            fmt="%(asctime)s [ember-mcp] %(levelname)s %(message)s",
+            datefmt="%Y-%m-%dT%H:%M:%S",
+        )
+    )
+    log.addHandler(_handler)
+    log.setLevel(logging.INFO)
 
 AUTOSTART = os.environ.get("EMBER_AUTOSTART", "1").lower() not in (
     "0",
@@ -109,6 +145,46 @@ def _ensure_server(endpoint: Endpoint) -> None:  # async-first:exception - worke
     )
     process.start(host=endpoint.host, port=endpoint.port, timeout=START_TIMEOUT)
     log.info("ember server is ready")
+
+
+def _sanitize_error(status_code: int, body: str) -> str:
+    """Build a safe ToolError message from an HTTP error response.
+
+    For 4xx errors, extract only the ``detail`` field from FastAPI's JSON
+    error body so that internal file paths and stack traces never reach the
+    calling agent (I-002). For 5xx errors, return a generic message and log
+    the full body to stderr — the agent cannot act on server internals, and
+    the body may contain filesystem paths or tracebacks.
+
+    Parameters
+    ----------
+    status_code : int
+        The HTTP status code returned by the server.
+    body : str
+        The raw response body text.
+
+    Returns
+    -------
+    str
+        A sanitized, agent-safe error message that always includes the status
+        code.
+    """
+    if status_code >= 500:
+        log.error(
+            "ember server %d (body redacted from ToolError): %s", status_code, body
+        )
+        return f"ember server error {status_code}: server-side error (see ember logs)"
+    try:
+        parsed = json.loads(body)
+        detail = parsed.get("detail")
+        if detail is not None:
+            if isinstance(detail, list):
+                msgs = ", ".join(_redact(str(d.get("msg") or d)) for d in detail if d)
+                return f"ember server error {status_code}: {msgs}"
+            return f"ember server error {status_code}: {_redact(str(detail))}"
+    except (json.JSONDecodeError, AttributeError):
+        pass
+    return f"ember server error {status_code}"
 
 
 def _client_error_message(exc: httpx.HTTPError, endpoint: Endpoint) -> str:
@@ -192,7 +268,7 @@ async def advise(input: AdviseInput) -> dict[str, Any]:
             f"{endpoint.url}; check auth_token/auth_header"
         )
     if resp.status_code >= 400:
-        raise ToolError(f"ember server error {resp.status_code}: {resp.text}")
+        raise ToolError(_sanitize_error(resp.status_code, resp.text))
     try:
         answer: dict[str, Any] = resp.json()
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
@@ -200,6 +276,11 @@ async def advise(input: AdviseInput) -> dict[str, Any]:
             f"endpoint at {endpoint.url} did not return a valid ember response"
         ) from exc
     loaded = str(answer.get("model") or "")
+    log.info(
+        "advise: questions=%s model=%s",
+        repr(",".join(sorted(input.questions))),
+        repr(loaded or input.model),
+    )
     # Only an explicitly requested label can mismatch; the schema default is a
     # placeholder and would otherwise warn on every call.
     requested = "model" in input.model_fields_set
@@ -214,7 +295,22 @@ async def advise(input: AdviseInput) -> dict[str, Any]:
 def main() -> None:
     """Run the MCP stdio server; blocks until the client disconnects."""
     try:
-        url = Endpoint.resolve().url
+        endpoint = Endpoint.resolve()
+        url = endpoint.url
+        # S-004: warn when EMBER_SERVER_URL is non-loopback over plaintext HTTP
+        # with insecure transport explicitly allowed — agent state (potentially
+        # containing secrets) will be sent unencrypted to a remote host.
+        if (
+            not endpoint.is_local
+            and endpoint.scheme == "http"
+            and endpoint.allow_insecure_transport
+        ):
+            log.warning(
+                "EMBER_SERVER_URL=%r is a non-loopback address over plaintext "
+                "http with EMBER_ALLOW_INSECURE_TRANSPORT enabled — agent state "
+                "will be sent unencrypted. Use https or a loopback address.",
+                url,
+            )
     except (InvalidEndpointError, InsecureEndpointError) as exc:
         url = f"<invalid: {exc}>"
     log.info("ember MCP server starting (server_url=%s, autostart=%s)", url, AUTOSTART)

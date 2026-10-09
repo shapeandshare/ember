@@ -8,6 +8,7 @@ confirming it is still an ember server; it never kills by port or by pattern.
 
 from __future__ import annotations
 
+import fcntl
 import logging
 import os
 import signal
@@ -144,7 +145,9 @@ def spawn(
             "HF_HUB_OFFLINE": "1",
         }
     )
-    with open(paths.server_log_path(), "ab") as handle:
+    log_path = paths.server_log_path()
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(log_path, "ab") as handle:
         proc = subprocess.Popen(
             [sys.executable, "-m", "ember.serving.server"],
             cwd=str(paths.state_dir()),
@@ -159,6 +162,45 @@ def spawn(
     tmp.write_text(str(proc.pid), encoding="utf-8")
     os.replace(tmp, pid_path)
     return proc
+
+
+def _spawn_locked(
+    model_dir: Path,
+    host: str,
+    port: int,
+    device: str,
+) -> subprocess.Popen[bytes] | None:
+    """Acquire the spawn lock and start the server, or return ``None`` if already up.
+
+    D-005: serialises concurrent autostart callers so two MCP processes that
+    both pass the pre-lock ``is_up()`` check in :func:`start` cannot race to
+    spawn duplicate servers on the same port.  The lock is released before the
+    wait loop so the caller can poll ``is_up()`` without holding it.
+
+    Parameters
+    ----------
+    model_dir : Path
+        Resolved model directory to pass to :func:`spawn`.
+    host : str
+        Server bind address.
+    port : int
+        Server bind port.
+    device : str
+        Compute device string.
+
+    Returns
+    -------
+    subprocess.Popen[bytes] | None
+        The freshly spawned process, or ``None`` when a concurrent caller
+        already started the server (re-check ``/health`` in that case).
+    """
+    lock_path = paths.pid_path().with_suffix(".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(lock_path, "w") as _lock_fh:
+        fcntl.flock(_lock_fh, fcntl.LOCK_EX)
+        if is_up(host, port):
+            return None
+        return spawn(model_dir, host, port, device)
 
 
 def start(
@@ -224,7 +266,11 @@ def start(
                 f"model {name!r} is not pulled; run: ember model pull {name}"
             )
 
-    proc = spawn(model_dir, host, port, device)
+    proc = _spawn_locked(model_dir, host, port, device)
+    if proc is None:
+        recheck = health(host, port)
+        return int((recheck or {}).get("pid") or 0)
+
     deadline = time.time() + timeout
     while time.time() < deadline:
         if is_up(host, port):

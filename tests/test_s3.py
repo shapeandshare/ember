@@ -231,3 +231,228 @@ def test_download_prefix_normalizes_trailing_slash_on_prefix(
     with pytest.raises(RuntimeError, match=r"no objects found"):
         s3.download_prefix("my-bucket", "clef-flash/", tmp_path / "dest", "test")
     assert captured_prefix == ["clef-flash/"]
+
+
+# ###########################################################################
+# D-006: S3 download must reject prefixes that exceed the size cap
+# ###########################################################################
+def test_download_prefix_raises_when_total_size_exceeds_max_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D-006: download_prefix() must preflight the S3 prefix size and raise
+    RuntimeError before downloading anything when it exceeds max_bytes."""
+
+    class _FakePaginator:
+        @staticmethod
+        def paginate(**_kwargs: object) -> list[dict[str, object]]:
+            return [
+                {
+                    "Contents": [
+                        {"Key": "model/config.json", "Size": 600 * 1024 * 1024},
+                    ]
+                }
+            ]
+
+    class _FakeClient:
+        @staticmethod
+        def get_paginator(_name: str) -> _FakePaginator:
+            return _FakePaginator()
+
+        @staticmethod
+        def download_file(bucket: str, key: str, target: str) -> None:
+            raise AssertionError(
+                "download_file must not be called when size exceeds cap"
+            )
+
+    monkeypatch.setattr(s3, "s3_client", lambda: _FakeClient())
+    with pytest.raises(RuntimeError, match=r"exceeds|too large|max"):
+        s3.download_prefix(
+            "my-bucket",
+            "model",
+            tmp_path / "dest",
+            "test",
+            max_bytes=500 * 1024 * 1024,
+        )
+
+
+def test_download_prefix_proceeds_when_size_within_max_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D-006: download_prefix() must download normally when size is within cap."""
+    downloaded: list[str] = []
+
+    class _FakePaginator:
+        @staticmethod
+        def paginate(**_kwargs: object) -> list[dict[str, object]]:
+            return [
+                {
+                    "Contents": [
+                        {"Key": "model/config.json", "Size": 100},
+                    ]
+                }
+            ]
+
+    class _FakeClient:
+        @staticmethod
+        def get_paginator(_name: str) -> _FakePaginator:
+            return _FakePaginator()
+
+        @staticmethod
+        def download_file(bucket: str, key: str, target: str) -> None:
+            downloaded.append(key)
+            Path(target).write_bytes(b"x")
+
+    monkeypatch.setattr(s3, "s3_client", lambda: _FakeClient())
+    s3.download_prefix(
+        "my-bucket",
+        "model",
+        tmp_path / "dest",
+        "test",
+        max_bytes=500 * 1024 * 1024,
+    )
+    assert len(downloaded) == 1
+
+
+def test_download_prefix_no_cap_when_max_bytes_is_zero(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D-006: max_bytes=0 disables the size preflight entirely."""
+    downloaded: list[str] = []
+
+    class _FakePaginator:
+        @staticmethod
+        def paginate(**_kwargs: object) -> list[dict[str, object]]:
+            return [
+                {
+                    "Contents": [
+                        {"Key": "model/config.json", "Size": 999 * 1024 * 1024 * 1024},
+                    ]
+                }
+            ]
+
+    class _FakeClient:
+        @staticmethod
+        def get_paginator(_name: str) -> _FakePaginator:
+            return _FakePaginator()
+
+        @staticmethod
+        def download_file(bucket: str, key: str, target: str) -> None:
+            downloaded.append(key)
+            Path(target).write_bytes(b"x")
+
+    monkeypatch.setattr(s3, "s3_client", lambda: _FakeClient())
+    s3.download_prefix(
+        "my-bucket",
+        "model",
+        tmp_path / "dest",
+        "test",
+        max_bytes=0,
+    )
+    assert len(downloaded) == 1
+
+
+# ###########################################################################
+# S3 path traversal prevention
+# ###########################################################################
+def test_download_prefix_rejects_path_traversal_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """S3 keys containing path traversal sequences must be rejected before
+    any download occurs so an attacker-controlled S3 prefix cannot write
+    files outside the destination directory."""
+
+    class _FakePaginator:
+        @staticmethod
+        def paginate(**_kwargs: object) -> list[dict[str, object]]:
+            return [
+                {
+                    "Contents": [
+                        {"Key": "model/../../.ssh/authorized_keys", "Size": 10},
+                    ]
+                }
+            ]
+
+    class _FakeClient:
+        @staticmethod
+        def get_paginator(_name: str) -> _FakePaginator:
+            return _FakePaginator()
+
+        @staticmethod
+        def download_file(bucket: str, key: str, target: str) -> None:
+            raise AssertionError("download_file must not be called for a traversal key")
+
+    monkeypatch.setattr(s3, "s3_client", lambda: _FakeClient())
+    with pytest.raises(RuntimeError, match=r"traversal|outside"):
+        s3.download_prefix("my-bucket", "model", tmp_path / "dest", "test")
+
+
+def test_download_prefix_accepts_normal_nested_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Normal nested keys (no traversal) must download without error."""
+    downloaded: list[str] = []
+
+    class _FakePaginator:
+        @staticmethod
+        def paginate(**_kwargs: object) -> list[dict[str, object]]:
+            return [
+                {
+                    "Contents": [
+                        {"Key": "model/subdir/weights.bin", "Size": 50},
+                    ]
+                }
+            ]
+
+    class _FakeClient:
+        @staticmethod
+        def get_paginator(_name: str) -> _FakePaginator:
+            return _FakePaginator()
+
+        @staticmethod
+        def download_file(bucket: str, key: str, target: str) -> None:
+            downloaded.append(key)
+            Path(target).write_bytes(b"x")
+
+    monkeypatch.setattr(s3, "s3_client", lambda: _FakeClient())
+    s3.download_prefix("my-bucket", "model", tmp_path / "dest", "test")
+    assert len(downloaded) == 1
+
+
+def test_s3_client_applies_connect_and_read_timeouts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """D-006 (timeout half): s3_client() must pass explicit connect and read
+    timeouts to boto3 so a slow or unresponsive S3 endpoint cannot block
+    startup indefinitely."""
+    import sys
+
+    captured: dict[str, object] = {}
+
+    class _FakeBotocoreConfig:
+        def __init__(self, **kwargs: object) -> None:
+            captured.update(kwargs)
+
+    class _FakeBoto3:
+        @staticmethod
+        def client(service: str, **kwargs: object) -> str:
+            captured["service"] = service
+            captured["config_obj"] = kwargs.get("config")
+            return "fake-client"
+
+    monkeypatch.setattr(s3.config, "resolve", lambda key: None)
+    monkeypatch.setitem(sys.modules, "boto3", _FakeBoto3())
+    monkeypatch.setitem(
+        sys.modules,
+        "botocore.config",
+        type(
+            "mod",
+            (),
+            {"Config": _FakeBotocoreConfig},
+        )(),
+    )
+
+    s3.s3_client()
+    assert "connect_timeout" in captured, "s3_client() must set connect_timeout"
+    assert "read_timeout" in captured, "s3_client() must set read_timeout"
+    assert captured["connect_timeout"] > 0
+    assert captured["read_timeout"] > 0
