@@ -6,10 +6,9 @@ tags:
   - domain/tooling
   - status/draft
 created: 2026-10-05
-updated: 2026-10-05
+updated: 2026-10-09
 code-refs:
   - .github/workflows/release-ember.yml
-  - .github/workflows/release-plugin.yml
 ---
 
 # release automation constraints on a public repo

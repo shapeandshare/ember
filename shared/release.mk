@@ -1,7 +1,7 @@
 # shared/release.mk — setup, bootstrap, release, and cleanup targets
 # Assumes UV, PY, EMBER, MODEL_DIR, and EMBER_* vars are defined in the root Makefile.
 
-.PHONY: download init opencode setup bootstrap check ci clean clean-model release-dry release-ember release-plugin deployment-requirements deploy undeploy
+.PHONY: download init opencode setup bootstrap check ci clean clean-model release-dry release-ember deployment-requirements deploy undeploy
 
 download: $(EMBER) ## Download pinned Clef-Flash weights (~18 GB) to .models/
 	$(PY) -c "from huggingface_hub import snapshot_download; from ember.models import get; spec = get('flash'); snapshot_download(spec.repo, revision=spec.revision, local_dir='$(MODEL_DIR)')"
@@ -36,11 +36,8 @@ clean-model: ## Delete downloaded model weights
 release-dry: ## Preview the next ember version bump without making changes
 	$(PY) -m commitizen bump --dry-run
 
-release-ember: ## Trigger the ember release workflow on main (bump PR → GitHub Release)
+release-ember: ## Trigger the ember release workflow on main (bump PR → GitHub Release → PyPI)
 	gh workflow run release-ember.yml --ref main
-
-release-plugin: ## Trigger the plugin release workflow on main (bump PR → GitHub Release)
-	gh workflow run release-plugin.yml --ref main
 
 deployment-requirements: $(EMBER) ## Regenerate deployment/requirements.txt from uv.lock (run before every Outerbounds deploy)
 	$(UV) export --format requirements.txt --no-dev --no-editable --no-hashes --no-emit-project -o deployment/requirements.txt

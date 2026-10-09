@@ -14,7 +14,7 @@ model server itself starts on the first tool call.
 
 ## Install
 
-For now, install it locally with the `ember` CLI (recommended):
+Install it with the `ember` CLI:
 
 ```bash
 ember init --opencode            # project scope
@@ -25,17 +25,12 @@ That writes a generated plugin to `.opencode/plugins/ember.js` (or
 `~/.config/opencode/plugins/ember.js`) with the absolute command path baked in,
 and installs the `ember-advise` skill next to it.
 
-To use this package as an npm dependency instead, add it to your opencode config:
-
-```json
-{ "plugin": ["opencode-ember-advise"] }
-```
-
-It resolves `ember-mcp` at every launch; set `EMBER_MCP` to override the path.
+This package is not published to npm, so `{ "plugin": ["opencode-ember-advise"] }`
+does not install it. The source here resolves `ember-mcp` at every launch (set
+`EMBER_MCP` to override the path) and stays tested in CI.
 
 ## Versioning
 
-This package versions independently of the `gut` Python distribution and follows
-[Semantic Versioning](https://semver.org/). A `feat` change cuts a minor release and a
-`fix`/`perf`/`refactor` change a patch; documentation and chore changes ride along with
-the next release. See [CHANGELOG.md](CHANGELOG.md) for the full history.
+Separate releases stopped after `plugin/v0.4.0`, and `package.json` keeps that
+version. Later changes appear in the root [CHANGELOG.md](../../CHANGELOG.md);
+[CHANGELOG.md](CHANGELOG.md) keeps the history up to `plugin/v0.4.0`.

@@ -7,13 +7,12 @@ tags:
   - domain/tooling
   - status/draft
 created: 2026-10-04
-updated: 2026-10-04
+updated: 2026-10-09
 code-refs:
   - pyproject.toml
   - packages/opencode-plugin/package.json
   - packages/opencode-plugin/CHANGELOG.md
   - .github/workflows/release-ember.yml
-  - .github/workflows/release-plugin.yml
 ---
 
 # version components separately
