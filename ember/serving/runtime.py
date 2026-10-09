@@ -130,6 +130,10 @@ def joint_module(model_dir: Path) -> Any:
     can run under its loader contract; this performs no integrity
     verification of ``model_dir`` before importing from it.
 
+    The model directory is added to ``sys.path`` only for the duration of
+    the import, then removed immediately (I-003). This limits the window
+    during which the path appears in tracebacks.
+
     Parameters
     ----------
     model_dir : Path
@@ -143,12 +147,19 @@ def joint_module(model_dir: Path) -> Any:
     global _JOINT_MODULE
     if _JOINT_MODULE is None:
         path = str(model_dir.resolve())
-        if path not in sys.path:
+        added = path not in sys.path
+        if added:
             sys.path.insert(0, path)
-        # import-placement:allow - joint_schema_model ships in the model snapshot.
-        import joint_schema_model  # type: ignore[import-not-found]
+        try:
+            # import-placement:allow - joint_schema_model ships in the model snapshot.
+            import joint_schema_model  # type: ignore[import-not-found]
 
-        _JOINT_MODULE = joint_schema_model
+            _JOINT_MODULE = joint_schema_model
+        finally:
+            # I-003: remove the model dir from sys.path after the import so it
+            # does not appear in tracebacks for the rest of the process lifetime.
+            if added and path in sys.path:
+                sys.path.remove(path)
     return _JOINT_MODULE
 
 
@@ -447,12 +458,14 @@ class Engine:
         Returns
         -------
         dict[str, Any]
-            ``model``, ``device``, ``dtype``, ``model_dir``, and ``max_length``.
+            ``model``, ``device``, ``dtype``, and ``max_length``.
+            ``model_dir`` is intentionally omitted: ``/health`` forwards this
+            dict to any loopback caller, and the filesystem path is not needed
+            by any external consumer (I-001).
         """
         return {
             "model": self.model_name,
             "device": self.device,
             "dtype": str(self.dtype).replace("torch.", ""),
-            "model_dir": str(self.model_dir),
             "max_length": self.max_length,
         }
