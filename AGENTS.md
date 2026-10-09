@@ -601,7 +601,8 @@ spacing values, or component styles outside the design system.
   gate that applied to the bot's first PRs), approve the runs, let the bump PR
   merge, then dispatch the workflow (`make release-ember` / `make release-plugin`)
   — it detects the already-merged version on main and goes straight to tagging
-  and publishing. The ember side releases on commitizen's rules; the
+  and publishing. It tags the commit that set the version, never main's head, so
+  PRs merged in the meantime stay out of that release. The ember side releases on commitizen's rules; the
   plugin side releases only for `feat` (minor) and `fix`/`perf`/`refactor`/`revert`
   (patch) commits — `docs`/`chore`/`test`/`ci`/`style`/`build` changes accumulate
   until a release-worthy commit arrives. Two repo settings are load-bearing: the

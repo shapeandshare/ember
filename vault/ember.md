@@ -62,6 +62,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-08-config-show-ignored-env-overrides]]
 - [[2026-10-08-ember-init-leaked-the-vault-server]]
 - [[2026-10-08-harnesses-gate-project-mcp-registrations]]
+- [[2026-10-08-release-resume-tagged-main-head]]
 
 ### Sessions
 
