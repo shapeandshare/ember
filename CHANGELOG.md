@@ -1,3 +1,14 @@
+## v0.8.0 (2026-10-09)
+
+### BREAKING CHANGE
+
+- the distribution is now ember-advise. Existing tool
+installs must run `uv tool uninstall gut` before installing it.
+
+### Feat
+
+- **ember**: publish releases to PyPI as ember-advise and the MCP Registry (#86)
+
 ## v0.7.0 (2026-10-09)
 
 ### Feat
