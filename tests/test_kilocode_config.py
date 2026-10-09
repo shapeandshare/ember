@@ -11,7 +11,7 @@ import json
 import re
 
 import pytest
-from ember.kilocode.kilocode_config import remove, write
+from ember.kilocode.kilocode_config import has_entry, remove, write
 
 _MATCH = re.escape("kilo.json")
 
@@ -122,3 +122,63 @@ def test_write_never_embeds_an_auth_token(tmp_path: pytest.TempPathFactory) -> N
     path = tmp_path / "kilo.json"
     write(path, "127.0.0.1", 8765, "0", server_url="https://decisions.example.com")
     assert "token" not in path.read_text().lower()
+
+
+def test_has_entry_is_true_after_write(tmp_path: pytest.TempPathFactory) -> None:
+    """has_entry() sees the mcp.ember entry write() produced."""
+    path = tmp_path / "kilo.json"
+    write(path, "127.0.0.1", 8765, "1")
+    assert has_entry(path) is True
+
+
+@pytest.mark.parametrize(
+    "content", ['// comment\n{"model": "x"}', "{not json", "[]", '{"mcp": "x"}']
+)
+def test_write_refuses_to_replace_a_config_it_cannot_parse(
+    tmp_path: pytest.TempPathFactory, content: str
+) -> None:
+    """write() never clobbers a kilo.json it can't merge into; the bytes survive."""
+    path = tmp_path / "kilo.json"
+    path.write_text(content)
+    with pytest.raises(ValueError, match="not overwriting"):
+        write(path, "127.0.0.1", 8765, "1")
+    assert path.read_text() == content
+
+
+def test_write_treats_an_empty_file_as_a_new_config(
+    tmp_path: pytest.TempPathFactory,
+) -> None:
+    """An empty kilo.json holds nothing to lose, so write() fills it in."""
+    path = tmp_path / "kilo.json"
+    path.write_text("")
+    write(path, "127.0.0.1", 8765, "1")
+    assert has_entry(path) is True
+
+
+@pytest.mark.parametrize("content", ["[]", '{"mcp": "ember"}'])
+def test_remove_is_false_for_a_config_without_an_mcp_table(
+    tmp_path: pytest.TempPathFactory, content: str
+) -> None:
+    """remove() reports nothing removed (and does not crash) on odd JSON shapes."""
+    path = tmp_path / "kilo.json"
+    path.write_text(content)
+    assert remove(path) is False
+
+
+@pytest.mark.parametrize("content", [None, "{not json", '{"mcp": "ember"}'])
+def test_has_entry_is_false_for_missing_or_malformed_config(
+    tmp_path: pytest.TempPathFactory, content: str | None
+) -> None:
+    """A missing, unparseable, or oddly shaped kilo.json is not registered."""
+    path = tmp_path / "kilo.json"
+    if content is not None:
+        path.write_text(content)
+    assert has_entry(path) is False
+
+
+def test_has_entry_rejects_non_kilo_json_basename(
+    tmp_path: pytest.TempPathFactory,
+) -> None:
+    """has_entry() keeps the same basename guard as write() and remove()."""
+    with pytest.raises(ValueError, match=_MATCH):
+        has_entry(tmp_path / "evil.json")
