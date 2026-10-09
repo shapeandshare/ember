@@ -1,3 +1,9 @@
+## v0.7.0 (2026-10-09)
+
+### Feat
+
+- **ember**: add --version / -V flag to CLI (#83)
+
 ## v0.6.0 (2026-10-08)
 
 The release run for #76 timed out before tagging, and the resumed run tagged `main` after
