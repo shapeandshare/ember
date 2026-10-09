@@ -298,22 +298,36 @@ and a `make deployment-requirements` target — lives in [`deployment/`](deploym
 
 ### Remote inference
 
-Local inference is the default. To use a decision model running on another machine, point the
-client at it:
+Local inference is the default. To serve another machine — for example, a second Mac that
+lacks the memory for the model — run the server on the host and point the client at it.
+
+#### On the host machine (the one with the model)
 
 ```bash
-export EMBER_SERVER_URL="https://decisions.example.com"   # a remote ember server
-export EMBER_AUTH_TOKEN="…"                               # optional bearer token
-ember status                                              # reports local/remote + reachability
+# Bind to all interfaces so other machines can reach it
+EMBER_HOST=0.0.0.0 ember start
+
+# Recommended: also require a bearer token so only your client can use it
+EMBER_HOST=0.0.0.0 EMBER_SERVER_AUTH_TOKEN=your-secret ember start
 ```
 
-Credentials may be sent as `Authorization: Bearer <token>` (default) or as a custom header
-(`EMBER_AUTH_HEADER=X-API-KEY`), ordinarily in front of a proxy that translates it. `http` to
-a non-loopback host is refused unless `EMBER_ALLOW_INSECURE_TRANSPORT=1`. To make a server
-accept remote clients, set `EMBER_HOST` (e.g. `0.0.0.0`) and `EMBER_SERVER_AUTH_TOKEN`, and
-terminate TLS at a proxy. `ember status` / `ember doctor` report the endpoint kind,
-reachability, the remote's advertised `auth_required`, and whether a credential is configured;
-reverting to local is a single change (unset these variables).
+Ember does not terminate TLS. On a trusted LAN, plain HTTP is fine (see the client note
+below). Over the internet, put a TLS proxy (nginx, Caddy) in front and use `https://`.
+
+#### On the client machine (the one running the agent)
+
+```bash
+export EMBER_SERVER_URL="http://<host-ip>:8765"   # use https:// if behind a TLS proxy
+export EMBER_AUTH_TOKEN="your-secret"             # matches EMBER_SERVER_AUTH_TOKEN on the host
+export EMBER_AUTOSTART=0                          # nothing local to start
+ember status                                      # reports remote endpoint + reachability
+```
+
+Plain `http` to a non-loopback host is refused by default; set
+`EMBER_ALLOW_INSECURE_TRANSPORT=1` to allow it on a trusted LAN. Credentials may also be
+sent as a custom header (`EMBER_AUTH_HEADER=X-API-KEY`). `ember status` / `ember doctor`
+report the endpoint kind, reachability, the remote's advertised `auth_required`, and whether
+a credential is configured; reverting to local is a single change (unset these variables).
 
 #### Bootstrapping a client against a hosted endpoint
 
