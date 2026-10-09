@@ -316,6 +316,28 @@ jobs:
         with:
           enable-cache: false
 
+      # PyPI Trusted Publishing runs as a non-user identity; it can upload to an
+      # existing project, but it cannot create the project for the first time.
+      - name: Confirm the PyPI project exists
+        env:
+          RELEASE_TAG: ${{ needs.release-ember.outputs.tag }}
+        run: |
+          if curl -fsI https://pypi.org/simple/ember-advise/ >/dev/null; then
+            exit 0
+          fi
+          cat <<EOF >&2
+          error: https://pypi.org/simple/ember-advise/ returned 404.
+
+          PyPI Trusted Publishing (OIDC, non-user identity) cannot create a new project.
+          A maintainer must create the project once by uploading a release with a user token.
+          After the project exists, rerun this job.
+
+          Suggested one-time bootstrap (run from a machine with a PyPI maintainer token):
+            gh release download "${RELEASE_TAG}" --repo shapeandshare/ember --pattern 'ember_advise-*' --dir dist
+            UV_PUBLISH_TOKEN="<pypi-token>" uv publish --trusted-publishing never dist/*
+          EOF
+          exit 1
+
       # Publish the exact files attached to the GitHub Release.
       - name: Download the release's wheel and sdist
         env:
