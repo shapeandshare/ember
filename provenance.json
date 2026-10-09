@@ -548,9 +548,9 @@
     },
     {
       "path": "assets/brand/tokens.css",
-      "sha256": "ae8c48535653bc8d7bafcc284e855cffdf2b216fa4c64c44da5330d6cb4bd79b",
+      "sha256": "ffba1094c509dad6c65d8fc79c0afd3c01ccf4cd70e43eaba1ca2629718cea0f",
       "kind": "ai_assisted_code",
-      "tool": "Codex; authored SVG paths, CSS, or HTML; comment and --ember-* token names renamed by the Sisyphus agent (opencode) on user request, 2026-10-02",
+      "tool": "Codex; authored SVG paths, CSS, or HTML; comment and --ember-* token names renamed by the Sisyphus agent (opencode) on user request, 2026-10-02; --ember-on-accent added by the Sisyphus agent (opencode) on user request, 2026-10-09",
       "parents": [
         "assets/brand/svg/ember-light.svg",
         "assets/brand/svg/ember-dark.svg"

@@ -1,16 +1,16 @@
 <header class="site-head">
   <div class="site-head-inner">
     <a class="brand" href="{{ '/' | relative_url }}">
-      <img class="brand-mark" src="{{ '/assets/brand/svg/ember-auto.svg' | relative_url }}" alt="" width="28" height="28">
+      <img class="brand-mark" src="{{ '/assets/brand/svg/ember-auto.svg' | relative_url }}" alt="" width="32" height="32">
       <span class="brand-name">ember</span>
     </a>
     <nav class="site-nav" aria-label="Primary">
       {%- assign docs_home = '/docs/' | append: site.data.docs[0].slug | append: '/' %}
-      <a href="{{ docs_home | relative_url }}">Docs</a>
+      <a href="{{ docs_home | relative_url }}"{% if page.url contains '/docs/' %} aria-current="true"{% endif %}>Docs</a>
       {%- assign bench_home = site.data.benchmark.sections[0].anchor | default: "summary" %}
-      <a href="{{ '/results/' | append: bench_home | append: '/' | relative_url }}">Benchmark</a>
-      <a href="{{ site.github }}">GitHub</a>
-      <button id="theme" class="theme-toggle" type="button" aria-label="Colour theme">Auto</button>
+      <a href="{{ '/results/' | append: bench_home | append: '/' | relative_url }}"{% if page.url contains '/results/' %} aria-current="true"{% endif %}>Benchmark</a>
+      <a class="nav-github" href="{{ site.github }}">GitHub</a>
     </nav>
+    <button id="theme" class="theme-toggle" type="button" aria-label="Colour theme">Auto</button>
   </div>
 </header>

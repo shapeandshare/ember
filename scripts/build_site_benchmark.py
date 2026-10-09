@@ -18,6 +18,7 @@ import json
 import shutil
 import sys
 from pathlib import Path
+from typing import Any
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
@@ -46,6 +47,49 @@ def _page(layout: str, title: str, permalink: str, body: str, extra: str = "") -
     )
 
 
+def _pct(value: float) -> int:
+    return round(value * 100)
+
+
+def headline(model: dict[str, Any]) -> dict[str, Any]:
+    """Pick the numbers the landing page shows, rounded for display."""
+    summary = model["summary"]
+    confident = [summary[kind]["acting"] for kind in ("choice", "noul")]
+    answered = sum(acting["n"] for acting in confident)
+    asked = summary["choice"]["n"] + summary["noul"]["n"]
+    bands = summary["choice"]["reliability"]
+    return {
+        "items": summary["overall"]["items"],
+        "questions": summary["overall"]["questions"],
+        "accuracy_pct": _pct(summary["overall"]["accuracy"]),
+        "accuracy_ci_pct": [_pct(bound) for bound in summary["overall"]["accuracy_ci"]],
+        "confident": {
+            "answered": answered,
+            "asked": asked,
+            "correct": round(sum(a["n"] * a["accuracy"] for a in confident)),
+            "share_pct": _pct(answered / asked),
+        },
+        "score": {
+            "exact_pct": _pct(summary["score"]["accuracy"]),
+            "within_one_pct": _pct(summary["score"]["within_one"]),
+        },
+        "reliability": [
+            {
+                "claimed_pct": _pct(band["confidence"]),
+                "actual_pct": _pct(band["accuracy"]),
+                "n": band["n"],
+            }
+            for band in bands
+        ],
+        "conservative": all(band["accuracy"] >= band["confidence"] for band in bands),
+        "latency": {
+            "p50_s": f"{model['latency']['p50'] / 1000:.2f}",
+            "p95_s": f"{model['latency']['p95'] / 1000:.2f}",
+        },
+        "host": model["meta"]["host"]["cpu"],
+    }
+
+
 def build() -> int:
     model_path = _latest_model()
     if model_path is None:
@@ -62,8 +106,8 @@ def build() -> int:
     shutil.rmtree(OUT, ignore_errors=True)
     OUT.mkdir(parents=True)
     (SITE / "assets").mkdir(exist_ok=True)
-    # The report hero gradient is provided site-wide by `.page-body` (site.css),
-    # so drop it here to avoid a second, narrower band under the nav.
+    # The report hero gradient is provided site-wide by the page background
+    # (`body` in site.css), so drop it here to avoid a second, narrower band.
     hero_override = "\n.hero { background: none; border-bottom: 0; }\n"
     (SITE / "assets" / "benchmark.css").write_text(
         render_html.css() + hero_override, encoding="utf-8"
@@ -87,6 +131,7 @@ def build() -> int:
         json.dumps(
             {
                 "run": {"id": run_id, "title": title, "run_at": meta["run_at"]},
+                "headline": headline(model),
                 "sections": [
                     {"anchor": a, "number": n, "title": t} for a, n, t, _ in sections
                 ],

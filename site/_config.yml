@@ -25,3 +25,4 @@ exclude:
   - Gemfile
   - Gemfile.lock
   - README.md
+  - .gems # make site-serve's gem cache; excluding it keeps Jekyll's polling off it

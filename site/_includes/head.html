@@ -1,6 +1,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script>
+  document.documentElement.classList.add("js");
   try {
     var t = localStorage.getItem("ember-theme");
     if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
@@ -24,4 +25,5 @@
 <link rel="icon" type="image/svg+xml" href="{{ '/assets/brand/svg/ember-auto.svg' | relative_url }}">
 <link rel="stylesheet" href="{{ '/assets/brand/tokens.css' | relative_url }}">
 <style>{% include site.css %}</style>
+{% if page.layout == 'home' %}<style>{% include home.css %}</style>{% endif %}
 {% if page.layout == 'benchmark' %}<link rel="stylesheet" href="{{ '/assets/benchmark.css' | relative_url }}">{% endif %}

@@ -57,6 +57,30 @@ Statuses must have explicit labels or icons; never rely on color alone.
 GitHub Markdown keeps the reader's native text colors; themed artwork carries the
 palette there. Rendered web documentation can consume the semantic CSS tokens.
 
+### Site buttons
+
+The Pages site has one button pattern, built from the tokens above:
+
+- **Primary**: a filled pill in `--ember-accent` with `--ember-on-accent` text and a
+  soft `--ember-gold` glow that grows on hover, like Ember's glowing tummy. At most
+  one per section; the glow never animates on its own.
+- **Secondary**: a pill tinted with the accent, with `--ember-text` text.
+- **Tertiary**: a plain accent link.
+
+Buttons are at least 44 px tall, show a visible focus ring, and drop their motion
+under `prefers-reduced-motion`. Navigation stays an `<a>` even when it looks like a
+button.
+
+### Site motion
+
+Decorative motion lives on the landing page only: the breathing glow and rising
+sparks around Ember, the flowing wires in the call diagram, and bars that grow
+when a section scrolls into view. It uses CSS `@keyframes` (never SMIL) and one
+small IntersectionObserver script. Motion never carries information, so all of it
+turns off under `prefers-reduced-motion`, and every section stays visible when
+JavaScript does not run. Numbers on the landing page come from the published
+benchmark run or the agent kit's observed outputs, never from hand-typed copies.
+
 ---
 
 ## 3. Typography
@@ -523,6 +547,8 @@ When editing any documentation file:
 | 2026-10-02 | Initial design system: palette, typography, diagram style, README structure, badges, callouts, tables, code blocks, language, architecture diagrams, commits, PRs, Makefile, tooling, config, agent kit, testing, maintenance checklist |
 | 2026-10-02 | Product renamed to `ember` to match the mascot; "gut feeling" stays as flavor text |
 | 2026-10-05 | README structure and badge conventions reconciled with the shipped README: no badge row, and the corrected section order (How it works, Names, Install, Agent onboarding, CLI, Usage, Configuration, Metrics, Development, Tests) |
+| 2026-10-09 | Site buttons (§2): one filled primary per section with a gold glow, a tinted secondary, and a plain-link tertiary; new `--ember-on-accent` token |
+| 2026-10-09 | Site motion (§2): landing-page-only decorative animation, off under reduced motion; landing numbers come from data |
 
 ## Material provenance
 
