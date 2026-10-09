@@ -47,6 +47,24 @@ def sandbox(tmp_path, monkeypatch):
     return tmp_path
 
 
+def test_version_flag_prints_version_and_exits(capsys):
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(["--version"])
+    assert exc_info.value.code == 0
+    out = capsys.readouterr().out
+    assert out.startswith("ember ")
+    assert out.strip() != "ember"
+
+
+def test_version_short_flag_prints_version_and_exits(capsys):
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(["-V"])
+    assert exc_info.value.code == 0
+    out = capsys.readouterr().out
+    assert out.startswith("ember ")
+    assert out.strip() != "ember"
+
+
 @pytest.mark.parametrize(
     ("what", "loader"),
     [
