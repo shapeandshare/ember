@@ -478,3 +478,134 @@ def test_classifier_unreachable_error():
         httpx.ConnectError("connection refused"), _error_endpoint()
     )
     assert "not reachable" in message
+
+
+# ###########################################################################
+# R-002: advise() must log a call summary (question IDs + model) to stderr
+# ###########################################################################
+# ###########################################################################
+# S-004: MCP main() must warn when EMBER_SERVER_URL is non-loopback + insecure
+# ###########################################################################
+# ###########################################################################
+# R-003: MCP log format must include a timestamp (structured logging)
+# ###########################################################################
+def test_mcp_log_format_includes_timestamp(monkeypatch):
+    """R-003: The MCP logger's formatter must include a timestamp so log
+    lines are correlatable with server-side events and auditable."""
+    import logging
+
+    logger = logging.getLogger("ember-mcp")
+    handlers = logger.handlers or logging.root.handlers
+    for handler in handlers:
+        fmt = handler.formatter
+        if fmt is not None:
+            pattern = fmt._fmt if hasattr(fmt, "_fmt") else str(fmt)
+            if "%(asctime)s" in pattern or "asctime" in pattern:
+                return
+    pytest.fail(
+        "R-003: ember-mcp logger must use a formatter that includes %(asctime)s"
+    )
+
+
+def test_main_logs_warning_when_server_url_is_non_loopback_and_insecure(
+    monkeypatch, caplog
+):
+    """S-004: mcp_server.main() must emit a WARNING when EMBER_SERVER_URL
+    resolves to a non-loopback address and EMBER_ALLOW_INSECURE_TRANSPORT is
+    enabled — state containing secrets would be sent in plaintext over the
+    network without this advisory."""
+    import logging
+
+    monkeypatch.setenv("EMBER_SERVER_URL", "http://192.0.2.1:8765")
+    monkeypatch.setenv("EMBER_ALLOW_INSECURE_TRANSPORT", "1")
+    monkeypatch.setattr(mcp_server.mcp, "run", lambda: None)
+    with caplog.at_level(logging.WARNING, logger="ember-mcp"):
+        mcp_server.main()
+    assert any(
+        "insecure" in r.message.lower() or "non-loopback" in r.message.lower()
+        for r in caplog.records
+        if r.levelno >= logging.WARNING
+    ), "S-004: main() must warn about non-loopback insecure transport"
+
+
+def test_main_no_warning_when_server_url_is_loopback(monkeypatch, caplog):
+    """S-004: No warning when EMBER_SERVER_URL is loopback (default case)."""
+    import logging
+
+    monkeypatch.setenv("EMBER_SERVER_URL", "http://127.0.0.1:8765")
+    monkeypatch.delenv("EMBER_ALLOW_INSECURE_TRANSPORT", raising=False)
+    monkeypatch.setattr(mcp_server.mcp, "run", lambda: None)
+    with caplog.at_level(logging.WARNING, logger="ember-mcp"):
+        mcp_server.main()
+    assert not any(
+        "insecure" in r.message.lower() or "non-loopback" in r.message.lower()
+        for r in caplog.records
+        if r.levelno >= logging.WARNING
+    ), "S-004: no warning expected for loopback URL"
+
+
+def test_advise_logs_question_ids_on_success(
+    stub_env, stub_server, monkeypatch, caplog
+):
+    """R-002: Each successful advise call must log question IDs and model label
+    so there is a minimal audit trail without persisting state content."""
+    import logging
+
+    url, _ = stub_server(
+        payload={
+            "model": "clef-flash",
+            "answers": {"q": {"type": "noul", "noul": 0.9}},
+            "usage": {},
+        }
+    )
+    monkeypatch.setenv("EMBER_SERVER_URL", url)
+    monkeypatch.setenv("EMBER_AUTOSTART", "0")
+    with caplog.at_level(logging.INFO, logger="ember-mcp"):
+        asyncio.run(
+            mcp_server.advise(AdviseInput(state="x", questions={"q": {"type": "noul"}}))
+        )
+    combined = caplog.text
+    assert "advise" in combined.lower() or "q" in combined, (
+        "R-002: advise() must log question IDs or a call summary to stderr"
+    )
+
+
+# ###########################################################################
+# I-002: ToolError messages must not include raw server error bodies
+# ###########################################################################
+def test_server_4xx_error_body_is_sanitized(stub_env, stub_server, monkeypatch):
+    """I-002: A 4xx response body must not include raw filesystem paths or
+    stack traces — only the actionable message is forwarded to the agent."""
+    fastapi_422 = json.dumps(
+        {
+            "detail": [
+                {
+                    "type": "missing",
+                    "loc": ["body", "state"],
+                    "msg": "Field required",
+                    "url": "https://errors.pydantic.dev/...",
+                }
+            ]
+        }
+    )
+    url, _ = stub_server(status=422, raw=fastapi_422, content_type="application/json")
+    with pytest.raises(ToolError) as exc_info:
+        _call_direct(monkeypatch, url)
+    error_text = str(exc_info.value)
+    assert "422" in error_text
+    assert "/Users/" not in error_text, "filesystem paths must not leak in ToolError"
+    assert "Traceback" not in error_text, "stack traces must not leak in ToolError"
+
+
+def test_server_5xx_error_returns_generic_message(stub_env, stub_server, monkeypatch):
+    """I-002: A 5xx body with filesystem paths must not be forwarded verbatim."""
+    url, _ = stub_server(
+        status=500,
+        raw="/home/user/ember/ember/serving/runtime.py: RuntimeError at line 42",
+        content_type="text/plain",
+    )
+    with pytest.raises(ToolError) as exc_info:
+        _call_direct(monkeypatch, url)
+    error_text = str(exc_info.value)
+    assert "/home/" not in error_text, "5xx body must not forward filesystem paths"
+    assert "500" in error_text
