@@ -265,7 +265,7 @@ You need an Apple Silicon Mac with 32 GB of memory or more, about 18 GiB of free
 1. **Install ember.**
 
    ```bash
-   uv tool install --python 3.12 "gut @ git+https://github.com/shapeandshare/ember"
+   uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.6.0"
    ```
 
 2. **Download the model.** It's about 18 GB, and an interrupted download resumes.

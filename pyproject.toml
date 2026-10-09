@@ -142,6 +142,8 @@ version_provider = "uv"
 # Files that carry the release version; each bump rewrites them, and
 # tests/test_distribution.py keeps the list complete.
 version_files = [
+    "README.md:shapeandshare/ember@v",
+    "site/index.md:shapeandshare/ember@v",
     "server.json:\"version\"",
     "packages/claude-plugin/.claude-plugin/plugin.json:\"version\"",
 ]

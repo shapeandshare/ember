@@ -14,6 +14,13 @@ PYPROJECT = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 VERSION = PYPROJECT["project"]["version"]
 SERVER_NAME = "io.github.shapeandshare/ember"
 PLUGIN_ROOT = ROOT / "packages" / "claude-plugin"
+
+# A documented git install of ember over https or ssh, with an optional @ref.
+GIT_INSTALL = re.compile(
+    r"git\+(?:https://github\.com/|ssh://git@github\.com/)shapeandshare/ember"
+    r"(?P<ref>@[^\"`\s)]*)?"
+)
+INSTALL_DOCS = ("README.md", "site/index.md")
 VERSIONED_MANIFESTS = (
     "server.json",
     "packages/claude-plugin/.claude-plugin/plugin.json",
@@ -27,6 +34,23 @@ def _version_files() -> dict[str, str]:
 
 def _json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("name", INSTALL_DOCS)
+def test_git_installs_pin_the_current_release_tag(name: str) -> None:
+    text = (ROOT / name).read_text(encoding="utf-8")
+    refs = [match.group("ref") for match in GIT_INSTALL.finditer(text)]
+    assert refs, f"{name} documents no git install"
+    assert refs == [f"@v{VERSION}"] * len(refs)
+
+
+@pytest.mark.parametrize("name", INSTALL_DOCS)
+def test_version_bumps_rewrite_every_pinned_install(name: str) -> None:
+    pattern = re.compile(_version_files()[name])
+    lines = (ROOT / name).read_text(encoding="utf-8").splitlines()
+    pinned = [line for line in lines if GIT_INSTALL.search(line)]
+    assert pinned
+    assert all(pattern.search(line) for line in pinned)
 
 
 @pytest.mark.parametrize("name", VERSIONED_MANIFESTS)
@@ -50,6 +74,11 @@ def test_server_json_describes_the_published_pypi_package() -> None:
     assert package["identifier"] == PYPROJECT["project"]["name"]
     assert package["transport"] == {"type": "stdio"}
     assert [arg["value"] for arg in package["packageArguments"]] == ["mcp"]
+
+
+def test_readme_carries_the_registry_ownership_marker() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert f"<!-- mcp-name: {SERVER_NAME} -->" in readme
 
 
 def test_marketplace_lists_the_ember_plugin() -> None:
