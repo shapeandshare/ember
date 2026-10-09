@@ -1,0 +1,17 @@
+{
+  "name": "ember",
+  "owner": {
+    "name": "shapeandshare",
+    "url": "https://github.com/shapeandshare"
+  },
+  "metadata": {
+    "description": "ember: calibrated advice for coding agents from a local decision model."
+  },
+  "plugins": [
+    {
+      "name": "ember",
+      "source": "./packages/claude-plugin",
+      "description": "The ember advise tool and its ember-advise playbook skill."
+    }
+  ]
+}

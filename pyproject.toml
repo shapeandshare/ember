@@ -143,6 +143,7 @@ version_provider = "uv"
 # tests/test_distribution.py keeps the list complete.
 version_files = [
     "server.json:\"version\"",
+    "packages/claude-plugin/.claude-plugin/plugin.json:\"version\"",
 ]
 update_changelog_on_bump = true
 major_version_zero = true

@@ -13,7 +13,11 @@ ROOT = Path(__file__).resolve().parents[1]
 PYPROJECT = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 VERSION = PYPROJECT["project"]["version"]
 SERVER_NAME = "io.github.shapeandshare/ember"
-VERSIONED_MANIFESTS = ("server.json",)
+PLUGIN_ROOT = ROOT / "packages" / "claude-plugin"
+VERSIONED_MANIFESTS = (
+    "server.json",
+    "packages/claude-plugin/.claude-plugin/plugin.json",
+)
 
 
 def _version_files() -> dict[str, str]:
@@ -46,6 +50,27 @@ def test_server_json_describes_the_published_pypi_package() -> None:
     assert package["identifier"] == PYPROJECT["project"]["name"]
     assert package["transport"] == {"type": "stdio"}
     assert [arg["value"] for arg in package["packageArguments"]] == ["mcp"]
+
+
+def test_marketplace_lists_the_ember_plugin() -> None:
+    marketplace = _json(ROOT / ".claude-plugin" / "marketplace.json")
+    (entry,) = marketplace["plugins"]
+    assert marketplace["name"] == "ember"
+    assert marketplace["owner"]["name"]
+    assert entry["name"] == "ember"
+    assert (ROOT / entry["source"]).resolve() == PLUGIN_ROOT
+
+
+def test_plugin_launches_the_installed_mcp_server() -> None:
+    plugin = _json(PLUGIN_ROOT / ".claude-plugin" / "plugin.json")
+    assert plugin["name"] == "ember"
+    assert plugin["mcpServers"] == {"ember": {"command": "ember-mcp"}}
+
+
+def test_plugin_skill_mirrors_the_agent_kit_skill() -> None:
+    kit = ROOT / "ember" / "agent_kit" / "ember-advise" / "SKILL.md"
+    mirror = PLUGIN_ROOT / "skills" / "ember-advise" / "SKILL.md"
+    assert mirror.read_bytes() == kit.read_bytes(), f"copy {kit} to {mirror}"
 
 
 def test_registry_launch_command_runs_the_ember_cli() -> None:
