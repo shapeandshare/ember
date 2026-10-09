@@ -74,7 +74,7 @@ On a MacBook Pro **M4 Max / 128 GB**, torch 2.14.1, transformers 5.18.0, mcp 2.3
 - **Python 3.12**, managed by uv.
 
 ```bash
-uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.8.0"
+uv tool install --python 3.12 ember-advise
 
 ember model pull                   # ~18 GB, resumable, disk-space checked
 ember doctor                       # platform, dependencies, model, server, and agent registration
@@ -84,8 +84,15 @@ ember init --opencode --global     # register with opencode for every repo on th
 Keep `--python 3.12`: uv otherwise picks your newest interpreter, which the pinned
 torch/transformers stack is not tested on.
 
-The install pins the latest release tag; without a tag you would get unreleased work from
-`main`. The repository is public, so the install needs no credentials. To use SSH instead,
+This installs the latest released wheel from PyPI.
+
+To pin a specific release tag from GitHub instead (no PyPI required):
+
+```bash
+uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.8.0"
+```
+
+The repository is public, so the git install needs no credentials. To use SSH instead,
 install from `git+ssh://git@github.com/shapeandshare/ember@v0.8.0`.
 
 Installed ember before the rename, as `gut`? Run `uv tool uninstall gut` first: both
