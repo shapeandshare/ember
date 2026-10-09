@@ -184,6 +184,45 @@ def spawn(
     return proc
 
 
+def _spawn_locked(
+    model_dir: Path,
+    host: str,
+    port: int,
+    device: str,
+) -> subprocess.Popen[bytes] | None:
+    """Acquire the spawn lock and start the server, or return ``None`` if already up.
+
+    D-005: serialises concurrent autostart callers so two MCP processes that
+    both pass the pre-lock ``is_up()`` check in :func:`start` cannot race to
+    spawn duplicate servers on the same port.  The lock is released before the
+    wait loop so the caller can poll ``is_up()`` without holding it.
+
+    Parameters
+    ----------
+    model_dir : Path
+        Resolved model directory to pass to :func:`spawn`.
+    host : str
+        Server bind address.
+    port : int
+        Server bind port.
+    device : str
+        Compute device string.
+
+    Returns
+    -------
+    subprocess.Popen[bytes] | None
+        The freshly spawned process, or ``None`` when a concurrent caller
+        already started the server (re-check ``/health`` in that case).
+    """
+    lock_path = paths.pid_path().with_suffix(".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(lock_path, "w") as _lock_fh:
+        fcntl.flock(_lock_fh, fcntl.LOCK_EX)
+        if is_up(host, port):
+            return None
+        return spawn(model_dir, host, port, device)
+
+
 def start(
     model: str | None = None,
     host: str | None = None,
@@ -247,19 +286,10 @@ def start(
                 f"model {name!r} is not pulled; run: ember model pull {name}"
             )
 
-    # D-005: serialize concurrent autostart calls with a file lock so two MCP
-    # processes that both pass the is_up() check above cannot race to spawn
-    # two server processes on the same port.
-    lock_path = paths.pid_path().with_suffix(".lock")
-    lock_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(lock_path, "w") as _lock_fh:
-        fcntl.flock(_lock_fh, fcntl.LOCK_EX)
-        # Re-check after acquiring the lock; a concurrent caller may have
-        # already spawned and the server may now be healthy.
-        if is_up(host, port):
-            recheck = health(host, port)
-            return int((recheck or {}).get("pid") or 0)
-        proc = spawn(model_dir, host, port, device)
+    proc = _spawn_locked(model_dir, host, port, device)
+    if proc is None:
+        recheck = health(host, port)
+        return int((recheck or {}).get("pid") or 0)
 
     deadline = time.time() + timeout
     while time.time() < deadline:
