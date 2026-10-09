@@ -349,7 +349,8 @@ make start        # model server in the background; stop | restart | status | lo
 make opencode     # this checkout's opencode plugin and skill
 ```
 
-`opencode.json`, `.opencode/plugins/ember.js`, and `.opencode/skills/ember-advise/`
+`opencode.json`, `.opencode/plugins/ember.js`, and `.opencode/skills/ember-advise/` (like
+`kilo.json`, `.codex/config.toml`, and the other harnesses' `ember-advise` skill copies)
 embed this clone's absolute paths or copy packaged files, so they are gitignored — regenerate
 them with `make init` / `make opencode` after cloning. `.opencode/opencode.json` is shared and
 committed: it registers the `vault` MCP server that agents use to read and write `vault/`
