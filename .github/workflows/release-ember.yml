@@ -12,8 +12,9 @@
 #   3. Wait for the PR to actually merge (10 min). If checks await a
 #      maintainer's approval (public-repo contributor gate), the wait says
 #      so; approving and dispatching the workflow resumes cleanly.
-#   4. Only after the merge: verify the merged version, tag the merged
-#      commit, push the tag, build wheel + sdist, create the GitHub Release.
+#   4. Only after the merge: verify the merged version, tag the commit that
+#      set it (never main's head, which may carry later PRs), push the tag,
+#      build wheel + sdist from that tree, create the GitHub Release.
 #
 # Resume path: if a run finds that main already carries a version newer
 # than the last tag (a previous bump PR merged but its release failed), it
@@ -216,7 +217,7 @@ jobs:
             sleep 30
           done
 
-      - name: Tag the merged commit and push the tag
+      - name: Tag the version's bump commit and push the tag
         if: steps.check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -226,15 +227,30 @@ jobs:
           git remote set-url origin \
             "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}"
           git fetch origin main --quiet
-          # Build, notes, and assets all come from the merged tree, whether this
-          # run bumped, waited for a merge, or resumed after one.
-          git reset --hard origin/main
-          MERGED_VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)
-          if [ "$MERGED_VERSION" != "$NEW_VERSION" ]; then
-            echo "main has ${MERGED_VERSION}, expected ${NEW_VERSION} — aborting." >&2
+          MAIN_VERSION=$(git show origin/main:pyproject.toml \
+            | sed -n 's/^version = "\(.*\)"/\1/p' | head -1)
+          if [ "$MAIN_VERSION" != "$NEW_VERSION" ]; then
+            echo "main has ${MAIN_VERSION}, expected ${NEW_VERSION} — aborting." >&2
             exit 1
           fi
-          git tag -f -a -m "release ${BUMP_TAG}" "${BUMP_TAG}" origin/main
+          # Tag the commit that set this version, never main's head: a resumed
+          # run can start long after the bump merged, and tagging main's head
+          # would sweep every PR merged since into this release.
+          BUMP_SHA=""
+          for sha in $(git log --format=%H -S "version = \"${NEW_VERSION}\"" \
+            origin/main -- pyproject.toml); do
+            if git show "${sha}:pyproject.toml" | grep -qx "version = \"${NEW_VERSION}\""; then
+              BUMP_SHA="$sha"
+              break
+            fi
+          done
+          if [ -z "$BUMP_SHA" ]; then
+            echo "No commit on main sets version ${NEW_VERSION} — aborting." >&2
+            exit 1
+          fi
+          # Build, notes, and assets all come from the tagged tree.
+          git reset --hard "$BUMP_SHA"
+          git tag -f -a -m "release ${BUMP_TAG}" "${BUMP_TAG}" "$BUMP_SHA"
           git push origin "refs/tags/${BUMP_TAG}"
 
       - name: Build wheel and sdist
