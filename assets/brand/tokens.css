@@ -9,6 +9,7 @@
   --ember-text: var(--ember-ink);
   --ember-muted: #715568;
   --ember-accent: var(--ember-plum);
+  --ember-on-accent: var(--ember-surface);
   --ember-border: #D8BFCB;
 }
 @media (prefers-color-scheme: dark) {
