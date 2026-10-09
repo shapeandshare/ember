@@ -8,6 +8,13 @@ when set): top-level ``mcpServers`` for user scope, and
 ``.mcp.json`` at the repository root. Claude Code's own project-key
 canonicalization varies across symlinks and worktrees, so the local-scope lookup
 tries every plausible spelling of the root.
+
+The ember Claude Code plugin (``.claude-plugin/marketplace.json`` in this
+repository) registers the server too. Installing it records
+``enabledPlugins["ember@ember"]`` in a settings file: user
+(``~/.claude/settings.json``, or under ``$CLAUDE_CONFIG_DIR``), project
+(``.claude/settings.json``), or local (``.claude/settings.local.json``), where a
+later scope overrides an earlier one.
 """
 
 from __future__ import annotations
@@ -20,6 +27,7 @@ from typing import Any
 from ..cfg.repo_root import checkout_root, main_checkout_root
 
 _SERVER_KEY = "ember"
+PLUGIN_ID = "ember@ember"
 
 
 def user_config_path() -> Path:
@@ -97,6 +105,42 @@ def has_project_entry(start: Path) -> bool:
         ``True`` if ``.mcp.json`` at the repository root has ``mcpServers.ember``.
     """
     return _has_server(_read_json(project_config_path(start)))
+
+
+def plugin_scopes(start: Path) -> list[tuple[str, Path]]:
+    """Return the settings scopes that enable the ember plugin.
+
+    Parameters
+    ----------
+    start : Path
+        Directory to search from; project and local settings live at its
+        repository root.
+
+    Returns
+    -------
+    list[tuple[str, Path]]
+        ``(scope, settings file)`` for each scope that sets
+        ``enabledPlugins["ember@ember"]`` to ``true``, in user, project, local
+        order; empty when no scope enables it or the last scope that sets it
+        disables it.
+    """
+    config_dir = os.environ.get("CLAUDE_CONFIG_DIR", "")
+    user_dir = Path(config_dir) if config_dir else Path.home() / ".claude"
+    project_dir = (checkout_root(start) or start) / ".claude"
+    enabled: list[tuple[str, Path]] = []
+    effective = False
+    for scope, path in (
+        ("user", user_dir / "settings.json"),
+        ("project", project_dir / "settings.json"),
+        ("local", project_dir / "settings.local.json"),
+    ):
+        plugins = _read_json(path).get("enabledPlugins")
+        value = plugins.get(PLUGIN_ID) if isinstance(plugins, dict) else None
+        if isinstance(value, bool):
+            effective = value
+            if value:
+                enabled.append((scope, path))
+    return enabled if effective else []
 
 
 def _project_keys(start: Path) -> list[str]:

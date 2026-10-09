@@ -68,7 +68,9 @@ def registration_lines(root: Path) -> list[tuple[str, str]]:
         (
             "claude",
             _claude(root),
-            "run `claude mcp add --scope user ember -- ember-mcp`",
+            "run `claude mcp add --scope user ember -- ember-mcp`, or install the "
+            "plugin: `claude plugin marketplace add shapeandshare/ember` then "
+            f"`claude plugin install {claude_config.PLUGIN_ID}`",
         ),
     )
     lines: list[tuple[str, str]] = []
@@ -165,7 +167,7 @@ def _codex(root: Path) -> list[str]:
 
 
 def _claude(root: Path) -> list[str]:
-    """Return where Claude Code registers ember, by ``claude mcp add`` scope.
+    """Return where Claude Code registers ember: ``claude mcp add`` scopes, plugin.
 
     Parameters
     ----------
@@ -175,7 +177,7 @@ def _claude(root: Path) -> list[str]:
     Returns
     -------
     list[str]
-        One description per scope found: user, local, then project.
+        One description per scope found: user, local, project, then the plugin.
     """
     found: list[str] = []
     user = claude_config.user_config_path()
@@ -188,4 +190,8 @@ def _claude(root: Path) -> list[str]:
             f"project {claude_config.project_config_path(root)} (approve it when "
             "Claude Code asks; `claude mcp list` shows the state)"
         )
+    scopes = claude_config.plugin_scopes(root)
+    if scopes:
+        where = ", ".join(f"{scope} {path}" for scope, path in scopes)
+        found.append(f"plugin {claude_config.PLUGIN_ID} ({where})")
     return found
