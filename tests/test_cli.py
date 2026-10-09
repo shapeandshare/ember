@@ -76,11 +76,16 @@ def test_init_opencode_registers_server_plugin_and_skill(sandbox):
     assert cli.main(["init", "--opencode"]) == 0
     config = json.loads((sandbox / "opencode.json").read_text())
     assert config["mcp"]["ember"]["type"] == "local"
-    assert config["mcp"]["vault"]["command"][-1] == "vault"
     assert (sandbox / ".opencode/plugins/ember.js").exists()
     assert (
         sandbox / ".opencode/skills/ember-advise/SKILL.md"
     ).read_text() == agent_kit.skill()
+
+
+def test_init_registers_only_ember_never_the_repo_vault_server(sandbox):
+    assert cli.main(["init", "--opencode", "--global"]) == 0
+    config = json.loads(opencode_config.global_config_path().read_text())
+    assert "vault" not in config["mcp"]
 
 
 def test_init_kilocode_registers_server_and_skill(sandbox):
