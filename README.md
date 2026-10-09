@@ -74,7 +74,7 @@ On a MacBook Pro **M4 Max / 128 GB**, torch 2.14.1, transformers 5.18.0, mcp 2.3
 - **Python 3.12**, managed by uv.
 
 ```bash
-uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.6.0"
+uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.7.0"
 
 ember model pull                   # ~18 GB, resumable, disk-space checked
 ember doctor                       # platform, dependencies, model, server, and agent registration
@@ -86,7 +86,7 @@ torch/transformers stack is not tested on.
 
 The install pins the latest release tag; without a tag you would get unreleased work from
 `main`. The repository is public, so the install needs no credentials. To use SSH instead,
-install from `git+ssh://git@github.com/shapeandshare/ember@v0.6.0`.
+install from `git+ssh://git@github.com/shapeandshare/ember@v0.7.0`.
 
 Installed ember before the rename, as `gut`? Run `uv tool uninstall gut` first: both
 distributions provide the same commands.
