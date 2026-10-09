@@ -9,11 +9,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+import tomllib
+from pathlib import Path
 
 import pytest
 from ember import cli, models
 from ember.agent_kit import api as agent_kit
+from ember.codex import codex_config
 from ember.commands import endpoint as endpoint_cmd
 from ember.commands import lifecycle
 from ember.kilocode import kilocode_config
@@ -35,6 +39,9 @@ def sandbox(tmp_path, monkeypatch):
         "EMBER_ALLOW_INSECURE_TRANSPORT",
         "EMBER_REQUEST_TIMEOUT",
         "EMBER_SERVER_AUTH_TOKEN",
+        # Harness config-dir overrides would redirect "global" paths to the host.
+        "CODEX_HOME",
+        "CLAUDE_CONFIG_DIR",
     ):
         monkeypatch.delenv(name, raising=False)
     return tmp_path
@@ -76,11 +83,16 @@ def test_init_opencode_registers_server_plugin_and_skill(sandbox):
     assert cli.main(["init", "--opencode"]) == 0
     config = json.loads((sandbox / "opencode.json").read_text())
     assert config["mcp"]["ember"]["type"] == "local"
-    assert config["mcp"]["vault"]["command"][-1] == "vault"
     assert (sandbox / ".opencode/plugins/ember.js").exists()
     assert (
         sandbox / ".opencode/skills/ember-advise/SKILL.md"
     ).read_text() == agent_kit.skill()
+
+
+def test_init_registers_only_ember_never_the_repo_vault_server(sandbox):
+    assert cli.main(["init", "--opencode", "--global"]) == 0
+    config = json.loads(opencode_config.global_config_path().read_text())
+    assert "vault" not in config["mcp"]
 
 
 def test_init_kilocode_registers_server_and_skill(sandbox):
@@ -124,6 +136,73 @@ def test_init_opencode_with_server_url_bootstraps_a_remote_endpoint(sandbox):
     config = json.loads((sandbox / "opencode.json").read_text())
     env = config["mcp"]["ember"]["environment"]
     assert env["EMBER_SERVER_URL"] == "https://decisions.example.com"
+
+
+def test_init_codex_registers_server_and_skill(sandbox):
+    assert cli.main(["init", "--codex"]) == 0
+    parsed = tomllib.loads((sandbox / ".codex/config.toml").read_text())
+    assert parsed["mcp_servers"]["ember"]["command"]
+    assert (
+        sandbox / ".agents/skills/ember-advise/SKILL.md"
+    ).read_text() == agent_kit.skill()
+
+
+def test_init_codex_notes_that_codex_ignores_an_untrusted_project(sandbox, capsys):
+    assert cli.main(["init", "--codex"]) == 0
+    assert "until you trust this project" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    ("relative", "content", "flags"),
+    [
+        ("opencode.json", "{not json", []),
+        ("kilo.json", "// comment\n{}", ["--kilocode"]),
+        (".codex/config.toml", "this = is [ not toml", ["--codex"]),
+    ],
+)
+def test_init_reports_an_unparseable_config_as_an_error_and_keeps_it(
+    sandbox, capsys, relative, content, flags
+):
+    target = sandbox / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(content)
+    assert cli.main(["init", *flags]) == 1
+    assert "error:" in capsys.readouterr().err
+    assert target.read_text() == content
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root ignores directory permissions")
+def test_init_reports_an_unwritable_project_as_an_error(sandbox, monkeypatch, capsys):
+    project = sandbox / "read-only"
+    project.mkdir()
+    monkeypatch.chdir(project)
+    project.chmod(0o555)
+    try:
+        assert cli.main(["init"]) == 1
+    finally:
+        project.chmod(0o755)
+    assert "error:" in capsys.readouterr().err
+
+
+def test_init_codex_confirms_a_trusted_project(sandbox, capsys):
+    trust = codex_config.global_config_path()
+    trust.parent.mkdir(parents=True)
+    key = json.dumps(str(Path.cwd()))
+    trust.write_text(f'[projects.{key}]\ntrust_level = "trusted"\n')
+    assert cli.main(["init", "--codex"]) == 0
+    out = capsys.readouterr().out
+    assert "this project is trusted" in out
+    assert "until you trust this project" not in out
+
+
+def test_doctor_reports_where_ember_is_registered(sandbox, monkeypatch, capsys):
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
+    assert cli.main(["init", "--codex"]) == 0
+    capsys.readouterr()
+    assert cli.main(["doctor"]) == 0
+    expected = f"[info] codex registration: project {Path.cwd() / '.codex/config.toml'}"
+    assert expected in capsys.readouterr().out
 
 
 def test_status_and_stop_are_inert_on_an_unused_port(sandbox, capsys):
@@ -189,18 +268,18 @@ def test_local_to_remote_is_single_reversible_change(sandbox, capsys):
     assert json.loads(capsys.readouterr().out)["kind"] == "local"
 
 
-def test_doctor_labels_a_configured_anaconda_hosted_endpoint_as_remote(
+def test_doctor_labels_a_configured_hosted_endpoint_as_remote(
     sandbox, monkeypatch, capsys
 ):
     """US3 T019: spec FR-005/SC-004; contracts/hosted-endpoint.md rule 7 — this is a
     regression lock proving the existing (001) endpoint-status reporting already
-    distinguishes remote from local with no new code needed for an Anaconda-hosted
+    distinguishes remote from local with no new code needed for a hosted
     endpoint, which is just another non-loopback server_url."""
     monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
     monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
-    assert cli.main(["doctor", "--server-url", "https://anaconda-hosted.example"]) == 0
+    assert cli.main(["doctor", "--server-url", "https://hosted.example"]) == 0
     out = capsys.readouterr().out
-    assert "[info] endpoint: remote https://anaconda-hosted.example" in out
+    assert "[info] endpoint: remote https://hosted.example" in out
 
 
 def test_doctor_labels_the_default_loopback_endpoint_as_local(
@@ -235,8 +314,8 @@ def test_doctor_makes_no_remote_http_call_when_unconfigured(
 def test_config_show_masks_secrets(sandbox, capsys, monkeypatch):
     monkeypatch.setenv("EMBER_AUTH_TOKEN", "topsecret")
     monkeypatch.setenv("EMBER_SERVER_AUTH_TOKEN", "server-token")
-    monkeypatch.setenv("EMBER_ANACONDA_S3_ACCESS_KEY_ID", "AKIAFAKE")
-    monkeypatch.setenv("EMBER_ANACONDA_S3_SECRET_ACCESS_KEY", "fakesecretkey")
+    monkeypatch.setenv("EMBER_S3_ACCESS_KEY_ID", "AKIAFAKE")
+    monkeypatch.setenv("EMBER_S3_SECRET_ACCESS_KEY", "fakesecretkey")
     assert cli.main(["config", "show"]) == 0
     out = capsys.readouterr().out
     assert "topsecret" not in out
@@ -246,8 +325,8 @@ def test_config_show_masks_secrets(sandbox, capsys, monkeypatch):
     body = json.loads(out)
     assert body["auth_token"] == "***"
     assert body["server_auth_token"] == "***"
-    assert body["anaconda_s3_access_key_id"] == "***"
-    assert body["anaconda_s3_secret_access_key"] == "***"
+    assert body["s3_access_key_id"] == "***"
+    assert body["s3_secret_access_key"] == "***"
 
 
 def test_config_show_reflects_env_var_overrides_for_every_key(
@@ -255,18 +334,18 @@ def test_config_show_reflects_env_var_overrides_for_every_key(
 ):
     """Critical review finding (2026-10-08): `ember config show` only applied
     env-var precedence to `server_url` and the four masked secret keys —
-    every other DEFAULTS key (including `anaconda_s3_region`) silently showed
+    every other DEFAULTS key (including `s3_region`) silently showed
     its config-file/default value even when overridden by an EMBER_* env
     var, with no visible indication the override was being ignored.
     `config.resolve()` already implements the correct flag > env > file >
     default precedence; `cmd_config_show` MUST use it for every key, not
     just a hardcoded subset."""
     monkeypatch.setenv("EMBER_HOST", "192.0.2.1")
-    monkeypatch.setenv("EMBER_ANACONDA_S3_REGION", "us-west-2")
+    monkeypatch.setenv("EMBER_S3_REGION", "us-west-2")
     assert cli.main(["config", "show"]) == 0
     body = json.loads(capsys.readouterr().out)
     assert body["host"] == "192.0.2.1"
-    assert body["anaconda_s3_region"] == "us-west-2"
+    assert body["s3_region"] == "us-west-2"
 
 
 def test_doctor_treats_a_stopped_server_as_information(sandbox, monkeypatch, capsys):
@@ -332,6 +411,19 @@ def test_uninstall_removes_global_installs_and_keeps_other_config(sandbox):
 
     kilo_config = kilocode_config.global_config_path()
     assert "ember" not in json.loads(kilo_config.read_text()).get("mcp", {})
+
+
+def test_uninstall_removes_global_codex_entry(sandbox):
+    assert cli.main(["init", "--codex", "--global"]) == 0
+    codex_global = codex_config.global_config_path()
+    text = codex_global.read_text()
+    assert "[mcp_servers.other]" not in text  # sanity: nothing pre-seeded yet
+    codex_global.write_text(text + '\n[mcp_servers.other]\ncommand = "other-server"\n')
+
+    assert cli.main(["uninstall"]) == 0
+    remaining = tomllib.loads(codex_global.read_text())
+    assert "ember" not in remaining.get("mcp_servers", {})
+    assert remaining["mcp_servers"]["other"]["command"] == "other-server"
 
 
 def test_eval_commands_require_a_checkout(monkeypatch):

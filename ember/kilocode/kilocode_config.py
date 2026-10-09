@@ -11,9 +11,8 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Any
 
-from ..opencode.opencode_config import build_entry
+from ..opencode.opencode_config import build_entry, load_config_for_merge
 
 #: The only accepted basename for a kilo config file written or removed by ember.
 _ACCEPTED_BASENAME = "kilo.json"
@@ -107,17 +106,16 @@ def write(
     Raises
     ------
     ValueError
-        If ``path`` does not end in ``kilo.json``.
+        If ``path`` does not end in ``kilo.json``, or if it holds content ember
+        cannot merge into without losing it (see
+        :func:`ember.opencode.opencode_config.load_config_for_merge`); the file
+        is left untouched.
     """
     _validate_config_path(path)
-    existing: dict[str, Any] = {}
-    if path.exists():
-        try:
-            existing = json.loads(path.read_text())
-        except json.JSONDecodeError:
-            existing = {}
-    mcp = existing.setdefault("mcp", {})
-    mcp["ember"] = build_entry(host, port, autostart, server_url, auth_header)
+    existing = load_config_for_merge(path)
+    existing["mcp"]["ember"] = build_entry(
+        host, port, autostart, server_url, auth_header
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
     # path validated by _validate_config_path above; content is this module's own JSON
@@ -149,7 +147,8 @@ def remove(path: Path) -> bool:
         existing = json.loads(path.read_text())
     except (FileNotFoundError, json.JSONDecodeError):
         return False
-    if "ember" not in existing.get("mcp", {}):
+    mcp = existing.get("mcp") if isinstance(existing, dict) else None
+    if not isinstance(mcp, dict) or "ember" not in mcp:
         return False
     del existing["mcp"]["ember"]
     tmp = path.with_suffix(".tmp")
@@ -157,3 +156,32 @@ def remove(path: Path) -> bool:
     tmp.write_text(json.dumps(existing, indent=2) + "\n", encoding="utf-8")  # NOSONAR
     os.replace(tmp, path)
     return True
+
+
+def has_entry(path: Path) -> bool:
+    """Return whether ``path`` registers the ``mcp.ember`` server.
+
+    Read-only: a missing or malformed file counts as not registered.
+
+    Parameters
+    ----------
+    path : Path
+        Config file to inspect. Must end in ``kilo.json``.
+
+    Returns
+    -------
+    bool
+        ``True`` if the file has an ``mcp.ember`` entry.
+
+    Raises
+    ------
+    ValueError
+        If ``path`` does not end in ``kilo.json``.
+    """
+    _validate_config_path(path)
+    try:
+        existing = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    mcp = existing.get("mcp") if isinstance(existing, dict) else None
+    return isinstance(mcp, dict) and "ember" in mcp

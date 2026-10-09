@@ -11,7 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from ember.cfg import anaconda_s3
+from ember.cfg import s3
 from ember.serving import hosted
 
 
@@ -59,7 +59,7 @@ def test_resolve_downloads_and_returns_dir_when_not_cached(
         (dest / "config.json").write_text("{}")
         return dest
 
-    monkeypatch.setattr(anaconda_s3, "download_prefix", _fake_download_prefix)
+    monkeypatch.setattr(s3, "download_prefix", _fake_download_prefix)
 
     result = hosted.resolve()
 
@@ -85,7 +85,7 @@ def test_resolve_skips_download_when_already_cached(
     def _fail_if_called(*_args: object, **_kwargs: object) -> Path:
         raise AssertionError("download_prefix must not be called when already cached")
 
-    monkeypatch.setattr(anaconda_s3, "download_prefix", _fail_if_called)
+    monkeypatch.setattr(s3, "download_prefix", _fail_if_called)
 
     result = hosted.resolve()
 

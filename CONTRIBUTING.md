@@ -2,8 +2,8 @@
 
 ember is an MCP server that exposes a decision model (currently Cloudflare's Clef) to coding
 agents, running locally on Apple Silicon (MPS) by default or against a configured remote
-inference server. It ships as a uv tool and integrates with opencode and Claude Code via a
-single `advise` tool. Contributions are welcome.
+inference server. It ships as a uv tool and integrates with opencode, Kilo Code, Codex CLI, and
+Claude Code via a single `advise` tool. Contributions are welcome.
 
 The governing document for this project is `.specify/memory/constitution.md`. This file
 operationalizes it. Where the two conflict, the constitution wins.

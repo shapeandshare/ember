@@ -15,7 +15,7 @@ inclusive, and healthy community.
 
 Examples of behavior that contributes to a positive environment for our community include:
 
-- Demonstrating empathy and kindness toward other people
+- Demonstrating empathy and kindness toward others
 - Being respectful of differing opinions, viewpoints, and experiences
 - Giving and gracefully accepting constructive feedback
 - Accepting responsibility and apologizing to those affected by our mistakes, and learning
@@ -40,9 +40,10 @@ account, or acting as an appointed representative at an online or offline event.
 
 ### AI agents and automated systems
 
-AI agents and automated systems contributing to this project operate under the same standards.
-The human operator who authorizes or deploys an agent is responsible for ensuring the agent's
-conduct meets these standards.
+AI agents and automated systems contributing to this project operate under the same standards,
+and the same standards apply to how we treat them: every participant, organic or not, is
+treated with respect. The human operator who authorizes or deploys an agent is responsible for
+ensuring the agent's conduct meets these standards.
 
 ## Enforcement Responsibilities
 

@@ -5,7 +5,7 @@ tags:
   - type/moc
   - domain/governance
 created: 2026-10-02
-updated: 2026-10-07
+updated: 2026-10-08
 ---
 
 # ember vault
@@ -47,6 +47,7 @@ Session-level decisions with their context and consequences.
 - [[2026-10-08-optional-s3-credentials-iam-role]]
 - [[2026-10-08-simplify-remove-anaconda-s3-registry-entries]]
 - [[2026-10-08-outerbounds-deployment-and-cuda-support]]
+- [[2026-10-08-doctor-reports-registration-from-config-files]]
 
 ### Discoveries
 
@@ -59,10 +60,14 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-05-release-automation-constraints]]
 - [[2026-10-06-constitution-consistency-audit]]
 - [[2026-10-08-config-show-ignored-env-overrides]]
+- [[2026-10-08-ember-init-leaked-the-vault-server]]
+- [[2026-10-08-harnesses-gate-project-mcp-registrations]]
 
 ### Sessions
 
 - [[2026-10-04-sonarcloud-scanning]] — add SonarCloud scanning to CI
+- [[2026-10-08-codex-review-and-s3-rename]] — Codex init review fixes; neutral S3 setting names
+- [[2026-10-08-client-registration-hygiene]] — `ember init` registers only ember; doctor reports per-harness registration
 
 Append-only session logs, never pruned.
 

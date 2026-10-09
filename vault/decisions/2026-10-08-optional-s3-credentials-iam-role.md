@@ -6,7 +6,7 @@ tags:
   - domain/models
   - domain/cli
 code-refs:
-  - ember/cfg/anaconda_s3.py
+  - ember/cfg/s3.py
   - ember/cfg/config.py
   - tests/test_model_integrity.py
 created: "2026-10-08"
@@ -16,7 +16,7 @@ status: draft
 
 # AWS S3 credentials made optional: support IAM-role-based auth (no static keys)
 
-Part of [[ember]]. `ember/cfg/anaconda_s3.py::s3_client()` no longer requires
+Part of [[ember]]. `ember/cfg/s3.py::s3_client()` no longer requires
 `EMBER_ANACONDA_S3_ACCESS_KEY_ID`/`_SECRET_ACCESS_KEY` to be set. When unset, no credential
 kwargs are passed to `boto3.client("s3", ...)` at all, and boto3's own default credential
 chain applies — the expected case for a hosted deployment with an IAM role attached to the

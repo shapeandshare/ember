@@ -1,18 +1,19 @@
-"""Doctor subcommand handler: platform, dependency, model, and server checks."""
+"""Doctor subcommand handler: platform, dependency, model, server, and agent checks."""
 
 from __future__ import annotations
 
 import argparse
 import collections.abc
 import platform
-import shutil
 import sys
+from pathlib import Path
 
 from .. import models as models_mod
 from ..cfg import config, paths
 from ..cfg import endpoint as endpoint_mod
 from ..serving import hosted, process
 from .endpoint import endpoint_status, resolve_endpoint
+from .registration import registration_lines
 
 
 def _doctor_check_platform(
@@ -149,6 +150,10 @@ def _doctor_check_models(
 def cmd_doctor(args: argparse.Namespace) -> int:
     """Check platform, dependencies, model, and server (``ember doctor``).
 
+    Ends with one pair of lines per coding-agent harness: its binary on
+    ``PATH`` and where ember is registered for it. Registration is
+    informational and never fails the check.
+
     Parameters
     ----------
     args : argparse.Namespace
@@ -199,6 +204,6 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     else:
         state = "reachable" if status["reachable"] else "unreachable"
         info("endpoint", f"{status['kind']} {status['url']} ({state})")
-    info("opencode", shutil.which("opencode") or "not on PATH")
-    info("kilo", shutil.which("kilo") or "not on PATH")
+    for label, detail in registration_lines(Path.cwd()):
+        info(label, detail)
     return 0 if ok else 1

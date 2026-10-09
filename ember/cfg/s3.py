@@ -5,8 +5,7 @@ Used by :mod:`ember.serving.hosted` to download a model directly from an
 platform (e.g. Outerbounds) that supplies the model's location at start time.
 Credentials are optional: when unconfigured, boto3's own default credential
 chain applies — the expected case for a hosted deployment with an IAM role
-attached to the compute, matching ``model-foundry``'s own Metaflow-managed S3
-access pattern.
+attached to the compute (the usual Metaflow-managed S3 access pattern).
 """
 
 from __future__ import annotations
@@ -20,13 +19,13 @@ from . import config
 def s3_client() -> Any:
     """Construct an AWS S3 client, with or without explicit credentials.
 
-    When both ``anaconda_s3_access_key_id`` and ``anaconda_s3_secret_access_key``
+    When both ``s3_access_key_id`` and ``s3_secret_access_key``
     are configured, they are passed explicitly. Otherwise, no credential
     kwargs are passed at all, and boto3's own default credential chain
     applies (environment variables, the shared AWS config/credentials files,
-    or — the expected case for a hosted deployment, matching
-    ``model-foundry``'s own Metaflow-managed S3 access — an IAM role attached
-    to the compute, e.g. an Outerbounds execution environment). A
+    or — the expected case for a hosted deployment with Metaflow-managed S3
+    access — an IAM role attached to the compute, e.g. an Outerbounds
+    execution environment). A
     partially-configured pair (only one of the two set) is treated as
     unconfigured, since boto3 rejects a half-explicit credential pair
     confusingly.
@@ -46,9 +45,9 @@ def s3_client() -> Any:
     # import-placement:allow - deferred; boto3 must not load at module import
     import boto3
 
-    access_key_id = config.resolve("anaconda_s3_access_key_id")
-    secret_access_key = config.resolve("anaconda_s3_secret_access_key")
-    region = config.resolve("anaconda_s3_region")
+    access_key_id = config.resolve("s3_access_key_id")
+    secret_access_key = config.resolve("s3_secret_access_key")
+    region = config.resolve("s3_region")
     has_explicit_credentials = bool(access_key_id and secret_access_key)
     try:
         if has_explicit_credentials:

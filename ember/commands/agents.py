@@ -10,28 +10,55 @@ from pathlib import Path
 from .. import models as models_mod
 from ..agent_kit import api as agent_kit
 from ..cfg import paths
+from ..codex import codex_config
 from ..kilocode import kilocode_config
 from ..opencode import opencode_config, opencode_plugin
 from ..serving import process
 from .endpoint import host_port
+from .registration import codex_trust_note
 
 
 def cmd_init(args: argparse.Namespace) -> int:
-    """Register the MCP server with opencode and/or Kilo Code (``ember init``).
+    """Register the MCP server with opencode, Kilo Code, and/or Codex CLI.
 
-    When ``args.server_url`` is given, bootstraps the client against that
-    remote endpoint instead of a local loopback server: ``EMBER_AUTOSTART`` is
-    forced off (there is nothing local to autostart) and, if ``args.auth_header``
-    is set, its name is recorded. The credential itself is never written to a
-    config file — export ``EMBER_AUTH_TOKEN`` in the shell that launches the
-    agent instead.
+    This is ``ember init``. When ``args.server_url`` is given, bootstraps the
+    client against that remote endpoint instead of a local loopback server:
+    ``EMBER_AUTOSTART`` is forced off (there is nothing local to autostart)
+    and, if ``args.auth_header`` is set, its name is recorded. The credential
+    itself is never written to a config file — export ``EMBER_AUTH_TOKEN`` in
+    the shell that launches the agent instead.
 
     Parameters
     ----------
     args : argparse.Namespace
         Parsed CLI arguments; uses the server flags plus ``args.global_``,
-        ``args.opencode``, ``args.kilocode``, ``args.no_autostart``,
-        ``args.server_url``, and ``args.auth_header``.
+        ``args.opencode``, ``args.kilocode``, ``args.codex``,
+        ``args.no_autostart``, ``args.server_url``, and ``args.auth_header``.
+
+    Returns
+    -------
+    int
+        Always ``0``.
+
+    Raises
+    ------
+    RuntimeError
+        If an existing config file cannot be merged into without losing its
+        content (that file is left untouched), or a file cannot be written.
+    """
+    try:
+        return _register(args)
+    except (OSError, ValueError) as exc:
+        raise RuntimeError(str(exc)) from exc
+
+
+def _register(args: argparse.Namespace) -> int:
+    """Write every registration ``cmd_init`` was asked for.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed ``ember init`` arguments.
 
     Returns
     -------
@@ -80,9 +107,53 @@ def cmd_init(args: argparse.Namespace) -> int:
         print(f"wrote {kilo_written}")
         skill = agent_kit.install_skill("kilocode", scope, Path.cwd())
         print(f"installed {agent_kit.SKILL_NAME} skill: {skill}")
+    if args.codex:
+        _register_codex(args.global_, host, port, autostart, server_url, auth_header)
     print(f"  command: {command}")
-    print("restart opencode/kilo to pick up changes")
+    print("restart opencode/kilo/codex to pick up changes")
     return 0
+
+
+def _register_codex(
+    global_: bool,
+    host: str,
+    port: int,
+    autostart: str,
+    server_url: str | None,
+    auth_header: str | None,
+) -> None:
+    """Write the Codex CLI entry and skill, and say whether Codex will load it.
+
+    Parameters
+    ----------
+    global_ : bool
+        Register in the user-global Codex config instead of this project's.
+    host : str
+        Model server host for a local endpoint.
+    port : int
+        Model server port for a local endpoint.
+    autostart : str
+        Value for ``EMBER_AUTOSTART``.
+    server_url : str | None
+        A remote inference endpoint, if any.
+    auth_header : str | None
+        The header name a remote endpoint expects the credential on.
+    """
+    target = (
+        codex_config.global_config_path()
+        if global_
+        else codex_config.project_config_path(Path.cwd())
+    )
+    written = codex_config.write(target, host, port, autostart, server_url, auth_header)
+    print(f"wrote {written}")
+    scope = "global" if global_ else "project"
+    skill = agent_kit.install_skill("codex", scope, Path.cwd())
+    print(f"installed {agent_kit.SKILL_NAME} skill: {skill}")
+    if global_:
+        return
+    note = codex_trust_note(Path.cwd())
+    trusted = "  codex: this project is trusted; Codex will load it"
+    print(f"  note: .codex/config.toml is {note}" if note else trusted)
 
 
 def cmd_agents_install(args: argparse.Namespace) -> int:
@@ -130,6 +201,9 @@ def cmd_agents_show(args: argparse.Namespace) -> int:
 def cmd_uninstall(args: argparse.Namespace) -> int:
     """Stop the server and remove global installs (``ember uninstall``).
 
+    Removes the global opencode, Kilo Code, and Codex CLI MCP entries, the
+    global opencode plugin, and every agent's global skill install.
+
     Parameters
     ----------
     args : argparse.Namespace
@@ -162,13 +236,16 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
         print(f"removed mcp.ember from {opencode_config.global_config_path()}")
     if kilocode_config.remove(kilocode_config.global_config_path()):
         print(f"removed mcp.ember from {kilocode_config.global_config_path()}")
+    if codex_config.remove(codex_config.global_config_path()):
+        print(f"removed mcp_servers.ember from {codex_config.global_config_path()}")
     for directory in {paths.state_dir(), paths.config_dir()}:
         shutil.rmtree(directory, ignore_errors=True)
         print(f"removed {directory}")
 
     print(
         "project installs are left in place: in each initialized project, remove the "
-        "`mcp.ember` entry from opencode.json and/or kilo.json, "
+        "`mcp.ember`/`mcp_servers.ember` entry from opencode.json, kilo.json, "
+        "and/or .codex/config.toml, "
         f".opencode/plugins/{opencode_plugin.PLUGIN_FILENAME}, "
         f"and any {agent_kit.SKILL_NAME} skill directories"
     )

@@ -20,8 +20,8 @@ name: ember
 port: 8765
 
 tags:
-  - team: AISAGE
-  - owner: jburt@anaconda.com
+  - team: your-team
+  - owner: you@example.com
 
 # EMBER_MODEL_S3_URI names the exact model location directly — there is no
 # REGISTRY lookup for this path (constitution Article V, "Model Loading"; see
@@ -35,7 +35,7 @@ environment:
   EMBER_HOST: "0.0.0.0"
   EMBER_PORT: "8765"
   EMBER_DEVICE: "cuda"
-  EMBER_MODEL_S3_URI: "s3://obp-0ttxc8-metaflow/metaflow/model-pipelines-dev/Cloudflare__clef-flash/artifacts/model_file"
+  EMBER_MODEL_S3_URI: "s3://your-bucket/your-prefix/Cloudflare__clef-flash/artifacts/model_file"
   EMBER_AUTOSTART: "0"
 
 # No secrets needed: EMBER_MODEL_S3_URI downloads via the compute pool's
@@ -60,10 +60,9 @@ dependencies:
 # EMBER_DEVICE=cpu instead (float32 is ~2x the float16 footprint).
 #
 # Targets a g5.4xlarge node (1x NVIDIA A10G, 24 GB VRAM / ~22.3 GiB usable;
-# 64 GiB system RAM; 16 vCPU) — chosen after two earlier pools
-# (ai-services-pool, dep-inf) both rejected this capsule with "memory
-# requirement 32Gi exceeds available ~14-15Gi", meaning their underlying
-# nodes' *schedulable* memory (after Kubernetes/system overhead) was far
+# 64 GiB system RAM; 16 vCPU) — chosen after two earlier pools both rejected
+# this capsule with "memory requirement 32Gi exceeds available ~14-15Gi",
+# meaning their underlying nodes' *schedulable* memory (after Kubernetes/system overhead) was far
 # below the 32Gi system-RAM request. g5.4xlarge's 64Gi total gives real
 # headroom below that ceiling, unlike g5.2xlarge's 32Gi (which would match
 # this request almost exactly, leaving little schedulable margin again).
@@ -94,10 +93,10 @@ resources:
 
 # compute_pools is OPTIONAL (see docs.outerbounds.com/outerbounds/inference-deep-dive
 # "Targeting compute pools") — left commented out here so Outerbounds
-# auto-selects any eligible pool in the merced workspace's default perimeter
+# auto-selects any eligible pool in your workspace's default perimeter
 # that has "Inference deployments" enabled (Compute Pool UI → Advanced
-# Routing) and can satisfy `resources` above. ai-services-pool and dep-inf
-# were both explicitly tried and rejected ("memory requirement 32Gi exceeds
+# Routing) and can satisfy `resources` above. Two candidate pools were both
+# explicitly tried and rejected ("memory requirement 32Gi exceeds
 # available ~14-15Gi") — they are NOT viable regardless of whether a pool is
 # named here or left to auto-select. Pin an explicit pool only if you need
 # cost tracking, compute isolation, or a specific GPU class (see the docs

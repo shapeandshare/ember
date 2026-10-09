@@ -13,7 +13,7 @@ code-refs:
   - ember/models.py
   - ember/cfg/config.py
   - ember/cfg/paths.py
-  - ember/cfg/anaconda_s3.py
+  - ember/cfg/s3.py
   - ember/commands/config.py
   - pyproject.toml
   - tests/test_model_integrity.py
@@ -163,7 +163,7 @@ runtime, unrelated to the internal catalog pipeline this paragraph describes.
   `cli.main`'s clean `error: ...` format. Both are fixed (lazy path computation; wrapped as
   `RuntimeError` with `from exc`), with regression tests. See research.md R5.
 - A follow-up module split (`tasks.md` T032, same day) moved the S3 download logic
-  (`s3_client()`/`download()`) out of `ember/models.py` into `ember/cfg/anaconda_s3.py` after
+  (`s3_client()`/`download()`) out of `ember/models.py` into `ember/cfg/s3.py` after
   the `ModelSource`/S3-download addition pushed `ember/models.py` over the Article X §10.3
   400-line ceiling (470 lines); `ember/models.py` is now 359 lines.
 - A second critical review (2026-10-08, after the R2→AWS S3 correction above) found and fixed

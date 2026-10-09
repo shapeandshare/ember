@@ -4,7 +4,7 @@ Constitution Article V ("Model Loading"): ember supports any model that can
 run under its loader contract. When ember runs as a deployed app on a hosting
 platform (e.g. Outerbounds) that supplies the model's location as an
 ``s3://bucket/prefix`` URI at start time rather than a ``REGISTRY`` key
-(matching ``model-foundry``'s own S3-URI deployment convention),
+(the usual convention for a platform-deployed model),
 ``EMBER_MODEL_S3_URI`` names that location directly — no ``REGISTRY`` entry,
 revision, or hash is required.
 
@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlparse
 
-from ..cfg import anaconda_s3, paths
+from ..cfg import paths, s3
 
 _URI_ENV = "EMBER_MODEL_S3_URI"
 
@@ -94,5 +94,5 @@ def resolve() -> HostedModelSource | None:
     bucket, prefix = _parse_uri(uri)
     model_dir = paths.hosted_model_cache(uri)
     if not model_dir.is_dir() or not any(model_dir.iterdir()):
-        anaconda_s3.download_prefix(bucket, prefix, model_dir, f"{_URI_ENV}={uri!r}")
+        s3.download_prefix(bucket, prefix, model_dir, f"{_URI_ENV}={uri!r}")
     return HostedModelSource(uri=uri, model_dir=model_dir)

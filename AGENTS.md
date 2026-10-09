@@ -1,6 +1,6 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-07 (`ember init` can bootstrap clients against a hosted/remote endpoint: `--server-url`/`--auth-header` on `ember init`, never writing the credential to disk)
+**Last updated**: 2026-10-08 (client registration hygiene: `ember init` registers only ember — no more `mcp.vault` leak — and `ember doctor` reports where ember is registered for opencode, Kilo Code, Codex CLI, and Claude Code)
 
 ## What this repo is
 
@@ -72,6 +72,7 @@ after changing brand assets. Do not invent missing provenance or license facts.
 ember/
   cli.py              # `ember` / `gut` composition root: argparse wiring + main()
   commands/           # subcommand handlers: lifecycle, doctor, models, agents, eval, config
+    registration.py   #   doctor's per-harness "where is ember registered" report (reads files only)
   models.py           # model registry + pull/list/rm
   serving/            # HTTP model server, MPS runtime, lifecycle, media
     server.py         #   FastAPI: POST /v1/systemone, GET /health (reports pid)
@@ -85,11 +86,17 @@ ember/
     config.py         #   config resolution (CLI flag > env > file > default)
     endpoint.py       #   client endpoint: loopback check, transport guard, auth headers
     paths.py          #   platform-aware app dirs (macOS Library, XDG)
+    repo_root.py      #   git checkout / main-worktree root from .git on disk (no git subprocess)
   opencode/           # opencode integration
     opencode_config.py  # generates opencode.json
     opencode_plugin.py  # installs the npm plugin
   kilocode/           # Kilo Code integration
     kilocode_config.py  # generates kilo.json (mcp.ember entry; reuses opencode's entry builder)
+  codex/              # Codex CLI integration
+    codex_config.py   #   writes/removes [mcp_servers.ember] in .codex/config.toml
+    codex_trust.py    #   CodexTrust + trust_level(): mirrors Codex's project-trust lookup
+  claude/             # Claude Code integration (read-only; users run `claude mcp add`)
+    claude_config.py  #   detects user/local (~/.claude.json) and project (.mcp.json) scopes
   agent_kit/          # consumer onboarding kit (single source of truth)
     api.py            #   public API: instructions(), skill(), snippet(), install_skill()
     instructions.md   #   MCP initialize.instructions (≤ 2 KB)
@@ -186,7 +193,7 @@ agent ──tools/call advise──► ember-mcp (stdio, mcp_server.py)
 | File | Delivered as | Reaches |
 | --- | --- | --- |
 | `instructions.md` | MCP `initialize.instructions` | opencode and Claude Code, automatically |
-| `ember-advise/SKILL.md` | MCP resource `ember://guide`; skill via `ember agents install` and `ember init --opencode` | opencode, Claude Code, Codex |
+| `ember-advise/SKILL.md` | MCP resource `ember://guide`; skill via `ember agents install` and `ember init --opencode` / `--kilocode` / `--codex` | opencode, Kilo Code, Claude Code, Codex |
 | `AGENTS.snippet.md` | `ember agents show snippet` | any agent that reads AGENTS.md or CLAUDE.md |
 
 Rules for changing it:
@@ -313,6 +320,11 @@ base URL and MCP stdio parameters for integration tests.
 | `tests/test_metrics.py` | Prometheus endpoint: counter/gauge lifecycle, registry isolation |
 | `tests/test_mcp_tool.py` | MCP protocol: tool discovery, advise over stdio, error handling, autostart |
 | `tests/test_opencode_plugin.py` | Plugin install/uninstall, config merge/remove |
+| `tests/test_opencode_config.py` / `tests/test_kilocode_config.py` / `tests/test_codex_config.py` | Harness config writers: basename guard, merge-not-clobber, no vault injection, no secrets, `has_entry()` |
+| `tests/test_codex_trust.py` | Codex project-trust lookup: canonical/spelled keys, repo-root and worktree mapping, exact-key match |
+| `tests/test_claude_config.py` | Claude Code detection: `CLAUDE_CONFIG_DIR`, user/local/project scopes, malformed files |
+| `tests/test_registration.py` | Doctor's per-harness registration report: next steps, untrusted/unapproved flags, legacy vault hint |
+| `tests/test_repo_root.py` | Checkout and main-worktree root discovery from `.git` on disk |
 | `tests/test_runtime_unit.py` | Runtime helpers: device selection, model max length, mcp_server isolation |
 | `tests/test_vault_audit.py` | Vault audit script: frontmatter, tags, wikilinks, code-refs, orphans |
 | `tests/test_http_api.py` | HTTP API call paths: GET /health, POST /v1/systemone across all question types, request-validation errors |
@@ -534,11 +546,19 @@ spacing values, or component styles outside the design system.
 - **Never pass `device_map={"": "mps"}`** — it segfaults. `runtime.load_clef` loads on CPU and
   moves the module to MPS; keep it that way.
 - **stdout is the MCP wire.** Log to stderr only in `mcp_server.py`; never `print`.
-- **`opencode.json`, `.opencode/plugins/ember.js`, `.opencode/skills/ember-advise/`, and
-  `.kilo/jetbrains.json` are per-machine** (absolute paths and the installer's `PATH`). They
-  are gitignored; regenerate them, never commit them.
+- **`opencode.json`, `.opencode/plugins/ember.js`, `.opencode/skills/ember-advise/`,
+  `.kilo/jetbrains.json`, `kilo.json`, `.codex/config.toml`, and the `ember-advise` copies
+  under `.kilo/`, `.agents/`, and `.claude/skills/` are per-machine** (absolute paths and the
+  installer's `PATH`). They are gitignored; regenerate them, never commit them.
 - **`.opencode/opencode.json` is shared and committed.** Put shared opencode settings (such
   as the `vault` MCP server) there; opencode merges it with the per-machine root file.
+  `ember init` registers only ember: never write `vault` (or any other server) into a
+  generated config — `--global` would spread it into every project a client opens.
+- **Registration checks read files; they never run a harness CLI.** `ember doctor` reads the
+  opencode, Kilo Code, Codex, and Claude Code config files directly (host safety, speed).
+  Codex's project-trust lookup is mirrored exactly (`ember/codex/codex_trust.py`); Claude
+  Code's `.mcp.json` approval is multi-file and trust-gated, so doctor points at
+  `claude mcp list` instead of emulating it.
 - **The `advise` input is wrapped in `input`.** mcp v2 does not flatten a single model parameter.
 - **Raise `ToolError` for failures the agent should read.** mcp v2 reports any other exception
   as a bare "Error executing tool advise", hiding the actionable message.
@@ -648,6 +668,25 @@ MUST pass the constitution check.
 
 ## Recent Changes
 
+- 2026-10-08: client registration hygiene: `ember init` no longer merges this repo's
+  `mcp.vault` server into the configs it writes (it leaked into clients' projects, and with
+  `--global` into every project; contributors get it from the committed
+  `.opencode/opencode.json`, as the 2026-10-02 vault decision intended). `ember doctor` now
+  reports, per harness (opencode, Kilo Code, Codex CLI, Claude Code), the binary on `PATH`
+  and where ember is registered, flagging an untrusted Codex project, a Claude Code
+  `.mcp.json` awaiting approval, and a leftover legacy `mcp.vault` in the global opencode
+  config; `ember init --codex` reports the project's trust state precisely. `ember init` also
+  refuses to rewrite an opencode/Kilo config it cannot parse (it used to replace one with
+  comments by a fresh file) and reports any such refusal as `error:` instead of a traceback;
+  the Kilo, Codex, and skill files it generates are now gitignored. New read-only
+  modules: `ember/commands/registration.py`, `ember/codex/codex_trust.py`,
+  `ember/claude/claude_config.py`, `ember/cfg/repo_root.py`. Tests now clear `CODEX_HOME`/
+  `CLAUDE_CONFIG_DIR`. See `vault/sessions/2026-10-08-client-registration-hygiene.md`.
+- 2026-10-08: neutral S3 setting names: `EMBER_ANACONDA_S3_*` → `EMBER_S3_*` (config keys
+  `s3_access_key_id`/`s3_secret_access_key`/`s3_region`), `ember/cfg/anaconda_s3.py` →
+  `ember/cfg/s3.py`; no alias (never released). `ember init --codex` hardened: actionable error
+  for inline/dotted ember entries, comments above the next table survive a rewrite. See
+  `vault/sessions/2026-10-08-codex-review-and-s3-rename.md`.
 - 2026-10-08: removed the `ANACONDA_S3` `REGISTRY`-entry subsystem (simplification): per
   direct maintainer pushback ("this is like shaving the yacht, do we actually need this
   level of complexity?"), `anaconda-flash`/`anaconda-clef` `REGISTRY` entries, the

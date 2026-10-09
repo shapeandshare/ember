@@ -21,7 +21,7 @@ individually pinned, hash-verified weights.
 A hosted deployment (e.g. Outerbounds) that supplies the model's location directly at start
 time via `EMBER_MODEL_S3_URI` doesn't use this registry at all — see README.md "Hosted
 deployment: a model location supplied at start time." AWS credentials
-(`EMBER_ANACONDA_S3_ACCESS_KEY_ID`/`_SECRET_ACCESS_KEY`, see README.md) for that path are
+(`EMBER_S3_ACCESS_KEY_ID`/`_SECRET_ACCESS_KEY`, see README.md) for that path are
 optional — boto3's default credential chain (an attached IAM role, e.g. on Outerbounds; env
 vars; `~/.aws/credentials`) applies when they are unset.
 

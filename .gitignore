@@ -11,6 +11,12 @@ logs/
 /.opencode/plugins/ember.js
 /.opencode/skills/ember-advise/
 /.kilo/jetbrains.json
+# Other per-machine agent registrations `ember init` / `ember agents install` write here.
+/kilo.json
+/.kilo/skills/ember-advise/
+/.codex/config.toml
+/.agents/skills/ember-advise/
+/.claude/skills/ember-advise/
 .DS_Store
 .idea/
 .omo/

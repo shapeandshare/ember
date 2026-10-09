@@ -7,7 +7,7 @@ tags:
   - domain/tooling
   - status/draft
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-08
 code-refs:
   - .opencode/opencode.json
   - ember/opencode/opencode_config.py
@@ -45,5 +45,6 @@ With opencode `0.0.0-dev-202610022056`, in scratch git repositories:
 
 ## References
 
-- `ember/opencode_config.py` (what `ember init` writes)
+- `ember/opencode/opencode_config.py` (what `ember init` writes; since 2026-10-08 only the
+  `ember` entry, see [[2026-10-08-ember-init-leaked-the-vault-server]])
 - https://opencode.ai/docs/config (config precedence)

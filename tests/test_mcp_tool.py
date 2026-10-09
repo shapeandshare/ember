@@ -165,7 +165,7 @@ def test_ensure_server_never_autostarts_for_a_non_loopback_endpoint(
     monkeypatch,
 ) -> None:
     """US3 T020: spec Clarification 5/FR-007; contracts/hosted-endpoint.md rules 2
-    and 6 — an Anaconda-hosted endpoint is just another non-loopback server_url, and
+    and 6 — a hosted endpoint is just another non-loopback server_url, and
     the existing `_ensure_server` guard (`if not endpoint.is_local: return`) already
     makes autostart/fallback impossible for it. This locks that in directly rather
     than relying on an unreachable real network call to prove the negative."""
@@ -177,8 +177,8 @@ def test_ensure_server_never_autostarts_for_a_non_loopback_endpoint(
 
     monkeypatch.setattr(mcp_server.process, "is_up", _fail_if_called)
     remote = Endpoint(
-        url="https://anaconda-hosted.example",
-        host="anaconda-hosted.example",
+        url="https://hosted.example",
+        host="hosted.example",
         scheme="https",
         is_local=False,
         allow_insecure_transport=False,
