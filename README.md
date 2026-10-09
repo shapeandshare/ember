@@ -86,6 +86,9 @@ torch/transformers stack is not tested on.
 
 This installs the latest released wheel from PyPI.
 
+If the PyPI project has not been created yet (it will 404), use the pinned git-tag install
+below to bootstrap the first release.
+
 To pin a specific release tag from GitHub instead (no PyPI required):
 
 ```bash
