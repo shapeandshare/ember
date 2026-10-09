@@ -9,6 +9,8 @@ Clef-Flash, from its [public Hugging Face repo](https://huggingface.co/Cloudflar
 ask typed questions, and get back a calibrated feeling about every option. It's a little
 buddy for judgment calls — it advises; the agent decides.
 
+**Website:** [shapeandshare.github.io/ember](https://shapeandshare.github.io/ember/)
+
 ## How it works
 
 A decision model is not a chat model: it takes a `state` plus a schema of typed
