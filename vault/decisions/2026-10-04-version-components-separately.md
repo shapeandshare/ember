@@ -5,7 +5,7 @@ tags:
   - type/decision
   - domain/governance
   - domain/tooling
-  - status/draft
+  - status/superseded
 created: 2026-10-04
 updated: 2026-10-09
 code-refs:
@@ -16,6 +16,8 @@ code-refs:
 ---
 
 # version components separately
+
+> Superseded by [[2026-10-09-publish-releases-to-pypi-and-the-mcp-registry]]: the opencode plugin no longer versions or releases separately.
 
 Part of [[ember]]. Each releasable component carries its own version, changelog,
 and git tag series — `v*` for the Python package, `plugin/v*` for the opencode
