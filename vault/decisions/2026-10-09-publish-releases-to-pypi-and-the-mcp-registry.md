@@ -77,9 +77,15 @@ plugin stops versioning separately. Supersedes
   pypi.org (project `ember-advise`, owner `shapeandshare`, repository `ember`, workflow
   `release-ember.yml`, environment `pypi`). A pending publisher does not reserve the
   name, so do it right before the next release.
+- The pending publisher's project name must be exactly `ember-advise`. One registered under
+  another name still creates that empty project on first use, then the upload fails with
+  `400 Non-user identities cannot create new projects` (see PyPI's
+  [trusted-publisher troubleshooting](https://docs.pypi.org/trusted-publishers/troubleshooting/)).
+  The first 0.8.0 upload failed this way; once a publisher for `ember-advise` existed,
+  `gh run rerun <run> --failed` published to PyPI and the registry.
 - Existing `gut` tool installs must run `uv tool uninstall gut` before installing
   `ember-advise`: both provide the same commands.
-- After the first PyPI release, switch the README and landing-page install to
+- Since 0.8.0, the first PyPI release, the README and landing page install with
   `uv tool install --python 3.12 ember-advise` and keep the pinned git form as an alternative.
 - A bump PR opened before `version_files` existed (PR #84, `release v0.7.0`) leaves the
   pins at `0.6.0` and fails `tests/test_distribution.py`; re-dispatch `make release-ember`

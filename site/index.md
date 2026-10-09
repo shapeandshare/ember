@@ -264,18 +264,15 @@ You need an Apple Silicon Mac with 32 GB of memory or more, about 18 GiB of free
 
 1. **Install ember.**
 
-    ```bash
-     uv tool install --python 3.12 ember-advise
-     ```
+   ```bash
+   uv tool install --python 3.12 ember-advise
+   ```
 
-     If the PyPI project has not been created yet (it will 404), use the pinned git-tag
-     install below to bootstrap the first release.
+   To pin a specific release tag from GitHub instead:
 
-     To pin a specific release tag from GitHub instead:
-
-    ```bash
-    uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.8.0"
-    ```
+   ```bash
+   uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.8.0"
+   ```
 
 2. **Download the model.** It's about 18 GB, and an interrupted download resumes.
 
