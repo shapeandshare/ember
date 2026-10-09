@@ -1,5 +1,5 @@
 [project]
-name = "gut"
+name = "ember-advise"
 version = "0.7.0"
 description = "A local gut feeling for coding agents: calibrated advice over MCP from Cloudflare's Clef model on Apple Silicon."
 readme = "README.md"
@@ -37,6 +37,7 @@ Repository = "https://github.com/shapeandshare/ember"
 [project.scripts]
 ember = "ember.cli:main"
 gut = "ember.cli:main"
+ember-advise = "ember.cli:main"
 ember-mcp = "ember.mcp.mcp_server:main"
 
 [build-system]
@@ -45,6 +46,10 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["ember"]
+
+# The sdist ships the package, not the repository (benchmark data, site, vault).
+[tool.hatch.build.targets.sdist]
+include = ["/ember", "/README.md", "/LICENSE", "/THIRD_PARTY_NOTICES.md"]
 
 [dependency-groups]
 dev = [
@@ -134,25 +139,22 @@ skips = [
 [tool.commitizen]
 name = "cz_conventional_commits"
 version_provider = "uv"
+# Files that carry the release version; each bump rewrites them, and
+# tests/test_distribution.py keeps the list complete.
+version_files = [
+    "README.md:shapeandshare/ember@v",
+    "site/index.md:shapeandshare/ember@v",
+    "server.json:\"version\"",
+    "packages/claude-plugin/.claude-plugin/plugin.json:\"version\"",
+]
 update_changelog_on_bump = true
 major_version_zero = true
 tag_format = "v$version"
+# The retired opencode plugin release series (plugin/v0.2.0 … plugin/v0.4.0).
+ignored_tag_formats = ["plugin/v$version"]
 bump_message = "release v$new_version"
 changelog_incremental = true
 changelog_file = "CHANGELOG.md"
-
-[tool.commitizen.extras.plugin]
-# Separate commitizen config for the opencode plugin (packages/opencode-plugin/).
-# Drive with: cz --config pyproject.toml bump --tag-format "plugin/v$version"
-#   --version-files "packages/opencode-plugin/package.json:\"version\": \"$version\""
-#   --changelog --file-name packages/opencode-plugin/CHANGELOG.md
-# The release-plugin CI job runs these flags explicitly.
-name = "cz_conventional_commits"
-version_files = ["packages/opencode-plugin/package.json:\"version\": \"$version\""]
-tag_format = "plugin/v$version"
-bump_message = "release plugin/v$new_version"
-changelog_file = "packages/opencode-plugin/CHANGELOG.md"
-major_version_zero = true
 
 [tool.coverage.run]
 source = ["ember"]

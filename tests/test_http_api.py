@@ -314,3 +314,15 @@ def test_lifespan_falls_back_to_registry_when_hosted_not_configured(
     # no hosted-path field leaks in when hosted.resolve() returned None.
     body = resp.json()
     assert body["status"] in ("ok", "loading")
+
+
+def test_health_version_is_the_installed_distribution_version() -> None:
+    import importlib.metadata
+    import tomllib
+    from pathlib import Path
+
+    name = tomllib.loads(
+        (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text()
+    )["project"]["name"]
+    body = _in_process_client().get("/health").json()
+    assert body["version"] == importlib.metadata.version(name)

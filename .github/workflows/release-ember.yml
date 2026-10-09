@@ -15,6 +15,13 @@
 #   4. Only after the merge: verify the merged version, tag the commit that
 #      set it (never main's head, which may carry later PRs), push the tag,
 #      build wheel + sdist from that tree, create the GitHub Release.
+#   5. publish-pypi uploads that release's wheel + sdist to PyPI as `ember-advise`
+#      through Trusted Publishing: PyPI exchanges the job's OIDC token for a
+#      short-lived upload token, so no PyPI credential is stored anywhere.
+#      If it fails, re-run the failed job; files PyPI already has are skipped.
+#   6. publish-mcp-registry then lists that version in the official MCP
+#      Registry as io.github.shapeandshare/ember (server.json), signing in
+#      with the job's GitHub OIDC token. Registry versions are immutable.
 #
 # Resume path: if a run finds that main already carries a version newer
 # than the last tag (a previous bump PR merged but its release failed), it
@@ -32,6 +39,9 @@
 # Security posture (per AGENTS.md):
 #   - All uses: pinned to full commit SHAs with # vX.Y.Z comments.
 #   - permissions: {} at workflow level; each job grants only what it needs.
+#     Only publish-pypi and publish-mcp-registry get id-token: write; the
+#     PyPI job never checks out code, and the registry job runs a
+#     version- and SHA-256-pinned mcp-publisher.
 #   - checkout uses persist-credentials: false throughout.
 #   - No pull_request_target, workflow_run, or self-hosted runners.
 #   - No stored secrets beyond GITHUB_TOKEN (auto-provisioned per run).
@@ -62,6 +72,8 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -272,6 +284,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
+        id: release
         if: steps.check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -281,3 +294,88 @@ jobs:
             --verify-tag \
             --title "$RELEASE_TAG" \
             --notes-file release-notes.md
+          echo "tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+
+  publish-pypi:
+    name: ember — publish to PyPI
+    needs: release-ember
+    if: needs.release-ember.outputs.tag != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # PyPI's trusted publisher for `ember-advise` names this workflow file and this
+    # environment; add required reviewers to the environment to gate uploads.
+    environment:
+      name: pypi
+      url: https://pypi.org/project/ember-advise/
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+
+      # Publish the exact files attached to the GitHub Release.
+      - name: Download the release's wheel and sdist
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.release-ember.outputs.tag }}
+        run: |
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern 'ember_advise-*' --dir dist
+          ls -l dist
+
+      - name: Publish to PyPI (Trusted Publishing)
+        run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/ dist/*
+
+  publish-mcp-registry:
+    name: ember — publish to the MCP Registry
+    needs: [release-ember, publish-pypi]
+    if: needs.release-ember.outputs.tag != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      # Bump both together; the hash comes from the release's
+      # registry_<version>_checksums.txt.
+      MCP_PUBLISHER_VERSION: v1.8.1
+      MCP_PUBLISHER_SHA256: a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.release-ember.outputs.tag }}
+          persist-credentials: false
+
+      - name: Check server.json carries the release version
+        env:
+          RELEASE_TAG: ${{ needs.release-ember.outputs.tag }}
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          jq -e --arg v "$VERSION" \
+            '.version == $v and all(.packages[]; .version == $v)' server.json
+
+      - name: Download and verify mcp-publisher
+        run: |
+          ASSET=mcp-publisher_linux_amd64.tar.gz
+          curl -fsSL -o "$ASSET" \
+            "https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}/${ASSET}"
+          echo "${MCP_PUBLISHER_SHA256}  ${ASSET}" | sha256sum -c -
+          tar -xzf "$ASSET" mcp-publisher
+
+      - name: Publish server.json (GitHub OIDC, no stored token)
+        run: |
+          ./mcp-publisher login github-oidc
+          # The registry checks this version's README on PyPI, which can lag
+          # the upload by a few seconds.
+          for attempt in 1 2 3 4 5; do
+            if ./mcp-publisher publish server.json; then
+              exit 0
+            fi
+            echo "Publish attempt ${attempt} failed; retrying in 20s." >&2
+            sleep 20
+          done
+          exit 1

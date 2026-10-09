@@ -5,15 +5,18 @@ tags:
   - type/discovery
   - domain/governance
   - domain/tooling
-  - status/draft
+  - status/superseded
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-09
 code-refs:
   - pyproject.toml
   - packages/opencode-plugin/package.json
 ---
 
 # The ember name is taken on PyPI and npm
+
+> Superseded by [[2026-10-09-pypi-json-api-hides-empty-projects]]: `gut` was not free. Its
+> JSON API 404s because the project has no releases; the distribution is now `ember-advise`.
 
 Part of [[ember]]. The rename to ember collided with two package registries, and other
 tools already install an `ember` command.
@@ -44,5 +47,5 @@ Keep the `gut` alias as the fallback when another `ember` command shadows ours.
 
 ## References
 
-- `pyproject.toml` (`name = "gut"`)
+- `pyproject.toml` (the distribution `name`)
 - `packages/opencode-plugin/package.json` (`"name": "opencode-ember-advise"`)

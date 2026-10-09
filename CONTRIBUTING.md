@@ -167,8 +167,8 @@ parentheses. The valid scopes are:
 
 | Scope | Component | Versioned separately? |
 | --- | --- | --- |
-| `ember` | Python package / CLI / MCP server (`ember/`) | Yes — `v*` tag, PyPI wheel |
-| `plugin` | opencode npm plugin (`packages/opencode-plugin/`) | Yes — `plugin/v*` tag |
+| `ember` | Python package / CLI / MCP server (`ember/`) | Yes — `v*` tag, GitHub Release, PyPI `ember-advise` |
+| `plugin` | opencode plugin source (`packages/opencode-plugin/`) | No — releases stopped after `plugin/v0.4.0`; appears in the root changelog |
 | `evals` | benchmark harness (`evals/`) | No — appears in the root changelog |
 | `site` | Jekyll Pages site (`site/`) | No — appears in the root changelog |
 

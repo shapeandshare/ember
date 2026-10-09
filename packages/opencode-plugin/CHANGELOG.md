@@ -4,7 +4,9 @@ All notable changes to the opencode plugin package are documented here.
 Versions follow [Semantic Versioning](https://semver.org/); changes follow
 [Conventional Commits](https://www.conventionalcommits.org/) with scope `plugin`.
 
-<!-- next-version -->
+Separate plugin releases stopped after `plugin/v0.4.0` (2026-10-09); later changes
+appear in the root [CHANGELOG.md](../../CHANGELOG.md).
+
 ## plugin/v0.4.0 (2026-10-06)
 
 ### Feat

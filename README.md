@@ -3,6 +3,8 @@
   <img src="assets/brand/hero-light.svg" alt="ember — Ember hugs its glowing tummy. Give your agent a gut feeling." width="1200">
 </picture>
 
+<!-- mcp-name: io.github.shapeandshare/ember -->
+
 **A local gut feeling for coding agents.** ember runs a decision model — Cloudflare's
 Clef-Flash, from its [public Hugging Face repo](https://huggingface.co/Cloudflare/clef-flash)
 — on your Apple Silicon Mac and gives agents one MCP tool, `advise`: describe a situation,
@@ -32,10 +34,10 @@ plugs into agents as a **tool**, while their reasoning stays on their normal LLM
 | Thing | Name |
 | --- | --- |
 | Product, Python import, repository | `ember` |
-| Distribution (`uv tool install`, PyPI) | `gut`, because `ember` is taken on PyPI |
-| CLI | `ember` (short alias: `gut`) |
+| Distribution (`uv tool install`, PyPI) | `ember-advise`, because `ember` is taken on PyPI and `gut` is held by an empty project |
+| CLI | `ember` (short alias: `gut`; `ember-advise` too, so `uvx ember-advise mcp` works) |
 | MCP server / command | `ember` / `ember-mcp` |
-| Tool | `advise` — opencode: `ember_advise`; Claude Code: `mcp__ember__advise`; Kilo Code: `ember_advise` |
+| Tool | `advise` — opencode: `ember_advise`; Claude Code: `mcp__ember__advise` (plugin: `mcp__plugin_ember_ember__advise`); Kilo Code: `ember_advise` |
 | Playbook skill / MCP resource | `ember-advise` / `ember://guide` |
 | Environment variables | `EMBER_*` |
 
@@ -72,7 +74,7 @@ On a MacBook Pro **M4 Max / 128 GB**, torch 2.14.1, transformers 5.18.0, mcp 2.3
 - **Python 3.12**, managed by uv.
 
 ```bash
-uv tool install --python 3.12 "gut @ git+https://github.com/shapeandshare/ember"
+uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.7.0"
 
 ember model pull                   # ~18 GB, resumable, disk-space checked
 ember doctor                       # platform, dependencies, model, server, and agent registration
@@ -82,8 +84,12 @@ ember init --opencode --global     # register with opencode for every repo on th
 Keep `--python 3.12`: uv otherwise picks your newest interpreter, which the pinned
 torch/transformers stack is not tested on.
 
-The repository is public, so the install above needs no credentials. To use SSH instead,
-install from `git+ssh://git@github.com/shapeandshare/ember`.
+The install pins the latest release tag; without a tag you would get unreleased work from
+`main`. The repository is public, so the install needs no credentials. To use SSH instead,
+install from `git+ssh://git@github.com/shapeandshare/ember@v0.7.0`.
+
+Installed ember before the rename, as `gut`? Run `uv tool uninstall gut` first: both
+distributions provide the same commands.
 
 Restart opencode and every repo on this machine gains `ember_advise`. The model server
 stays **lazy** — it starts on the first tool call (or with `ember start`).
@@ -160,7 +166,17 @@ Agent-specific notes:
   the tool appears as `ember_advise`. Kilo Code also reads `AGENTS.md` automatically.
 - Claude Code: register the server with `claude mcp add --scope user ember -- ember-mcp`
   (every project; drop `--scope user` to register it for the current project only); the
-  tool appears as `mcp__ember__advise`.
+  tool appears as `mcp__ember__advise`. Or install the **ember plugin**, which bundles the
+  MCP entry and the `ember-advise` skill (so skip `ember agents install --agent claude`):
+
+  ```bash
+  claude plugin marketplace add shapeandshare/ember
+  claude plugin install ember@ember
+  ```
+
+  The plugin still runs the `ember-mcp` you installed with `uv tool install`, and its tool
+  appears as `mcp__plugin_ember_ember__advise`. Use one route, not both, or the tool is
+  listed twice.
 - Codex CLI: `ember init --codex` writes `[mcp_servers.ember]` to `.codex/config.toml`
   (`--global`: `~/.codex/config.toml`, or `$CODEX_HOME/config.toml`) and installs the skill
   to `.agents/skills/ember-advise/SKILL.md`. Codex loads a project `.codex/config.toml` only
@@ -180,7 +196,7 @@ only reads each harness's config files; it never runs a harness CLI.
 | opencode | `ember init --opencode [--global]` | `opencode.json`, `.opencode/plugins/ember.js` | `~/.config/opencode/opencode.json`, `~/.config/opencode/plugins/ember.js` | a leftover `mcp.vault` entry from older `ember init` versions |
 | Kilo Code | `ember init --kilocode [--global]` | `kilo.json` | `~/.config/kilo/kilo.json` | — |
 | Codex CLI | `ember init --codex [--global]` | `.codex/config.toml` | `~/.codex/config.toml` | a project file Codex ignores because the project isn't trusted |
-| Claude Code | `claude mcp add --scope user ember -- ember-mcp` | `.mcp.json` (`--scope project`); `~/.claude.json` per project (`--scope local`) | `~/.claude.json` | a project `.mcp.json`, which Claude Code asks you to approve |
+| Claude Code | `claude mcp add --scope user ember -- ember-mcp`, or the `ember@ember` plugin | `.mcp.json` (`--scope project`); `~/.claude.json` per project (`--scope local`); `enabledPlugins` in `.claude/settings.json` / `settings.local.json` | `~/.claude.json`; `enabledPlugins` in `~/.claude/settings.json` | a project `.mcp.json`, which Claude Code asks you to approve |
 
 Each harness has its own check too: `opencode mcp list`, `codex mcp list`, `claude mcp list`.
 Older `ember init` versions also added this repository's `vault` MCP server to every config
@@ -395,7 +411,9 @@ ember/
   claude/             # Claude Code registration detection (read-only)
   agent_kit/          # what agents read: instructions, ember-advise skill, AGENTS snippet
     api.py            #   public API: instructions(), skill(), snippet(), install_skill()
-packages/opencode-plugin/   # npm-ready opencode plugin source
+packages/opencode-plugin/   # opencode plugin source (unpublished; `ember init --opencode` writes the installed copy)
+packages/claude-plugin/     # Claude Code plugin (MCP entry + mirrored ember-advise skill), listed by .claude-plugin/marketplace.json
+server.json                 # MCP Registry entry (io.github.shapeandshare/ember), published by release-ember.yml
 scripts/              # make-only dev tools: MPS smoke, MCP e2e, site build, provenance/vault audits
 evals/eval/           # benchmark harness: run, report, export, snapshot, agent-in-the-loop
 tests/                # pytest suite (unit + model-backed, host-isolated)
@@ -440,7 +458,7 @@ committed: it registers the `vault` MCP server that agents use to read and write
 | `make vault-audit` | Check `vault/` notes: frontmatter, tags, wikilinks, code-refs, orphans |
 | `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000`, rebuilt and reloaded in the browser on every edit (needs Docker) |
 | `make release-dry` | Preview the next ember version bump without changes |
-| `make release-ember` / `make release-plugin` | Trigger a component release workflow on `main` (bump PR → GitHub Release) |
+| `make release-ember` | Trigger the release workflow on `main` (bump PR → GitHub Release → PyPI) |
 | `make clean` / `make clean-model` | Caches and build output / weights (`EMBER_FORCE=1` skips the prompt) |
 
 Make re-syncs the environment automatically when `pyproject.toml` or `uv.lock` changes.

@@ -1,4 +1,23 @@
 <!--
+SYNC IMPACT REPORT — Distribution Renamed to ember-advise
+Version change: 3.1.0 → 3.1.1 (PATCH: a naming fact is corrected; no principle changes)
+Date: 2026-10-09
+Reason: Publishing to PyPI failed: `gut` is an existing PyPI project (an empty one owned by
+  another account), which its JSON API hid by returning 404. The distribution is renamed
+  `ember-advise`; the product, package, CLI (`ember`, alias `gut`), and MCP names are
+  unchanged, and an `ember-advise` console-script alias lets `uvx ember-advise mcp` start
+  the MCP server.
+Modified principles: none (Article XIV's default-path example and the naming constraint now
+  name `ember-advise`)
+Added sections: none
+Removed sections: none
+Templates / docs propagated:
+  - ✅ pyproject.toml, uv.lock, server.json, release and CI workflows
+  - ✅ README.md, AGENTS.md, CONTRIBUTING.md, THIRD_PARTY_NOTICES.md, site/index.md
+  - ✅ vault/discoveries/ (new discovery note), vault/decisions/ (updated decision note)
+Follow-up TODOs: none
+-->
+<!--
 SYNC IMPACT REPORT — CUDA Support Added for Outerbounds Hosted Deployment
 Version change: 3.0.1 → 3.1.0 (MINOR: a new supported platform is added alongside MPS; the
   existing MPS/CPU behavior and Article VI's existing MUSTs are unchanged)
@@ -860,7 +879,7 @@ fake engine; the engine can be tested directly.
 **Applicability**: Effective 2026-10-04. Applies to the install, configuration, and
 runtime paths.
 
-The default path — `uv tool install gut`, `ember doctor`, `ember start` — MUST always
+The default path — `uv tool install ember-advise`, `ember doctor`, `ember start` — MUST always
 produce a working system on supported hardware without manual intervention. Optional or
 enhanced capabilities MUST silently degrade, never crash or block.
 
@@ -923,11 +942,12 @@ required by the current work.
 - The product name is **ember**, after the Ember mascot, in every artifact: package `ember`,
   MCP server `ember` with the `advise` tool, skill `ember-advise`, resource `ember://guide`,
   environment variables `EMBER_*`, and repository `shapeandshare/ember`. The one exception
-  is the distribution, `gut`, because `ember` is taken on PyPI. "Gut feeling" phrasing, such
+  is the distribution, `ember-advise`, because `ember` is taken on PyPI and `gut` is held
+  by an empty project there. "Gut feeling" phrasing, such
   as the tagline, is flavor text, not a name. "Clef" MUST refer only to Cloudflare's
   upstream model. ember advises; agents decide.
 - Python 3.12 managed by uv (consumers install with `uv tool install --python 3.12`); console
-  scripts `ember`, `gut`, and `ember-mcp` are the supported entry points.
+  scripts `ember`, `gut`, `ember-advise`, and `ember-mcp` are the supported entry points.
 - `stdout` of the MCP process is the JSON-RPC wire; diagnostics MUST go to stderr.
 - Per-machine generated files (`opencode.json`, `.opencode/plugins/ember.js`,
   `.opencode/skills/ember-advise/`) MUST NOT be committed.
@@ -963,4 +983,4 @@ required by the current work.
 - Reviews MUST check changes against the Articles, with special attention to Article III
   (agent contract) and Article V (model loading).
 
-**Version**: 3.1.0 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-08
+**Version**: 3.1.1 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-09

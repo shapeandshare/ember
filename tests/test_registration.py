@@ -132,3 +132,16 @@ def test_a_leftover_global_vault_entry_gets_a_cleanup_hint(project: Path) -> Non
 
 def test_there_is_no_legacy_line_without_a_leftover_vault_entry(project: Path) -> None:
     assert "opencode legacy" not in _report(project)
+
+
+def test_claude_reports_an_enabled_plugin(project: Path) -> None:
+    settings = Path.home() / ".claude" / "settings.json"
+    settings.parent.mkdir(parents=True)
+    settings.write_text(json.dumps({"enabledPlugins": {"ember@ember": True}}))
+    detail = _report(project)["claude registration"]
+    assert detail == f"plugin ember@ember (user {settings})"
+
+
+def test_unregistered_claude_also_offers_the_plugin(project: Path) -> None:
+    detail = _report(project)["claude registration"]
+    assert "claude plugin install ember@ember" in detail

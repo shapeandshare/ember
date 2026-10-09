@@ -249,5 +249,5 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
         f".opencode/plugins/{opencode_plugin.PLUGIN_FILENAME}, "
         f"and any {agent_kit.SKILL_NAME} skill directories"
     )
-    print("then run: uv tool uninstall gut")
+    print("then run: uv tool uninstall ember-advise")
     return 0

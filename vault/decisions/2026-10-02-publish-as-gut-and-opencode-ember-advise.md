@@ -5,9 +5,9 @@ tags:
   - type/decision
   - domain/tooling
   - domain/opencode
-  - status/draft
+  - status/superseded
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-09
 code-refs:
   - pyproject.toml
   - packages/opencode-plugin/package.json
@@ -15,6 +15,9 @@ code-refs:
 ---
 
 # Publish as gut on PyPI and as opencode-ember-advise on npm
+
+> Superseded by [[2026-10-09-publish-releases-to-pypi-and-the-mcp-registry]]: the npm package was never published and no longer releases, installs pin a release tag, and
+> the distribution is now `ember-advise` because `gut` is taken on PyPI.
 
 Part of [[ember]]. The Python distribution and the npm plugin package can't be named
 ember, so they take the names below. Everything else stays ember.

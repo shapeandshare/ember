@@ -69,7 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--version",
         "-V",
         action="version",
-        version=f"ember {importlib.metadata.version('gut')}",
+        version=f"ember {importlib.metadata.version('ember-advise')}",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 

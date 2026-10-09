@@ -82,11 +82,11 @@ def _package_version() -> str:
     Returns
     -------
     str
-        The version of the ``gut`` distribution, or ``"unknown"`` when it cannot
-        be determined (e.g. running from a source tree).
+        The version of the ``ember-advise`` distribution, or ``"unknown"`` when it
+        cannot be determined (e.g. running from a source tree).
     """
     try:
-        return _dist_version("gut")
+        return _dist_version("ember-advise")
     except PackageNotFoundError:
         return "unknown"
 

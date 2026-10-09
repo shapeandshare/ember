@@ -48,6 +48,7 @@ Session-level decisions with their context and consequences.
 - [[2026-10-08-simplify-remove-anaconda-s3-registry-entries]]
 - [[2026-10-08-outerbounds-deployment-and-cuda-support]]
 - [[2026-10-08-doctor-reports-registration-from-config-files]]
+- [[2026-10-09-publish-releases-to-pypi-and-the-mcp-registry]]
 
 ### Discoveries
 
@@ -64,6 +65,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-08-harnesses-gate-project-mcp-registrations]]
 - [[2026-10-08-release-resume-tagged-main-head]]
 - [[2026-10-09-docker-desktop-drops-deletion-events]]
+- [[2026-10-09-pypi-json-api-hides-empty-projects]]
 
 ### Sessions
 

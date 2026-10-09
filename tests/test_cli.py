@@ -8,6 +8,7 @@ nothing touches the real project, user config, or running servers.
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import json
 import os
 import sys
@@ -527,3 +528,22 @@ def test_endpoint_status_marks_reachable_when_health_returns_body(
     assert status["ready"] == "ok"
     assert status["contract_version"] == "1.0.0"
     assert status["remote_auth_required"] is False
+
+
+def test_version_flag_reports_the_installed_distribution(capsys):
+    name = tomllib.loads(
+        (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text()
+    )["project"]["name"]
+    with pytest.raises(SystemExit):
+        cli.main(["--version"])
+    assert (
+        capsys.readouterr().out.strip() == f"ember {importlib.metadata.version(name)}"
+    )
+
+
+def test_uninstall_names_the_uv_tool_to_remove(sandbox, capsys):
+    name = tomllib.loads(
+        (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text()
+    )["project"]["name"]
+    assert cli.main(["uninstall"]) == 0
+    assert f"uv tool uninstall {name}" in capsys.readouterr().out

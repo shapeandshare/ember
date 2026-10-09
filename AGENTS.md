@@ -1,6 +1,6 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-08 (client registration hygiene: `ember init` registers only ember — no more `mcp.vault` leak — and `ember doctor` reports where ember is registered for opencode, Kilo Code, Codex CLI, and Claude Code)
+**Last updated**: 2026-10-09 (distribution: installs pin the release tag, the distribution is renamed `ember-advise` and releases publish it to PyPI and the MCP Registry, a Claude Code plugin marketplace, and the opencode plugin's separate release track retired)
 
 ## What this repo is
 
@@ -9,8 +9,8 @@ default, or against a single configured remote inference server
 (`EMBER_SERVER_URL`/config `server_url`) when the user opts in, and exposes them to coding
 agents as one advisory MCP tool, `advise` (opencode: `ember_advise`; Kilo Code:
 `ember_advise`; Claude Code: `mcp__ember__advise`). An agent sends a `state` plus typed
-questions and gets calibrated probabilities back — no prose. It ships as the `gut` uv tool
-(commands `ember`, `gut`, `ember-mcp`), a local opencode plugin, and an **agent onboarding
+questions and gets calibrated probabilities back — no prose. It ships as the `ember-advise` uv tool
+(commands `ember`, `gut`, `ember-advise`, `ember-mcp`), a local opencode plugin, and an **agent onboarding
 kit** that teaches consumers' agents to use the tool well. Kilo Code is a first-class
 supported harness alongside opencode.
 
@@ -20,7 +20,7 @@ two conflict, the constitution wins and this file MUST be updated.
 ## Naming
 
 The product is **ember**, named after the Ember mascot. Only the distribution differs: it is
-`gut`, because `ember` is taken on PyPI. ember *advises*; the agent decides — keep that voice
+`ember-advise`, because `ember` is taken on PyPI and `gut` is held by an empty project there. ember *advises*; the agent decides — keep that voice
 in user-facing text.
 
 "Gut feeling" is flavor text, not a name. Keep the tagline *Give your agent a gut feeling.*,
@@ -28,9 +28,9 @@ in user-facing text.
 
 | Thing | Name |
 | --- | --- |
-| Distribution (PyPI, `uv tool`) | `gut` |
+| Distribution (PyPI, `uv tool`) | `ember-advise` |
 | Python package, app dir | `ember` |
-| CLI | `ember` (alias `gut`); MCP command `ember-mcp` |
+| CLI | `ember` (aliases `gut` and `ember-advise`, the latter so `uvx ember-advise mcp` works); MCP command `ember-mcp` |
 | MCP server / tool | `ember` / `advise` (opencode `ember_advise`, Claude Code `mcp__ember__advise`) |
 | Skill / MCP resource | `ember-advise` / `ember://guide` |
 | Environment variables | `EMBER_*` |
@@ -64,6 +64,7 @@ after changing brand assets. Do not invent missing provenance or license facts.
 | Development memory (decisions, discoveries, session logs) | `vault/` (hub `vault/ember.md`) |
 | Verification | `tests/`, `.github/workflows/ci.yml` |
 | Site build and deploy | `scripts/build_site_docs.py`, `site/_data/docs.json`, `.github/workflows/deploy-site.yml` |
+| Distribution (PyPI publish, MCP Registry entry, Claude Code plugin) | `.github/workflows/release-ember.yml`, `server.json`, `.claude-plugin/marketplace.json`, `packages/claude-plugin/` |
 | Benchmark runs (data the site renders) | `benchmark/<run-id>/`, written by `scripts/snapshot_evals.py` (via `evals/eval/snapshot_evals.py`) |
 
 ## Project structure
@@ -102,7 +103,9 @@ ember/
     instructions.md   #   MCP initialize.instructions (≤ 2 KB)
     ember-advise/     #   installable skill + ember://guide content
     AGENTS.snippet.md #   block consumers paste into their AGENTS.md / CLAUDE.md
-packages/opencode-plugin/   # npm-ready opencode plugin source
+packages/opencode-plugin/   # opencode plugin source (unpublished; `ember init --opencode` writes the installed copy)
+packages/claude-plugin/     # Claude Code plugin (MCP entry + mirrored ember-advise skill), listed by .claude-plugin/marketplace.json
+server.json                 # MCP Registry entry (io.github.shapeandshare/ember), published by release-ember.yml
 shared/               # Makefile domain modules (.mk files)
   helper.mk           #   auto-generated make help
   python.mk           #   lint, format, typecheck, security, pr-ready
@@ -157,7 +160,7 @@ vault/                # project memory (Obsidian): decisions, discoveries, sessi
 | `make eval-agent` / `make eval-agent-smoke` | Agent-in-the-loop eval through opencode (opt-in; spends provider credit) |
 | `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000`, rebuilt and reloaded in the browser on every edit (needs Docker) |
 | `make release-dry` | Preview the next ember version bump without changes |
-| `make release-ember` / `release-plugin` | Trigger a component release workflow on `main` (bump PR → GitHub Release) |
+| `make release-ember` | Trigger the release workflow on `main` (bump PR → GitHub Release → PyPI) |
 | `.venv/bin/ember …` or `.venv/bin/gut …` | Primary CLI, built from this checkout |
 
 ## Architecture (call path)
@@ -193,13 +196,17 @@ agent ──tools/call advise──► ember-mcp (stdio, mcp_server.py)
 | File | Delivered as | Reaches |
 | --- | --- | --- |
 | `instructions.md` | MCP `initialize.instructions` | opencode and Claude Code, automatically |
-| `ember-advise/SKILL.md` | MCP resource `ember://guide`; skill via `ember agents install` and `ember init --opencode` / `--kilocode` / `--codex` | opencode, Kilo Code, Claude Code, Codex |
+| `ember-advise/SKILL.md` | MCP resource `ember://guide`; skill via `ember agents install`, `ember init --opencode` / `--kilocode` / `--codex`, and the Claude Code plugin's mirrored copy | opencode, Kilo Code, Claude Code, Codex |
 | `AGENTS.snippet.md` | `ember agents show snippet` | any agent that reads AGENTS.md or CLAUDE.md |
 
 Rules for changing it:
 
 - `instructions.md` MUST stay ≤ 2048 bytes (Claude Code truncates longer instructions).
 - The skill name MUST stay `ember-advise` and match its directory.
+- The Claude Code plugin ships a byte-for-byte copy at
+  `packages/claude-plugin/skills/ember-advise/SKILL.md` (a plugin cannot reference files
+  outside its own directory). Copy the kit's `SKILL.md` there whenever it changes;
+  `tests/test_distribution.py` fails until you do.
 - Thresholds and "Observed" numbers MUST come from real model output. Re-measure them when the
   model revision or a recipe schema changes — questions are scored jointly.
 - The tool name, input schema, and kit text are public API: change them together with the
@@ -221,7 +228,7 @@ Rules for changing it:
    | Scope | Component | Versioned separately? |
    | --- | --- | --- |
    | `ember` | Python package / CLI / MCP server (`ember/`) | Yes — `v*` tag, PyPI wheel |
-   | `plugin` | opencode npm plugin (`packages/opencode-plugin/`) | Yes — `plugin/v*` tag |
+   | `plugin` | opencode plugin source (`packages/opencode-plugin/`) | No — releases stopped after `plugin/v0.4.0` |
    | `evals` | benchmark harness (`evals/`) | No — root changelog only |
    | `site` | Jekyll Pages site (`site/`) | No — root changelog only |
 
@@ -323,7 +330,8 @@ base URL and MCP stdio parameters for integration tests.
 | `tests/test_opencode_config.py` / `tests/test_kilocode_config.py` / `tests/test_codex_config.py` | Harness config writers: basename guard, merge-not-clobber, no vault injection, no secrets, `has_entry()` |
 | `tests/test_codex_trust.py` | Codex project-trust lookup: canonical/spelled keys, repo-root and worktree mapping, exact-key match |
 | `tests/test_claude_config.py` | Claude Code detection: `CLAUDE_CONFIG_DIR`, user/local/project scopes, malformed files |
-| `tests/test_registration.py` | Doctor's per-harness registration report: next steps, untrusted/unapproved flags, legacy vault hint |
+| `tests/test_registration.py` | Doctor's per-harness registration report: next steps, untrusted/unapproved flags, Claude Code plugin, legacy vault hint |
+| `tests/test_distribution.py` | Release contract: pinned git installs, commitizen `version_files`, `server.json`, the `mcp-name` marker, the Claude Code marketplace/plugin and its mirrored skill |
 | `tests/test_repo_root.py` | Checkout and main-worktree root discovery from `.git` on disk |
 | `tests/test_runtime_unit.py` | Runtime helpers: device selection, model max length, mcp_server isolation |
 | `tests/test_vault_audit.py` | Vault audit script: frontmatter, tags, wikilinks, code-refs, orphans |
@@ -589,30 +597,40 @@ spacing values, or component styles outside the design system.
   reference org secrets. The `zizmor` job in `ci` enforces this; run
   `uvx zizmor@1.30.1 .github/` before pushing workflow changes. See
   `vault/decisions/2026-10-03-harden-github-before-going-public.md`.
-- **The release workflows open bump PRs.** `release-ember.yml` (paths `ember/**`,
-  `evals/**`; tags `v*`) and `release-plugin.yml` (paths `packages/opencode-plugin/**`;
-  tags `plugin/v*`) run from `main` only. Each computes the next version from
-  conventional commits, commits it, pushes a `ci/bump-*` branch, opens a PR with
+- **The release workflow opens a bump PR, then publishes.** `release-ember.yml` (paths
+  `ember/**`, `evals/**`; tags `v*`) runs from `main` only. It computes the next version
+  from conventional commits, commits it, pushes a `ci/bump-*` branch, opens a PR with
   auto-merge, waits for that PR to actually merge, and only then tags the merged
-  commit and creates the GitHub Release — a blocked or closed PR leaves no tag
-  behind. Reruns are safe: the branch is force-pushed, an open bump PR is reused,
-  and a branch that falls behind main is updated while waiting. If the wait times
-  out because check runs await maintainer approval (the public-repo contributor
-  gate that applied to the bot's first PRs), approve the runs, let the bump PR
-  merge, then dispatch the workflow (`make release-ember` / `make release-plugin`)
-  — it detects the already-merged version on main and goes straight to tagging
-  and publishing. It tags the commit that set the version, never main's head, so
-  PRs merged in the meantime stay out of that release. The ember side releases on commitizen's rules; the
-  plugin side releases only for `feat` (minor) and `fix`/`perf`/`refactor`/`revert`
-  (patch) commits — `docs`/`chore`/`test`/`ci`/`style`/`build` changes accumulate
-  until a release-worthy commit arrives. Two repo settings are load-bearing: the
-  Actions token must be read-write and "Allow GitHub Actions to create and approve
-  pull requests" must be on — the workflows create their PRs with `GITHUB_TOKEN`,
-  never a stored personal token. Bump commit subjects (`release v…`,
-  `release plugin/v…`) are filtered out of the commit scan, and only files under the
-  component's own paths trigger the workflow, so a bump never triggers another bump.
-  To cut a release by hand, run `make release-ember` / `make release-plugin`
-  (workflow dispatch); `make release-dry` previews the next ember version.
+  commit, creates the GitHub Release, and (job `publish-pypi`) uploads that release's
+  wheel and sdist to PyPI as `ember-advise` — a blocked or closed PR leaves no tag behind.
+  PyPI uploads use Trusted Publishing: the trusted publisher configured on PyPI for
+  `ember-advise` names `release-ember.yml` and the `pypi` environment, only `publish-pypi` holds
+  `id-token: write`, and no PyPI token exists anywhere. A failed upload is retried by
+  re-running that job (`--check-url` skips files PyPI already has). The bump also
+  rewrites the release tag pinned in the documented git installs (`README.md`,
+  `site/index.md`) and the versions in `server.json` and the Claude Code plugin manifest
+  through commitizen `version_files`; `tests/test_distribution.py` fails if one is
+  missed. After PyPI, job `publish-mcp-registry` lists the release in the official MCP
+  Registry as `io.github.shapeandshare/ember` (GitHub OIDC login, a version- and
+  SHA-256-pinned `mcp-publisher`); the registry verifies ownership through the
+  `<!-- mcp-name: … -->` marker in `README.md`, which is the PyPI description, so
+  never remove it. Registry versions, like PyPI files, are immutable. Reruns are safe: the branch is force-pushed, an
+  open bump PR is reused, and a branch that falls behind main is updated while waiting.
+  If the wait times out because check runs await maintainer approval (the public-repo
+  contributor gate that applied to the bot's first PRs), approve the runs, let the bump
+  PR merge, then dispatch the workflow (`make release-ember`) — it detects the
+  already-merged version on main and goes straight to tagging and publishing. It tags
+  the commit that set the version, never main's head, so PRs merged in the meantime
+  stay out of that release. Releases follow commitizen's rules. Two repo settings are
+  load-bearing: the Actions token must be read-write and "Allow GitHub Actions to
+  create and approve pull requests" must be on — the workflow creates its PR with
+  `GITHUB_TOKEN`, never a stored personal token. Bump commit subjects (`release v…`)
+  are filtered out of the commit scan, and only files under ember's own paths trigger
+  the workflow, so a bump never triggers another bump. To cut a release by hand, run
+  `make release-ember` (workflow dispatch); `make release-dry` previews the next
+  version. The opencode plugin (`packages/opencode-plugin/`) is no longer released
+  separately: it was never published to npm, and `ember init --opencode` writes the
+  plugin users actually run.
 - **The Pages site is generated at build.** `site/_docs/` and `site/assets/brand/` come from
   `scripts/build_site_docs.py` (manifest in `site/_data/docs.json`), so they are gitignored and
   must not be committed. To publish a page, add a manifest entry and run `make site`; never hand
@@ -669,6 +687,21 @@ MUST pass the constitution check.
 
 ## Recent Changes
 
+- 2026-10-09: the distribution is renamed `gut` → `ember-advise` (PyPI's `gut` is an empty
+  project owned by someone else; its JSON API 404s, which hid that). Commands are unchanged
+  plus an `ember-advise` alias for `uvx ember-advise mcp`; existing `gut` tool installs need
+  `uv tool uninstall gut` first. See
+  `vault/discoveries/2026-10-09-pypi-json-api-hides-empty-projects.md`.
+- 2026-10-09: distribution: the documented installs pin the release tag (`@vX.Y.Z`)
+  instead of `main`, and every bump rewrites them; `release-ember.yml` now uploads each
+  release's wheel and sdist to PyPI as `ember-advise` via Trusted Publishing (job `publish-pypi`,
+  environment `pypi`, no stored token) and then lists it in the MCP Registry (job
+  `publish-mcp-registry`, `server.json`); the sdist ships only the package (86 KB, was the
+  whole repository); `.claude-plugin/marketplace.json` + `packages/claude-plugin/` make
+  ember installable as a Claude Code plugin (`claude plugin install ember@ember`), and
+  `ember doctor` reports an enabled plugin; the opencode plugin's separate release track
+  (`release-plugin.yml`, `plugin/v*`, `make release-plugin`) is retired — it was never on
+  npm. See `vault/decisions/2026-10-09-publish-releases-to-pypi-and-the-mcp-registry.md`.
 - 2026-10-08: client registration hygiene: `ember init` no longer merges this repo's
   `mcp.vault` server into the configs it writes (it leaked into clients' projects, and with
   `--global` into every project; contributors get it from the committed

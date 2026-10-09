@@ -7,9 +7,11 @@ from pathlib import Path
 
 import pytest
 from ember.claude.claude_config import (
+    PLUGIN_ID,
     has_local_entry,
     has_project_entry,
     has_user_entry,
+    plugin_scopes,
     project_config_path,
     user_config_path,
 )
@@ -91,3 +93,40 @@ def test_detection_is_false_for_missing_or_malformed_files(
             path.write_text(content)
     found = (has_user_entry(), has_local_entry(tmp_path), has_project_entry(tmp_path))
     assert found == (False, False, False)
+
+
+def _enable(settings: Path, enabled: bool) -> None:
+    settings.parent.mkdir(parents=True, exist_ok=True)
+    settings.write_text(json.dumps({"enabledPlugins": {PLUGIN_ID: enabled}}))
+
+
+def test_plugin_scopes_reads_user_settings(tmp_path: Path, home: Path) -> None:
+    _enable(home / ".claude" / "settings.json", True)
+    assert plugin_scopes(tmp_path) == [("user", home / ".claude" / "settings.json")]
+
+
+def test_plugin_scopes_honors_claude_config_dir(
+    tmp_path: Path, home: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(tmp_path / "cfg"))
+    _enable(tmp_path / "cfg" / "settings.json", True)
+    assert plugin_scopes(tmp_path) == [("user", tmp_path / "cfg" / "settings.json")]
+
+
+def test_plugin_scopes_reads_project_settings_at_the_repository_root(
+    tmp_path: Path, home: Path
+) -> None:
+    repo = tmp_path / "repo"
+    (repo / ".git").mkdir(parents=True)
+    _enable(repo / ".claude" / "settings.json", True)
+    assert plugin_scopes(repo / "sub") == [
+        ("project", repo / ".claude" / "settings.json")
+    ]
+
+
+def test_plugin_scopes_lets_local_settings_disable_the_plugin(
+    tmp_path: Path, home: Path
+) -> None:
+    _enable(home / ".claude" / "settings.json", True)
+    _enable(tmp_path / ".claude" / "settings.local.json", False)
+    assert plugin_scopes(tmp_path) == []

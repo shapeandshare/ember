@@ -7,11 +7,10 @@ tags:
   - domain/governance
   - status/draft
 created: 2026-10-03
-updated: 2026-10-04
+updated: 2026-10-09
 code-refs:
   - .github/workflows/ci.yml
   - .github/workflows/release-ember.yml
-  - .github/workflows/release-plugin.yml
   - .github/dependabot.yml
   - .github/CODEOWNERS
   - SECURITY.md
