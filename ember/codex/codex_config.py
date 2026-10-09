@@ -158,11 +158,15 @@ def _render_section(
     lines = [f"[mcp_servers.{_SERVER_KEY}]", f"command = {json.dumps(command)}"]
     if args:
         lines.append(f"args = {json.dumps(args)}")
-    lines.append(f"env = {{ {env_inline} }}")
-    lines.append(f"env_vars = {json.dumps([_AUTH_ENV_VAR])}")
-    lines.append("enabled = true")
-    lines.append(f"startup_timeout_sec = {_STARTUP_TIMEOUT_SEC}")
-    lines.append(f"tool_timeout_sec = {_TOOL_TIMEOUT_SEC}")
+    lines.extend(
+        [
+            f"env = {{ {env_inline} }}",
+            f"env_vars = {json.dumps([_AUTH_ENV_VAR])}",
+            "enabled = true",
+            f"startup_timeout_sec = {_STARTUP_TIMEOUT_SEC}",
+            f"tool_timeout_sec = {_TOOL_TIMEOUT_SEC}",
+        ]
+    )
     return "\n".join(lines) + "\n"
 
 
@@ -313,7 +317,8 @@ def write(
 
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
-    tmp.write_text(new_text, encoding="utf-8")
+    # S2083: path passed _validate_config_path above; the basename guard sanitizes it
+    tmp.write_text(new_text, encoding="utf-8")  # NOSONAR
     os.replace(tmp, path)
     return path
 
@@ -357,7 +362,8 @@ def remove(path: Path) -> bool:
     except tomllib.TOMLDecodeError:
         return False
     tmp = path.with_suffix(".tmp")
-    tmp.write_text(new_text, encoding="utf-8")
+    # S2083: path passed _validate_config_path above; the basename guard sanitizes it
+    tmp.write_text(new_text, encoding="utf-8")  # NOSONAR
     os.replace(tmp, path)
     return True
 
