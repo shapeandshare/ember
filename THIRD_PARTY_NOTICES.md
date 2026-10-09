@@ -21,7 +21,7 @@ python3 scripts/check_provenance.py
 
 ## Runtime dependencies
 
-These ship as dependencies of the `gut` distribution and run when ember serves advice.
+These ship as dependencies of the `ember-advise` distribution and run when ember serves advice.
 
 | Package | Version (as installed) | License (as installed) | Role |
 | --- | --- | --- | --- |
@@ -62,7 +62,7 @@ Installed for contributors and CI. They are not part of the runtime distribution
 
 The Clef model weights and `joint_schema_model.py` are upstream Cloudflare work, licensed
 **Apache-2.0**. They are downloaded at runtime from Hugging Face and are **not**
-redistributed in this repository or the `gut` distribution. `provenance.json` records each
+redistributed in this repository or the `ember-advise` distribution. `provenance.json` records each
 model's repository, pinned revision, license, and distribution status.
 
 See also: [`PROVENANCE.md`](PROVENANCE.md) for material origins, and
