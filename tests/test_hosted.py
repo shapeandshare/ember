@@ -50,7 +50,9 @@ def test_resolve_downloads_and_returns_dir_when_not_cached(
 
     captured: dict[str, object] = {}
 
-    def _fake_download_prefix(bucket: str, prefix: str, dest: Path, label: str) -> Path:
+    def _fake_download_prefix(
+        bucket: str, prefix: str, dest: Path, label: str, **_kw: object
+    ) -> Path:
         captured["bucket"] = bucket
         captured["prefix"] = prefix
         captured["dest"] = dest
