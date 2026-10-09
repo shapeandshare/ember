@@ -73,7 +73,7 @@ On a MacBook Pro **M4 Max / 128 GB**, torch 2.14.1, transformers 5.18.0, mcp 2.3
 uv tool install --python 3.12 "gut @ git+https://github.com/shapeandshare/ember"
 
 ember model pull          # ~18 GB, resumable, disk-space checked
-ember doctor              # platform, dependencies, model, and server
+ember doctor              # platform, dependencies, model, server, and agent registration
 ember init --opencode     # register with opencode: config, plugin, and skill
 ```
 
@@ -124,6 +124,7 @@ guidance through every channel each agent actually reads:
 ```bash
 ember init --opencode                  # opencode: config entry, plugin, and skill
 ember init --kilocode                  # Kilo Code: kilo.json entry and skill
+ember init --codex                     # Codex CLI: .codex/config.toml entry and skill
 ember agents install --agent claude    # .claude/skills/ember-advise/SKILL.md
 ember agents install --agent codex     # .agents/skills/... (opencode reads this too)
 ember agents show snippet >> AGENTS.md # then edit the project policy at the end
@@ -143,10 +144,39 @@ Agent-specific notes:
 - Kilo Code: `ember init --kilocode` writes the `mcp.ember` entry to `kilo.json` (same
   config shape as opencode) and installs the skill to `.kilo/skills/ember-advise/SKILL.md`;
   the tool appears as `ember_advise`. Kilo Code also reads `AGENTS.md` automatically.
-- Claude Code: register the server with `claude mcp add ember -- ember-mcp`; the
+- Claude Code: register the server with `claude mcp add --scope user ember -- ember-mcp`
+  (every project; drop `--scope user` to register it for the current project only); the
   tool appears as `mcp__ember__advise`.
-- Codex CLI support for MCP server instructions and resources is unconfirmed, so rely on the
-  skill and the AGENTS.md snippet there.
+- Codex CLI: `ember init --codex` writes `[mcp_servers.ember]` to `.codex/config.toml`
+  (`--global`: `~/.codex/config.toml`, or `$CODEX_HOME/config.toml`) and installs the skill
+  to `.agents/skills/ember-advise/SKILL.md`. Codex loads a project `.codex/config.toml` only
+  for a trusted project, and `ember init --codex` tells you whether this one is. The entry
+  forwards `EMBER_AUTH_TOKEN` by name (`env_vars`), never by value. Support for MCP server
+  instructions and resources is unconfirmed, so rely on the skill and the AGENTS.md snippet
+  there.
+
+### Check what's registered
+
+`ember doctor` closes with two lines per harness: its binary on `PATH`, and where ember is
+registered for it — in this directory and globally — or the command that registers it. It
+only reads each harness's config files; it never runs a harness CLI.
+
+| Harness | Register | Project scope | Global scope | doctor also flags |
+| --- | --- | --- | --- | --- |
+| opencode | `ember init --opencode [--global]` | `opencode.json`, `.opencode/plugins/ember.js` | `~/.config/opencode/opencode.json`, `~/.config/opencode/plugins/ember.js` | a leftover `mcp.vault` entry from older `ember init` versions |
+| Kilo Code | `ember init --kilocode [--global]` | `kilo.json` | `~/.config/kilo/kilo.json` | — |
+| Codex CLI | `ember init --codex [--global]` | `.codex/config.toml` | `~/.codex/config.toml` | a project file Codex ignores because the project isn't trusted |
+| Claude Code | `claude mcp add --scope user ember -- ember-mcp` | `.mcp.json` (`--scope project`); `~/.claude.json` per project (`--scope local`) | `~/.claude.json` | a project `.mcp.json`, which Claude Code asks you to approve |
+
+Each harness has its own check too: `opencode mcp list`, `codex mcp list`, `claude mcp list`.
+Older `ember init` versions also added this repository's `vault` MCP server to every config
+they wrote; if you ran `ember init --global`, doctor points at the leftover entry in your
+global opencode config so you can delete it.
+
+`ember init` records the `ember-mcp` it finds on your `PATH`, falling back to the Python
+that runs it, so run `ember init --global` from the installed tool (`uv tool install …`)
+rather than a checkout's `.venv`. It merges into existing configs and refuses to rewrite one
+it can't parse (an `opencode.json` with comments, say), leaving that file untouched.
 
 ## CLI
 
@@ -154,18 +184,18 @@ Agent-specific notes:
 
 ```bash
 # lifecycle
-ember doctor                      # platform, dependencies, model, and server
+ember doctor                      # platform, dependencies, model, server, agent registration
 ember serve                       # run the model server in the foreground
 ember start | stop | restart | status | logs
 ember config path | show
-ember uninstall [--purge-models]  # also removes global opencode/skill installs
+ember uninstall [--purge-models]  # also removes global opencode/Kilo Code/Codex and skill installs
 
 # models
 ember model pull [flash|full]      # flash = 9B (default)
 ember model list | path [name] | rm [name]
 
-# opencode, Kilo Code, and agents
-ember init [--opencode] [--kilocode] [--global] [--server-url URL] [--auth-header NAME]
+# opencode, Kilo Code, Codex CLI, and agents
+ember init [--opencode] [--kilocode] [--codex] [--global] [--server-url URL] [--auth-header NAME]
 ember agents install [--agent opencode|claude|codex|kilocode] [--global]
 ember agents show instructions|skill|snippet
 ember mcp                         # the MCP stdio server agents launch
@@ -276,7 +306,7 @@ reverting to local is a single change (unset these variables).
 #### Bootstrapping a client against a hosted endpoint
 
 `ember init` can generate the `mcp.ember` entry for a remote endpoint directly, instead of
-hand-editing the generated `opencode.json` / `kilo.json`:
+hand-editing the generated `opencode.json` / `kilo.json` / `.codex/config.toml`:
 
 ```bash
 ember init --opencode --kilocode \
@@ -328,9 +358,13 @@ ember/
     config.py         #   config resolution (CLI flag > env > file > default)
     endpoint.py       #   client endpoint: loopback check, transport guard, auth headers
     paths.py          #   platform-aware app dirs (macOS Library, XDG)
+    repo_root.py      #   checkout / main-worktree root from .git on disk
   opencode/           # opencode integration
     opencode_config.py  # generates opencode.json
     opencode_plugin.py  # installs the npm plugin
+  kilocode/           # Kilo Code integration: generates kilo.json
+  codex/              # Codex CLI integration: .codex/config.toml entry, project trust
+  claude/             # Claude Code registration detection (read-only)
   agent_kit/          # what agents read: instructions, ember-advise skill, AGENTS snippet
     api.py            #   public API: instructions(), skill(), snippet(), install_skill()
 packages/opencode-plugin/   # npm-ready opencode plugin source
@@ -503,7 +537,9 @@ never part of `make check`, `make test`, or CI.
 
 - Start with `ember doctor`, then `ember logs`
   (`~/Library/Application Support/ember/logs/server.log`).
-- The agent can't see the tool: `opencode mcp list` should show `✓ ember connected`.
+- The agent can't see the tool: `ember doctor` shows where ember is registered for each
+  harness (and flags an untrusted Codex project or a Claude Code `.mcp.json` awaiting
+  approval); `opencode mcp list` should show `✓ ember connected`.
 - "model … is not pulled": run `ember model pull`, or point `EMBER_MODEL_DIR` at the
   weights.
 - `Qwen3VLVideoProcessor requires Torchvision` → torchvision is a pinned dependency; run
