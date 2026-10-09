@@ -8,12 +8,12 @@ tags:
   - domain/governance
 code-refs:
   - ember/models.py
-  - ember/cfg/anaconda_s3.py
+  - ember/cfg/s3.py
   - ember/cfg/config.py
   - ember/cfg/paths.py
   - ember/serving/hosted.py
   - tests/test_model_integrity.py
-  - tests/test_anaconda_s3.py
+  - tests/test_s3.py
 created: "2026-10-08"
 updated: "2026-10-08"
 status: draft
@@ -68,7 +68,7 @@ two solutions to the same problem and not retiring the first one once the second
 - **`pull()`/`resolve_dir()`/`remove()`** in `ember/models.py` lose their `ModelSource`
   dispatch branches entirely — always the Hugging Face Hub path now. `ember/models.py`:
   352 → 247 lines.
-- **`ember/cfg/anaconda_s3.py`** keeps only its two generic primitives,
+- **`ember/cfg/s3.py`** keeps only its two generic primitives,
   `s3_client()`/`download_prefix(bucket, prefix, dest, label)` — both still used by
   `ember/serving/hosted.py` for `EMBER_MODEL_S3_URI`. The `ModelSpec`-specific `download()`
   wrapper (which resolved a bucket from `spec.s3_bucket`/the shared config) is deleted.
@@ -114,7 +114,7 @@ two solutions to the same problem and not retiring the first one once the second
   `REGISTRY` entry if it's on the public Hugging Face Hub, or (b) nothing at all in
   `ember/models.py` if it's hosted-S3-supplied — just point `EMBER_MODEL_S3_URI` at it. There
   is no longer a third, named-but-S3-sourced `REGISTRY` entry shape to choose between.
-- Net code removed this session: `ember/models.py` -105 lines, `ember/cfg/anaconda_s3.py` -64
+- Net code removed this session: `ember/models.py` -105 lines, `ember/cfg/s3.py` -64
   lines, plus the `ModelSource` enum, three `ModelSpec` fields, one config key, and one path
   helper function. Test suite: 357 → 332 tests (net removal reflecting the real subsystem
   removal, not a coverage regression — `make pr-ready` coverage still 90%+).

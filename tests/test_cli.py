@@ -189,18 +189,18 @@ def test_local_to_remote_is_single_reversible_change(sandbox, capsys):
     assert json.loads(capsys.readouterr().out)["kind"] == "local"
 
 
-def test_doctor_labels_a_configured_anaconda_hosted_endpoint_as_remote(
+def test_doctor_labels_a_configured_hosted_endpoint_as_remote(
     sandbox, monkeypatch, capsys
 ):
     """US3 T019: spec FR-005/SC-004; contracts/hosted-endpoint.md rule 7 — this is a
     regression lock proving the existing (001) endpoint-status reporting already
-    distinguishes remote from local with no new code needed for an Anaconda-hosted
+    distinguishes remote from local with no new code needed for a hosted
     endpoint, which is just another non-loopback server_url."""
     monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
     monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
-    assert cli.main(["doctor", "--server-url", "https://anaconda-hosted.example"]) == 0
+    assert cli.main(["doctor", "--server-url", "https://hosted.example"]) == 0
     out = capsys.readouterr().out
-    assert "[info] endpoint: remote https://anaconda-hosted.example" in out
+    assert "[info] endpoint: remote https://hosted.example" in out
 
 
 def test_doctor_labels_the_default_loopback_endpoint_as_local(
@@ -235,8 +235,8 @@ def test_doctor_makes_no_remote_http_call_when_unconfigured(
 def test_config_show_masks_secrets(sandbox, capsys, monkeypatch):
     monkeypatch.setenv("EMBER_AUTH_TOKEN", "topsecret")
     monkeypatch.setenv("EMBER_SERVER_AUTH_TOKEN", "server-token")
-    monkeypatch.setenv("EMBER_ANACONDA_S3_ACCESS_KEY_ID", "AKIAFAKE")
-    monkeypatch.setenv("EMBER_ANACONDA_S3_SECRET_ACCESS_KEY", "fakesecretkey")
+    monkeypatch.setenv("EMBER_S3_ACCESS_KEY_ID", "AKIAFAKE")
+    monkeypatch.setenv("EMBER_S3_SECRET_ACCESS_KEY", "fakesecretkey")
     assert cli.main(["config", "show"]) == 0
     out = capsys.readouterr().out
     assert "topsecret" not in out
@@ -246,8 +246,8 @@ def test_config_show_masks_secrets(sandbox, capsys, monkeypatch):
     body = json.loads(out)
     assert body["auth_token"] == "***"
     assert body["server_auth_token"] == "***"
-    assert body["anaconda_s3_access_key_id"] == "***"
-    assert body["anaconda_s3_secret_access_key"] == "***"
+    assert body["s3_access_key_id"] == "***"
+    assert body["s3_secret_access_key"] == "***"
 
 
 def test_config_show_reflects_env_var_overrides_for_every_key(
@@ -255,18 +255,18 @@ def test_config_show_reflects_env_var_overrides_for_every_key(
 ):
     """Critical review finding (2026-10-08): `ember config show` only applied
     env-var precedence to `server_url` and the four masked secret keys —
-    every other DEFAULTS key (including `anaconda_s3_region`) silently showed
+    every other DEFAULTS key (including `s3_region`) silently showed
     its config-file/default value even when overridden by an EMBER_* env
     var, with no visible indication the override was being ignored.
     `config.resolve()` already implements the correct flag > env > file >
     default precedence; `cmd_config_show` MUST use it for every key, not
     just a hardcoded subset."""
     monkeypatch.setenv("EMBER_HOST", "192.0.2.1")
-    monkeypatch.setenv("EMBER_ANACONDA_S3_REGION", "us-west-2")
+    monkeypatch.setenv("EMBER_S3_REGION", "us-west-2")
     assert cli.main(["config", "show"]) == 0
     body = json.loads(capsys.readouterr().out)
     assert body["host"] == "192.0.2.1"
-    assert body["anaconda_s3_region"] == "us-west-2"
+    assert body["s3_region"] == "us-west-2"
 
 
 def test_doctor_treats_a_stopped_server_as_information(sandbox, monkeypatch, capsys):

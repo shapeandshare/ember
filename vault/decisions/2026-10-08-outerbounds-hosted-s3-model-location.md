@@ -17,7 +17,7 @@ code-refs:
   - ember/serving/server.py
   - ember/serving/process.py
   - ember/commands/doctor.py
-  - ember/cfg/anaconda_s3.py
+  - ember/cfg/s3.py
   - ember/cfg/paths.py
 ---
 
@@ -99,7 +99,7 @@ the existing rule for every other path.
   otherwise crash during its own startup; `lifespan()` so `ember serve`/the spawned subprocess
   itself resolves correctly when launched directly (e.g. by Outerbounds' own `commands:`
   startup line, not through `ember start`).
-- **Download mechanics reused, not duplicated**: `ember/cfg/anaconda_s3.py::download()` (the
+- **Download mechanics reused, not duplicated**: `ember/cfg/s3.py::download()` (the
   existing `ANACONDA_S3` registry-entry path) was refactored to extract a lower-level
   `download_prefix(bucket, prefix, dest, label)` primitive with no `ModelSpec` dependency;
   `hosted.resolve()` calls this directly, `download()` becomes a thin `ModelSpec`-resolving

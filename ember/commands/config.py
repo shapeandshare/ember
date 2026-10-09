@@ -47,8 +47,8 @@ def cmd_config_show(_: argparse.Namespace) -> int:
     secret_keys = {
         "auth_token",
         "server_auth_token",
-        "anaconda_s3_access_key_id",
-        "anaconda_s3_secret_access_key",
+        "s3_access_key_id",
+        "s3_secret_access_key",
     }
     effective = {
         key: (

@@ -43,13 +43,13 @@ DEFAULTS: dict[str, Any] = {
     # are OPTIONAL: when unset (never baked in by default), the S3 client is
     # constructed with no explicit credentials at all and boto3's own default
     # credential chain applies — the expected case for a hosted deployment
-    # with an IAM role attached to the compute, matching model-foundry's own
-    # Metaflow-managed S3 access pattern. Set them explicitly only when
+    # with an IAM role attached to the compute (the usual Metaflow-managed S3
+    # access pattern). Set them explicitly only when
     # running somewhere without an attached role (e.g. a local developer
     # machine).
-    "anaconda_s3_access_key_id": None,  # nosec B105 - None default: no credential
-    "anaconda_s3_secret_access_key": None,  # nosec B105 - None default: no credential
-    "anaconda_s3_region": None,
+    "s3_access_key_id": None,  # nosec B105 - None default: no credential
+    "s3_secret_access_key": None,  # nosec B105 - None default: no credential
+    "s3_region": None,
 }
 
 
