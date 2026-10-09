@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import ssl
 import sys
 from typing import Any
@@ -43,6 +44,32 @@ from ..cfg.endpoint import (
 )
 from ..serving import process
 from .mcp_types import AdviseInput
+
+_PATH_RE = re.compile(r"(/[^\s:]+|[A-Za-z]:\\[^\s:]+)")
+_TRACEBACK_RE = re.compile(r"Traceback \(most recent call last\)", re.IGNORECASE)
+
+
+def _redact(text: str) -> str:
+    """Strip filesystem paths and traceback markers from an error message.
+
+    Prevents internal paths and stack traces from leaking to the calling agent
+    via ToolError messages (I-002).
+
+    Parameters
+    ----------
+    text : str
+        The raw error string to clean.
+
+    Returns
+    -------
+    str
+        The input with filesystem paths replaced by ``<path>`` and any
+        traceback header stripped.
+    """
+    text = _PATH_RE.sub("<path>", text)
+    text = _TRACEBACK_RE.sub("<traceback>", text)
+    return text
+
 
 # stdout is the JSON-RPC wire; log to stderr only.
 # R-003: configure the named logger directly (not basicConfig, which is a no-op
@@ -152,9 +179,9 @@ def _sanitize_error(status_code: int, body: str) -> str:
         detail = parsed.get("detail")
         if detail is not None:
             if isinstance(detail, list):
-                msgs = ", ".join(str(d.get("msg") or d) for d in detail if d)
+                msgs = ", ".join(_redact(str(d.get("msg") or d)) for d in detail if d)
                 return f"ember server error {status_code}: {msgs}"
-            return f"ember server error {status_code}: {detail}"
+            return f"ember server error {status_code}: {_redact(str(detail))}"
     except (json.JSONDecodeError, AttributeError):
         pass
     return f"ember server error {status_code}"
@@ -249,12 +276,10 @@ async def advise(input: AdviseInput) -> dict[str, Any]:
             f"endpoint at {endpoint.url} did not return a valid ember response"
         ) from exc
     loaded = str(answer.get("model") or "")
-    # R-002: log a structured call summary so there is a minimal audit trail
-    # for each advise call without persisting sensitive state content.
     log.info(
         "advise: questions=%s model=%s",
-        ",".join(sorted(input.questions)),
-        loaded or input.model,
+        repr(",".join(sorted(input.questions))),
+        repr(loaded or input.model),
     )
     # Only an explicitly requested label can mismatch; the schema default is a
     # placeholder and would otherwise warn on every call.

@@ -15,6 +15,9 @@ from typing import Any
 
 from . import config
 
+_S3_CONNECT_TIMEOUT = 30
+_S3_READ_TIMEOUT = 300
+
 
 def s3_client() -> Any:
     """Construct an AWS S3 client, with or without explicit credentials.
@@ -44,11 +47,16 @@ def s3_client() -> Any:
     """
     # import-placement:allow - deferred; boto3 must not load at module import
     import boto3
+    from botocore.config import Config as BotocoreConfig
 
     access_key_id = config.resolve("s3_access_key_id")
     secret_access_key = config.resolve("s3_secret_access_key")
     region = config.resolve("s3_region")
     has_explicit_credentials = bool(access_key_id and secret_access_key)
+    boto_config = BotocoreConfig(
+        connect_timeout=_S3_CONNECT_TIMEOUT,
+        read_timeout=_S3_READ_TIMEOUT,
+    )
     try:
         if has_explicit_credentials:
             return boto3.client(
@@ -56,8 +64,9 @@ def s3_client() -> Any:
                 aws_access_key_id=access_key_id,
                 aws_secret_access_key=secret_access_key,
                 region_name=region,
+                config=boto_config,
             )
-        return boto3.client("s3", region_name=region)
+        return boto3.client("s3", region_name=region, config=boto_config)
     except ValueError as exc:
         raise RuntimeError(f"could not create an S3 client: {exc}") from exc
 
@@ -138,10 +147,20 @@ def download_prefix(
                 f"({total / 1024 / 1024:.0f} MB total). "
                 "Raise EMBER_S3_MAX_BYTES or set it to 0 to disable the cap."
             )
+    resolved_dest = dest.resolve()
     try:
         for obj in objects:
             key = str(obj["key"])
-            target = dest / key[len(prefix) + 1 :]
+            relative = key[len(prefix) + 1 :]
+            target = (dest / relative).resolve()
+            if (
+                not str(target).startswith(str(resolved_dest) + "/")
+                and target != resolved_dest
+            ):
+                raise RuntimeError(
+                    f"S3 key {key!r} for {label} resolves outside the download "
+                    f"destination {dest} — possible path traversal attack"
+                )
             target.parent.mkdir(parents=True, exist_ok=True)
             client.download_file(bucket, key, str(target))
     except (ClientError, BotoCoreError) as exc:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 
 from .. import models as models_mod
 
@@ -86,5 +87,10 @@ def cmd_model_rm(args: argparse.Namespace) -> int:
         if answer != "y":
             print("aborted")
             return 1
-    print(models_mod.remove(args.name))
+    result = models_mod.remove(args.name)
+    print(result)
+    print(
+        f"audit: model rm {args.name or models_mod.DEFAULT!r} — {result}",
+        file=sys.stderr,
+    )
     return 0

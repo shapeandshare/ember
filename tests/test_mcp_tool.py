@@ -575,14 +575,19 @@ def test_advise_logs_question_ids_on_success(
 # ###########################################################################
 def test_server_4xx_error_body_is_sanitized(stub_env, stub_server, monkeypatch):
     """I-002: A 4xx response body must not include raw filesystem paths or
-    stack traces — only the actionable message is forwarded to the agent."""
+    stack traces — only the actionable message is forwarded to the agent.
+    The msg field deliberately contains a path and a traceback marker so the
+    test fails if the sanitizer is removed or bypassed."""
     fastapi_422 = json.dumps(
         {
             "detail": [
                 {
-                    "type": "missing",
+                    "type": "value_error",
                     "loc": ["body", "state"],
-                    "msg": "Field required",
+                    "msg": (
+                        "Traceback (most recent call last):"
+                        " /home/user/ember/serving/runtime.py line 42"
+                    ),
                     "url": "https://errors.pydantic.dev/...",
                 }
             ]
@@ -593,8 +598,8 @@ def test_server_4xx_error_body_is_sanitized(stub_env, stub_server, monkeypatch):
         _call_direct(monkeypatch, url)
     error_text = str(exc_info.value)
     assert "422" in error_text
-    assert "/Users/" not in error_text, "filesystem paths must not leak in ToolError"
-    assert "Traceback" not in error_text, "stack traces must not leak in ToolError"
+    assert "/home/" not in error_text, "filesystem paths must not leak in ToolError"
+    assert "Traceback" not in error_text, "traceback markers must not leak in ToolError"
 
 
 def test_server_5xx_error_returns_generic_message(stub_env, stub_server, monkeypatch):

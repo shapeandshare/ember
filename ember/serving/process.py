@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import fcntl
 import logging
-import logging.handlers
 import os
 import signal
 import subprocess  # nosec B404
@@ -130,10 +129,6 @@ def tracked_pid(host: str, port: int) -> int | None:
     return pid
 
 
-_LOG_MAX_BYTES = 10 * 1024 * 1024  # 10 MB per file (D-004)
-_LOG_BACKUP_COUNT = 3  # keep server.log, server.log.1, server.log.2, server.log.3
-
-
 def spawn(
     model_dir: Path, host: str, port: int, device: str
 ) -> subprocess.Popen[bytes]:
@@ -150,22 +145,9 @@ def spawn(
             "HF_HUB_OFFLINE": "1",
         }
     )
-    # D-004: use a RotatingFileHandler so server.log is capped at 10 MB with
-    # 3 backups (server.log.1 … server.log.3).  We borrow its stream for the
-    # Popen stdout/stderr file descriptor; the handler is then closed in the
-    # parent so only the child process writes to the descriptor.
     log_path = paths.server_log_path()
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    handler = logging.handlers.RotatingFileHandler(
-        str(log_path),
-        mode="ab",
-        maxBytes=_LOG_MAX_BYTES,
-        backupCount=_LOG_BACKUP_COUNT,
-        encoding=None,
-        delay=False,
-    )
-    handle = handler.stream
-    try:
+    with open(log_path, "ab") as handle:
         proc = subprocess.Popen(
             [sys.executable, "-m", "ember.serving.server"],
             cwd=str(paths.state_dir()),
@@ -175,8 +157,6 @@ def spawn(
             env=env,
             start_new_session=True,
         )
-    finally:
-        handler.close()
     pid_path = paths.pid_path()
     tmp = pid_path.with_suffix(".tmp")
     tmp.write_text(str(proc.pid), encoding="utf-8")

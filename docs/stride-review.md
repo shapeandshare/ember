@@ -14,8 +14,9 @@ _A chronological log of every scan run. Newest first._
 
 | Scan Date  | New Threats | Resolved | Regressed | Total Open | Scope |
 |------------|-------------|----------|-----------|------------|-------|
-| 2026-10-09 (impl 2) | +0   | -8       | +0        | 3          | implementation pass 2 — R-003, R-004, I-003 fixed; S-003, T-005, I-005, I-006, R-005 accepted (documented in SECURITY.md) |
-| 2026-10-09 (impl) | +0     | -8       | +0        | 11         | implementation pass 1 — I-001, T-004, D-004, D-005, D-006, I-002, R-002, S-004 fixed; S-005/E-003 documented in SECURITY.md |
+| 2026-10-09 (impl 3) | +0   | +0       | +0        | 4          | PR feedback pass — D-004 reverted to open (RotatingFileHandler does not rotate child subprocess output); S3 path traversal guard added; _sanitize_error scalar detail redaction; audit log moved to CLI stderr; behavioral tests replace inspect-source assertions |
+| 2026-10-09 (impl 2) | +0   | -7       | +0        | 4          | implementation pass 2 — R-003, R-004, I-003 fixed; S-003, T-005, I-005, I-006, R-005 accepted (documented in SECURITY.md) |
+| 2026-10-09 (impl) | +0     | -7       | +0        | 11         | implementation pass 1 — I-001, T-004, D-005, D-006, I-002, R-002, S-004 fixed; D-004 incorrectly marked fixed (reverted in impl 3); S-005/E-003 documented in SECURITY.md |
 | 2026-10-09 | +4          | -2       | +3        | 19         | full scan — post-2026-10-05 changes: remote inference, bearer auth, hosted S3, Kilo Code / Claude Code / Codex integrations, constitution Article V redefinition, distribution rename |
 | 2026-10-05 | +0          | -10      | +0        | 16         | status refresh — fixes merged (#57–#60) |
 | 2026-10-04 | +26         | -0       | +0        | 26         | full  |
@@ -29,11 +30,11 @@ _This section grows with each scan — never prune rows._
 | Metric                        | Value  |
 |-------------------------------|--------|
 | Total threats (all time)      | **30** |
-| Currently open                | **3**  |
+| Currently open                | **4**  |
 | In progress                   | **0**  |
-| Fixed / resolved              | **19** |
+| Fixed / resolved              | **18** |
 | Wontfix / False positive      | **8**  |
-| Resolved rate                 | **90%** |
+| Resolved rate                 | **87%** |
 
 ### Open Threats by Category
 
@@ -43,7 +44,7 @@ _This section grows with each scan — never prune rows._
 | T — Tampering             | 0    | 0        | 0    |
 | R — Repudiation           | 0    | 0        | 0    |
 | I — Information Disclosure| 1    | 0        | 0    |
-| D — Denial of Service     | 0    | 0        | 0    |
+| D — Denial of Service     | 1    | 0        | 0    |
 | E — Elevation of Privilege| 1    | 0        | 1    |
 
 ### Open Threats by Severity
@@ -52,21 +53,22 @@ _This section grows with each scan — never prune rows._
 |----------|-------|
 | CRITICAL | 0     |
 | HIGH     | 2     |
-| MEDIUM   | 0     |
+| MEDIUM   | 1     |
 | LOW      | 1     |
 | INFO     | 0     |
 
-### Trend Since Last Review (implementation pass 2)
+### Trend Since Last Review (PR feedback pass)
 
-- New threats resolved: −3 code fixes (R-003, R-004, I-003)
-- New threats accepted (wontfix): −5 (S-003, T-005, I-005, I-006, R-005 — all documented in SECURITY.md)
-- New threats added: +0
-- Threats regressed: +0
+- D-004 reverted from `fixed` to `open`: `RotatingFileHandler` only rotates when `emit()` is called in-process; a child subprocess writes directly to the borrowed fd so rollover is never triggered. Subprocess log rotation must be handled externally (e.g., `logrotate`).
+- S3 path traversal guard added (`s3.py`): keys are now resolved and rejected if they escape the destination directory.
+- `_sanitize_error` now redacts filesystem paths and traceback markers from scalar 4xx `detail` strings via `_redact()`.
+- Audit log moved to CLI composition root (`cmd_model_rm` → `sys.stderr`).
 
-> ⚠️ **Remaining Open Risks (3 total)**:
-> 1. **E-003** — `EMBER_MODEL_S3_URI` path: S3-supplied `joint_schema_model.py` imported as executable Python without hash verification. Accepted per constitution Article V; SECURITY.md documents operator IAM/ACL requirements. D-006 (size cap) fixed.
-> 2. **S-005** — S3 URI bucket name has no allowlist. Same Article V acceptance; same SECURITY.md guidance. Primary mitigation is deployment-environment IAM policy.
-> 3. **I-004 (LOW)** — `server.log` is an append-only sink that would persist `state` if any future code change logs it. Current code does not log state; risk is prospective. Mitigation: code-review policy (enforced by RESPONSIBLE_USE.md §privacy).
+> ⚠️ **Remaining Open Risks (4 total)**:
+> 1. **E-003** — `EMBER_MODEL_S3_URI` path: S3-supplied `joint_schema_model.py` imported as executable Python without hash verification. Accepted per constitution Article V; SECURITY.md documents operator IAM/ACL requirements.
+> 2. **S-005** — S3 URI bucket name has no allowlist. Same Article V acceptance; same SECURITY.md guidance.
+> 3. **D-004 (MEDIUM)** — `server.log` subprocess output cannot be rotated by a parent-process handler; external `logrotate` is required.
+> 4. **I-004 (LOW)** — `server.log` prospective state-echo risk; current code does not log state.
 
 ---
 
@@ -94,7 +96,7 @@ _A single flat table covering every threat across all STRIDE categories. Sorted:
 | I-002 | I   | MEDIUM   | fixed    | mcp       | Z1→Z0: ToolError messages                 | ToolError forwarded raw server error bodies             | —                                                                                 | 2026-10-04 | 2026-10-09     | 2026-10-09 |
 | T-004 | T   | MEDIUM   | fixed    | server    | Z4: config.json / server lifespan         | Non-loopback host binding without bearer auth           | —                                                                                 | 2026-10-04 | 2026-10-09     | 2026-10-09 |
 | R-002 | R   | MEDIUM   | fixed    | mcp       | Z0→Z1: advise tool call                   | advise calls not logged with question IDs / model label | —                                                                                 | 2026-10-04 | 2026-10-09     | 2026-10-09 |
-| D-004 | D   | MEDIUM   | fixed    | server    | Z4: server.log                            | server.log grows without rotation                       | —                                                                                 | 2026-10-04 | 2026-10-09     | 2026-10-09 |
+| D-004 | D   | MEDIUM   | open     | server    | Z4: server.log                            | server.log subprocess output cannot be rotated in-process | —                                                                               | 2026-10-04 | 2026-10-09     | —          |
 | D-005 | D   | MEDIUM   | fixed    | server    | Z4: autostart TOCTOU                      | Multiple MCP autostart calls race to spawn server       | —                                                                                 | 2026-10-04 | 2026-10-09     | 2026-10-09 |
 | D-006 | D   | MEDIUM   | fixed    | server    | Z4→Z5: EMBER_MODEL_S3_URI download        | S3 model download had no size cap                       | —                                                                                 | 2026-10-09 | 2026-10-09     | 2026-10-09 |
 | S-004 | S   | MEDIUM   | fixed    | mcp       | Z1→Z2: EMBER_SERVER_URL scheme            | No advisory when non-loopback + insecure transport      | → SECURITY.md §security-sensitive-design-notes                                    | 2026-10-04 | 2026-10-09     | 2026-10-09 |

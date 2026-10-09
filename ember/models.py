@@ -230,9 +230,7 @@ def remove(name: str | None = None) -> str:
     dev = _dev_dir(spec)
     if dev.is_dir():
         shutil.rmtree(dev)
-        msg = f"removed {dev}"
-        _log.info("model remove: %s", msg)
-        return msg
+        return f"removed {dev}"
     try:
         # import-placement:allow - deferred to remove(); avoids HF import at module load
         from huggingface_hub import scan_cache_dir
@@ -245,13 +243,8 @@ def remove(name: str | None = None) -> str:
             for rev in repo.revisions
         ]
         if not revisions:
-            msg = f"{spec.repo} is not cached"
-            _log.info("model remove: %s (nothing to delete)", spec.repo)
-            return msg
+            return f"{spec.repo} is not cached"
         cache.delete_revisions(*revisions).execute()
-        msg = f"removed {spec.repo} from HF cache"
-        _log.info("model remove: %s", msg)
-        return msg
+        return f"removed {spec.repo} from HF cache"
     except Exception as exc:  # pragma: no cover - best effort
-        _log.warning("model remove: could not remove %s: %s", spec.repo, exc)
         return f"could not remove {spec.repo}: {exc}"
