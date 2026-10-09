@@ -108,24 +108,52 @@ def _register(args: argparse.Namespace) -> int:
         skill = agent_kit.install_skill("kilocode", scope, Path.cwd())
         print(f"installed {agent_kit.SKILL_NAME} skill: {skill}")
     if args.codex:
-        codex_target = (
-            codex_config.global_config_path()
-            if args.global_
-            else codex_config.project_config_path(Path.cwd())
-        )
-        codex_written = codex_config.write(
-            codex_target, host, port, autostart, server_url, auth_header
-        )
-        print(f"wrote {codex_written}")
-        skill = agent_kit.install_skill("codex", scope, Path.cwd())
-        print(f"installed {agent_kit.SKILL_NAME} skill: {skill}")
-        if scope == "project":
-            note = codex_trust_note(Path.cwd())
-            trusted = "  codex: this project is trusted; Codex will load it"
-            print(f"  note: .codex/config.toml is {note}" if note else trusted)
+        _register_codex(args.global_, host, port, autostart, server_url, auth_header)
     print(f"  command: {command}")
     print("restart opencode/kilo/codex to pick up changes")
     return 0
+
+
+def _register_codex(
+    global_: bool,
+    host: str,
+    port: int,
+    autostart: str,
+    server_url: str | None,
+    auth_header: str | None,
+) -> None:
+    """Write the Codex CLI entry and skill, and say whether Codex will load it.
+
+    Parameters
+    ----------
+    global_ : bool
+        Register in the user-global Codex config instead of this project's.
+    host : str
+        Model server host for a local endpoint.
+    port : int
+        Model server port for a local endpoint.
+    autostart : str
+        Value for ``EMBER_AUTOSTART``.
+    server_url : str | None
+        A remote inference endpoint, if any.
+    auth_header : str | None
+        The header name a remote endpoint expects the credential on.
+    """
+    target = (
+        codex_config.global_config_path()
+        if global_
+        else codex_config.project_config_path(Path.cwd())
+    )
+    written = codex_config.write(target, host, port, autostart, server_url, auth_header)
+    print(f"wrote {written}")
+    scope = "global" if global_ else "project"
+    skill = agent_kit.install_skill("codex", scope, Path.cwd())
+    print(f"installed {agent_kit.SKILL_NAME} skill: {skill}")
+    if global_:
+        return
+    note = codex_trust_note(Path.cwd())
+    trusted = "  codex: this project is trusted; Codex will load it"
+    print(f"  note: .codex/config.toml is {note}" if note else trusted)
 
 
 def cmd_agents_install(args: argparse.Namespace) -> int:
