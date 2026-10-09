@@ -124,10 +124,11 @@ jobs:
       - run: uv build
       - name: Install the wheel as a uv tool and smoke the CLI
         run: |
-          uv tool install --python 3.12 dist/gut-*.whl
+          uv tool install --python 3.12 dist/ember_advise-*.whl
           bin="$(uv tool dir --bin)"
           "$bin/ember" --help
           "$bin/gut" --help
+          "$bin/ember-advise" --help
           "$bin/ember" model list
           "$bin/ember" agents show instructions | head -1
           test -x "$bin/ember-mcp"

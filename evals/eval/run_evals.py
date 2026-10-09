@@ -51,7 +51,7 @@ DATASET_PATH = REPO_ROOT / "evals" / "clef-flash.jsonl"
 RESULTS_DIR = REPO_ROOT / "results"
 DEFAULT_SERVER = "http://127.0.0.1:8765"
 TIMEOUT = 120.0
-PACKAGES = ("gut", "torch", "transformers", "mcp")
+PACKAGES = ("ember-advise", "torch", "transformers", "mcp")
 
 
 def _resolve_server(flag: str | None) -> str:
