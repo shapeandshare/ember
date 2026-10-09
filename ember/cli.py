@@ -7,6 +7,7 @@ handlers defined in ``ember/commands/``.
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import sys
 
 from .commands.agents import (
@@ -63,6 +64,12 @@ def build_parser() -> argparse.ArgumentParser:
             "A local gut feeling for coding agents: calibrated advice from "
             "decision models on Apple Silicon."
         ),
+    )
+    parser.add_argument(
+        "--version",
+        "-V",
+        action="version",
+        version=f"ember {importlib.metadata.version('gut')}",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
