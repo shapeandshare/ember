@@ -1,3 +1,9 @@
+## v0.9.1 (2026-10-10)
+
+### Fix
+
+- **ember**: remove T-004's non-loopback-without-auth startup check (#99)
+
 ## v0.9.0 (2026-10-10)
 
 ### Feat
