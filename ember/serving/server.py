@@ -256,7 +256,7 @@ class AdviseRequest(BaseModel):
             "Optional image/video processor arguments. "
             "Only the following keys are permitted: "
             "min_pixels, max_pixels, fps, min_frames, max_frames, "
-            "do_resize, size, do_convert_rgb. "
+            "do_resize, size, do_convert_rgb, cap_pixels_per_frame. "
             "Any other key is rejected with a 422 error."
         ),
     )

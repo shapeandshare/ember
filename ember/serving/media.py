@@ -45,6 +45,7 @@ ALLOWED_MEDIA_KWARGS = frozenset(
         "do_resize",
         "size",
         "do_convert_rgb",
+        "cap_pixels_per_frame",
     }
 )
 

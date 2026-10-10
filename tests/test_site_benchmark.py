@@ -103,6 +103,22 @@ def test_leaderboard_table_shows_the_deployment_label_not_a_url() -> None:
     assert "://" not in html
 
 
+def test_leaderboard_table_run_link_uses_relative_url_for_baseurl() -> None:
+    """The site is a GitHub Pages project page served under ``/ember/``.
+
+    A raw ``href="/results/.../summary/"`` link bypasses Jekyll's baseurl and
+    404s when deployed; the link must go through the ``relative_url`` filter,
+    as every other internal link in the generated/templated site does.
+    """
+    row = _leaderboard_row(run_id="clef-flash_20261010T000000Z")
+    html = bench._leaderboard_table_html([row])
+    assert (
+        "href=\"{{ '/results/clef-flash_20261010T000000Z/summary/' "
+        '| relative_url }}">'
+    ) in html
+    assert 'href="/results/' not in html
+
+
 def test_leaderboard_table_never_leaks_a_real_hostname() -> None:
     """Even if a row's ``deployment_label`` somehow contained a scheme-less
     hostname fragment, the table must never surface anything resembling a
