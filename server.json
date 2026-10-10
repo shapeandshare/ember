@@ -8,13 +8,13 @@
     "url": "https://github.com/shapeandshare/ember",
     "source": "github"
   },
-  "version": "0.10.3",
+  "version": "0.11.0",
   "packages": [
     {
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "ember-advise",
-      "version": "0.10.3",
+      "version": "0.11.0",
       "runtimeHint": "uvx",
       "runtimeArguments": [
         {

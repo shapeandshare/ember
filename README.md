@@ -89,11 +89,11 @@ This installs the latest released wheel from PyPI.
 To pin a specific release tag from GitHub instead (no PyPI required):
 
 ```bash
-uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.10.3"
+uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.11.0"
 ```
 
 The repository is public, so the git install needs no credentials. To use SSH instead,
-install from `git+ssh://git@github.com/shapeandshare/ember@v0.10.3`.
+install from `git+ssh://git@github.com/shapeandshare/ember@v0.11.0`.
 
 Installed ember before the rename, as `gut`? Run `uv tool uninstall gut` first: both
 distributions provide the same commands.
