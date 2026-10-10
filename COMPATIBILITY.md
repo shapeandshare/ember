@@ -122,6 +122,15 @@ under 0.1%.
 - **Gated DeltaNet fallback.** Qwen3.5's hybrid linear attention has no optimized kernels
   for Apple Silicon, so it runs the pure-PyTorch path. Two "falling back" log lines are
   expected. The result is correct, only slower.
+- **torch 2.14's `torch._native` Triton JIT requires a C compiler on CUDA.** Qwen3.5's RoPE
+  forward hits a Triton-backed `aten::bmm` outer-product specialization that JIT-compiles a
+  kernel on first use; a minimal CUDA container (e.g. Outerbounds' Fast Bakery base image)
+  has no compiler and the deploy has no mechanism to install one, so every real CUDA request
+  failed with `RuntimeError: Failed to find C compiler`. `EMBER_TORCH_DISABLE_NATIVE_JIT=1`
+  (ember's default) prevents the registration entirely, so the standard eager/ATen `aten::bmm`
+  runs instead — same operation, a different and mature cuBLAS-backed kernel. Set
+  `EMBER_TORCH_DISABLE_NATIVE_JIT=0` on a host with a working compiler toolchain to opt back
+  into the (likely faster) Triton path.
 - **`device_map={"": "mps"}` segfaults.** The loader loads on CPU and then moves the module
   to the target device (MPS or CUDA). Do not pass a device map directly — this constraint is
   MPS-specific; CUDA has no equivalent issue but shares the same CPU-then-move code path
