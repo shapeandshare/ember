@@ -1106,3 +1106,14 @@ def test_a_snapshot_copies_a_finished_canonical_run(monkeypatch, tmp_path):
         "rows-flash.jsonl",
         "summary.json",
     ]
+
+
+def test_the_sizing_gate_fails_when_a_pilot_pair_is_missing():
+    manifest = _manifest(lengths=[2048, 16384])
+    rows = [
+        _row(item_id, length, Depth.MIDDLE)
+        for item_id in ("a1", "b2")
+        for length in (2048, 16384)
+    ]
+    assert math.isfinite(run_context._pilot_width(manifest, rows, ITEM_BY_ID))
+    assert math.isinf(run_context._pilot_width(manifest, rows[:-1], ITEM_BY_ID))

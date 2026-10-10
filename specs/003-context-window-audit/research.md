@@ -281,6 +281,7 @@ the server.
 - **Sizing gate**: Before the full run, a pilot runs flash at 2K and 16K, middle depth, on
   all included items.
   - It projects the 95% half-width at the included item count as `1.96 · sd(delta) / √n`.
+    Every included item must have both pilot rows; a missing or errored pair fails the gate.
   - If that half-width exceeds 2 percentage points, the run stops and reports it: the
     available items can't resolve the pre-declared tolerance. A human then decides what to
     do, for example add items.

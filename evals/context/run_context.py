@@ -22,6 +22,7 @@ import math
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
@@ -42,6 +43,7 @@ from evals.context.records.probe_manifest import (  # noqa: E402
     ProbeManifest,
     new_run_id,
 )
+from evals.context.records.probe_row import ProbeRow  # noqa: E402
 from evals.context.records.row_status import RowStatus  # noqa: E402
 from evals.context.rows_file import read_rows  # noqa: E402
 from evals.context.scoring import (  # noqa: E402
@@ -264,28 +266,35 @@ def _gate_result(manifest: ProbeManifest, width: float) -> ProbeManifest:
     )
 
 
+def _pilot_width(
+    manifest: ProbeManifest,
+    rows: list[ProbeRow],
+    items: dict[str, dict[str, Any]],
+) -> float:
+    """Project the pilot's half-width; infinite unless every item has both lengths."""
+    kept = [r for r in rows if r.depth is Depth.MIDDLE and r.status is RowStatus.OK]
+
+    def accuracy(length: int) -> dict[str, float]:
+        return {
+            row.item_id: item_scores(items[row.item_id], row.answers).accuracy
+            for row in kept
+            if row.length == length
+        }
+
+    deltas = paired_deltas(accuracy(BASELINE_LENGTH), accuracy(_GATE_LENGTH))
+    if len(deltas) != len(manifest.item_ids):
+        return math.inf
+    return projected_half_width(deltas)
+
+
 def _sizing_gate(run_dir: Path, manifest: ProbeManifest) -> ProbeManifest | None:
     """Run the pilot and record its half-width; ``None`` if the worker failed."""
     model = "flash" if "flash" in manifest.models else next(iter(manifest.models))
     if _run_worker(run_dir, model, pilot=True) != 0:
         return None
     items = summarize.dataset_items(manifest, run_dir)
-    rows = [
-        row
-        for row in read_rows(run_dir / summarize.rows_name(model))
-        if row.depth is Depth.MIDDLE and row.status is RowStatus.OK
-    ]
-
-    def accuracy(length: int) -> dict[str, float]:
-        return {
-            row.item_id: item_scores(items[row.item_id], row.answers).accuracy
-            for row in rows
-            if row.length == length
-        }
-
-    width = projected_half_width(
-        paired_deltas(accuracy(BASELINE_LENGTH), accuracy(_GATE_LENGTH))
-    )
+    rows = read_rows(run_dir / summarize.rows_name(model))
+    width = _pilot_width(manifest, rows, items)
     updated = _gate_result(manifest, width)
     _write_manifest(run_dir, updated)
     print(
