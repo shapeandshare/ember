@@ -1,3 +1,9 @@
+## v0.10.1 (2026-10-10)
+
+### Fix
+
+- **ember**: send the configured auth header on the remote health probe (#102)
+
 ## v0.10.0 (2026-10-10)
 
 ### Feat
