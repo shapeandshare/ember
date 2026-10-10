@@ -47,7 +47,9 @@ limits as unknown.
 [data-model.md](../data-model.md), RequestSize).
 - The check runs after media decoding and the `media_kwargs` allowlist, and before
   inference. A disallowed `media_kwargs` key still gets 422 from the allowlist.
-- A request that is both oversized and malformed gets 413 first.
+- A request that is oversized and malformed in a way that still encodes (an empty
+  criteria map, say) gets 413 first. One that `encode_record` can't encode at all skips the
+  size check and gets the 422 from validation.
 
 **Body**: The FastAPI shape is unchanged, `{"detail": "<message>"}`. `<message>` is a
 single line:

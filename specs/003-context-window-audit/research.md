@@ -78,8 +78,10 @@ deferred as low impact). The quickstart measures and records the overhead.
 - The invariant costs three lines. It keeps "never silent" true even for an unpinned
   `joint_schema_model.py` loaded through `EMBER_MODEL_DIR` or `EMBER_MODEL_S3_URI`.
 
-**Documented consequence**: A request that is both oversized and malformed gets 413 first.
-The retry, once trimmed, surfaces the 422.
+**Documented consequence**: A request that is oversized and malformed in a way that still
+encodes (an empty criteria map, say) gets 413 first; the retry, once trimmed, surfaces the
+422. One that `encode_record` can't encode at all skips the size check and gets the 422
+directly.
 
 **Alternatives considered**: Copying `systemone`'s eight validation lines (L547–561) into
 ember so that 422 always wins. Rejected because it duplicates upstream logic and can drift
