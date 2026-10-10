@@ -270,8 +270,8 @@ tokens) when the operator disables the cap.
 | Model | Default cap | Why |
 | --- | --- | --- |
 | `flash` | 24,576 tokens | fallback until the long-context probe has measured it: the longest probe length that leaves 4 GiB of its 32 GiB memory budget free |
-| `full` | 8,192 tokens | fallback until the long-context probe has measured it: the longest probe length that leaves 4 GiB of its 64 GiB memory budget free |
-| outside the registry | 8,192 tokens | the lowest registry cap, measured or fallback |
+| `full` | 65,536 tokens | fallback until the long-context probe has measured it: the longest probe length that leaves 4 GiB of its 96 GiB memory budget free |
+| outside the registry | 24,576 tokens | the lowest registry cap, measured or fallback |
 
 A measured cap is the longest length where the probe found accuracy and calibration held
 at every evidence position and peak memory fit the model's budget; the decision record

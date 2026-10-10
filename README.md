@@ -66,7 +66,7 @@ On a MacBook Pro **M4 Max / 128 GB**, torch 2.14.1, transformers 5.18.0, mcp 2.3
 - **Apple Silicon Mac** (M-series) on macOS for local use (MPS). Intel Macs remain out of
   scope. For a hosted deployment on NVIDIA/CUDA compute (e.g. Outerbounds), see "Hosted
   deployment" below and `deployment/README.md`.
-- **Unified memory** above the model's size: 32 GB or more for `flash` (9B), 64 GB or more
+- **Unified memory** above the model's size: 32 GB or more for `flash` (9B), 96 GB or more
   for `full` (27B). Only 128 GB has been verified.
 - **Disk**: about 18 GiB for `flash` or 55 GiB for `full`, in Hugging Face's shared cache
   (`~/.cache/huggingface`). Config, state, and logs live in
@@ -283,12 +283,12 @@ maximum, and an unset `max_request_length` means the loaded model's own default 
 | `EMBER_MODEL` | `flash` | `flash` (9B, default) or `full` (27B), both from Cloudflare's public Hugging Face repos |
 | `EMBER_MODEL_DIR` | — | Run weights from this directory instead of the pinned cache |
 | `EMBER_MAX_LENGTH` | `0` (the model's maximum: 262,144) | The most tokens the model processes; `0` derives it from the model's `config.json`, and a larger value is clamped to it |
-| `EMBER_MAX_REQUEST_LENGTH` | unset: the loaded model's own default, its measured cap or, until measured, its fallback, the longest length that leaves 4 GiB of its memory budget free (24,576 for `flash`, 8,192 for `full`). A model outside the registry (`EMBER_MODEL_DIR`, `EMBER_MODEL_S3_URI`) gets the lowest registry cap, 8,192 today | Per-request cap on the whole encoded request (state, media, questions, schema, prompt wrapper), checked before inference. A request over it is refused with a 413 that states its token split, never truncated. `0` disables the cap; the maximum still applies |
+| `EMBER_MAX_REQUEST_LENGTH` | unset: the loaded model's own default, its measured cap or, until measured, its fallback, the longest length that leaves 4 GiB of its memory budget free (24,576 for `flash`, 65,536 for `full`). A model outside the registry (`EMBER_MODEL_DIR`, `EMBER_MODEL_S3_URI`) gets the lowest registry cap, 24,576 today | Per-request cap on the whole encoded request (state, media, questions, schema, prompt wrapper), checked before inference. A request over it is refused with a 413 that states its token split, never truncated. `0` disables the cap; the maximum still applies |
 | `EMBER_SERVER_URL` | `http://127.0.0.1:8765` | Inference endpoint the client sends to; loopback by default, may be remote |
 | `EMBER_AUTH_TOKEN` | — | Client credential for a remote endpoint |
 | `EMBER_AUTH_HEADER` | `Authorization` | Header carrying the credential; `Authorization` sends `Bearer <token>`, any other name sends the token verbatim |
 | `EMBER_ALLOW_INSECURE_TRANSPORT` | `0` | Allow plaintext `http` to a non-loopback endpoint (off by default) |
-| `EMBER_REQUEST_TIMEOUT` | `300` | Seconds bounding a remote request |
+| `EMBER_REQUEST_TIMEOUT` | `900` | Seconds the MCP client waits for each advise request, local or remote; a request near `full`'s cap takes about 12 minutes on an M4 Max |
 | `EMBER_SERVER_AUTH_TOKEN` | — | When set, the server requires `Authorization: Bearer <token>` on `/v1/systemone` |
 | `EMBER_AUTOSTART` | `1` | Let the MCP server start a local server on demand (loopback only) |
 | `EMBER_START_TIMEOUT` | `300` | Seconds to wait for the model server to start |
@@ -556,7 +556,7 @@ as requests grow: it pads every text-only benchmark item with public-domain fill
 2K–64K tokens, with the evidence at the start, middle, or end, and records accuracy,
 calibration, peak MPS memory, and latency. A pre-declared rule then picks each model's
 default cap: the longest length where accuracy stays within 2 points and Brier within
-0.02 of the 2K result at every depth, and peak memory fits 32 GB (flash) or 64 GB (full).
+0.02 of the 2K result at every depth, and peak memory fits 32 GB (flash) or 96 GB (full).
 It runs in-process on MPS for hours, never touches a running server, and writes
 `results/context/<run_id>/`; the run a decision cites is copied into
 `evals/context/runs/` with `--snapshot`. `--rescore` rebuilds the summary byte for byte,

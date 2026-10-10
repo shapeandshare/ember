@@ -33,7 +33,8 @@ evals/context/runs/<run_id>/       # tracked copy of the run a decision cites (-
   `summary.inputs_sha256` holds digests of the rows files and the manifest.
 - **Rule parameters fixed in the manifest.** These are written before any inference:
   - tolerances: accuracy 0.02, Brier 0.02
-  - memory budgets: flash 34,359,738,368 bytes, full 68,719,476,736 bytes
+  - memory budgets: flash 34,359,738,368 bytes, full 103,079,215,104 bytes (96 GiB; the
+    maintainer raised full's from 64 GiB on 2026-10-10)
   - lengths and depths
   - length tolerance: 32 tokens
   - bootstrap: 10,000 resamples, 95%, seed 0

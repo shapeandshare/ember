@@ -49,8 +49,8 @@ Callers:
 | Field | Type | Rule |
 |-------|------|------|
 | `max_request_length` | `int \| None` = `None` | The cap the FR-010 rule chose for this model, set from the canonical probe run. `None` until measured. When set, 2,048 ≤ value ≤ declared maximum (a test checks this) |
-| `memory_budget_bytes` | `int` | Peak memory one request may use: the model's documented minimum (32 GiB for flash, 64 GiB for full). The probe fails any length over it. Moved here from the probe's `MEMORY_BUDGETS` on 2026-10-10 |
-| `fallback_request_length` | `int` | The default cap until measured: the longest probe length whose peak leaves 4 GiB of `memory_budget_bytes` free (24,576 for flash, 8,192 for full), reported as `fallback`. Added 2026-10-10 |
+| `memory_budget_bytes` | `int` | Peak memory one request may use: the model's documented minimum (32 GiB for flash, 96 GiB for full; full's was 64 GiB). The probe fails any length over it. Moved here from the probe's `MEMORY_BUDGETS` on 2026-10-10 |
+| `fallback_request_length` | `int` | The default cap until measured: the longest probe length whose peak leaves 4 GiB of `memory_budget_bytes` free (24,576 for flash, 65,536 for full), reported as `fallback`. Added 2026-10-10 |
 
 `registry_key(name) -> str | None` returns the registry key unless `EMBER_MODEL_DIR`
 overrides the directory. Callers pass `None` for a hosted (`EMBER_MODEL_S3_URI`) model.
@@ -118,7 +118,8 @@ message kept).
 
 ### ProbeModel (Pydantic)
 
-`name`, `repo`, `revision`, `params`, `memory_budget_bytes` (flash 32 GiB, full 64 GiB),
+`name`, `repo`, `revision`, `params`, `memory_budget_bytes` (from the registry: flash
+32 GiB, full 96 GiB),
 `recommended_max_memory_bytes` (from `torch.mps`; informational).
 
 ### ProbeManifest (Pydantic; `manifest.json`, written before the first inference)

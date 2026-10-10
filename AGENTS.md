@@ -1,6 +1,6 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-10 (per-model request caps: every registry model declares its memory budget and its own fallback cap, the longest probe length that leaves 4 GiB of that budget free; flash falls back to 24,576 and full to 8,192)
+**Last updated**: 2026-10-10 (per-model request caps: every registry model declares its memory budget and its own fallback cap, the longest probe length that leaves 4 GiB of that budget free; flash falls back to 24,576 and full, which now requires 96 GB, to 65,536; `EMBER_REQUEST_TIMEOUT` defaults to 900 s)
 
 ## What this repo is
 
@@ -724,12 +724,13 @@ MUST pass the constitution check.
   entry declares its own `memory_budget_bytes` (moved from the probe's `MEMORY_BUDGETS`) and
   `fallback_request_length`, the longest probe length whose peak memory leaves 4 GiB of
   that budget free for the OS, used until the probe measures the model's cap. One-item
-  memory checks set flash's to 24,576 (27.83 GiB of 32 GiB; 32,768 peaked at 32.35 GiB)
-  and full's to 8,192 (59.54 GiB of 64 GiB; 16,384 peaked at 63.54 GiB, too close to the
-  budget). A model
-  outside the registry gets the lowest registry cap, measured or fallback. The probe's
-  sizing pilot could not resolve its 2-point accuracy tolerance with 232 text items
-  (half-width 0.0264), so the benchmark grows to 443 (PR #95). See
+  memory checks set flash's to 24,576 (27.83 GiB of 32 GiB; 32,768 peaked at 32.35 GiB).
+  full now requires 96 GB (it was 64), and its fallback is 65,536 (90.80 GiB of 96 GiB).
+  A model outside the registry gets the lowest registry cap, measured or fallback. The
+  default `EMBER_REQUEST_TIMEOUT` rises from 300 s to 900 s (and the generated Codex
+  `tool_timeout_sec` with it), because 65,536 tokens on full take about 740 s on an M4
+  Max. The probe's sizing pilot could not resolve its 2-point accuracy tolerance with 232
+  text items (half-width 0.0264), so the benchmark grows to 443 (#95). See
   `vault/decisions/2026-10-10-per-model-request-caps.md`.
 - 2026-10-09: context window audit, part 1 (`specs/003-context-window-audit/`): requests are
   counted in full (state, media, questions, schema, prompt wrapper) with upstream

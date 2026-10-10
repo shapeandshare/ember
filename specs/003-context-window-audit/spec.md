@@ -277,7 +277,8 @@ agents how to react when a request is refused.
   tested length, meets all of the following for that model at the worst of the three
   evidence depths — accuracy at most 2 percentage points below, and Brier score at most
   0.02 above, that model's own 2K result — and whose peak memory stays within that model's
-  documented minimum (32 GB for `flash`, 64 GB for `full`). Until a model is measured, its
+  documented minimum (32 GB for `flash`; 96 GB for `full`, raised from 64 GB on
+  2026-10-10). Until a model is measured, its
   default is its own fallback: the longest tested length whose peak memory leaves at least
   4 GiB of that minimum free for the OS, reported as a fallback (updated 2026-10-10; it was
   a shared 32,768). A
@@ -308,7 +309,7 @@ agents how to react when a request is refused.
   from the loaded model's configuration, with an identifiable documented fallback.
 - **Per-request cap**: The operator-configurable limit (which can be disabled) that ember
   checks before inference; its default is the loaded model's measured cap (FR-010). A
-  model not yet measured gets its own memory-checked fallback (24,576 for `flash`, 8,192
+  model not yet measured gets its own memory-checked fallback (24,576 for `flash`, 65,536
   for `full`), and a model outside the registry gets the lowest registry cap; both are
   reported as fallbacks.
 - **Enforced limit**: The lower of the per-request cap (when enabled) and the effective
@@ -378,10 +379,10 @@ agents how to react when a request is refused.
 - Operators may still raise or lower limits through the existing settings; the
   no-silent-shortening guarantee holds regardless of the values they choose.
 - Until the probe measures a model, its default cap is its own memory-checked fallback
-  (24,576 for `flash`, 8,192 for `full`), reported as a fallback. Because requests are
-  now counted in full (questions, schema, and media included) and the fallbacks are below
-  the old 32,768, some requests accepted before may be refused before the measured caps
-  land.
+  (24,576 for `flash`, 65,536 for `full`), reported as a fallback. Because requests are
+  now counted in full (questions, schema, and media included) and flash's fallback is
+  below the old 32,768, some requests accepted before may be refused before the measured
+  caps land.
 - The over-limit default is refusal only: ember never truncates a request, silently or
   otherwise. Explicit truncation-with-signal is not a path in this feature; if caller UX
   later demands it, it would be an additive, documented change.

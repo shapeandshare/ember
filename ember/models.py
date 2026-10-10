@@ -50,7 +50,7 @@ class ModelSpec:
     memory_budget_bytes : int
         The most memory one request may peak at on this model: the unified
         memory of the smallest Mac it is documented to run on (32 GiB for
-        ``flash``, 64 GiB for ``full``). The long-context probe fails any
+        ``flash``, 96 GiB for ``full``). The long-context probe fails any
         length whose peak exceeds it.
     fallback_request_length : int
         This model's per-request cap until the probe measures one: the longest
@@ -103,11 +103,10 @@ REGISTRY: dict[str, ModelSpec] = {
         "clef",
         "27B",
         55 * 2**30,
-        memory_budget_bytes=64 * 2**30,
-        # The longest probe length that leaves 4 GiB of 64 GiB free: 8,192
-        # tokens peaked at 59.54 GiB and 16,384 at 63.54 GiB (memory check,
-        # 2026-10-10).
-        fallback_request_length=8192,
+        memory_budget_bytes=96 * 2**30,
+        # The longest probe length, 65,536 tokens, peaked at 90.80 GiB and so
+        # leaves 4 GiB of 96 GiB free (memory check, 2026-10-10).
+        fallback_request_length=65536,
         revision="2f3de3dd85f379784083b0814d997ab627200f0c",
     ),
 }

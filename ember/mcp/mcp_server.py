@@ -15,7 +15,7 @@ Env:
     EMBER_AUTH_TOKEN              optional client credential (secret)
     EMBER_AUTH_HEADER             default Authorization (else a custom header)
     EMBER_ALLOW_INSECURE_TRANSPORT  default 0 (refuse plaintext to non-local)
-    EMBER_REQUEST_TIMEOUT         default 300 seconds
+    EMBER_REQUEST_TIMEOUT         default 900 seconds
     EMBER_AUTOSTART               default 1 (0 disables; loopback only)
     EMBER_START_TIMEOUT           default 300 seconds
 """

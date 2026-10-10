@@ -38,7 +38,7 @@ fit in unified memory, and that is the binding constraint — not CPU speed.
 | Model | Parameters | On disk (fp16) | Weight in memory | Unified memory | Verified |
 | --- | --- | --- | --- | --- | --- |
 | `flash` | 9B | about 18 GiB | float16 | 32 GB or more | 128 GB (M4 Max) |
-| `full` | 27B | about 55 GiB | float16 | 64 GB or more | not yet |
+| `full` | 27B | about 55 GiB | float16 | 96 GB or more | not yet |
 
 - **Apple Silicon Mac (M-series) on macOS**, arm64, for local use (MPS). Intel Macs remain
   out of scope. NVIDIA GPUs (CUDA) are supported for hosted deployment (Article VI, "Apple
@@ -137,15 +137,16 @@ under 0.1%.
   long-context probe (`make eval-context`, MPS on an M4 Max with 128 GB) measures a model,
   its default is its own fallback, the longest probe length whose peak memory leaves at
   least 4 GiB of its budget free for the OS: 24,576 tokens for `flash` (27.83 GiB of
-  32 GiB; 32,768 peaked at 32.35 GiB) and 8,192 for `full` (59.54 GiB of 64 GiB; 16,384
-  peaked at 63.54 GiB). A model outside the registry gets the lowest registry cap. The
-  measured values and the probe run ID replace
-  the fallbacks. The whole encoded request counts, including questions, schema, the prompt
-  wrapper, and media, so image-heavy requests near the cap that passed the earlier
-  state-only check may now be refused. An oversized request is refused with a 413 that
-  states its token split, never truncated. The caps hold for the pinned model revisions
-  and are re-measured whenever a revision changes. `0` disables the cap; the effective
-  maximum still applies.
+  32 GiB; 32,768 peaked at 32.35 GiB) and 65,536 for `full` (90.80 GiB of 96 GiB, the
+  longest length the probe tests). A model outside the registry gets the lowest registry
+  cap. The measured values and the probe run ID replace the fallbacks. Long requests are
+  slow on `full`: 65,536 tokens took about 740 s on the M4 Max, inside the 900 s default
+  `EMBER_REQUEST_TIMEOUT`. The whole encoded request counts, including questions, schema,
+  the prompt wrapper, and media, so image-heavy requests near the cap that passed the
+  earlier state-only check may now be refused. An oversized request is refused with a 413
+  that states its token split, never truncated. The caps hold for the pinned model
+  revisions and are re-measured whenever a revision changes. `0` disables the cap; the
+  effective maximum still applies.
 
 See also: [`README.md`](README.md) for install steps, and
 [`RESPONSIBLE_USE.md`](RESPONSIBLE_USE.md) for what the numbers mean.
