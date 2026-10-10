@@ -514,11 +514,11 @@ approval per Article XI §11.2.
 
 ### Benchmark
 
-`evals/clef-flash.jsonl` is a 264-item benchmark covering the five agent-kit recipes (intent
+`evals/clef-flash.jsonl` is a 475-item benchmark covering the five agent-kit recipes (intent
 and readiness, failure triage, change risk, routing, effort and approach) plus four vision
-recipes (`vision_noul`, `vision_choice`, `vision_score`, `vision_video`): 456 scored questions
-(184 `choice`, 152 `noul`, 88 `score`, 32 across the four vision recipes), split into
-`dev` (130 items) and `test` (134). Vision items carry an `images` or `videos` field
+recipes (`vision_noul`, `vision_choice`, `vision_score`, `vision_video`): 843 scored questions
+(351 `choice`, 292 `noul`, 168 `score`, 32 across the four vision recipes), split into
+`dev` (236 items) and `test` (239). Vision items carry an `images` or `videos` field
 (base64 `data:` URIs) alongside `state` and `questions`. Each line is
 self-contained (`state`, the recipe's fixed question set, a gold label for every question, and
 a `rationale`), so other implementations can score it without this harness.
