@@ -40,8 +40,8 @@ falls back to the longest probe length that fits its own memory budget instead o
   otherwise the model's own fallback, reported as `fallback`. A model outside the registry
   gets the lowest registry cap, measured or fallback, because nothing is known about its
   memory. `FALLBACK_REQUEST_CAP` is gone.
-- **flash falls back to 24,576** (27.83 GiB peak). **full** keeps 32,768 until its own
-  memory check runs.
+- **flash falls back to 24,576** (27.83 GiB of 32 GiB) and **full to 16,384** (63.54 GiB
+  of 64 GiB, a thin margin; 24,576 peaked at 68.40 GiB).
 - **Grow the benchmark; keep the tolerance.** Loosening the 2-point tolerance after seeing
   pilot data would undo its pre-declaration, so 211 curated text items take the benchmark
   to 443 (projected half-width about 0.019). Their labels need a human review before any
@@ -52,8 +52,9 @@ falls back to the longest probe length that fits its own memory budget instead o
 - A new registry entry states its budget and runs a one-item memory check before it ships:
   `ember eval context --models <name> --items 1 --lengths <lengths>`, without 16,384 (that
   length starts the sizing gate, which one item always fails). The fallback is the longest
-  length that fit; the worker stops at the first length that doesn't.
+  length that fit; the worker stops at the first length that doesn't. To check 16,384, run
+  it alone: the gate's pilot records that row before the run exits 2.
 - Deployments outside the registry (`EMBER_MODEL_DIR`, `EMBER_MODEL_S3_URI`) default to the
-  lowest registry cap instead of 32,768. Operators who know their model's memory set
-  `EMBER_MAX_REQUEST_LENGTH`.
+  lowest registry cap, 16,384 today, instead of 32,768. Operators who know their model's
+  memory set `EMBER_MAX_REQUEST_LENGTH`.
 - The measured caps still need the re-run pilot and then a canonical run on a clean tree.

@@ -85,7 +85,7 @@ The 003 implementation resolved the code findings:
 - 6: `runtime.py` is 386 lines, and constitution 3.1.2 drops it from §10.18.
 
 Still open: the measured caps wait for a canonical `make eval-context` run. Until then
-each model uses its own memory-checked fallback (flash 24,576); see
+each model uses its own memory-checked fallback (flash 24,576, full 16,384); see
 [[2026-10-10-per-model-request-caps]].
 
 ## References

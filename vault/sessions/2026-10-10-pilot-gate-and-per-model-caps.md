@@ -31,7 +31,9 @@ flash.
   `fallback_request_length`, `FALLBACK_REQUEST_CAP` is gone, and flash falls back to
   24,576. The README, COMPATIBILITY, the agent kit and its plugin mirror, and the config
   contract say so.
-- **full.** Pulled (55 GB) for its own memory check.
+- **Memory check (full).** Pulled full (51 GiB) and checked it: 8,192 tokens peaked at
+  59.54 GiB, 16,384 at 63.54 GiB (run alone, through the sizing gate's pilot), and 24,576
+  at 68.40 GiB, over its 64 GiB budget. full falls back to 16,384.
 
 ## Decisions and discoveries written back
 
@@ -41,7 +43,6 @@ flash.
 
 ## Follow-ups
 
-- Set full's fallback from its memory check.
 - Review the 211 new labels, then re-run the pilot.
 - Run a canonical `make eval-context` on a clean tree, then set the measured caps
   (T060 to T065).
