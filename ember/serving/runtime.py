@@ -27,6 +27,7 @@ them.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
 import threading
@@ -39,13 +40,16 @@ os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 import torch
 
 from . import media
+from .devices import pick_device, pick_dtype
+from .limit_source import LimitSource
+from .limits import Limits, declared_max_length, resolve
+from .request_size import RequestSize, measure, refusal_message
+
+_log = logging.getLogger(__name__)
 
 # ember/serving/runtime.py -> parents[2] is the checkout root (matches models._dev_dir).
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MODEL_DIR = REPO_ROOT / ".models" / "clef-flash"
-
-#: Used only if a model's config.json has no max_position_embeddings.
-FALLBACK_MAX_LENGTH = 32768
 
 #: Maximum number of concurrent advise calls allowed to queue behind the engine
 #: lock (D-001). When all slots are taken, new calls fail fast with a 503-mapped
@@ -64,63 +68,27 @@ class AdmissionError(RuntimeError):
 
 
 class RequestTooLargeError(ValueError):
-    """Raised when tokenized input exceeds the per-request cap (D-002).
+    """Raised when the encoded request exceeds the enforced limit.
 
-    The HTTP layer maps this to 413 so the agent knows to reduce input size
-    or raise ``EMBER_MAX_REQUEST_LENGTH``.
-    """
-
-
-#: Explicit allowlist of processor keyword arguments callers may pass through.
-#: Switching from a blocklist to an allowlist (T-003) closes the gap where any
-#: non-reserved key was forwarded unchecked to joint_schema_model.systemone.
-ALLOWED_MEDIA_KWARGS = frozenset(
-    {
-        "min_pixels",
-        "max_pixels",
-        "fps",
-        "min_frames",
-        "max_frames",
-        "do_resize",
-        "size",
-        "do_convert_rgb",
-    }
-)
-
-_JOINT_MODULE: Any = None
-
-
-def model_max_length(model_dir: str | os.PathLike[str] = DEFAULT_MODEL_DIR) -> int:
-    """Resolve the backbone's declared context window from config.json.
-
-    ``0`` in the config means "the model's own maximum"; this resolves it. The
-    value is read from the pinned snapshot, so it tracks a model revision bump
-    instead of a hardcoded number.
+    The HTTP layer maps this to 413, with the message as ``detail``.
 
     Parameters
     ----------
-    model_dir : str | os.PathLike[str], optional
-        Directory containing the model's ``config.json``. Defaults to
-        ``DEFAULT_MODEL_DIR``.
-
-    Returns
-    -------
-    int
-        The resolved ``max_position_embeddings`` value, or
-        ``FALLBACK_MAX_LENGTH`` if it cannot be read or is non-positive.
+    message : str
+        The refusal, from ``request_size.refusal_message``.
+    size : RequestSize
+        The refused request's measured size.
+    limits : Limits
+        The limits it exceeded.
     """
-    try:
-        config = json.loads((Path(model_dir) / "config.json").read_text())
-    except (OSError, json.JSONDecodeError):
-        return FALLBACK_MAX_LENGTH
-    text = config.get("text_config")
-    text = text if isinstance(text, dict) else {}
-    value = text.get("max_position_embeddings") or config.get("max_position_embeddings")
-    try:
-        result = int(value)
-    except (TypeError, ValueError):
-        return FALLBACK_MAX_LENGTH
-    return result if result > 0 else FALLBACK_MAX_LENGTH
+
+    def __init__(self, message: str, *, size: RequestSize, limits: Limits) -> None:
+        super().__init__(message)
+        self.size = size
+        self.limits = limits
+
+
+_JOINT_MODULE: Any = None
 
 
 def joint_module(model_dir: Path) -> Any:
@@ -161,50 +129,6 @@ def joint_module(model_dir: Path) -> Any:
             if added and path in sys.path:
                 sys.path.remove(path)
     return _JOINT_MODULE
-
-
-def pick_device(requested: str | None = None) -> str:
-    """Resolve the compute device to run on.
-
-    Parameters
-    ----------
-    requested : str | None, optional
-        ``"mps"``, ``"cuda"``, ``"cpu"``, or ``"auto"``/``None`` to detect
-        automatically.
-
-    Returns
-    -------
-    str
-        ``requested`` if given and not ``"auto"``; otherwise ``"mps"`` when
-        available (constitution Article VI: Apple Silicon is the
-        local-first default), else ``"cuda"`` when available (the hosted-
-        deployment path, e.g. Outerbounds compute, which is Linux and has
-        no MPS), else ``"cpu"``.
-    """
-    if requested and requested != "auto":
-        return requested
-    if torch.backends.mps.is_available():
-        return "mps"
-    if torch.cuda.is_available():
-        return "cuda"
-    return "cpu"
-
-
-def pick_dtype(device: str) -> torch.dtype:
-    """Resolve the floating-point dtype to load the model in.
-
-    Parameters
-    ----------
-    device : str
-        The compute device, as returned by ``pick_device``.
-
-    Returns
-    -------
-    torch.dtype
-        ``torch.float16`` on MPS or CUDA, ``torch.float32`` otherwise
-        (constitution Article VI).
-    """
-    return torch.float16 if device in ("mps", "cuda") else torch.float32
 
 
 def load_clef(
@@ -288,14 +212,12 @@ class Engine:
         Compute device; resolved by ``pick_device`` when ``None``.
     dtype : torch.dtype | None, optional
         Floating-point dtype; resolved by ``pick_dtype`` when ``None``.
-    max_length : int | None, optional
-        Server-level token budget passed to ``joint_schema_model.systemone``.
-        ``None`` derives it from the model's ``config.json``.
     model_name : str | None, optional
         Label echoed in responses. Defaults to the model directory name.
-    max_request_length : int, optional
-        Per-request token cap enforced after tokenization and before the model
-        forward pass (D-002). ``0`` disables the cap. Defaults to ``0``.
+    limits : Limits | None, optional
+        The effective maximum and the per-request cap. ``None`` uses the
+        model's declared maximum and the default cap for a model outside the
+        registry, with no config read; the server passes the resolved limits.
     """
 
     def __init__(
@@ -303,23 +225,23 @@ class Engine:
         model_dir: str | os.PathLike[str] = DEFAULT_MODEL_DIR,
         device: str | None = None,
         dtype: torch.dtype | None = None,
-        max_length: int | None = None,
         model_name: str | None = None,
-        max_request_length: int = 0,
+        limits: Limits | None = None,
     ) -> None:
         self.model_dir = Path(model_dir)
         self.model_name = model_name if model_name is not None else self.model_dir.name
         self.device = pick_device(device)
         self.dtype = dtype or pick_dtype(self.device)
-        if max_length is not None and max_length <= 0:
-            raise ValueError("max_length must be a positive integer or None")
-        self.max_length = (
-            max_length if max_length is not None else model_max_length(self.model_dir)
-        )
-        self.max_request_length = max_request_length
+        self.declared = declared_max_length(self.model_dir)
+        self.limits = limits if limits is not None else resolve(self.declared, None)
         self.model, self.processor = load_clef(self.model_dir, self.device, self.dtype)
         self._lock = threading.Lock()
         self._admission = threading.Semaphore(MAX_PENDING_ADVISE)
+
+    @property
+    def max_length(self) -> int:
+        """The effective maximum: the most tokens the model processes."""
+        return self.limits.max_length
 
     def advise(
         self,
@@ -357,10 +279,13 @@ class Engine:
         AdmissionError
             If the admission semaphore is full (server busy — retry shortly).
         RequestTooLargeError
-            If ``max_request_length`` is positive and the tokenized input
-            exceeds it.
+            If the encoded request exceeds the enforced limit.
         ValueError
-            If ``media_kwargs`` contains disallowed keys.
+            If ``media_kwargs`` contains disallowed keys, or the request is
+            malformed.
+        RuntimeError
+            If the loaded model can't count requests, or it saw a different
+            number of tokens than ember counted.
         """
         if not self._admission.acquire(blocking=False):
             raise AdmissionError(
@@ -383,46 +308,11 @@ class Engine:
         videos: list[list[media.MediaRef]] | None,
         media_kwargs: dict[str, Any] | None,
     ) -> dict[str, Any]:
-        """Execute the advise request after admission is granted.
+        """Build the request, refuse it if it is too large, then run the model.
 
-        Parameters
-        ----------
-        state : Any
-            The situation to read.
-        questions : dict[str, Any]
-            Mapping of question ID to typed question schema.
-        max_length : int | None
-            Per-call token budget override.
-        images : list[MediaRef] | None
-            Image refs.
-        videos : list[list[MediaRef]] | None
-            Video frame refs.
-        media_kwargs : dict[str, Any] | None
-            Processor keyword arguments.
-
-        Returns
-        -------
-        dict[str, Any]
-            SystemOne response body.
-
-        Raises
-        ------
-        RequestTooLargeError
-            If the tokenized input exceeds ``max_request_length``.
-        ValueError
-            If ``media_kwargs`` contains disallowed keys.
+        Takes ``advise``'s arguments and raises its errors, once admission is
+        granted.
         """
-        if self.max_request_length > 0:
-            text = str(state)
-            tokens = self.processor.tokenizer(text)
-            token_count = len(tokens["input_ids"])
-            if token_count > self.max_request_length:
-                raise RequestTooLargeError(
-                    f"request too large: {token_count} tokens exceeds the "
-                    f"{self.max_request_length}-token per-request cap. "
-                    "Reduce input size or raise EMBER_MAX_REQUEST_LENGTH "
-                    "(set to 0 to use the model maximum)."
-                )
         js = joint_module(self.model_dir)
         request: dict[str, Any] = {
             "model": self.model_name,
@@ -434,21 +324,40 @@ class Engine:
         if videos:
             request["videos"] = media.decode_videos(videos)
         if media_kwargs:
-            disallowed = set(media_kwargs) - ALLOWED_MEDIA_KWARGS
-            if disallowed:
-                raise ValueError(
-                    "media_kwargs keys not permitted: "
-                    + ", ".join(sorted(disallowed))
-                    + ". Permitted keys: "
-                    + ", ".join(sorted(ALLOWED_MEDIA_KWARGS))
-                )
+            media.check_media_kwargs(media_kwargs)
             request["media_kwargs"] = media_kwargs
+        applied = self.limits
+        if max_length is not None:
+            applied = Limits(
+                max_length=max_length,
+                max_length_source=LimitSource.OPERATOR,
+                max_request_length=applied.max_request_length,
+                max_request_length_source=applied.max_request_length_source,
+            )
+        size: RequestSize | None
+        try:
+            size = measure(js, self.processor, request)
+        except (KeyError, TypeError, AttributeError, ValueError):
+            # A malformed request: systemone raises the same error, mapped to 422.
+            size = None
+        if size is not None and size.total > applied.enforced:
+            raise RequestTooLargeError(
+                refusal_message(size, applied, self.declared),
+                size=size,
+                limits=applied,
+            )
         with self._lock:
             response: dict[str, Any] = js.systemone(
-                self.model,
-                self.processor,
-                request,
-                max_length=self.max_length if max_length is None else max_length,
+                self.model, self.processor, request, max_length=applied.max_length
+            )
+        served = (response.get("usage") or {}).get("input_tokens")
+        if size is not None and served != size.total:
+            _log.error(
+                "size check mismatch: counted %d tokens, served %s", size.total, served
+            )
+            raise RuntimeError(
+                "size check mismatch; refusing to answer from a possibly "
+                "shortened input"
             )
         return response
 
@@ -458,14 +367,20 @@ class Engine:
         Returns
         -------
         dict[str, Any]
-            ``model``, ``device``, ``dtype``, and ``max_length``.
-            ``model_dir`` is intentionally omitted: ``/health`` forwards this
-            dict to any loopback caller, and the filesystem path is not needed
-            by any external consumer (I-001).
+            ``model``, ``device``, ``dtype``, ``max_length``,
+            ``max_length_source``, ``max_request_length`` (``0`` when the cap
+            is disabled), and ``max_request_length_source``; sources are
+            ``LimitSource`` string values. ``model_dir`` is intentionally
+            omitted: ``/health`` forwards this dict to any loopback caller,
+            and the filesystem path is not needed by any external consumer
+            (I-001).
         """
         return {
             "model": self.model_name,
             "device": self.device,
             "dtype": str(self.dtype).replace("torch.", ""),
-            "max_length": self.max_length,
+            "max_length": self.limits.max_length,
+            "max_length_source": self.limits.max_length_source.value,
+            "max_request_length": self.limits.max_request_length,
+            "max_request_length_source": self.limits.max_request_length_source.value,
         }

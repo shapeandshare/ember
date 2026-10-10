@@ -55,6 +55,10 @@ class ModelSpec:
         Model category. ``"decision"`` for the Clef models, which score typed
         questions instead of generating text. More categories can be added as
         ember grows beyond decision models.
+    max_request_length : int | None
+        The cap the FR-010 rule chose for this model, set from the canonical
+        probe run. ``None`` until measured. When set, 2,048 ≤ value ≤ declared
+        maximum.
     """
 
     name: str
@@ -64,6 +68,7 @@ class ModelSpec:
     approx_bytes: int
     revision: str | None = None
     kind: str = "decision"
+    max_request_length: int | None = None
 
 
 REGISTRY: dict[str, ModelSpec] = {
@@ -109,6 +114,30 @@ def get(name: str | None) -> ModelSpec:
     if key not in REGISTRY:
         raise KeyError(f"unknown model {name!r}; choose from {', '.join(REGISTRY)}")
     return REGISTRY[key]
+
+
+def registry_key(name: str | None) -> str | None:
+    """Return the registry key of the model being run, if it is a registry model.
+
+    Parameters
+    ----------
+    name : str | None
+        Model key (case-insensitive); ``None`` resolves to ``DEFAULT``.
+
+    Returns
+    -------
+    str | None
+        The registry key, or ``None`` when ``EMBER_MODEL_DIR`` overrides the
+        model directory: the weights being run are then outside the registry.
+
+    Raises
+    ------
+    KeyError
+        If ``name`` does not match any key in ``REGISTRY``.
+    """
+    if os.environ.get("EMBER_MODEL_DIR"):
+        return None
+    return get(name).name
 
 
 def _repo_root() -> Path:

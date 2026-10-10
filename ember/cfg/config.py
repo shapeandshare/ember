@@ -6,11 +6,14 @@ Precedence (highest first): CLI flag > EMBER_* env var > config file > default.
 from __future__ import annotations
 
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any
 
 from . import paths
+
+_log = logging.getLogger(__name__)
 
 DEFAULTS: dict[str, Any] = {
     # MUST match ember.models.DEFAULT (ember/models.py). Not derived automatically:
@@ -21,12 +24,12 @@ DEFAULTS: dict[str, Any] = {
     "host": "127.0.0.1",
     "port": 8765,
     "device": "auto",
-    # 0 means "the model's own maximum" (ember.serving.runtime.model_max_length).
+    # 0 means "the model's own maximum" (ember.serving.limits.model_max_length).
     "max_length": 0,
-    # 0 means no per-request cap; positive values cap tokenized input before inference.
-    # Default 32768 guards against accidental MPS OOM from oversized single requests
-    # (D-002). Set EMBER_MAX_REQUEST_LENGTH=0 to restore the model-maximum behaviour.
-    "max_request_length": 32768,
+    # Unset (None) means the loaded model's measured default, resolved in
+    # ember/serving/limits.py; 0 disables the cap; a positive value caps the full
+    # encoded request.
+    "max_request_length": None,
     # Remote inference (see specs/001-remote-inference-servers/). `server_url` is where
     # the client sends advise requests; loopback by default (local-first). The auth_*
     # keys carry the client credential; `server_auth_token` is the optional token the
@@ -110,6 +113,9 @@ def resolve(key: str, flag: Any = None, env: str | None = None) -> Any:
             try:
                 return int(value)
             except ValueError:
+                _log.warning(
+                    "ignoring %s=%r: not an integer; using the default", env_name, value
+                )
                 return default
         return value
     return load().get(key, DEFAULTS.get(key))

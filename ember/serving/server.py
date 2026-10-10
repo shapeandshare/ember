@@ -11,6 +11,7 @@ Env:  EMBER_HOST (127.0.0.1), EMBER_PORT (8765),
 
 from __future__ import annotations
 
+import copy
 import logging
 import os
 import secrets
@@ -36,10 +37,12 @@ from pydantic import BaseModel, Field
 from .. import models
 from ..cfg import config
 from ..cfg.endpoint import is_loopback_host
-from . import hosted
+from . import hosted, limits
 from .runtime import AdmissionError, Engine, RequestTooLargeError
 
-log = logging.getLogger(__name__)
+# Named explicitly: `ember start` runs `python -m ember.serving.server`, where
+# __name__ is "__main__", outside the "ember" logger that main() configures.
+log = logging.getLogger("ember.serving.server")
 
 _ENGINE: Engine | None = None
 
@@ -161,16 +164,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             "Either bind to 127.0.0.1 or set EMBER_SERVER_AUTH_TOKEN."
         )
     hosted_source = hosted.resolve()
-    raw_length = int(config.resolve("max_length"))
-    raw_request_length = int(config.resolve("max_request_length"))
     if hosted_source is not None:
         name = hosted_source.uri
+        resolved = limits.from_config(hosted_source.model_dir, None)
         _ENGINE = Engine(
             hosted_source.model_dir,
             device=config.resolve("device"),
-            max_length=raw_length if raw_length > 0 else None,
             model_name=name,
-            max_request_length=raw_request_length,
+            limits=resolved,
         )
     else:
         name = config.resolve("model")
@@ -189,13 +190,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             )
             yield
             return
+        resolved = limits.from_config(model_dir, models.registry_key(name))
         _ENGINE = Engine(
             model_dir,
             device=config.resolve("device"),
-            max_length=raw_length if raw_length > 0 else None,
             model_name=name,
-            max_request_length=raw_request_length,
+            limits=resolved,
         )
+    log.info("limits: %s", resolved.summary())
     MODEL_INFO.clear()
     MODEL_INFO.labels(
         model=name,
@@ -299,7 +301,12 @@ async def metrics() -> Response:
     "/v1/systemone",
     responses={
         503: {"description": "Model not loaded yet or admission queue full."},
-        413: {"description": "Tokenized input exceeds the per-request cap."},
+        413: {
+            "description": (
+                "Encoded request exceeds the enforced limit; "
+                "detail carries the token split"
+            )
+        },
         422: {"description": "Malformed questions, media, or kwargs."},
     },
 )
@@ -323,8 +330,10 @@ def systemone_endpoint(
     ------
     HTTPException
         503 if the model has not finished loading or the admission queue is
-        full; 413 if the tokenized input exceeds the per-request cap; 422 if
-        ``req`` contains malformed questions, media, or kwargs.
+        full; 413 if the encoded request exceeds the enforced limit (the detail
+        carries the token split); 422 if ``req`` contains malformed questions,
+        media, or kwargs. A size-check mismatch is a ``RuntimeError``, which
+        the middleware counts and the server returns as 500.
     """
     if _ENGINE is None:
         raise HTTPException(status_code=503, detail="model not loaded yet")
@@ -339,7 +348,7 @@ def systemone_endpoint(
         )
     except AdmissionError as exc:  # admission semaphore full — server busy
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    except RequestTooLargeError as exc:  # per-request token cap exceeded
+    except RequestTooLargeError as exc:  # encoded request over the enforced limit
         raise HTTPException(status_code=413, detail=str(exc)) from exc
     except ValueError as exc:  # malformed questions, media, or kwargs
         raise HTTPException(status_code=422, detail=str(exc)) from exc
@@ -351,15 +360,27 @@ def systemone_endpoint(
 
 
 def main() -> None:
-    """Run the model server in the foreground with uvicorn."""
+    """Run the model server in the foreground with uvicorn.
+
+    ember's own loggers share uvicorn's default handler, so their INFO lines
+    (such as the ``limits:`` line) reach the server log.
+    """
     # import-placement:allow - deferred to main(); avoids uvicorn import at module load
     import uvicorn
+    from uvicorn.config import LOGGING_CONFIG
 
+    log_config = copy.deepcopy(LOGGING_CONFIG)
+    log_config["loggers"]["ember"] = {
+        "handlers": ["default"],
+        "level": "INFO",
+        "propagate": False,
+    }
     uvicorn.run(
         app,
         host=config.resolve("host"),
         port=int(config.resolve("port")),
         log_level="info",
+        log_config=log_config,
         limit_concurrency=16,
     )
 
