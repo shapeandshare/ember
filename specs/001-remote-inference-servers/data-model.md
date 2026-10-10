@@ -19,7 +19,7 @@ Represents where advise requests are sent.
 | `scheme` | `str` | parsed from `url` | `http` or `https` |
 | `is_local` | `bool` | computed via `is_loopback_host(host)` | Loopback ⇒ local |
 | `allow_insecure_transport` | `bool` | `config.resolve("allow_insecure_transport")` | Explicit override |
-| `request_timeout` | `int` (seconds) | `config.resolve("request_timeout")` | Default `300`; bounds a remote request |
+| `request_timeout` | `int` (seconds) | `config.resolve("request_timeout")` | Default `900` (`300` until 2026-10-10); bounds each advise request, local or remote |
 
 **Validation rules**
 

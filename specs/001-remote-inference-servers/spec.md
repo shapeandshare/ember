@@ -181,7 +181,7 @@ a bounded time and that no local fallback occurs implicitly.
   a local model server.
 - **FR-010**: Remote failures (unreachable, authentication, certificate, timeout, incompatible
   response, endpoint busy) MUST each produce a distinct, actionable message within the
-  configured request timeout (`request_timeout`, default 300 s), and MUST NOT silently fall
+  configured request timeout (`request_timeout`, default 900 s), and MUST NOT silently fall
   back to local inference.
 - **FR-011**: An ember server MUST be able to accept remote clients with optional
   bearer-token authentication that can be disabled, so operators can delegate authentication
@@ -208,7 +208,7 @@ a bounded time and that no local fallback occurs implicitly.
   single configurable endpoint and resolvable through the existing configuration mechanism;
   local remains the default.
 - **FR-017**: The remote request timeout MUST be configurable (`request_timeout`, env
-  `EMBER_REQUEST_TIMEOUT`, default 300 s) using the existing precedence, and MUST bound a
+  `EMBER_REQUEST_TIMEOUT`, default 900 s) using the existing precedence, and MUST bound a
   remote request before it is reported as a timeout failure.
 - **FR-018**: The MCP advise path MUST be async-first: the tool handler MUST be `async def` and
   use an async HTTP client, with any blocking local autostart offloaded to a worker thread
