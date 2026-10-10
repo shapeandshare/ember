@@ -26,7 +26,8 @@
   percentage points below and Brier score at most 0.02 above that model's own 2K result,
   with the probe sized so this tolerance is measurable; the probe also records peak memory
   and latency per length, and any length whose peak memory exceeds the model's documented
-  minimum (32 GB for flash, 64 GB for full) is ruled out.
+  minimum (32 GB for flash, 64 GB for full) is ruled out. (Updated 2026-10-10: full's
+  documented minimum is now 96 GB; see FR-010.)
 - Q: Should the measured cap be one default shared by every model, or a separate default
   for each registered model? → A: Per-model: each registered model (flash, full) gets its
   own measured cap as its default, as the effective maximum already derives from the

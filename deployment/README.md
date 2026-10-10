@@ -119,8 +119,10 @@ numbers in [`COMPATIBILITY.md`](../COMPATIBILITY.md#hardware-requirements)
 (`flash` 9B needs roughly 18 GiB of weights plus activation/KV-cache headroom —
 32 GB+ total is the practical floor on MPS and a reasonable floor on CUDA too;
 `full` 27B needs roughly 55 GiB of weights and 96 GB+ total, since a request at its
-65,536-token default peaked at 90.8 GiB on MPS). An undersized GPU fails with a
-CUDA out-of-memory error at load time, not a graceful degradation.
+65,536-token default peaked at 90.8 GiB on MPS). A GPU too small for the weights fails
+with a CUDA out-of-memory error at load time, not a graceful degradation. One that holds
+the weights but not a long request fails only when such a request runs; lower
+`EMBER_MAX_REQUEST_LENGTH` to what the GPU can hold.
 
 **System RAM and GPU VRAM are sized independently, and only one is a single
 AWS "instance size" knob.** `load_clef()` (`ember/serving/runtime.py`) loads
