@@ -38,3 +38,4 @@ vault/.trash/
 .coverage
 # Outerbounds CLI's local deploy-state/image-build cache (per-machine).
 .ob_apps/
+*.egg-info/
