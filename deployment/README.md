@@ -46,7 +46,11 @@ Loading") for why no integrity hash is checked against that location.
    - Access control is `auth.type: API` (below) — Outerbounds gates the
      endpoint with each caller's own existing platform token, so ember's own
      optional `EMBER_SERVER_AUTH_TOKEN` bearer-auth layer is intentionally
-     left unset for this deployment.
+     left unset for this deployment. (Setting `EMBER_HOST` to a non-loopback
+     address with no `EMBER_SERVER_AUTH_TOKEN` is accepted by ember — see
+     `docs/stride-tracker.csv` T-004 and `SECURITY.md`'s accepted-residual-
+     risks section. Access control is the operator's responsibility in that
+     configuration; here it's Outerbounds' gateway.)
    - S3 access relies on an IAM role attached to the compute pool; boto3's
      default credential chain picks it up automatically (see
      `vault/decisions/2026-10-08-optional-s3-credentials-iam-role.md`). Only
