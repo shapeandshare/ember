@@ -1,6 +1,6 @@
 {
   "name": "ember",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "Give your agent a gut feeling: calibrated advice from a local decision model, over MCP.",
   "author": {
     "name": "shapeandshare",
