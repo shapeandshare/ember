@@ -771,12 +771,17 @@ D-002.
     - the 2K `driver_peak_bytes` is 0.9–1.5× `approx_bytes`
 
     If either check fails, stop and revise the peak-memory formula before T059.
-- [ ] T059 [US3] Pilot: run `ember eval context --pilot`. If it exits 2:
+- [X] T059 [US3] Pilot: run `ember eval context --pilot`. If it exits 2:
   - stop US3 here
   - record the projected half-width and the item count in a new vault discovery,
     `vault/discoveries/<date>-probe-items-cannot-resolve-the-tolerance.md`, linked from
     `vault/ember.md`
   - ask the maintainer how to proceed (R10)
+  - Done 2026-10-10: `context_20261010T015823Z` exited 2 with a half-width of 0.0264 over
+    232 items (0.02 needs at least 405). Recorded in
+    `vault/discoveries/2026-10-10-probe-items-cannot-resolve-the-tolerance.md`. The
+    maintainer chose to grow the benchmark to 443 text items and to give each model its
+    own memory-checked fallback (`vault/decisions/2026-10-10-per-model-request-caps.md`).
 - [ ] T060 [US3] Canonical run, on a clean tree (`git status` empty, and
   `results/context/<run_id>/manifest.json` shows `git_dirty: false`):
   - Run `make eval-context`. After an interruption, resume with

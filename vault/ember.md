@@ -5,7 +5,7 @@ tags:
   - type/moc
   - domain/governance
 created: 2026-10-02
-updated: 2026-10-08
+updated: 2026-10-10
 ---
 
 # ember vault
@@ -49,6 +49,7 @@ Session-level decisions with their context and consequences.
 - [[2026-10-08-outerbounds-deployment-and-cuda-support]]
 - [[2026-10-08-doctor-reports-registration-from-config-files]]
 - [[2026-10-09-publish-releases-to-pypi-and-the-mcp-registry]]
+- [[2026-10-10-per-model-request-caps]]
 
 ### Discoveries
 
@@ -67,6 +68,8 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-09-docker-desktop-drops-deletion-events]]
 - [[2026-10-09-pypi-json-api-hides-empty-projects]]
 - [[2026-10-09-request-size-checks-miss-what-the-model-sees]]
+- [[2026-10-10-probe-items-cannot-resolve-the-tolerance]]
+- [[2026-10-10-memory-checks-bound-each-models-cap]]
 
 ### Sessions
 
@@ -74,6 +77,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-08-codex-review-and-s3-rename]] — Codex init review fixes; neutral S3 setting names
 - [[2026-10-08-client-registration-hygiene]] — `ember init` registers only ember; doctor reports per-harness registration
 - [[2026-10-09-context-window-audit-implementation]] — full-request counting, refusals, limit reporting, and the long-context probe
+- [[2026-10-10-pilot-gate-and-per-model-caps]] — the pilot's sizing gate, memory checks, per-model fallback caps, and a larger benchmark
 
 Append-only session logs, never pruned.
 
