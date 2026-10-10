@@ -53,7 +53,7 @@ Expected:
   `max_request_length_source` ([http-api.md](./contracts/http-api.md)).
 - The log has one `limits:` line from model load.
 - doctor prints `[info] limits: enforced 24576 tokens; …; live from local server` for
-  flash. Until the probe has run, it shows `max_request_length 24576 (fallback)` (16384
+  flash. Until the probe has run, it shows `max_request_length 24576 (fallback)` (8192
   for full).
 
 ```bash

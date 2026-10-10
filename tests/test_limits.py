@@ -356,13 +356,13 @@ def test_every_registered_model_declares_its_own_fallback():
         assert spec.fallback_request_length >= 2048
 
 
-@pytest.mark.parametrize(("name", "fallback"), [("flash", 24576), ("full", 16384)])
+@pytest.mark.parametrize(("name", "fallback"), [("flash", 24576), ("full", 8192)])
 def test_each_model_falls_back_to_the_longest_length_its_memory_check_fit(
     name, fallback
 ):
-    # Memory checks, 2026-10-10: flash peaked at 27.83 GiB at 24,576 tokens and 32.35
-    # GiB at 32,768 (32 GiB budget); full at 63.54 GiB at 16,384 and 68.40 GiB at
-    # 24,576 (64 GiB budget).
+    # Memory checks, 2026-10-10. The fallback must leave 4 GiB of the budget free for
+    # the OS: flash peaked at 27.83 GiB at 24,576 tokens and 32.35 GiB at 32,768
+    # (32 GiB budget); full at 59.54 GiB at 8,192 and 63.54 GiB at 16,384 (64 GiB).
     assert models.get(name).fallback_request_length == fallback
 
 

@@ -1,6 +1,6 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-10 (per-model request caps: every registry model declares its memory budget and its own fallback cap, the longest probe length that fits that budget; flash falls back to 24,576 and full to 16,384)
+**Last updated**: 2026-10-10 (per-model request caps: every registry model declares its memory budget and its own fallback cap, the longest probe length that leaves 4 GiB of that budget free; flash falls back to 24,576 and full to 8,192)
 
 ## What this repo is
 
@@ -600,8 +600,9 @@ spacing values, or component styles outside the design system.
   count becomes a 500. Agent-facing error text must contain no `/`: the MCP layer rewrites
   anything path-like. An unset `max_request_length` means the loaded model's own default: its
   measured cap (`ModelSpec.max_request_length`) or, until measured, its fallback
-  (`ModelSpec.fallback_request_length`, the longest probe length that fits its
-  `memory_budget_bytes`). There is no shared fallback: models need different amounts of
+  (`ModelSpec.fallback_request_length`, the longest probe length whose peak leaves 4 GiB
+  of its `memory_budget_bytes` free). There is no shared fallback: models need different
+  amounts of
   memory, so every registry entry declares its own, and a model outside the registry gets
   the lowest registry cap.
 - **Metric names and labels are public API** (`ember/serving/server.py`): change
@@ -721,10 +722,11 @@ MUST pass the constitution check.
 
 - 2026-10-10: per-model request caps: the shared 32,768 fallback is gone. Every `REGISTRY`
   entry declares its own `memory_budget_bytes` (moved from the probe's `MEMORY_BUDGETS`) and
-  `fallback_request_length`, the longest probe length whose peak memory fits that budget,
-  used until the probe measures the model's cap. One-item memory checks set flash's to
-  24,576 (27.83 GiB peak; 32,768 peaked at 32.35 GiB, over its 32 GiB budget) and full's to
-  16,384 (63.54 GiB; 24,576 peaked at 68.40 GiB, over its 64 GiB budget). A model
+  `fallback_request_length`, the longest probe length whose peak memory leaves 4 GiB of
+  that budget free for the OS, used until the probe measures the model's cap. One-item
+  memory checks set flash's to 24,576 (27.83 GiB of 32 GiB; 32,768 peaked at 32.35 GiB)
+  and full's to 8,192 (59.54 GiB of 64 GiB; 16,384 peaked at 63.54 GiB, too close to the
+  budget). A model
   outside the registry gets the lowest registry cap, measured or fallback. The probe's
   sizing pilot could not resolve its 2-point accuracy tolerance with 232 text items
   (half-width 0.0264), so the benchmark grows to 443 (PR #95). See

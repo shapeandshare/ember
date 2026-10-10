@@ -135,10 +135,11 @@ under 0.1%.
   `config.json` (`EMBER_MAX_LENGTH=0` derives it; it is not a fixed 16384 cap). Each
   request is also held to a per-model cap (`EMBER_MAX_REQUEST_LENGTH`). Until the
   long-context probe (`make eval-context`, MPS on an M4 Max with 128 GB) measures a model,
-  its default is its own fallback, the longest probe length whose peak memory fits its
-  budget: 24,576 tokens for `flash` (27.83 GiB of 32 GiB; 32,768 peaked at 32.35 GiB) and
-  16,384 for `full` (63.54 GiB of 64 GiB; 24,576 peaked at 68.40 GiB). A model outside the
-  registry gets the lowest registry cap. The measured values and the probe run ID replace
+  its default is its own fallback, the longest probe length whose peak memory leaves at
+  least 4 GiB of its budget free for the OS: 24,576 tokens for `flash` (27.83 GiB of
+  32 GiB; 32,768 peaked at 32.35 GiB) and 8,192 for `full` (59.54 GiB of 64 GiB; 16,384
+  peaked at 63.54 GiB). A model outside the registry gets the lowest registry cap. The
+  measured values and the probe run ID replace
   the fallbacks. The whole encoded request counts, including questions, schema, the prompt
   wrapper, and media, so image-heavy requests near the cap that passed the earlier
   state-only check may now be refused. An oversized request is refused with a 413 that

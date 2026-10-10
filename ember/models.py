@@ -54,9 +54,9 @@ class ModelSpec:
         length whose peak exceeds it.
     fallback_request_length : int
         This model's per-request cap until the probe measures one: the longest
-        probe length whose peak memory fits ``memory_budget_bytes``. Each model
-        declares its own because memory needs differ by model; it is reported
-        as ``fallback``.
+        probe length whose peak memory leaves at least 4 GiB of
+        ``memory_budget_bytes`` free for the OS. Each model declares its own
+        because memory needs differ by model; it is reported as ``fallback``.
     revision : str | None
         Optional Hugging Face Hub commit/branch/tag to download — a
         convenience for targeting a specific known-good version, not a
@@ -91,8 +91,9 @@ REGISTRY: dict[str, ModelSpec] = {
         "9B",
         18 * 2**30,
         memory_budget_bytes=32 * 2**30,
-        # The longest probe length that fits 32 GiB: 24,576 tokens peaked at
-        # 27.83 GiB and 32,768 at 32.35 GiB (memory check, 2026-10-10).
+        # The longest probe length that leaves 4 GiB of 32 GiB free: 24,576
+        # tokens peaked at 27.83 GiB and 32,768 at 32.35 GiB (memory check,
+        # 2026-10-10).
         fallback_request_length=24576,
         revision="17f0b0ad64efb65d273590632833508766b2aae6",
     ),
@@ -103,9 +104,10 @@ REGISTRY: dict[str, ModelSpec] = {
         "27B",
         55 * 2**30,
         memory_budget_bytes=64 * 2**30,
-        # The longest probe length that fits 64 GiB: 16,384 tokens peaked at
-        # 63.54 GiB and 24,576 at 68.40 GiB (memory check, 2026-10-10).
-        fallback_request_length=16384,
+        # The longest probe length that leaves 4 GiB of 64 GiB free: 8,192
+        # tokens peaked at 59.54 GiB and 16,384 at 63.54 GiB (memory check,
+        # 2026-10-10).
+        fallback_request_length=8192,
         revision="2f3de3dd85f379784083b0814d997ab627200f0c",
     ),
 }

@@ -39,7 +39,8 @@ served; one token more is refused (see [http-api.md](./http-api.md)).
 
 - **Cap default**: `max_request_length`'s default changes from `32768` to unset. Until a
   model has a measured cap, unset resolves to that model's own fallback, the longest probe
-  length that fits its memory budget. (Updated 2026-10-10, replacing a shared 32,768: see
+  length whose peak leaves 4 GiB of its memory budget free. (Updated 2026-10-10, replacing a
+  shared 32,768: see
   `vault/decisions/2026-10-10-per-model-request-caps.md`.)
 - **Counting**: requests are now counted in full: questions, schema, prompt wrapper, and
   media, not just `str(state)`. Requests that passed before can now be refused, and the
