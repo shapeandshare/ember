@@ -14,7 +14,8 @@ from ember.serving import request_size, runtime
 from ember.serving.limit_source import LimitSource
 from ember.serving.limits import Limits, declared_max_length
 
-from .filler import filler_ids, offset_for
+from ..eval.provenance import REPO_ROOT
+from .filler import filler_ids, load_filler, offset_for
 from .memory_sampler import MemorySampler
 from .padding import build_state
 from .records.depth import Depth
@@ -29,10 +30,36 @@ PILOT_LENGTHS = (2048, 16384)
 _log = logging.getLogger(__name__)
 
 
+def check_pins(manifest: ProbeManifest, model: str) -> None:
+    """Refuse weights other than the repo and revision the run pinned.
+
+    Raises
+    ------
+    RuntimeError
+        If the registry's entry for ``model`` no longer matches the manifest.
+    """
+    spec, pinned = models.get(model), manifest.models[model]
+    if (spec.repo, spec.revision) != (pinned.repo, pinned.revision):
+        raise RuntimeError(
+            f"the registry's {model} is {spec.repo}@{spec.revision}, but this run "
+            f"pinned {pinned.repo}@{pinned.revision}; start a new run, or check out "
+            "the commit that pinned it"
+        )
+
+
+def pinned_filler(manifest: ProbeManifest) -> str:
+    """Load the filler the manifest pinned, verifying its SHA-256."""
+    path = Path(manifest.filler_path)
+    return load_filler(
+        path if path.is_absolute() else REPO_ROOT / path, manifest.filler_sha256
+    )
+
+
 class _Prober:
     """Holds the engine and inputs one worker needs to run probe cells."""
 
     def __init__(self, run_dir: Path, manifest: ProbeManifest, model: str) -> None:
+        check_pins(manifest, model)
         model_dir = models.resolve_dir(model, override=False)
         if model_dir is None:
             raise RuntimeError(
@@ -51,7 +78,9 @@ class _Prober:
             ),
         )
         self.js = runtime.joint_module(model_dir)
-        self.filler = filler_ids(self.engine.processor.tokenizer)
+        self.filler = filler_ids(
+            self.engine.processor.tokenizer, pinned_filler(manifest)
+        )
         self.manifest = manifest
         self.model = model
         self.items = dataset_items(manifest, run_dir)
@@ -154,7 +183,7 @@ def run_model(run_dir: Path, model: str, *, pilot: bool = False) -> int:
     manifest = load_manifest(run_dir)
     try:
         prober = _Prober(run_dir, manifest, model)
-    except RuntimeError as exc:
+    except (RuntimeError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
     repair(prober.path)

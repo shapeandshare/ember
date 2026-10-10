@@ -1047,3 +1047,36 @@ def test_a_reproduction_carries_the_snapshot_dataset(monkeypatch, tmp_path):
     assert original == snapshot
     copied = (run_dir / "dataset.jsonl").read_bytes()
     assert copied == (snapshot / "dataset.jsonl").read_bytes()
+
+
+# ###########################################################################
+# worker: the run's pinned weights and filler (PR #94 review)
+# ###########################################################################
+def test_check_pins_accepts_the_pinned_revision():
+    from evals.context import worker
+
+    worker.check_pins(_manifest(), "flash")
+
+
+def test_check_pins_refuses_a_registry_revision_the_run_did_not_pin(monkeypatch):
+    import dataclasses
+
+    from ember import models
+    from evals.context import worker
+
+    spec = dataclasses.replace(models.REGISTRY["flash"], revision="0" * 40)
+    monkeypatch.setitem(models.REGISTRY, "flash", spec)
+    with pytest.raises(RuntimeError, match="pinned"):
+        worker.check_pins(_manifest(), "flash")
+
+
+def test_pinned_filler_reads_and_verifies_the_manifest_copy(tmp_path):
+    from evals.context import worker
+
+    path = tmp_path / "filler.txt"
+    path.write_text("call me ishmael", encoding="utf-8")
+    digest = hashlib.sha256(b"call me ishmael").hexdigest()
+    manifest = _manifest(filler_path=str(path), filler_sha256=digest)
+    assert worker.pinned_filler(manifest) == "call me ishmael"
+    with pytest.raises(ValueError, match="SHA-256"):
+        worker.pinned_filler(_manifest(filler_path=str(path)))
