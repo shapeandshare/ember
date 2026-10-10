@@ -884,7 +884,7 @@
   ],
   "dependencies": {
     "lockfile": "uv.lock",
-    "lockfile_sha256": "d18696ccc9d4fb69ef6d03f27b0a238a8eb9b22f21f12c6602a165285184c5ea",
+    "lockfile_sha256": "966cc74d6a3fa8c68906e45043d851205153c01d1ec56c9b79bc3464c48d5efb",
     "inventory": [
       {
         "name": "accelerate",
@@ -1298,6 +1298,48 @@
         }
       },
       {
+        "name": "astroid",
+        "version": "4.3.4",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/2d/87/5732fa68bf100a095cfcbd108f919220d995db99e1a7502b8119a869fd62/astroid-4.3.4.tar.gz",
+            "hash": "sha256:d515a105722b72098bbe82d430d65e635f742b6cbac3bdfaf8b7c188b87c5e39",
+            "size": 444627
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/16/d4/f23c0ac6e6de33ba5686cb21c672c95e0c2d3d4c9351f16d3b5fed818652/astroid-4.3.4-py3-none-any.whl",
+            "hash": "sha256:2bcd0d02648a443a4b818c952c3550091989daefac3c12d3b83b2289482e0818",
+            "size": 288310
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "4.3.4",
+          "matches_locked_version": true,
+          "declared_license": "LGPL-2.1-or-later",
+          "license_classifiers": [],
+          "project_urls": [
+            "Bug tracker, https://github.com/pylint-dev/astroid/issues",
+            "Discord server, https://discord.gg/Egy6P8AMB5",
+            "Docs, https://pylint.readthedocs.io/projects/astroid/en/latest/",
+            "Source Code, https://github.com/pylint-dev/astroid"
+          ],
+          "license_files": [
+            {
+              "path": "astroid-4.3.4.dist-info/licenses/CONTRIBUTORS.txt",
+              "sha256": "883f38aed08e549ea31b0b6d234ec0fd6fbfb292d1039708735725d150fac434"
+            },
+            {
+              "path": "astroid-4.3.4.dist-info/licenses/LICENSE",
+              "sha256": "fea16bda9e734dea0d9c8d9f5b909878ef4171626354329609fffcf3db42cb24"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
         "name": "attrs",
         "version": "26.1.0",
         "source": {
@@ -1371,6 +1413,160 @@
             {
               "path": "bandit-1.9.4.dist-info/licenses/LICENSE",
               "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "boto3",
+        "version": "1.43.109",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/2a/80/0430e16c302b0d1a4ca3c8c69ffee9e4f8f2170d56162d2761b34fd512ba/boto3-1.43.109.tar.gz",
+            "hash": "sha256:c829bc3352e1e3922d8fe1db10b697182ac411b64ce5fc3acb0a06a29837417e",
+            "size": 112661
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/a1/56/c83a8fdadf06f631d1a0c4d82fc8daa9e1a40f6354264fba20c186363f49/boto3-1.43.109-py3-none-any.whl",
+            "hash": "sha256:703a81baed186d31e27cf50065d25a9faeb704f009e7c56b0f002ca52a328896",
+            "size": 140044
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "1.43.109",
+          "matches_locked_version": true,
+          "declared_license": "Apache-2.0",
+          "license_classifiers": [],
+          "project_urls": [
+            "Documentation, https://docs.aws.amazon.com/boto3/latest/",
+            "Source, https://github.com/boto/boto3"
+          ],
+          "license_files": [
+            {
+              "path": "boto3-1.43.109.dist-info/LICENSE",
+              "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+            },
+            {
+              "path": "boto3-1.43.109.dist-info/NOTICE",
+              "sha256": "04fb1e61484a7810f1ba09bb42bc01ca58c9af33927d7c5a21556e4c4d1c7fa4"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "boto3-stubs",
+        "version": "1.43.109",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/57/39/ad11618878f0066533d4fd51791b2f4d2a75ecca6424242fee5e944f4d67/boto3_stubs-1.43.109.tar.gz",
+            "hash": "sha256:ee1901bd298c59800c816f67411081dfb0e5d8a5510d85d22bd1481180f49ba2",
+            "size": 105669
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/1d/54/b09cef023c90ea91f061c2afd1f7e7691c1dbcbe4e8ad7886a3827655b77/boto3_stubs-1.43.109-py3-none-any.whl",
+            "hash": "sha256:2529814863088a266e15b2eb3366095970fb5c270417032a53ef11d07fb61eee",
+            "size": 72038
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "1.43.109",
+          "matches_locked_version": true,
+          "declared_license": "MIT",
+          "license_classifiers": [],
+          "project_urls": [
+            "Homepage, https://github.com/youtype/mypy_boto3_builder",
+            "Documentation, https://youtype.github.io/boto3_stubs_docs/",
+            "Source, https://github.com/youtype/mypy_boto3_builder",
+            "Tracker, https://github.com/youtype/mypy_boto3_builder/issues"
+          ],
+          "license_files": [
+            {
+              "path": "boto3_stubs-1.43.109.dist-info/licenses/LICENSE",
+              "sha256": "31d3c170c380fe65c79806819f8d6a4c7f333fbaac7507d1008c4d25a0aafb01"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "botocore",
+        "version": "1.43.109",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/3c/da/424aaef4727876f4095bd2c10e683bb8531ac3bea56b0b6efd29eeb57f91/botocore-1.43.109.tar.gz",
+            "hash": "sha256:46b15bea4d942aaea6d7ab7c4b8a3a7290305064a3b41a6cb271cde9da3ba371",
+            "size": 16301678
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/7c/d7/bf9e5988baf1245f3ac373e09f3204f641e7a2db170f512f236aa90961d6/botocore-1.43.109-py3-none-any.whl",
+            "hash": "sha256:cd00edff465264fb448e36acc9ee29a828f738fff3746270b3f685a19194a5a6",
+            "size": 15998671
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "1.43.109",
+          "matches_locked_version": true,
+          "declared_license": "Apache-2.0",
+          "license_classifiers": [],
+          "project_urls": [],
+          "license_files": [
+            {
+              "path": "botocore-1.43.109.dist-info/LICENSE.txt",
+              "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+            },
+            {
+              "path": "botocore-1.43.109.dist-info/NOTICE",
+              "sha256": "1d1c5a6f3d68cb11f4fad1afa86a7450d0286f15c176ef0ea048f255b46d95b0"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "botocore-stubs",
+        "version": "1.43.67",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/3f/45/53d662227dc4787b2c854445ee7eb4751cb5d74cfb5c686a6ecbe1f94c17/botocore_stubs-1.43.67.tar.gz",
+            "hash": "sha256:853e74014a1f557055c4ffae5fb38d7c65c7c0520e1aab366cac41d5428f419d",
+            "size": 42846
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/4e/5e/bdbf19967898a032292da65a47d6e25b2eee55865db4e687f861d80b5602/botocore_stubs-1.43.67-py3-none-any.whl",
+            "hash": "sha256:c51262bac3341c1cda71f05fa01141fffd3990d7a92c7960e3b755c1bc830373",
+            "size": 67244
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "1.43.67",
+          "matches_locked_version": true,
+          "declared_license": "MIT",
+          "license_classifiers": [],
+          "project_urls": [
+            "Homepage, https://github.com/youtype/botocore-stubs",
+            "Documentation, https://youtype.github.io/mypy_boto3_builder/",
+            "Repository, https://github.com/youtype/botocore-stubs",
+            "Changelog, https://github.com/youtype/botocore-stubs/releases",
+            "Issues, https://github.com/youtype/botocore-stubs/issues"
+          ],
+          "license_files": [
+            {
+              "path": "botocore_stubs-1.43.67.dist-info/licenses/LICENSE",
+              "sha256": "60875427f70545949c2d9405c914ff3bcc820b15c58452a65daaa00e97b7ae93"
             }
           ],
           "status": "local_metadata_only; upstream license not independently verified"
@@ -2307,6 +2503,78 @@
         }
       },
       {
+        "name": "dill",
+        "version": "0.4.1",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/81/e1/56027a71e31b02ddc53c7d65b01e68edf64dea2932122fe7746a516f75d5/dill-0.4.1.tar.gz",
+            "hash": "sha256:423092df4182177d4d8ba8290c8a5b640c66ab35ec7da59ccfa00f6fa3eea5fa",
+            "size": 187315
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/1e/77/dc8c558f7593132cf8fefec57c4f60c83b16941c574ac5f619abb3ae7933/dill-0.4.1-py3-none-any.whl",
+            "hash": "sha256:1e1ce33e978ae97fcfcff5638477032b801c46c7c65cf717f95fbc2248f79a9d",
+            "size": 120019
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "0.4.1",
+          "matches_locked_version": true,
+          "declared_license": "BSD-3-Clause",
+          "license_classifiers": [
+            "License :: OSI Approved :: BSD License"
+          ],
+          "project_urls": [
+            "Documentation, http://dill.rtfd.io",
+            "Source Code, https://github.com/uqfoundation/dill",
+            "Bug Tracker, https://github.com/uqfoundation/dill/issues"
+          ],
+          "license_files": [
+            {
+              "path": "dill-0.4.1.dist-info/LICENSE",
+              "sha256": "f669d63bebf765baaa0b20d8b0c1193296a7e0ea0c22c50a308b74d76ab3939c"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "durationpy",
+        "version": "0.11",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/b0/5d/5f8571bd5dedc80863191621ac4be001f3f3dd8315d2ec078705dab7dec1/durationpy-0.11.tar.gz",
+            "hash": "sha256:181898e1ae282e288f0a2291829656bf1b6b3aadf30a97993b85db4943642905",
+            "size": 3582
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/e6/c4/ebdf7837bc4ef6fd98cfb013c28855bb358467bf86c1af011bbc21e21df0/durationpy-0.11-py3-none-any.whl",
+            "hash": "sha256:a739fe2b8972c250ff72f8e2c488d18cf25f7b852f49ee76048775d5171df30c",
+            "size": 4133
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "0.11",
+          "matches_locked_version": true,
+          "declared_license": "MIT",
+          "license_classifiers": [],
+          "project_urls": [],
+          "license_files": [
+            {
+              "path": "durationpy-0.11.dist-info/licenses/LICENSE",
+              "sha256": "b6c5adfeed4ba4385ea6ab33c4e9b730fd22937350b2e17f862ae169f8d90dc9"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
         "name": "fastapi",
         "version": "0.142.2",
         "source": {
@@ -2892,6 +3160,66 @@
         }
       },
       {
+        "name": "isort",
+        "version": "9.0.2",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/da/cf/068066b8fdab91cd40bcd63e483137908710a3d25a4d3a01b538be45d9d6/isort-9.0.2.tar.gz",
+            "hash": "sha256:d2298980ce44350f11d9d24c8150eaef1883431ec203dddbb4e9b5c3ceb54c70",
+            "size": 685196
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/41/c3/3cd3e0f66af21e1bf917f50b45d3389de3d9a25661f2e7f74e51c7fb37a8/isort-9.0.2-cp312-cp312-macosx_11_0_arm64.whl",
+            "hash": "sha256:a05dc63cb6ae2a8e62ec4184153f424b1650593e00a24e6138184c46193891e9",
+            "size": 1062138
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/ab/36/512c41f0d9f4c2a61d56d383db21d42a9b82b4f768827f7e852139d14123/isort-9.0.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+            "hash": "sha256:af8be0b5cac101202c8255360e5de832ebbb84b2e863dc0f65dbb1a3d63dd40a",
+            "size": 1680120
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/84/6f/44fa0de7eb71d576d08d0ad3a1d5d401d6cc0c4f908d76159c52b690e6de/isort-9.0.2-cp312-cp312-musllinux_1_2_x86_64.whl",
+            "hash": "sha256:3fe693c1e56781de387a6c206306e9e5e560cfeb4acdfd85f0c46122afd48792",
+            "size": 1669955
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/b1/cc/89e9a499612665321a1f05e3bb1f4ff6f99e170568cff5c0162bd5d82ae6/isort-9.0.2-cp312-cp312-win_amd64.whl",
+            "hash": "sha256:f7a9efeb3689c7327a0d637eb4e12691e8d5ab1297caee997b144dc595ccb93f",
+            "size": 880360
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/8b/c9/0849e74b868ef10312eecfc24278710e97dd14bc49c1df629d7df142d318/isort-9.0.2-py3-none-any.whl",
+            "hash": "sha256:6c29deeb39698a8717823b7f75b2ac58c5e8ab8dcf6cf31205a72a6617fb454e",
+            "size": 105052
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "9.0.2",
+          "matches_locked_version": true,
+          "declared_license": "MIT",
+          "license_classifiers": [
+            "License :: OSI Approved :: MIT License"
+          ],
+          "project_urls": [
+            "Homepage, https://isort.readthedocs.io/",
+            "Documentation, https://isort.readthedocs.io/",
+            "Repository, https://github.com/PyCQA/isort",
+            "Changelog, https://github.com/PyCQA/isort/releases"
+          ],
+          "license_files": [
+            {
+              "path": "isort-9.0.2.dist-info/licenses/LICENSE",
+              "sha256": "063294001c3d523dbacbab9dd54ac229982756ccaf592ca53240b2b0cdd82065"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
         "name": "jinja2",
         "version": "3.1.6",
         "source": {
@@ -2927,6 +3255,41 @@
             {
               "path": "jinja2-3.1.6.dist-info/licenses/LICENSE.txt",
               "sha256": "3b49dcee4105eb37bac10faf1be260408fe85d252b8e9df2e0979fc1e094437b"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "jmespath",
+        "version": "1.1.0",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/d3/59/322338183ecda247fb5d1763a6cbe46eff7222eaeebafd9fa65d4bf5cb11/jmespath-1.1.0.tar.gz",
+            "hash": "sha256:472c87d80f36026ae83c6ddd0f1d05d4e510134ed462851fd5f754c8c3cbb88d",
+            "size": 27377
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/14/2f/967ba146e6d58cf6a652da73885f52fc68001525b4197effc174321d70b4/jmespath-1.1.0-py3-none-any.whl",
+            "hash": "sha256:a5663118de4908c91729bea0acadca56526eb2698e83de10cd116ae0f4e97c64",
+            "size": 20419
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "1.1.0",
+          "matches_locked_version": true,
+          "declared_license": "MIT",
+          "license_classifiers": [
+            "License :: OSI Approved :: MIT License"
+          ],
+          "project_urls": [],
+          "license_files": [
+            {
+              "path": "jmespath-1.1.0.dist-info/LICENSE",
+              "sha256": "6eefacfa4d71b82d08408c751470ac8d9854538da2142cb27be0287fb13d0ab9"
             }
           ],
           "status": "local_metadata_only; upstream license not independently verified"
@@ -3008,6 +3371,41 @@
             {
               "path": "jsonschema_specifications-2025.9.1.dist-info/licenses/COPYING",
               "sha256": "42dcd63495f87b4eb7c7757afa379bb55a53f94afd7a5f657d9adf57236e515c"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "kubernetes",
+        "version": "35.0.0",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/2c/8f/85bf51ad4150f64e8c665daf0d9dfe9787ae92005efb9a4d1cba592bd79d/kubernetes-35.0.0.tar.gz",
+            "hash": "sha256:3d00d344944239821458b9efd484d6df9f011da367ecb155dadf9513f05f09ee",
+            "size": 1094642
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/0c/70/05b685ea2dffcb2adbf3cdcea5d8865b7bc66f67249084cf845012a0ff13/kubernetes-35.0.0-py2.py3-none-any.whl",
+            "hash": "sha256:39e2b33b46e5834ef6c3985ebfe2047ab39135d41de51ce7641a7ca5b372a13d",
+            "size": 2017602
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "35.0.0",
+          "matches_locked_version": true,
+          "declared_license": "Apache License Version 2.0",
+          "license_classifiers": [
+            "License :: OSI Approved :: Apache Software License"
+          ],
+          "project_urls": [],
+          "license_files": [
+            {
+              "path": "kubernetes-35.0.0.dist-info/licenses/LICENSE",
+              "sha256": "5f52a7f9e6a13f7ce4ec84fe72fbf1f7a9827bee85dd991026aaaccfe2bd655c"
             }
           ],
           "status": "local_metadata_only; upstream license not independently verified"
@@ -3271,6 +3669,41 @@
         }
       },
       {
+        "name": "mccabe",
+        "version": "0.7.0",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/e7/ff/0ffefdcac38932a54d2b5eed4e0ba8a408f215002cd178ad1df0f2806ff8/mccabe-0.7.0.tar.gz",
+            "hash": "sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325",
+            "size": 9658
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/27/1a/1f68f9ba0c207934b35b86a8ca3aad8395a3d6dd7921c0686e23853ff5a9/mccabe-0.7.0-py2.py3-none-any.whl",
+            "hash": "sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e",
+            "size": 7350
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "0.7.0",
+          "matches_locked_version": true,
+          "declared_license": "Expat license",
+          "license_classifiers": [
+            "License :: OSI Approved :: MIT License"
+          ],
+          "project_urls": [],
+          "license_files": [
+            {
+              "path": "mccabe-0.7.0.dist-info/LICENSE",
+              "sha256": "10fbc003cbaf8a6b3cf7195b80dac96c86daf390039b2abf6e7b6e735afd7d74"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
         "name": "mcp",
         "version": "2.3.0",
         "source": {
@@ -3388,6 +3821,67 @@
         }
       },
       {
+        "name": "metaflow-checkpoint",
+        "version": "0.2.14",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/15/0b/22dc7932f53e6c743102aebbd04be4afe1187052ca07e763145fddbb4966/metaflow_checkpoint-0.2.14.tar.gz",
+            "hash": "sha256:05ab9a10d32d1c9ce8030ccd4fc95fb825e46ee729223de0e5c8edb2b3c8e30f",
+            "size": 88102
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/0f/8e/634f4bb5c4c4bb45d19146e14ee6a02ad112c776fd2496c5f4c9c3ad22c8/metaflow_checkpoint-0.2.14-py2.py3-none-any.whl",
+            "hash": "sha256:80b416f4e153b406e3b76564b7b1720aeb08f270947a1a783d366ba801c0acfb",
+            "size": 113189
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "0.2.14",
+          "matches_locked_version": true,
+          "declared_license": null,
+          "license_classifiers": [],
+          "project_urls": [],
+          "license_files": [
+            {
+              "path": "metaflow_checkpoint-0.2.14.dist-info/LICENSE",
+              "sha256": "0d9b812eef92b612b47c9628e0b0872d58b7a4be3b7d011005af71cbaee3c674"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "metaflow-torchrun",
+        "version": "0.2.2",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/a1/ab/967e954034aa0f949922511ce17d685e3d5ed6dfbc8d7ce98e208141942d/metaflow_torchrun-0.2.2.tar.gz",
+            "hash": "sha256:b33bcde2e17672b78d784cd9d30594b92103dabd9dc3d88c4475c4785a12efca",
+            "size": 13887
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/c2/f5/e82db23ff9c0af348db58af2f3f24a69cd780b755e84b57dbb0f99124539/metaflow_torchrun-0.2.2-py3-none-any.whl",
+            "hash": "sha256:8ddc4089ea0a820d193a28736bd4b55fd99899d09982034728be6dc6ff136eeb",
+            "size": 15634
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "0.2.2",
+          "matches_locked_version": true,
+          "declared_license": null,
+          "license_classifiers": [],
+          "project_urls": [],
+          "license_files": [],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
         "name": "mpmath",
         "version": "1.3.0",
         "source": {
@@ -3498,6 +3992,44 @@
             {
               "path": "mypy/typeshed/LICENSE",
               "sha256": "295f8538c94ae5c3043301cf7cff1c852dab6a786a8ddee471e061b40d5ecabe"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "mypy-boto3-s3",
+        "version": "1.43.106",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/46/db/e3922d6c62365c1098da97d9a775e78c66827df5cba11619a7d2a11cdae4/mypy_boto3_s3-1.43.106.tar.gz",
+            "hash": "sha256:731195f15830699a36e29d3c8abb2918bccd3587eb2edcb233f8046967893279",
+            "size": 79447
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/b8/4a/52419b5496215ab52c6c257134c1ac0da25c1ca5d802f133424d02a43686/mypy_boto3_s3-1.43.106-py3-none-any.whl",
+            "hash": "sha256:e233d04dbcf3925522dff4346e75c37344ec3d1cbb82337e5eed2af263847668",
+            "size": 86791
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "1.43.106",
+          "matches_locked_version": true,
+          "declared_license": "MIT",
+          "license_classifiers": [],
+          "project_urls": [
+            "Homepage, https://github.com/youtype/mypy_boto3_builder",
+            "Documentation, https://youtype.github.io/boto3_stubs_docs/mypy_boto3_s3/",
+            "Source, https://github.com/youtype/mypy_boto3_builder",
+            "Tracker, https://github.com/youtype/mypy_boto3_builder/issues"
+          ],
+          "license_files": [
+            {
+              "path": "mypy_boto3_s3-1.43.106.dist-info/licenses/LICENSE",
+              "sha256": "31d3c170c380fe65c79806819f8d6a4c7f333fbaac7507d1008c4d25a0aafb01"
             }
           ],
           "status": "local_metadata_only; upstream license not independently verified"
@@ -4073,6 +4605,163 @@
         }
       },
       {
+        "name": "oauthlib",
+        "version": "4.0.0",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/7a/d8/a1bcc8ba112a627f8ffbdc212a78ce18d3ac07e91a5ca65d27918eee25a1/oauthlib-4.0.0.tar.gz",
+            "hash": "sha256:efb274799819440f95b4ab3b818869f1ce9ae26c5beacba0201d1a1b76b54f86",
+            "size": 187232
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/d9/f4/78229a1066068ca14fc60fb26cf7381cabe4382261392b90e5f9552722d4/oauthlib-4.0.0-py3-none-any.whl",
+            "hash": "sha256:624c28c13a0a59cabf9747dfa52af63be3e512a7f2714df16e91b5b3a145e6cd",
+            "size": 159715
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "4.0.0",
+          "matches_locked_version": true,
+          "declared_license": "BSD-3-Clause",
+          "license_classifiers": [],
+          "project_urls": [
+            "Changelog, https://github.com/oauthlib/oauthlib/blob/master/CHANGELOG.rst",
+            "Documentation, https://oauthlib.readthedocs.io/",
+            "Gitter, https://gitter.im/oauthlib/Lobby",
+            "Issues, https://github.com/oauthlib/oauthlib/issues",
+            "Source, https://github.com/oauthlib/oauthlib",
+            "Sponsor, https://github.com/sponsors/JonathanHuot"
+          ],
+          "license_files": [
+            {
+              "path": "oauthlib-4.0.0.dist-info/licenses/LICENSE",
+              "sha256": "0028aa4763a8a0b09ca4c68d585263474cf9aaa6ec69ffbef3a31a9eccdd3b91"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "ob-metaflow",
+        "version": "2.19.39.1",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/6c/14/188265b3ca6096d4ce41ac14da6576335bb8f6bf571588af32a074634d0a/ob_metaflow-2.19.39.1.tar.gz",
+            "hash": "sha256:ad73bce53ff73b0bfeab86f38f73a1704f4011fad5b34bc07106e24ae04560e6",
+            "size": 1621691
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/c8/18/b07db530dd5c120d541edc9f6239b5c09b53103b968629fbac17efdbdb80/ob_metaflow-2.19.39.1-py2.py3-none-any.whl",
+            "hash": "sha256:de6782249c422967ca1f01770a4cd864d7138b988c530a759f4a5dbd2c8bdbcf",
+            "size": 1819927
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "2.19.39.1",
+          "matches_locked_version": true,
+          "declared_license": "Apache License 2.0",
+          "license_classifiers": [],
+          "project_urls": [],
+          "license_files": [
+            {
+              "path": "ob_metaflow-2.19.39.1.dist-info/licenses/LICENSE",
+              "sha256": "9e5fcbb79bfd56f27ee655890d3e1d74a006f9567ed8868b99bce98180f3da15"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "ob-metaflow-extensions",
+        "version": "1.6.34",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/65/12/486576c401fb56eaa460780232fc2db418d843ac000fd4bc9da03bce3b14/ob_metaflow_extensions-1.6.34.tar.gz",
+            "hash": "sha256:b8674049fc59b84b93a387ab3203211ee7d73fa354dfbb0585ec55587e67e6ee",
+            "size": 254677
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/c3/99/3558865588e384999a82ca218c770d014cb21b473c3fd89291259a1fed65/ob_metaflow_extensions-1.6.34-py2.py3-none-any.whl",
+            "hash": "sha256:ea20ff8288255cf2a9806efb24c5b67cf3c9d7c3b235d1342cf4a4be25cf9de7",
+            "size": 315044
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "1.6.34",
+          "matches_locked_version": true,
+          "declared_license": "Commercial",
+          "license_classifiers": [],
+          "project_urls": [],
+          "license_files": [],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "ob-metaflow-stubs",
+        "version": "6.0.12.52",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/71/01/722ab707361267184ef7352d0a14959a815314ff863e59a539f64bf5621f/ob_metaflow_stubs-6.0.12.52.tar.gz",
+            "hash": "sha256:9927695b7e4f7b1248013522081830d08d0167e05d0fbb011b2f30079003feb8",
+            "size": 215716
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/2f/84/b455d3b34f7e563a29655d28cdf875b92ca1009c0b46a3299a3db89206c1/ob_metaflow_stubs-6.0.12.52-py2.py3-none-any.whl",
+            "hash": "sha256:d1d2f6370372abf5339d340c3c849086c8e79547dbdb5f6d024587068b7ed49e",
+            "size": 362560
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "6.0.12.52",
+          "matches_locked_version": true,
+          "declared_license": "Apache License 2.0",
+          "license_classifiers": [],
+          "project_urls": [],
+          "license_files": [],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "ob-project-utils",
+        "version": "0.2.41",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/ad/79/b799dcf9282976d81997fb6ccf7d59efe205679b9c91da56e2df86ada57d/ob_project_utils-0.2.41.tar.gz",
+            "hash": "sha256:baeb223111986ffdeedea8dd825d7a3ca7382b3703b8f1d861931f53f0232ea8",
+            "size": 578912
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/35/fb/8d952e48d532f829cf484ff4038d09278c0a40047998f513280772e74f1b/ob_project_utils-0.2.41-py3-none-any.whl",
+            "hash": "sha256:31395b57cb3a3e04375d9adb1c9785efaa3c2d25cca33c1037a2f91a355b7f24",
+            "size": 569478
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "0.2.41",
+          "matches_locked_version": true,
+          "declared_license": null,
+          "license_classifiers": [],
+          "project_urls": [],
+          "license_files": [],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
         "name": "opentelemetry-api",
         "version": "1.45.0",
         "source": {
@@ -4105,6 +4794,33 @@
               "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
             }
           ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "outerbounds",
+        "version": "0.12.52",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/e3/d0/e02404a8f240abc121800ebc3f6c7563d5210619faab689b01c01ddecd7e/outerbounds-0.12.52-py3-none-any.whl",
+            "hash": "sha256:0d838f266fb9a03c8fd0c679cc0a399b504069020201ba67d6553f78f20f74a8",
+            "size": 347278
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "0.12.52",
+          "matches_locked_version": true,
+          "declared_license": "Proprietary",
+          "license_classifiers": [
+            "License :: Other/Proprietary License"
+          ],
+          "project_urls": [
+            "Documentation, https://docs.metaflow.org"
+          ],
+          "license_files": [],
           "status": "local_metadata_only; upstream license not independently verified"
         }
       },
@@ -4282,6 +4998,47 @@
         }
       },
       {
+        "name": "platformdirs",
+        "version": "4.12.4",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/90/a1/d5f9002a70298c64a789779077d8dd90c10aa1f47fe40c86802df874f2a6/platformdirs-4.12.4.tar.gz",
+            "hash": "sha256:63743c02414e755de4e31b8f68125c1407495b86c5a006e203c01ff8b9924250",
+            "size": 60010
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/f4/ba/223e00b885e960edd5d4b4d178c88acce019bd5b83786093681b8c393492/platformdirs-4.12.4-py3-none-any.whl",
+            "hash": "sha256:78bfb9db2a8471ed7eebe3c3c932da413911042994e699b384fbb4493fa872d7",
+            "size": 32596
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "4.12.4",
+          "matches_locked_version": true,
+          "declared_license": "MIT",
+          "license_classifiers": [
+            "License :: OSI Approved :: MIT License"
+          ],
+          "project_urls": [
+            "Changelog, https://platformdirs.readthedocs.io/en/latest/changelog.html",
+            "Documentation, https://platformdirs.readthedocs.io",
+            "Homepage, https://github.com/tox-dev/platformdirs",
+            "Source, https://github.com/tox-dev/platformdirs",
+            "Tracker, https://github.com/tox-dev/platformdirs/issues"
+          ],
+          "license_files": [
+            {
+              "path": "platformdirs-4.12.4.dist-info/licenses/LICENSE",
+              "sha256": "29e0fd62e929850e86eb28c3fdccf0cefdf4fa94879011cffb3d0d4bed6d4db6"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
         "name": "pluggy",
         "version": "1.6.0",
         "source": {
@@ -4311,6 +5068,46 @@
             {
               "path": "pluggy-1.6.0.dist-info/licenses/LICENSE",
               "sha256": "d6b65e6c213a5d0b577911d34d6e5949b9f59d76c238c5071a2f3fc16cfb2606"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "prometheus-client",
+        "version": "0.26.0",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/52/73/f1334c29c2af4cd9dba6c7817e61b611bd0215e2eb5565c6064a4de18802/prometheus_client-0.26.0.tar.gz",
+            "hash": "sha256:04a91bcf94e2cf74a44a1a874d651a2e853ed354b6e822f3b7487751465d5c2b",
+            "size": 92910
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/eb/a3/b69efbf4143b5b9859b977770bbbabcc2796b702fa69dc40271e45cd5a56/prometheus_client-0.26.0-py3-none-any.whl",
+            "hash": "sha256:fa93d06737aa02bacd05794768508bb97d2fbee28cb3bca04eaae92f0ca953d6",
+            "size": 64494
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "0.26.0",
+          "matches_locked_version": true,
+          "declared_license": "Apache-2.0 AND BSD-2-Clause",
+          "license_classifiers": [],
+          "project_urls": [
+            "Homepage, https://github.com/prometheus/client_python",
+            "Documentation, https://prometheus.github.io/client_python/"
+          ],
+          "license_files": [
+            {
+              "path": "prometheus_client-0.26.0.dist-info/licenses/LICENSE",
+              "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+            },
+            {
+              "path": "prometheus_client-0.26.0.dist-info/licenses/NOTICE",
+              "sha256": "4efa1874aeaa60f365f5797e617f1ff933e15e508eaf751e9848ed4413d7a7ae"
             }
           ],
           "status": "local_metadata_only; upstream license not independently verified"
@@ -4710,6 +5507,51 @@
         }
       },
       {
+        "name": "pylint",
+        "version": "4.1.2",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/19/3c/be4bb2d62e3d1bee3f3aa14af5b294813ad53351cacb3b03fbaf3f851e03/pylint-4.1.2.tar.gz",
+            "hash": "sha256:235f13dc418c0041c649b42a5c35c99f2ffc6ca8b6a7574958eac5335906a68a",
+            "size": 1739885
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/90/61/b76698429225f848921f4d620f5c7b16f616daf53f99cc25afd1c86496fc/pylint-4.1.2-py3-none-any.whl",
+            "hash": "sha256:e34c8636edc7d60a2eaadca4ad6c18a49e202361987a26e81b2a17fa92be28e1",
+            "size": 585512
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "4.1.2",
+          "matches_locked_version": true,
+          "declared_license": "GPL-2.0-or-later",
+          "license_classifiers": [],
+          "project_urls": [
+            "Bug Tracker, https://github.com/pylint-dev/pylint/issues",
+            "Discord Server, https://discord.com/invite/Egy6P8AMB5",
+            "Docs: Contributor Guide, https://pylint.readthedocs.io/en/latest/development_guide/contributor_guide/index.html",
+            "Docs: User Guide, https://pylint.readthedocs.io/en/latest/",
+            "Source Code, https://github.com/pylint-dev/pylint",
+            "What's New, https://pylint.readthedocs.io/en/latest/whatsnew/4/",
+            "homepage, https://github.com/pylint-dev/pylint"
+          ],
+          "license_files": [
+            {
+              "path": "pylint-4.1.2.dist-info/licenses/CONTRIBUTORS.txt",
+              "sha256": "62e9ca2f4e0318c435a4461ba3eb4f183a1061899d6b0911b2aad773c7c5b03e"
+            },
+            {
+              "path": "pylint-4.1.2.dist-info/licenses/LICENSE",
+              "sha256": "f97b14080de8b8490d60eb3d620ebc419943e0779466d1dd0d5d6f68fe195dcd"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
         "name": "pytest",
         "version": "9.1.1",
         "source": {
@@ -4788,6 +5630,45 @@
             {
               "path": "pytest_cov-7.1.0.dist-info/licenses/LICENSE",
               "sha256": "835586ae156766a24e3c103fbc55d9af6b1a16df57ca932c97482a2737fd83d5"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "python-dateutil",
+        "version": "2.9.0.post0",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz",
+            "hash": "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3",
+            "size": 342432
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
+            "hash": "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427",
+            "size": 229892
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "2.9.0.post0",
+          "matches_locked_version": true,
+          "declared_license": "Dual License",
+          "license_classifiers": [
+            "License :: OSI Approved :: BSD License",
+            "License :: OSI Approved :: Apache Software License"
+          ],
+          "project_urls": [
+            "Documentation, https://dateutil.readthedocs.io/en/stable/",
+            "Source, https://github.com/dateutil/dateutil"
+          ],
+          "license_files": [
+            {
+              "path": "python_dateutil-2.9.0.post0.dist-info/LICENSE",
+              "sha256": "ba00f51a0d92823b5a1cde27d8b5b9d2321e67ed8da9bc163eff96d5e17e577e"
             }
           ],
           "status": "local_metadata_only; upstream license not independently verified"
@@ -5171,6 +6052,83 @@
         }
       },
       {
+        "name": "requests",
+        "version": "2.34.2",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/ac/c3/e2a2b89f2d3e2179abd6d00ebd70bff6273f37fb3e0cc209f48b39d00cbf/requests-2.34.2.tar.gz",
+            "hash": "sha256:f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed",
+            "size": 142856
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl",
+            "hash": "sha256:2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0",
+            "size": 73075
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "2.34.2",
+          "matches_locked_version": true,
+          "declared_license": "Apache-2.0",
+          "license_classifiers": [
+            "License :: OSI Approved :: Apache Software License"
+          ],
+          "project_urls": [
+            "Documentation, https://requests.readthedocs.io",
+            "Source, https://github.com/psf/requests"
+          ],
+          "license_files": [
+            {
+              "path": "requests-2.34.2.dist-info/licenses/LICENSE",
+              "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b"
+            },
+            {
+              "path": "requests-2.34.2.dist-info/licenses/NOTICE",
+              "sha256": "f5110972dedad2b4e9d314518daf3b7d72d6e02e499acd802181de6f74571dcc"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "requests-oauthlib",
+        "version": "2.0.0",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/42/f2/05f29bc3913aea15eb670be136045bf5c5bbf4b99ecb839da9b422bb2c85/requests-oauthlib-2.0.0.tar.gz",
+            "hash": "sha256:b3dffaebd884d8cd778494369603a9e7b58d29111bf6b41bdc2dcd87203af4e9",
+            "size": 55650
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/3b/5d/63d4ae3b9daea098d5d6f5da83984853c1bbacd5dc826764b249fe119d24/requests_oauthlib-2.0.0-py2.py3-none-any.whl",
+            "hash": "sha256:7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36",
+            "size": 24179
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "2.0.0",
+          "matches_locked_version": true,
+          "declared_license": "ISC",
+          "license_classifiers": [
+            "License :: OSI Approved :: BSD License"
+          ],
+          "project_urls": [],
+          "license_files": [
+            {
+              "path": "requests_oauthlib-2.0.0.dist-info/LICENSE",
+              "sha256": "ae01846afad8a8291fe6a08966f3015af9a8ff675d84b981f9793c122f7876e8"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
         "name": "rich",
         "version": "15.0.0",
         "source": {
@@ -5437,6 +6395,45 @@
         }
       },
       {
+        "name": "s3transfer",
+        "version": "0.19.2",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/76/43/35e4d8aa320bffe8287fe8f65f578fa2d2db0a64212f0e710dce58267854/s3transfer-0.19.2.tar.gz",
+            "hash": "sha256:ba0309fd86be3c27dbf78cdd813c13c5e1df16e5874b99d2535ebbdfb9892993",
+            "size": 165592
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/bc/e7/5c595c75e9f41a44f30e526eda465ea0b4eec93470e074e4a111b253f13a/s3transfer-0.19.2-py3-none-any.whl",
+            "hash": "sha256:d8168eccca828cbb2cd573675333f3bddd254313a9c42494b84c76b539e8ba25",
+            "size": 90216
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "0.19.2",
+          "matches_locked_version": true,
+          "declared_license": "Apache License 2.0",
+          "license_classifiers": [
+            "License :: OSI Approved :: Apache Software License"
+          ],
+          "project_urls": [],
+          "license_files": [
+            {
+              "path": "s3transfer-0.19.2.dist-info/LICENSE.txt",
+              "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+            },
+            {
+              "path": "s3transfer-0.19.2.dist-info/NOTICE.txt",
+              "sha256": "d8354e0fa7fb762da7bc054a8a6774a0b310dfbbc78006393ee573a0e57612b5"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
         "name": "safetensors",
         "version": "0.8.0",
         "source": {
@@ -5680,6 +6677,41 @@
             {
               "path": "shellingham-1.5.4.dist-info/LICENSE",
               "sha256": "f388fd38cad13112c1dc0f669bbe80e7f84541edbafb72f3030d2ca7642c3c9d"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "six",
+        "version": "1.17.0",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz",
+            "hash": "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81",
+            "size": 34031
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl",
+            "hash": "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274",
+            "size": 11050
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "1.17.0",
+          "matches_locked_version": true,
+          "declared_license": "MIT",
+          "license_classifiers": [
+            "License :: OSI Approved :: MIT License"
+          ],
+          "project_urls": [],
+          "license_files": [
+            {
+              "path": "six-1.17.0.dist-info/LICENSE",
+              "sha256": "4375ba20e2b9c6c4e7cad2940a628fd90e95cc3d50ee92aae755715d8ba1fbd0"
             }
           ],
           "status": "local_metadata_only; upstream license not independently verified"
@@ -6675,6 +7707,45 @@
         }
       },
       {
+        "name": "types-s3transfer",
+        "version": "0.16.0",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/fe/64/42689150509eb3e6e82b33ee3d89045de1592488842ddf23c56957786d05/types_s3transfer-0.16.0.tar.gz",
+            "hash": "sha256:b4636472024c5e2b62278c5b759661efeb52a81851cde5f092f24100b1ecb443",
+            "size": 13557
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/98/27/e88220fe6274eccd3bdf95d9382918716d312f6f6cef6a46332d1ee2feff/types_s3transfer-0.16.0-py3-none-any.whl",
+            "hash": "sha256:1c0cd111ecf6e21437cb410f5cddb631bfb2263b77ad973e79b9c6d0cb24e0ef",
+            "size": 19247
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "0.16.0",
+          "matches_locked_version": true,
+          "declared_license": "MIT",
+          "license_classifiers": [],
+          "project_urls": [
+            "Homepage, https://github.com/youtype/types-s3transfer",
+            "Documentation, https://youtype.github.io/mypy_boto3_builder/",
+            "Repository, https://github.com/youtype/types-s3transfer",
+            "Changelog, https://github.com/youtype/types-s3transfer/releases",
+            "Issues, https://github.com/youtype/types-s3transfer/issues"
+          ],
+          "license_files": [
+            {
+              "path": "types_s3transfer-0.16.0.dist-info/licenses/LICENSE",
+              "sha256": "60875427f70545949c2d9405c914ff3bcc820b15c58452a65daaa00e97b7ae93"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
         "name": "typing-extensions",
         "version": "4.16.0",
         "source": {
@@ -6747,6 +7818,45 @@
             {
               "path": "typing_inspection-0.4.4.dist-info/licenses/LICENSE",
               "sha256": "804b59b25f2c31bd278f9202a19ae49a3945aa2664387e2d0a128c7cacc61ec3"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "urllib3",
+        "version": "2.8.0",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/e3/05/b17359e1cefb4f909b5e40b1b90a496d987258916dbbf88e842c729f510e/urllib3-2.8.0.tar.gz",
+            "hash": "sha256:63bf2ead4c879426ebf22ef2a781eeb4aa3b4ae798a0435506f8687fd5bb9b63",
+            "size": 458972
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/92/9d/c4e665119135114480843e7ab388fa94d8480650450e6f8e26b70d323a4c/urllib3-2.8.0-py3-none-any.whl",
+            "hash": "sha256:0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3",
+            "size": 135717
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "2.8.0",
+          "matches_locked_version": true,
+          "declared_license": "MIT",
+          "license_classifiers": [],
+          "project_urls": [
+            "Changelog, https://github.com/urllib3/urllib3/blob/main/CHANGES.rst",
+            "Documentation, https://urllib3.readthedocs.io",
+            "Code, https://github.com/urllib3/urllib3",
+            "Issue tracker, https://github.com/urllib3/urllib3/issues",
+            "Security policy, https://urllib3.readthedocs.io/en/latest/security.html"
+          ],
+          "license_files": [
+            {
+              "path": "urllib3-2.8.0.dist-info/licenses/LICENSE.txt",
+              "sha256": "130e3a64d5fdd5d096a752694634a7d9df284469de86e5732100268041e3d686"
             }
           ],
           "status": "local_metadata_only; upstream license not independently verified"
@@ -7050,6 +8160,42 @@
             {
               "path": "wcwidth-0.9.1.dist-info/licenses/LICENSE",
               "sha256": "70b98a95a2144eb70af8017fa8c6d95ce247e40867436e8bc649e137fe13d21a"
+            }
+          ],
+          "status": "local_metadata_only; upstream license not independently verified"
+        }
+      },
+      {
+        "name": "websocket-client",
+        "version": "1.9.2",
+        "source": {
+          "registry": "https://pypi.org/simple"
+        },
+        "artifacts": [
+          {
+            "url": "https://files.pythonhosted.org/packages/d8/cb/a5abcc2891249f393827c650c6296660ce40374ac22d99ab9aea41f9d2a2/websocket_client-1.9.2.tar.gz",
+            "hash": "sha256:0fcb57545848be86992e128218fd96dd87a6769ffdb1a968dff79632b85604d0",
+            "size": 84110
+          },
+          {
+            "url": "https://files.pythonhosted.org/packages/d5/d2/cc4dc1271e464942db7ee278baae2daa99ee77cb2af744025c04da585a3e/websocket_client-1.9.2-py3-none-any.whl",
+            "hash": "sha256:e1a673830a9c7bfa47b1cd3d5e4178f4c9651d80a4eab02c9c23a1c3ec6250ce",
+            "size": 95786
+          }
+        ],
+        "license_evidence": {
+          "installed_version": "1.9.2",
+          "matches_locked_version": true,
+          "declared_license": "Apache-2.0",
+          "license_classifiers": [],
+          "project_urls": [
+            "Documentation, https://websocket-client.readthedocs.io/",
+            "Source, https://github.com/websocket-client/websocket-client/"
+          ],
+          "license_files": [
+            {
+              "path": "websocket_client-1.9.2.dist-info/licenses/LICENSE",
+              "sha256": "14214b7bbb6952ada76afea206b6c393f2563d4e7678be0232e1a1d216716679"
             }
           ],
           "status": "local_metadata_only; upstream license not independently verified"

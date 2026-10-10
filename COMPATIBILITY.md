@@ -113,7 +113,9 @@ CUDA host has been recorded here yet. Update this note once one has.
 | Video frame inputs | Verified | Expected, not yet verified | Expected, slower |
 
 Observed on the tested hardware: model load in about 5 seconds, and a warm request in
-about 0.9 to 1.3 seconds for 220 to 360 input tokens.
+about 0.9 to 1.3 seconds for 220 to 360 input tokens. Counting the full request before
+inference adds about 0.4 ms to a warm 153-token request (about 0.65 seconds end to end),
+under 0.1%.
 
 ## Known issues
 
@@ -129,10 +131,17 @@ about 0.9 to 1.3 seconds for 220 to 360 input tokens.
   an agent cannot make the server read host files or fetch URLs.
 - **Numerics differ across devices.** MPS can differ from CPU and CUDA. Cross-check with
   `EMBER_DEVICE=cpu ember restart` when calibrated probabilities matter.
-- **Context length.** `max_length` defaults to the model maximum (262144, from the pinned
-  `config.json`). A value of `0` derives it. It is not a fixed 16384 cap. Individual
-  requests are additionally capped at 32768 tokens by default (`EMBER_MAX_REQUEST_LENGTH`);
-  set it to `0` to allow requests up to the model maximum.
+- **Context length.** The effective maximum is 262,144 tokens, declared by both models'
+  `config.json` (`EMBER_MAX_LENGTH=0` derives it; it is not a fixed 16384 cap). Each
+  request is also held to a per-model cap (`EMBER_MAX_REQUEST_LENGTH`): 32,768 tokens for
+  `flash` and `full` as the interim fallback until the long-context probe
+  (`make eval-context`, MPS on an M4 Max with 128 GB) measures them; the measured values
+  and the probe run ID replace it. The whole encoded request counts, including questions,
+  schema, the prompt wrapper, and media, so image-heavy requests near the cap that passed
+  the earlier state-only check may now be refused. An oversized request is refused with a
+  413 that states its token split, never truncated. The caps hold for the pinned model
+  revisions and are re-measured whenever a revision changes. `0` disables the cap; the
+  effective maximum still applies.
 
 See also: [`README.md`](README.md) for install steps, and
 [`RESPONSIBLE_USE.md`](RESPONSIBLE_USE.md) for what the numbers mean.

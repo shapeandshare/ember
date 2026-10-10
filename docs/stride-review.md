@@ -14,6 +14,7 @@ _A chronological log of every scan run. Newest first._
 
 | Scan Date  | New Threats | Resolved | Regressed | Total Open | Scope |
 |------------|-------------|----------|-----------|------------|-------|
+| 2026-10-09 (003 review) | +1   | +0       | +0        | 5          | PR #94 review — D-007 opened: media are decoded in full before the size check; `media_kwargs` now validated before decoding |
 | 2026-10-09 (impl 3) | +0   | +0       | +0        | 4          | PR feedback pass — D-004 reverted to open (RotatingFileHandler does not rotate child subprocess output); S3 path traversal guard added; _sanitize_error scalar detail redaction; audit log moved to CLI stderr; behavioral tests replace inspect-source assertions |
 | 2026-10-09 (impl 2) | +0   | -7       | +0        | 4          | implementation pass 2 — R-003, R-004, I-003 fixed; S-003, T-005, I-005, I-006, R-005 accepted (documented in SECURITY.md) |
 | 2026-10-09 (impl) | +0     | -7       | +0        | 11         | implementation pass 1 — I-001, T-004, D-005, D-006, I-002, R-002, S-004 fixed; D-004 incorrectly marked fixed (reverted in impl 3); S-005/E-003 documented in SECURITY.md |
@@ -29,12 +30,12 @@ _This section grows with each scan — never prune rows._
 
 | Metric                        | Value  |
 |-------------------------------|--------|
-| Total threats (all time)      | **30** |
-| Currently open                | **4**  |
+| Total threats (all time)      | **31** |
+| Currently open                | **5**  |
 | In progress                   | **0**  |
 | Fixed / resolved              | **18** |
 | Wontfix / False positive      | **8**  |
-| Resolved rate                 | **87%** |
+| Resolved rate                 | **84%** |
 
 ### Open Threats by Category
 
@@ -44,7 +45,7 @@ _This section grows with each scan — never prune rows._
 | T — Tampering             | 0    | 0        | 0    |
 | R — Repudiation           | 0    | 0        | 0    |
 | I — Information Disclosure| 1    | 0        | 0    |
-| D — Denial of Service     | 1    | 0        | 0    |
+| D — Denial of Service     | 2    | 0        | 0    |
 | E — Elevation of Privilege| 1    | 0        | 1    |
 
 ### Open Threats by Severity
@@ -53,7 +54,7 @@ _This section grows with each scan — never prune rows._
 |----------|-------|
 | CRITICAL | 0     |
 | HIGH     | 2     |
-| MEDIUM   | 1     |
+| MEDIUM   | 2     |
 | LOW      | 1     |
 | INFO     | 0     |
 
@@ -99,10 +100,11 @@ _A single flat table covering every threat across all STRIDE categories. Sorted:
 | D-004 | D   | MEDIUM   | open     | server    | Z4: server.log                            | server.log subprocess output cannot be rotated in-process | —                                                                               | 2026-10-04 | 2026-10-09     | —          |
 | D-005 | D   | MEDIUM   | fixed    | server    | Z4: autostart TOCTOU                      | Multiple MCP autostart calls race to spawn server       | —                                                                                 | 2026-10-04 | 2026-10-09     | 2026-10-09 |
 | D-006 | D   | MEDIUM   | fixed    | server    | Z4→Z5: EMBER_MODEL_S3_URI download        | S3 model download had no size cap                       | —                                                                                 | 2026-10-09 | 2026-10-09     | 2026-10-09 |
+| D-007 | D   | MEDIUM   | open     | runtime   | Z2→Z3: media decode before the size check | Oversized media decoded in full before refusal          | —                                                                                 | 2026-10-09 | 2026-10-09     | —          |
 | S-004 | S   | MEDIUM   | fixed    | mcp       | Z1→Z2: EMBER_SERVER_URL scheme            | No advisory when non-loopback + insecure transport      | → SECURITY.md §security-sensitive-design-notes                                    | 2026-10-04 | 2026-10-09     | 2026-10-09 |
 | D-003 | D   | MEDIUM   | fixed    | server    | Z2: uvicorn                               | uvicorn started without concurrency limits              | —                                                                                 | 2026-10-04 | 2026-10-09     | 2026-10-09 |
 | D-001 | D   | HIGH     | fixed    | server    | Z1→Z2: HTTP /v1/systemone                 | No rate limiting on inference endpoint                  | → SECURITY.md §scope; → constitution Article XIV §14.3                            | 2026-10-04 | 2026-10-04     | 2026-10-05 |
-| D-002 | D   | HIGH     | fixed    | runtime   | Z2→Z3: max_length                         | Default 262 144-token context exhausts MPS memory       | → COMPATIBILITY.md §known-issues                                                   | 2026-10-04 | 2026-10-04     | 2026-10-05 |
+| D-002 | D   | HIGH     | fixed    | runtime   | Z2→Z3: encoded request size               | Default 262 144-token context exhausts MPS memory       | → COMPATIBILITY.md §known-issues                                                   | 2026-10-04 | 2026-10-09     | 2026-10-05 |
 | E-002 | E   | HIGH     | fixed    | plugin    | Z4→Z3: EMBER_MCP env var                  | EMBER_MCP resolves to arbitrary executable              | —                                                                                 | 2026-10-04 | 2026-10-09     | 2026-10-05 |
 | R-001 | R   | HIGH     | fixed    | server    | Z4: process lifecycle                     | stop() performs destructive action with no audit log    | → constitution Article IV                                                          | 2026-10-04 | 2026-10-04     | 2026-10-05 |
 | S-001 | S   | HIGH     | fixed    | mcp       | Z1→Z2: EMBER_SERVER_URL                   | MCP trusts arbitrary server URL without loopback validation | → SECURITY.md §security-sensitive-design-notes                                 | 2026-10-04 | 2026-10-04     | 2026-10-05 |
@@ -530,9 +532,10 @@ _Per-category context for each threat — scenario, gap, mitigation, and trust-z
 | D-004 | MEDIUM   | open     | server    | Z4: server.log                       | server.log grows without rotation                       | 2026-10-04 | 2026-10-09     | —          |
 | D-005 | MEDIUM   | open     | server    | Z4: autostart TOCTOU                 | Multiple MCP autostart calls race to spawn server       | 2026-10-04 | 2026-10-09     | —          |
 | D-006 | MEDIUM   | open     | server    | Z4→Z5: EMBER_MODEL_S3_URI download   | S3 model download at startup has no timeout or size cap | 2026-10-09 | 2026-10-09     | —          |
+| D-007 | MEDIUM   | open     | runtime   | Z2→Z3: media decode before the check | Oversized media decoded in full before refusal          | 2026-10-09 | 2026-10-09     | —          |
 | D-003 | MEDIUM   | fixed    | server    | Z2: uvicorn                          | uvicorn started without concurrency or timeout limits   | 2026-10-04 | 2026-10-09     | 2026-10-09 |
 | D-001 | HIGH     | fixed    | server    | Z1→Z2: HTTP /v1/systemone            | No rate limiting on inference endpoint                  | 2026-10-04 | 2026-10-04     | 2026-10-05 |
-| D-002 | HIGH     | fixed    | runtime   | Z2→Z3: max_length                    | Default 262 144-token context exhausts MPS memory       | 2026-10-04 | 2026-10-04     | 2026-10-05 |
+| D-002 | HIGH     | fixed    | runtime   | Z2→Z3: encoded request size          | Default 262 144-token context exhausts MPS memory       | 2026-10-04 | 2026-10-09     | 2026-10-05 |
 
 #### D-001: No rate limiting on inference endpoint
 - **Severity**: HIGH — **fixed** (2026-10-05, #59). Confirmed: `AdmissionError` semaphore (`MAX_PENDING_ADVISE=4`) at `runtime.py:54-63`, raised in `Engine.advise()` at `runtime.py:354-358`, mapped to HTTP 503 in `server.py:327-328`.
@@ -540,7 +543,7 @@ _Per-category context for each threat — scenario, gap, mitigation, and trust-z
 ---
 
 #### D-002: Default 262 144-token context exhausts MPS memory
-- **Severity**: HIGH — **fixed** (2026-10-05, #59). Confirmed: `EMBER_MAX_REQUEST_LENGTH` default 32768 in `config.py:29`, enforced in `runtime.py:404-414` (tokenizes input and raises `RequestTooLargeError` if exceeded), mapped to HTTP 413 in `server.py:329-330`.
+- **Severity**: HIGH — **fixed** (2026-10-05, #59; mechanism replaced 2026-10-09 by `003-context-window-audit`). Confirmed: `measure()` in `ember/serving/request_size.py` counts the full encoded request (state, media, questions, schema, and prompt wrapper) with upstream `encode_record` at `max_length=sys.maxsize`, so nothing is truncated while counting. `Engine._run_advise` in `ember/serving/runtime.py` refuses a request whose total exceeds the enforced limit with `RequestTooLargeError` before inference, mapped to HTTP 413 in `server.py` with the token split in `detail`, and returns 500 instead of an answer if the model saw a different count. The limits come from `ember/serving/limits.py`: the per-request cap defaults to the loaded model's measured value (32,768 until measured), `0` disables it, and the effective maximum still applies. The earlier check tokenized only `str(state)`, so questions, schema, wrapper, and media went uncounted.
 
 ---
 
@@ -609,6 +612,21 @@ _Per-category context for each threat — scenario, gap, mitigation, and trust-z
   ```
 - **Mitigation**: (1) Add a configurable `EMBER_S3_DOWNLOAD_TIMEOUT` cap (default: 3600s) passed as a boto3 client config. (2) Add a total download size cap (fail if the prefix contains > N GB of objects before downloading). (3) Document the expected model size in the S3 deployment docs.
 - **Existing controls xref**: — (no existing control; `_disk_ok` in `models.py` checks local disk for HF downloads but is not called for the hosted S3 path)
+
+---
+
+#### D-007: Oversized media decoded in full before refusal
+- **Severity**: MEDIUM
+- **Status**: open
+- **Component**: runtime
+- **Flow**: Z2→Z3 (POST /v1/systemone `images`/`videos` → `media.decode_*` → `request_size.measure`)
+- **Trust-zone crossing**: Z2 → Z3
+- **First seen**: 2026-10-09 (PR #94 review)
+- **Last confirmed**: 2026-10-09
+- **Threat scenario**: Counting media exactly needs the decoded images, so `Engine._run_advise` decodes them before the size check. `media.py` allows 32 images and 64 video frames of up to 178,956,970 pixels each (about 512 MiB of RGB per frame), so one request can hold tens of GiB of pixels before it is refused with a 413, and four admitted requests decode concurrently outside the engine lock. Media were decoded before inference, uncounted, before full counting too, so the exposure predates D-002's new check, but it now sits in front of the refusal path.
+- **Gap**: no aggregate budget on total pixels or decoded bytes before decoding.
+- **Mitigation**: Read each image's header first (`Image.open` without `load()`) and refuse a request whose total pixels exceed a budget sized so the worst admitted request stays safe, before decoding any pixels. `media_kwargs` are already validated before any media is decoded.
+- **Existing controls xref**: `media.py` per-image pixel cap and image and frame counts; the admission semaphore (D-001).
 
 ---
 
@@ -725,11 +743,12 @@ No CI-layer threats identified. SHA-pinned actions, `permissions: {}`, `persist-
 | I-005     | /metrics exposes model identity                       | vault/decisions/2026-10-02-expose-prometheus-metrics-on-the-server.md                 | No-auth design documented; model identity disclosure is an accepted risk                        |
 | I-006     | /health discloses auth_required and version           | SECURITY.md §security-sensitive-design-notes; vault/decisions/ metrics doc             | Partially intentional (auth_required for client compatibility); version disclosure is new       |
 | D-001     | No rate limiting on /v1/systemone                     | AdmissionError semaphore (MAX_PENDING_ADVISE=4) in runtime.py                         | Fixed — semaphore confirmed; 503-mapped AdmissionError in server.py                            |
-| D-002     | Default 262 144-token context                         | EMBER_MAX_REQUEST_LENGTH=32768 default in config.py; RequestTooLargeError in runtime.py | Fixed — per-request cap confirmed; 413-mapped                                                  |
+| D-002     | Default 262 144-token context                         | Full encoded request counted in request_size.py; enforced in runtime.py from limits.py | Fixed — whole request counted, never truncated; 413 with the token split                       |
 | D-003     | uvicorn without concurrency limits                    | limit_concurrency=16 in server.py:350                                                  | Fixed — concurrency cap confirmed in uvicorn.run()                                             |
 | D-004     | server.log without rotation                           | —                                                                                      | Architectural gap — no existing control                                                          |
 | D-005     | Autostart TOCTOU race                                 | —                                                                                      | Architectural gap — no existing control                                                          |
 | D-006     | S3 download no timeout or size cap                    | —                                                                                      | Architectural gap — no existing control for hosted S3 path                                     |
+| D-007     | Media decoded before the size check                   | media.py per-image pixel and count caps; D-001 admission semaphore                    | Partial — no aggregate pre-decode pixel budget                                                 |
 | E-001     | Arbitrary code execution via model-dir import         | constitution Article V v3.0.0 (explicit architectural design)                          | Wontfix — constitutional decision; OS-level isolation is the mitigation                         |
 | E-002     | EMBER_MCP resolves to arbitrary executable            | packages/opencode-plugin/index.js:13-24 basename + existsSync validation               | Fixed — basename validation confirmed in plugin                                                 |
 | E-003     | S3-supplied model imported without integrity check    | constitution Article V v3.0.0; SECURITY.md §security-sensitive-design-notes            | Architectural gap for hosted deployments — S3 ACLs are the operator's control                  |

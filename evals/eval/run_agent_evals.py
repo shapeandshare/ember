@@ -33,15 +33,15 @@ from typing import Any
 
 import httpx
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
 from evals.agent import judge, opencode, sandbox, summary  # noqa: E402
 from evals.agent.condition import Condition  # noqa: E402
 from evals.agent.scenarios import SCENARIOS  # noqa: E402
+from evals.eval.provenance import git_hash, host_info  # noqa: E402
+from evals.eval.run_evals import _resolve_server  # noqa: E402
 from evals.export import write_atomic  # noqa: E402
-
-from .run_evals import _git_hash, _host, _resolve_server  # noqa: E402
 
 RESULTS_DIR = REPO_ROOT / "results"
 DEFAULT_MODELS = (
@@ -320,10 +320,10 @@ def main(argv: list[str] | None = None) -> int:
     config = {
         "run_id": run_id,
         "timestamp": stamp,
-        "git_hash": _git_hash(),
+        "git_hash": git_hash(),
         "opencode": ready["version"],
         "engine": ready["engine"],
-        "host": _host(),
+        "host": host_info(),
         "server": args.server,
         "models": args.models,
         "conditions": args.conditions,

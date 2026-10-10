@@ -1,4 +1,23 @@
 <!--
+SYNC IMPACT REPORT — runtime.py Size Debt Paid Down
+Version change: 3.1.1 → 3.1.2 (PATCH: a migration-debt entry is resolved; no principle changes)
+Date: 2026-10-09
+Reason: Feature 003-context-window-audit rewrote the engine's size check. In doing so it
+  moved limit resolution, request sizing and the refusal message, the `media_kwargs`
+  allowlist, and device selection out of `ember/serving/runtime.py`, into `limits.py`,
+  `request_size.py`, `media.py`, and `devices.py`. runtime.py is now 386 lines, under the
+  §10.3 ceiling. The recorded 445 lines had grown to 471 without being recorded.
+Modified principles: none
+Added sections: none
+Removed sections: none
+Articles amended:
+  - Article X §10.18 — `ember/serving/runtime.py` removed from the oversize list and added to
+    the previously tracked items now resolved.
+Templates / docs propagated:
+  - ✅ AGENTS.md (project structure, watch-outs, Recent Changes)
+Follow-up TODOs: none
+-->
+<!--
 SYNC IMPACT REPORT — Distribution Renamed to ember-advise
 Version change: 3.1.0 → 3.1.1 (PATCH: a naming fact is corrected; no principle changes)
 Date: 2026-10-09
@@ -734,10 +753,7 @@ darkfactory, infrastructure, k8s.platform) harvested on 2026-10-03.
   existence-guarded; a file write that could clobber another writes a sibling `.tmp` first and
   installs it with `os.replace()`.
 - §10.18 **Migration debt.** Known existing violations, tracked here and never increased:
-  modules over the 400-line ceiling that predate recording here: `ember/serving/runtime.py`
-  (445, reduced from 507 on 2026-10-08 when Article V's redefinition removed
-  `_classify_dir`/`skip_integrity` — still over the ceiling, but smaller; not yet paid down
-  fully), `evals/agent/scenarios.py` (905, scenario data), `evals/analysis.py` (793),
+  modules over the 400-line ceiling that predate recording here: `evals/agent/scenarios.py` (905, scenario data), `evals/analysis.py` (793),
   `evals/sections/sections_results.py` (506), `evals/charts/charts_calibration.py` (504),
   `evals/report_text.py` (447), `evals/metrics.py` (414), `evals/charts/charts.py` (412),
   `evals/eval/report_evals.py` (408); `ember/commands/lifecycle.py` defers
@@ -758,7 +774,10 @@ darkfactory, infrastructure, k8s.platform) harvested on 2026-10-03.
   rather than one-class-per-file. NumPy docstrings (ruff `D`) and the
   `py.typed` marker are now enforced for `ember/`; `evals/` and `tests/` are exempt from
   ruff `D`. Each remaining item is paid down as its file is next touched. Previously
-  tracked items now resolved: `ember/cli.py` (1086 lines, split into a 141-line composition
+  tracked items now resolved: `ember/serving/runtime.py` (471 lines, paid down to 386 on
+  2026-10-09 by moving limits, request sizing, the `media_kwargs` allowlist, and device
+  selection into `limits.py`, `request_size.py`, `media.py`, and `devices.py`);
+  `ember/cli.py` (1086 lines, split into a 141-line composition
   root plus `ember/commands/`, every module under 400 lines, 2026-10-06); the `evals/`
   agent-condition and report-tone magic-string sets (`Condition` in
   `evals/agent/condition.py`, `Tone` in `evals/render/tone.py`, 2026-10-06);
@@ -983,4 +1002,4 @@ required by the current work.
 - Reviews MUST check changes against the Articles, with special attention to Article III
   (agent contract) and Article V (model loading).
 
-**Version**: 3.1.1 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-09
+**Version**: 3.1.2 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-09

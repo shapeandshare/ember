@@ -89,7 +89,8 @@ def endpoint_status(endpoint: endpoint_mod.Endpoint) -> dict[str, Any]:
     -------
     dict[str, Any]
         Status dict with keys ``kind``, ``url``, ``reachable``, ``ready``,
-        ``contract_version``, ``remote_auth_required``, and ``auth_configured``.
+        ``contract_version``, ``remote_auth_required``, ``auth_configured``,
+        and ``engine`` (the health body's ``engine``, or ``None``).
     """
     status: dict[str, Any] = {
         "kind": "local" if endpoint.is_local else "remote",
@@ -99,6 +100,7 @@ def endpoint_status(endpoint: endpoint_mod.Endpoint) -> dict[str, Any]:
         "contract_version": None,
         "remote_auth_required": None,
         "auth_configured": bool(config.resolve("auth_token")),
+        "engine": None,
     }
     body = (
         process.health(endpoint.host, endpoint.port)
@@ -110,4 +112,5 @@ def endpoint_status(endpoint: endpoint_mod.Endpoint) -> dict[str, Any]:
         status["ready"] = body.get("status")
         status["contract_version"] = body.get("version")
         status["remote_auth_required"] = body.get("auth_required")
+        status["engine"] = body.get("engine")
     return status

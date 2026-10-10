@@ -82,7 +82,8 @@ The response also carries `usage.input_tokens` and `latency_ms`.
 
 1. **Put all evidence in `state` — and only evidence.** Prefer
    structured JSON with labeled fields (`{"test": ..., "output": ..., "diff_summary": ...}`)
-   and trim logs to the relevant lines; inputs are capped at the model's 262,144-token window.
+   and trim logs to the relevant lines; oversized requests are refused, not truncated
+   (see Size limits below).
    Attach pixels as base64 `images`/`videos` when the evidence is visual. Don't write your
    own verdict into `state` ("this is an infrastructure issue"): it gets echoed back and you
    lose the independent read you asked for.
@@ -257,6 +258,33 @@ own. For a video, pass a list of frames and use `colour_changed`:
 
 Use the question ids exactly as shown; ember is calibrated on them. Remote URLs and local
 paths are rejected: encode pixels as `data:` URIs.
+
+## Size limits
+
+Every request is counted in full before the model runs: the state, any images or video
+frames, the questions and their schema, and the prompt wrapper. A request over the
+**enforced limit** is refused, never truncated, so ember never answers from part of your
+evidence. The enforced limit is the per-request cap, or the model's maximum (262,144
+tokens) when the operator disables the cap.
+
+| Model | Default cap | Why |
+| --- | --- | --- |
+| `flash` | 32,768 tokens | fallback until the long-context probe has measured it |
+| `full` | 32,768 tokens | fallback until the long-context probe has measured it |
+| outside the registry | 32,768 tokens | the lowest measured registry cap, or the fallback |
+
+A measured cap is the longest length where the probe found accuracy and calibration held
+at every evidence position and peak memory fit the model's budget; the decision record
+cites the probe run ID. Until a model is measured, the 32,768 fallback applies.
+`ember doctor` and `/health` show the limits in force and where each came from.
+
+A refusal is an `ember server error 413` whose message starts `request too large:` and
+carries `Split: state N, media N, fixed overhead N`. When refused:
+
+- Trim the largest part: shorten the state to the relevant lines, attach fewer or smaller
+  images or frames, or ask fewer questions.
+- If the fixed overhead alone is over the limit, the questions are too many or too long.
+- Never retry the same request unchanged; it is refused again.
 
 ## Operations
 

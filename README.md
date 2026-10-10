@@ -273,7 +273,8 @@ paths are rejected — the model server never reads host files or fetches URLs f
 Settings resolve as **CLI flag > environment variable > config file > default**. The config file
 is JSON at `ember config path` (keys `model`, `host`, `port`, `device`, `max_length`,
 `server_url`, `auth_token`, `auth_header`, `allow_insecure_transport`, `request_timeout`,
-`server_auth_token`; a `max_length` of `0` means the model's own maximum).
+`server_auth_token`, `max_request_length`; a `max_length` of `0` means the model's own
+maximum, and an unset `max_request_length` means the loaded model's measured default).
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
@@ -281,8 +282,8 @@ is JSON at `ember config path` (keys `model`, `host`, `port`, `device`, `max_len
 | `EMBER_DEVICE` | `auto` | `auto`, `mps`, `cuda`, or `cpu` |
 | `EMBER_MODEL` | `flash` | `flash` (9B, default) or `full` (27B), both from Cloudflare's public Hugging Face repos |
 | `EMBER_MODEL_DIR` | — | Run weights from this directory instead of the pinned cache |
-| `EMBER_MAX_LENGTH` | `0` (the model's maximum: 262144) | Token cap per request; `0` derives it from the model |
-| `EMBER_MAX_REQUEST_LENGTH` | `32768` | Per-request token cap enforced before inference; `0` disables it (uses the model maximum) |
+| `EMBER_MAX_LENGTH` | `0` (the model's maximum: 262,144) | The most tokens the model processes; `0` derives it from the model's `config.json`, and a larger value is clamped to it |
+| `EMBER_MAX_REQUEST_LENGTH` | unset: the model's measured default (32,768 for `flash` and `full` until measured) | Per-request cap on the whole encoded request (state, media, questions, schema, prompt wrapper), checked before inference. A request over it is refused with a 413 that states its token split, never truncated. `0` disables the cap; the maximum still applies |
 | `EMBER_SERVER_URL` | `http://127.0.0.1:8765` | Inference endpoint the client sends to; loopback by default, may be remote |
 | `EMBER_AUTH_TOKEN` | — | Client credential for a remote endpoint |
 | `EMBER_AUTH_HEADER` | `Authorization` | Header carrying the credential; `Authorization` sends `Bearer <token>`, any other name sends the token verbatim |
@@ -295,6 +296,9 @@ is JSON at `ember config path` (keys `model`, `host`, `port`, `device`, `max_len
 | `EMBER_MODEL_S3_URI` | — | An `s3://bucket/prefix` URI naming the exact model location to load — for a deployment (e.g. Outerbounds) that supplies the model's S3 location at start time instead of a `REGISTRY` key. See "Hosted deployment: a model location supplied at start time" below. |
 | `EMBER_S3_ACCESS_KEY_ID` / `EMBER_S3_SECRET_ACCESS_KEY` | — | AWS credentials for `EMBER_MODEL_S3_URI`. **Optional** — when unset, boto3's own default credential chain applies (an IAM role attached to the compute, e.g. Outerbounds; env vars; `~/.aws/credentials`). Set explicitly only where no role is attached (e.g. a local developer machine) |
 | `EMBER_S3_REGION` | — | AWS region passed to the S3 client |
+
+`ember doctor` and `GET /health` (`engine`) report the limits in force and where each came
+from: the model, a fallback, an operator setting, or a measured default.
 
 ### Hosted deployment: a model location supplied at start time
 
@@ -379,7 +383,7 @@ While the model server is running it exposes Prometheus metrics at
 
 | Metric | Type | Meaning |
 | --- | --- | --- |
-| `ember_advise_requests_total{status}` | counter | advise requests by HTTP status (`200`, `422`, `503`, `500`) |
+| `ember_advise_requests_total{status}` | counter | advise requests by HTTP status (`200`, `413`, `422`, `503`, `500`) |
 | `ember_advise_latency_seconds` | histogram | advise request latency by status |
 | `ember_advise_input_tokens_total` | counter | input tokens processed |
 | `ember_advise_output_tokens_total` | counter | output tokens produced |
@@ -457,6 +461,8 @@ committed: it registers the `vault` MCP server that agents use to read and write
 | `make test-evals` | Calibration eval suite: positive + negative recipe cases (loads model) |
 | `make eval-run` | Run the benchmark dataset against the live server; writes `results/` |
 | `make eval-snapshot` | Copy the latest run into `benchmark/` for the site to render |
+| `make eval-context` | Long-context probe: measure each model's request cap on MPS (hours) |
+| `make eval-context-smoke` | Long-context probe smoke: flash, 2K and 4K, 3 items (minutes) |
 | `make eval-report` | Render the most recent run as a Markdown table |
 | `make mcp-check` / `make smoke` | MCP end-to-end check / direct MPS inference |
 | `make compile` / `make check` | Byte-compile / compile + unit tests |
@@ -542,6 +548,19 @@ are fixed before any run: `needs_review` is true exactly when `risk` is Medium o
 `retry` only for `flaky` failures. A person reviews disagreements; labels are never changed to
 match the model. `make check` validates the dataset (`tests/test_eval_benchmark.py`).
 `ember eval` reads `evals/` and `scripts/` from the checkout, so it works only in a clone.
+
+### Long-context probe
+
+`make eval-context` (or `ember eval context`) measures how each registered model holds up
+as requests grow: it pads every text-only benchmark item with public-domain filler to
+2K–64K tokens, with the evidence at the start, middle, or end, and records accuracy,
+calibration, peak MPS memory, and latency. A pre-declared rule then picks each model's
+default cap: the longest length where accuracy stays within 2 points and Brier within
+0.02 of the 2K result at every depth, and peak memory fits 32 GB (flash) or 64 GB (full).
+It runs in-process on MPS for hours, never touches a running server, and writes
+`results/context/<run_id>/`; the run a decision cites is copied into
+`evals/context/runs/` with `--snapshot`. `--rescore` rebuilds the summary byte for byte,
+and `--reproduce` re-runs a run's pinned inputs and compares them.
 
 ### Agent in the loop
 

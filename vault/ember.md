@@ -66,12 +66,14 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-08-release-resume-tagged-main-head]]
 - [[2026-10-09-docker-desktop-drops-deletion-events]]
 - [[2026-10-09-pypi-json-api-hides-empty-projects]]
+- [[2026-10-09-request-size-checks-miss-what-the-model-sees]]
 
 ### Sessions
 
 - [[2026-10-04-sonarcloud-scanning]] — add SonarCloud scanning to CI
 - [[2026-10-08-codex-review-and-s3-rename]] — Codex init review fixes; neutral S3 setting names
 - [[2026-10-08-client-registration-hygiene]] — `ember init` registers only ember; doctor reports per-harness registration
+- [[2026-10-09-context-window-audit-implementation]] — full-request counting, refusals, limit reporting, and the long-context probe
 
 Append-only session logs, never pruned.
 

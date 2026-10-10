@@ -1,7 +1,7 @@
 # shared/testing.mk — test suite and protocol check targets
 # Assumes PY, EMBER, and EMBER_* vars are defined in the root Makefile.
 
-.PHONY: test test-fast test-strict test-cov test-evals eval-run eval-report eval-export eval-snapshot eval-agent eval-agent-smoke mcp-check smoke
+.PHONY: test test-fast test-strict test-cov test-evals eval-run eval-report eval-export eval-snapshot eval-context eval-context-smoke eval-agent eval-agent-smoke mcp-check smoke
 
 test: $(EMBER) ## Full test suite (loads model once, ~30s)
 	$(PY) -m pytest
@@ -29,6 +29,12 @@ eval-export: ## Write the reviewer bundle (HTML + Markdown report) for the lates
 
 eval-snapshot: ## Copy the latest run into the tracked benchmark/ bundle the site renders
 	$(PY) evals/eval/snapshot_evals.py
+
+eval-context: $(EMBER) ## Long-context probe: measure each model's cap on MPS (hours; opt-in)
+	$(PY) evals/context/run_context.py
+
+eval-context-smoke: $(EMBER) ## Long-context probe smoke: flash, 2K and 4K, 3 items (minutes)
+	$(PY) evals/context/run_context.py --smoke
 
 eval-agent: $(EMBER) ## Agent-in-the-loop eval through opencode (opt-in; uses API credit)
 	$(PY) evals/eval/run_agent_evals.py

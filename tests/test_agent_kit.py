@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 import yaml
 from ember.agent_kit import api as agent_kit
@@ -70,3 +71,85 @@ def test_install_skill_writes_the_packaged_playbook(tmp_path):
 
 def test_kilocode_is_a_first_class_supported_agent():
     assert "kilocode" in agent_kit.AGENTS
+
+
+# ###########################################################################
+# Size limits (contracts/agent-kit.md, FR-008, SC-005)
+# ###########################################################################
+REPO = Path(__file__).resolve().parents[1]
+
+
+def _caps() -> list[str]:
+    from ember import models
+    from ember.serving.limits import default_request_cap
+
+    names = [*models.REGISTRY, None]
+    return [f"{default_request_cap(name)[0]:,}" for name in names]
+
+
+def _sample_refusal() -> str:
+    from ember.serving.limit_source import LimitSource
+    from ember.serving.limits import Limits
+    from ember.serving.request_size import RequestSize, refusal_message
+
+    limits = Limits(
+        max_length=262144,
+        max_length_source=LimitSource.MODEL,
+        max_request_length=32768,
+        max_request_length_source=LimitSource.FALLBACK,
+    )
+    return refusal_message(
+        RequestSize(total=41230, state=39800, media=0, fixed=1430), limits, 262144
+    )
+
+
+def test_instructions_say_over_cap_requests_are_refused_not_truncated():
+    from ember.serving.limits import default_request_cap
+
+    text = agent_kit.instructions()
+    assert len(text.encode("utf-8")) <= 2048
+    assert "refused" in text
+    assert "never truncated" in text
+    assert f"{default_request_cap('flash')[0]:,}" in text
+
+
+def test_skill_states_every_default_cap_and_why_it_holds():
+    text = agent_kit.skill()
+    for cap in _caps():
+        assert cap in text
+    for word in ("refused", "split", "measured", "fallback"):
+        assert word in text
+    assert "262,144-token window" not in text
+
+
+def test_skill_quotes_only_fragments_of_the_real_refusal():
+    text = agent_kit.skill()
+    message = _sample_refusal()
+    for fragment in ("request too large:", "Split: state"):
+        assert fragment in text
+        assert fragment in message
+
+
+def test_snippet_says_refused_requests_trim_the_largest_part():
+    text = agent_kit.snippet()
+    assert "refused" in text
+    assert "largest part" in text
+
+
+def test_readme_and_compatibility_state_every_registered_cap():
+    from ember import models
+    from ember.serving.limits import default_request_cap
+
+    readme = next(
+        line
+        for line in (REPO / "README.md").read_text(encoding="utf-8").splitlines()
+        if line.startswith("| `EMBER_MAX_REQUEST_LENGTH`")
+    )
+    compat = (REPO / "COMPATIBILITY.md").read_text(encoding="utf-8")
+    bullet = compat.split("- **Context length.**", 1)[1].split("\n- **", 1)[0]
+    for name in models.REGISTRY:
+        cap = f"{default_request_cap(name)[0]:,}"
+        assert cap in readme
+        assert cap in bullet
+    assert "refused" in readme
+    assert "refused" in bullet

@@ -18,10 +18,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 import torch  # noqa: E402
+from ember.serving.limits import model_max_length  # noqa: E402
 from ember.serving.runtime import (  # noqa: E402
     DEFAULT_MODEL_DIR,
     load_clef,
-    model_max_length,
 )
 
 

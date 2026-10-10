@@ -141,3 +141,24 @@ def cmd_eval_agent(args: argparse.Namespace) -> int:
     except ImportError as exc:
         raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
     return agent_main(list(args.agent_args))
+
+
+def cmd_eval_context(args: argparse.Namespace) -> int:
+    """Run the long-context probe (``ember eval context``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; ``args.context_args`` pass through to
+        ``evals/context/run_context.py`` unchanged.
+
+    Returns
+    -------
+    int
+        Exit code from ``run_context.main``.
+    """
+    try:
+        from evals.context.run_context import main as context_main
+    except ImportError as exc:
+        raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
+    return context_main(list(args.context_args))

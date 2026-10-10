@@ -187,3 +187,53 @@ def test_a_missing_answer_is_a_contract_error() -> None:
     item = ITEMS[0]
     with pytest.raises(ValueError, match="expected a"):
         metrics.score_item(item, {})
+
+
+# ###########################################################################
+# The eval scripts resolve paths from the checkout root
+# ###########################################################################
+@pytest.mark.parametrize(
+    ("module", "attribute"),
+    [
+        ("evals.eval.run_evals", "REPO_ROOT"),
+        ("evals.eval.report_evals", "REPO_ROOT"),
+        ("evals.eval.run_agent_evals", "REPO_ROOT"),
+        ("evals.eval.snapshot_evals", "REPO"),
+    ],
+)
+def test_eval_scripts_resolve_the_checkout_root(module, attribute):
+    import importlib
+
+    root = getattr(importlib.import_module(module), attribute)
+    assert root == Path(__file__).resolve().parents[1]
+
+
+def test_run_evals_default_dataset_exists():
+    from evals.eval import run_evals
+
+    assert run_evals.DATASET_PATH == DATASET
+
+
+@pytest.mark.parametrize(
+    "script",
+    [
+        "evals/eval/run_evals.py",
+        "evals/eval/report_evals.py",
+        "evals/eval/snapshot_evals.py",
+        "evals/eval/run_agent_evals.py",
+        "evals/context/run_context.py",
+    ],
+)
+def test_eval_scripts_run_directly_as_make_runs_them(script):
+    import subprocess
+    import sys
+
+    root = Path(__file__).resolve().parents[1]
+    result = subprocess.run(  # noqa: S603 - this interpreter, a repo script, --help
+        [sys.executable, str(root / script), "--help"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=root,
+    )
+    assert result.returncode == 0, result.stderr[-2000:]

@@ -261,10 +261,31 @@ def test_auth_disabled_requires_no_token(monkeypatch) -> None:
 # exercises the actual dispatch, not a reimplementation of it — Engine()
 # itself is mocked out to avoid a real torch/model load in this unit test.
 # ###########################################################################
-def test_lifespan_uses_hosted_source_when_configured(monkeypatch) -> None:
+def _measure_flash(monkeypatch, tmp_path, cap: int | None) -> None:
+    import dataclasses
+
+    from ember import models
+    from ember.cfg import paths
+
+    monkeypatch.setattr(paths, "config_path", lambda: tmp_path / "config.json")
+    for name in ("EMBER_MAX_LENGTH", "EMBER_MAX_REQUEST_LENGTH", "EMBER_MODEL"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.delenv("EMBER_MODEL_DIR", raising=False)
+    for key, spec in models.REGISTRY.items():
+        measured = cap if key == "flash" else None
+        monkeypatch.setitem(
+            models.REGISTRY,
+            key,
+            dataclasses.replace(spec, max_request_length=measured),
+        )
+
+
+def test_lifespan_uses_hosted_source_when_configured(monkeypatch, tmp_path) -> None:
     from ember.serving import hosted, runtime
     from ember.serving import server as server_mod
+    from ember.serving.limit_source import LimitSource
 
+    _measure_flash(monkeypatch, tmp_path, 8192)
     fake_source = hosted.HostedModelSource(
         uri="s3://my-bucket/clef-flash",
         model_dir=__import__("pathlib").Path("/fake/model/dir"),
@@ -296,6 +317,231 @@ def test_lifespan_uses_hosted_source_when_configured(monkeypatch) -> None:
     assert captured["model_dir"] == fake_source.model_dir
     assert "spec" not in captured
     assert "skip_integrity" not in captured
+    assert "max_length" not in captured
+    assert "max_request_length" not in captured
+    # A hosted model is outside the registry: the lowest measured cap applies.
+    limits = captured["limits"]
+    assert limits.max_request_length == 8192
+    assert limits.max_request_length_source is LimitSource.FALLBACK
+
+
+def test_lifespan_passes_the_registry_models_measured_cap(
+    monkeypatch, tmp_path
+) -> None:
+    from ember import models
+    from ember.serving import hosted
+    from ember.serving import server as server_mod
+    from ember.serving.limit_source import LimitSource
+
+    _measure_flash(monkeypatch, tmp_path, 8192)
+    monkeypatch.setattr(hosted, "resolve", lambda: None)
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    monkeypatch.setattr(models, "resolve_dir", lambda name: model_dir)
+
+    captured: dict[str, object] = {}
+
+    class _FakeEngine:
+        def __init__(self, model_dir, **kwargs):
+            captured["model_dir"] = model_dir
+            captured.update(kwargs)
+            self.device = "cpu"
+            self.dtype = "float32"
+
+        def describe(self):
+            return {"model": "flash"}
+
+    monkeypatch.setattr(server_mod, "Engine", _FakeEngine)
+
+    with _in_process_client() as client:
+        assert client.get("/health").json()["status"] == "ok"
+
+    assert captured["model_dir"] == model_dir
+    limits = captured["limits"]
+    assert limits.max_request_length == 8192
+    assert limits.max_request_length_source is LimitSource.MEASURED
+
+
+def _registry_model_dir(monkeypatch, tmp_path):
+    import json
+
+    from ember import models
+    from ember.serving import hosted
+
+    monkeypatch.setattr(hosted, "resolve", lambda: None)
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text(
+        json.dumps({"text_config": {"max_position_embeddings": 262144}})
+    )
+    monkeypatch.setattr(models, "resolve_dir", lambda name: model_dir)
+    return model_dir
+
+
+def test_health_engine_reports_the_limits_and_their_sources(
+    monkeypatch, tmp_path
+) -> None:
+    from ember.serving import runtime
+
+    _measure_flash(monkeypatch, tmp_path, None)
+    _registry_model_dir(monkeypatch, tmp_path)
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+
+    with _in_process_client() as client:
+        engine = client.get("/health").json()["engine"]
+
+    assert engine["max_length"] == 262144
+    assert engine["max_length_source"] == "model"
+    assert engine["max_request_length"] == 32768
+    assert engine["max_request_length_source"] == "fallback"
+
+
+def _lifespan_limit_lines(monkeypatch, caplog) -> list[str]:
+    import logging
+
+    from ember.serving import server as server_mod
+
+    class _FakeEngine:
+        def __init__(self, model_dir, **kwargs):
+            self.device = "cpu"
+            self.dtype = "float32"
+
+        def describe(self):
+            return {"model": "flash"}
+
+    monkeypatch.setattr(server_mod, "Engine", _FakeEngine)
+    with caplog.at_level(logging.INFO, logger="ember.serving.server"):
+        with _in_process_client() as client:
+            client.get("/health")
+    return [
+        record.getMessage()
+        for record in caplog.records
+        if record.getMessage().startswith("limits:")
+    ]
+
+
+def test_lifespan_logs_the_limits_once(monkeypatch, tmp_path, caplog) -> None:
+    _measure_flash(monkeypatch, tmp_path, 8192)
+    _registry_model_dir(monkeypatch, tmp_path)
+    assert _lifespan_limit_lines(monkeypatch, caplog) == [
+        "limits: enforced 8192 tokens; max_length 262144 (model), "
+        "max_request_length 8192 (measured)"
+    ]
+
+
+def test_lifespan_logs_a_disabled_cap(monkeypatch, tmp_path, caplog) -> None:
+    _measure_flash(monkeypatch, tmp_path, 8192)
+    _registry_model_dir(monkeypatch, tmp_path)
+    monkeypatch.setenv("EMBER_MAX_REQUEST_LENGTH", "0")
+    assert _lifespan_limit_lines(monkeypatch, caplog) == [
+        "limits: enforced 262144 tokens; max_length 262144 (model), "
+        "max_request_length disabled (operator)"
+    ]
+
+
+def test_main_sends_ember_logs_through_uvicorns_handler(monkeypatch) -> None:
+    import uvicorn
+    from ember.serving import server as server_mod
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(uvicorn, "run", lambda app, **kwargs: captured.update(kwargs))
+    server_mod.main()
+    ember_logger = captured["log_config"]["loggers"]["ember"]
+    assert ember_logger["level"] == "INFO"
+    assert ember_logger["handlers"] == ["default"]
+
+
+@pytest.mark.filterwarnings("ignore:.*found in sys.modules:RuntimeWarning")
+def test_the_server_logger_stays_under_ember_when_run_as_a_script() -> None:
+    """`ember start` runs `python -m ember.serving.server`, so `__name__` is not
+    the module path there; the logger must still sit under `ember`."""
+    import runpy
+
+    namespace = runpy.run_module("ember.serving.server", run_name="__not_main__")
+    assert namespace["log"].name == "ember.serving.server"
+
+
+# ###########################################################################
+# Refusals: 413 with the token split, 500 on a size-check mismatch
+# ###########################################################################
+class _RaisingEngine:
+    device = "cpu"
+    dtype = "float32"
+
+    def __init__(self, error: Exception) -> None:
+        self.error = error
+
+    def advise(self, *args, **kwargs):
+        raise self.error
+
+    def describe(self):
+        return {"model": "fake"}
+
+
+def _refusal():
+    from ember.serving.limit_source import LimitSource
+    from ember.serving.limits import Limits
+    from ember.serving.request_size import RequestSize, refusal_message
+    from ember.serving.runtime import RequestTooLargeError
+
+    size = RequestSize(total=41230, state=39800, media=0, fixed=1430)
+    limits = Limits(
+        max_length=262144,
+        max_length_source=LimitSource.MODEL,
+        max_request_length=32768,
+        max_request_length_source=LimitSource.FALLBACK,
+    )
+    message = refusal_message(size, limits, 262144)
+    return RequestTooLargeError(message, size=size, limits=limits), message
+
+
+def _requests_with_status(text: str, status: str) -> float:
+    from prometheus_client.parser import text_string_to_metric_families
+
+    return sum(
+        sample.value
+        for family in text_string_to_metric_families(text)
+        for sample in family.samples
+        if sample.name == "ember_advise_requests_total"
+        and sample.labels.get("status") == status
+    )
+
+
+def test_an_oversized_request_gets_413_with_the_refusal(monkeypatch) -> None:
+    from ember.serving import server as server_mod
+
+    monkeypatch.delenv("EMBER_SERVER_AUTH_TOKEN", raising=False)
+    error, message = _refusal()
+    monkeypatch.setattr(server_mod, "_ENGINE", _RaisingEngine(error))
+    resp = _in_process_client().post("/v1/systemone", json=BODY)
+    assert resp.status_code == 413
+    assert resp.json() == {"detail": message}
+
+
+def test_a_size_check_mismatch_gets_500(monkeypatch) -> None:
+    from ember.serving import server as server_mod
+    from fastapi.testclient import TestClient
+
+    monkeypatch.delenv("EMBER_SERVER_AUTH_TOKEN", raising=False)
+    error = RuntimeError(
+        "size check mismatch; refusing to answer from a possibly shortened input"
+    )
+    monkeypatch.setattr(server_mod, "_ENGINE", _RaisingEngine(error))
+    client = TestClient(server_mod.app, raise_server_exceptions=False)
+    assert client.post("/v1/systemone", json=BODY).status_code == 500
+
+
+def test_refusals_are_counted_with_status_413(monkeypatch) -> None:
+    from ember.serving import server as server_mod
+
+    monkeypatch.delenv("EMBER_SERVER_AUTH_TOKEN", raising=False)
+    error, _ = _refusal()
+    monkeypatch.setattr(server_mod, "_ENGINE", _RaisingEngine(error))
+    client = _in_process_client()
+    before = _requests_with_status(client.get("/metrics").text, "413")
+    client.post("/v1/systemone", json=BODY)
+    after = _requests_with_status(client.get("/metrics").text, "413")
+    assert after == before + 1
 
 
 def test_lifespan_falls_back_to_registry_when_hosted_not_configured(

@@ -246,6 +246,7 @@ def register_eval(
     cmd_export: object,
     cmd_snapshot: object,
     cmd_agent: object,
+    cmd_context: object,
 ) -> None:
     """Register ``ember eval`` subcommands on ``sub``.
 
@@ -263,6 +264,8 @@ def register_eval(
         Handler for ``ember eval snapshot``.
     cmd_agent : object
         Handler for ``ember eval agent``.
+    cmd_context : object
+        Handler for ``ember eval context``.
     """
     eval_cmd = sub.add_parser("eval", help="calibration eval suite")
     esub = eval_cmd.add_subparsers(dest="eval_command", required=True)
@@ -336,3 +339,12 @@ def register_eval(
     )
     p.add_argument("agent_args", nargs=argparse.REMAINDER)
     p.set_defaults(func=cmd_agent)
+
+    p = esub.add_parser(
+        "context",
+        add_help=False,
+        help="long-context probe: quality and memory by request length, on MPS "
+        "(checkout only; try `ember eval context --help`)",
+    )
+    p.add_argument("context_args", nargs=argparse.REMAINDER)
+    p.set_defaults(func=cmd_context)

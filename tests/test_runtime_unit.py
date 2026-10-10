@@ -4,23 +4,41 @@ that is explicitly killed. Safe to run repeatedly and safe on a shared host.
 
 from __future__ import annotations
 
+import base64
 import inspect
+import io
 import json
+import logging
 import os
 import re
 import signal
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import ember.serving.runtime as runtime
 import pytest
 from ember import models
 from ember.cfg import paths
 from ember.opencode import opencode_config
-from ember.serving import process
+from ember.serving import devices, limits, media, process
+from ember.serving.limit_source import LimitSource
+from ember.serving.limits import Limits
+from ember.serving.request_size import RequestSize, refusal_message
+from PIL import Image
 
 from tests.conftest import free_port
+from tests.fake_joint import FakeJointModule, record_length
+
+
+def _limits(max_request_length: int = 0, max_length: int = 262144) -> Limits:
+    return Limits(
+        max_length=max_length,
+        max_length_source=LimitSource.MODEL,
+        max_request_length=max_request_length,
+        max_request_length_source=LimitSource.OPERATOR,
+    )
 
 
 # ###########################################################################
@@ -36,7 +54,7 @@ def test_pick_device_defaults_to_available_accelerator():
         expected = "cuda"
     else:
         expected = "cpu"
-    assert runtime.pick_device() == expected
+    assert devices.pick_device() == expected
 
 
 def test_default_model_dir_matches_checkout_model_dir():
@@ -45,43 +63,43 @@ def test_default_model_dir_matches_checkout_model_dir():
 
 
 def test_pick_device_explicit_passthrough():
-    assert runtime.pick_device("cpu") == "cpu"
-    assert runtime.pick_device("mps") == "mps"
-    assert runtime.pick_device("cuda") == "cuda"
+    assert devices.pick_device("cpu") == "cpu"
+    assert devices.pick_device("mps") == "mps"
+    assert devices.pick_device("cuda") == "cuda"
 
 
 def test_pick_device_prefers_mps_over_cuda_when_both_available(monkeypatch):
     """Constitution Article VI ("Apple Silicon and CUDA"): MPS is the
     local-first default; a host with both backends available (unusual, but
     not impossible in a mocked test) still prefers MPS."""
-    monkeypatch.setattr(runtime.torch.backends.mps, "is_available", lambda: True)
-    monkeypatch.setattr(runtime.torch.cuda, "is_available", lambda: True)
-    assert runtime.pick_device("auto") == "mps"
+    monkeypatch.setattr(devices.torch.backends.mps, "is_available", lambda: True)
+    monkeypatch.setattr(devices.torch.cuda, "is_available", lambda: True)
+    assert devices.pick_device("auto") == "mps"
 
 
 def test_pick_device_falls_back_to_cuda_when_mps_unavailable(monkeypatch):
     """The hosted-deployment case (e.g. Outerbounds): Linux compute has no
     MPS, so an available CUDA GPU must be selected instead of falling
     straight through to CPU."""
-    monkeypatch.setattr(runtime.torch.backends.mps, "is_available", lambda: False)
-    monkeypatch.setattr(runtime.torch.cuda, "is_available", lambda: True)
-    assert runtime.pick_device("auto") == "cuda"
+    monkeypatch.setattr(devices.torch.backends.mps, "is_available", lambda: False)
+    monkeypatch.setattr(devices.torch.cuda, "is_available", lambda: True)
+    assert devices.pick_device("auto") == "cuda"
 
 
 def test_pick_device_falls_back_to_cpu_when_neither_accelerator_available(
     monkeypatch,
 ):
-    monkeypatch.setattr(runtime.torch.backends.mps, "is_available", lambda: False)
-    monkeypatch.setattr(runtime.torch.cuda, "is_available", lambda: False)
-    assert runtime.pick_device("auto") == "cpu"
+    monkeypatch.setattr(devices.torch.backends.mps, "is_available", lambda: False)
+    monkeypatch.setattr(devices.torch.cuda, "is_available", lambda: False)
+    assert devices.pick_device("auto") == "cpu"
 
 
 def test_pick_dtype_is_fp16_on_mps_fp32_on_cpu():
     # import-placement:allow - deferred; torch must not load at module collect time
     import torch
 
-    assert runtime.pick_dtype("mps") == torch.float16
-    assert runtime.pick_dtype("cpu") == torch.float32
+    assert devices.pick_dtype("mps") == torch.float16
+    assert devices.pick_dtype("cpu") == torch.float32
 
 
 def test_pick_dtype_is_fp16_on_cuda():
@@ -90,7 +108,7 @@ def test_pick_dtype_is_fp16_on_cuda():
     # import-placement:allow - deferred; torch must not load at module collect time
     import torch
 
-    assert runtime.pick_dtype("cuda") == torch.float16
+    assert devices.pick_dtype("cuda") == torch.float16
 
 
 def test_load_clef_missing_dir_raises():
@@ -122,42 +140,27 @@ def test_engine_loads_through_unmodified_loader():
     assert engine.model_dir == model_dir
 
 
-def test_model_max_length_reads_text_config(tmp_path):
+def test_engine_max_length_defaults_to_the_model_maximum(tmp_path, monkeypatch):
     model_dir = tmp_path / "model"
     model_dir.mkdir()
     (model_dir / "config.json").write_text(
         json.dumps({"text_config": {"max_position_embeddings": 4096}})
     )
-    assert runtime.model_max_length(model_dir) == 4096
-
-
-def test_model_max_length_reads_top_level_config(tmp_path):
-    model_dir = tmp_path / "model"
-    model_dir.mkdir()
-    (model_dir / "config.json").write_text(
-        json.dumps({"max_position_embeddings": 8192})
-    )
-    assert runtime.model_max_length(model_dir) == 8192
-
-
-def test_model_max_length_falls_back_without_a_config(tmp_path):
-    assert runtime.model_max_length(tmp_path / "missing") == runtime.FALLBACK_MAX_LENGTH
-
-
-def test_model_max_length_falls_back_when_zero(tmp_path):
-    model_dir = tmp_path / "model"
-    model_dir.mkdir()
-    (model_dir / "config.json").write_text(
-        json.dumps({"text_config": {"max_position_embeddings": 0}})
-    )
-    assert runtime.model_max_length(model_dir) == runtime.FALLBACK_MAX_LENGTH
-
-
-def test_engine_max_length_defaults_to_the_model_maximum():
-    default = (
-        inspect.signature(runtime.Engine.__init__).parameters["max_length"].default
-    )
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    default = inspect.signature(runtime.Engine.__init__).parameters["limits"].default
     assert default is None
+    engine = runtime.Engine(model_dir)
+    assert engine.max_length == 4096
+    assert engine.limits.max_length_source is LimitSource.MODEL
+
+
+def test_engine_max_length_follows_its_limits(tmp_path, monkeypatch):
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(model_dir, limits=_limits(max_length=8192))
+    assert engine.max_length == 8192
 
 
 def test_engine_model_name_explicit_and_fallback(tmp_path, monkeypatch):
@@ -167,18 +170,18 @@ def test_engine_model_name_explicit_and_fallback(tmp_path, monkeypatch):
 
     monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
 
-    engine_explicit = runtime.Engine(model_dir, model_name="full")
+    engine_explicit = runtime.Engine(model_dir, model_name="full", limits=_limits())
     assert engine_explicit.model_name == "full"
     assert engine_explicit.describe()["model"] == "full"
 
-    engine_fallback = runtime.Engine(model_dir)
+    engine_fallback = runtime.Engine(model_dir, limits=_limits())
     assert engine_fallback.model_name == "my-model"
     assert engine_fallback.describe()["model"] == "my-model"
 
-    engine_none = runtime.Engine(model_dir, model_name=None)
+    engine_none = runtime.Engine(model_dir, model_name=None, limits=_limits())
     assert engine_none.model_name == "my-model"
 
-    engine_empty = runtime.Engine(model_dir, model_name="")
+    engine_empty = runtime.Engine(model_dir, model_name="", limits=_limits())
     assert engine_empty.model_name == ""
 
 
@@ -192,7 +195,7 @@ def test_engine_describe_omits_model_dir(tmp_path, monkeypatch):
     model_dir.mkdir()
     (model_dir / "config.json").write_text("{}")
     monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
-    engine = runtime.Engine(model_dir)
+    engine = runtime.Engine(model_dir, limits=_limits())
     description = engine.describe()
     assert "model_dir" not in description, (
         "Engine.describe() must not expose model_dir (I-001: path disclosure)"
@@ -205,12 +208,44 @@ def test_engine_describe_still_has_required_fields(tmp_path, monkeypatch):
     model_dir.mkdir()
     (model_dir / "config.json").write_text("{}")
     monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
-    engine = runtime.Engine(model_dir)
+    engine = runtime.Engine(model_dir, limits=_limits())
     description = engine.describe()
     for field in ("model", "device", "dtype", "max_length"):
         assert field in description, (
             f"Engine.describe() missing required field: {field}"
         )
+
+
+def test_engine_describe_reports_its_limits_and_their_sources(tmp_path, monkeypatch):
+    model_dir = tmp_path / "my-model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}")
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    engine = runtime.Engine(
+        model_dir,
+        limits=Limits(
+            max_length=65536,
+            max_length_source=LimitSource.OPERATOR,
+            max_request_length=8192,
+            max_request_length_source=LimitSource.MEASURED,
+        ),
+    )
+    description = engine.describe()
+    assert set(description) == {
+        "model",
+        "device",
+        "dtype",
+        "max_length",
+        "max_length_source",
+        "max_request_length",
+        "max_request_length_source",
+    }
+    assert description["max_length"] == 65536
+    assert description["max_request_length"] == 8192
+    assert description["max_length_source"] == "operator"
+    assert description["max_request_length_source"] == "measured"
+    assert type(description["max_length_source"]) is str
+    assert type(description["max_request_length_source"]) is str
 
 
 def test_pinned_model_declares_the_model_maximum():
@@ -219,7 +254,7 @@ def test_pinned_model_declares_the_model_maximum():
         if os.environ.get("EMBER_REQUIRE_MODEL") == "1":
             pytest.fail(f"model dir not present: {model_dir} (EMBER_REQUIRE_MODEL=1)")
         pytest.skip("model dir not present")
-    assert runtime.model_max_length(model_dir) == 262144
+    assert limits.model_max_length(model_dir) == 262144
 
 
 # ###########################################################################
@@ -290,13 +325,13 @@ def test_joint_module_removes_model_dir_from_sys_path_after_import(
 
 
 def test_allowed_media_kwargs_constant_exists():
-    assert hasattr(runtime, "ALLOWED_MEDIA_KWARGS"), (
-        "runtime must expose ALLOWED_MEDIA_KWARGS"
+    assert hasattr(media, "ALLOWED_MEDIA_KWARGS"), (
+        "media must expose ALLOWED_MEDIA_KWARGS"
     )
 
 
 def test_allowed_media_kwargs_is_frozenset():
-    assert isinstance(runtime.ALLOWED_MEDIA_KWARGS, frozenset)
+    assert isinstance(media.ALLOWED_MEDIA_KWARGS, frozenset)
 
 
 def test_allowed_media_kwargs_contains_expected_keys():
@@ -310,7 +345,7 @@ def test_allowed_media_kwargs_contains_expected_keys():
         "size",
         "do_convert_rgb",
     }
-    assert expected == runtime.ALLOWED_MEDIA_KWARGS
+    assert expected == media.ALLOWED_MEDIA_KWARGS
 
 
 def test_check_media_kwargs_passes_for_allowed_key(monkeypatch, tmp_path):
@@ -319,17 +354,9 @@ def test_check_media_kwargs_passes_for_allowed_key(monkeypatch, tmp_path):
     model_dir.mkdir()
     (model_dir / "config.json").write_text("{}")
     monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
-    engine = runtime.Engine(model_dir)
+    engine = runtime.Engine(model_dir, limits=_limits())
     # Patch joint_module to avoid actual model call.
-    fake_response: dict = {
-        "answers": {},
-        "usage": {"input_tokens": 0, "output_tokens": 0},
-    }
-
-    def fake_systemone(*a, **kw):
-        return fake_response
-
-    fake_module = type("M", (), {"systemone": staticmethod(fake_systemone)})()
+    fake_module = FakeJointModule()
     monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
     # Should not raise.
     engine.advise("state", {}, media_kwargs={"min_pixels": 256})
@@ -341,16 +368,8 @@ def test_check_media_kwargs_rejects_unknown_key(monkeypatch, tmp_path):
     model_dir.mkdir()
     (model_dir / "config.json").write_text("{}")
     monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
-    engine = runtime.Engine(model_dir)
-    fake_response: dict = {
-        "answers": {},
-        "usage": {"input_tokens": 0, "output_tokens": 0},
-    }
-
-    def fake_systemone(*a, **kw):
-        return fake_response
-
-    fake_module = type("M", (), {"systemone": staticmethod(fake_systemone)})()
+    engine = runtime.Engine(model_dir, limits=_limits())
+    fake_module = FakeJointModule()
     monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
     with pytest.raises(ValueError, match="not permitted"):
         engine.advise("state", {}, media_kwargs={"unknown_key": "value"})
@@ -363,16 +382,8 @@ def test_check_media_kwargs_rejects_previously_reserved_key(monkeypatch, tmp_pat
     model_dir.mkdir()
     (model_dir / "config.json").write_text("{}")
     monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
-    engine = runtime.Engine(model_dir)
-    fake_response: dict = {
-        "answers": {},
-        "usage": {"input_tokens": 0, "output_tokens": 0},
-    }
-
-    def fake_systemone(*a, **kw):
-        return fake_response
-
-    fake_module = type("M", (), {"systemone": staticmethod(fake_systemone)})()
+    engine = runtime.Engine(model_dir, limits=_limits())
+    fake_module = FakeJointModule()
     monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
     for key in ("text", "images", "videos", "return_tensors"):
         with pytest.raises(ValueError, match="not permitted"):
@@ -800,7 +811,7 @@ def test_engine_has_admission_semaphore(monkeypatch, tmp_path):
     model_dir.mkdir()
     (model_dir / "config.json").write_text("{}")
     monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
-    engine = runtime.Engine(model_dir)
+    engine = runtime.Engine(model_dir, limits=_limits())
     assert hasattr(engine, "_admission"), "Engine must have _admission attribute"
     assert isinstance(engine._admission, type(threading.Semaphore())), (
         "_admission must be a threading.Semaphore"
@@ -813,7 +824,7 @@ def test_admission_semaphore_capacity_matches_constant(monkeypatch, tmp_path):
     model_dir.mkdir()
     (model_dir / "config.json").write_text("{}")
     monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
-    engine = runtime.Engine(model_dir)
+    engine = runtime.Engine(model_dir, limits=_limits())
     # Drain the semaphore to verify its initial count.
     acquired = 0
     while engine._admission.acquire(blocking=False):
@@ -833,15 +844,11 @@ def test_advise_raises_when_admission_full(monkeypatch, tmp_path):
     model_dir.mkdir()
     (model_dir / "config.json").write_text("{}")
     monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
-    engine = runtime.Engine(model_dir)
+    engine = runtime.Engine(model_dir, limits=_limits())
     # Drain all admission slots.
     for _ in range(runtime.MAX_PENDING_ADVISE):
         engine._admission.acquire(blocking=False)
-    fake_module = type(
-        "M",
-        (),
-        {"systemone": staticmethod(lambda *a, **kw: {"answers": {}, "usage": {}})},
-    )()
+    fake_module = FakeJointModule()
     monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
     with pytest.raises(runtime.AdmissionError, match="server busy"):
         engine.advise("state", {})
@@ -856,14 +863,15 @@ def test_advise_succeeds_when_admission_has_capacity(monkeypatch, tmp_path):
     model_dir.mkdir()
     (model_dir / "config.json").write_text("{}")
     monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
-    engine = runtime.Engine(model_dir)
+    engine = runtime.Engine(model_dir, limits=_limits())
     fake_response: dict = {
         "answers": {},
-        "usage": {"input_tokens": 5, "output_tokens": 0},
+        "usage": {
+            "input_tokens": record_length({"state": "state", "questions": {}}),
+            "output_tokens": 0,
+        },
     }
-    fake_module = type(
-        "M", (), {"systemone": staticmethod(lambda *a, **kw: fake_response)}
-    )()
+    fake_module = FakeJointModule(systemone=lambda *a, **kw: fake_response)
     monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
     # Must not raise.
     result = engine.advise("state", {})
@@ -876,11 +884,8 @@ def test_admission_slot_released_after_successful_advise(monkeypatch, tmp_path):
     model_dir.mkdir()
     (model_dir / "config.json").write_text("{}")
     monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
-    engine = runtime.Engine(model_dir)
-    fake_response: dict = {"answers": {}, "usage": {}}
-    fake_module = type(
-        "M", (), {"systemone": staticmethod(lambda *a, **kw: fake_response)}
-    )()
+    engine = runtime.Engine(model_dir, limits=_limits())
+    fake_module = FakeJointModule()
     monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
     engine.advise("state", {})
     # After the call, all slots must be available again.
@@ -898,12 +903,12 @@ def test_admission_slot_released_after_failed_advise(monkeypatch, tmp_path):
     model_dir.mkdir()
     (model_dir / "config.json").write_text("{}")
     monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
-    engine = runtime.Engine(model_dir)
+    engine = runtime.Engine(model_dir, limits=_limits())
 
     def boom(*a: object, **kw: object) -> dict:
         raise ValueError("simulated engine failure")
 
-    fake_module = type("M", (), {"systemone": staticmethod(boom)})()
+    fake_module = FakeJointModule(systemone=boom)
     monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
     with pytest.raises(ValueError, match="simulated"):
         engine.advise("state", {})
@@ -920,185 +925,234 @@ def test_admission_slot_released_after_failed_advise(monkeypatch, tmp_path):
 # D-002: per-request token cap
 # ###########################################################################
 def test_max_request_length_default_in_config():
-    """D-002: config DEFAULTS must include max_request_length = 32768."""
+    """D-002: config DEFAULTS must include max_request_length, unset (None) so the
+    loaded model's measured default applies."""
     from ember.cfg import config as cfg
 
     assert "max_request_length" in cfg.DEFAULTS, (
         "DEFAULTS must include max_request_length"
     )
-    assert cfg.DEFAULTS["max_request_length"] == 32768, (
-        "default max_request_length must be 32768"
+    assert cfg.DEFAULTS["max_request_length"] is None, (
+        "default max_request_length must be unset (None)"
     )
 
 
-def test_max_request_length_env_override(monkeypatch):
-    """D-002: EMBER_MAX_REQUEST_LENGTH env var must override the default."""
-    from ember.cfg import config as cfg
-
-    monkeypatch.setenv("EMBER_MAX_REQUEST_LENGTH", "16384")
-    value = cfg.resolve("max_request_length")
-    assert value == 16384
-
-
-def test_max_request_length_zero_means_no_cap(monkeypatch):
-    """D-002: EMBER_MAX_REQUEST_LENGTH=0 must resolve to 0 (no cap)."""
-    from ember.cfg import config as cfg
-
-    monkeypatch.setenv("EMBER_MAX_REQUEST_LENGTH", "0")
-    value = cfg.resolve("max_request_length")
-    assert value == 0
-
-
-def test_engine_accepts_max_request_length_param(monkeypatch, tmp_path):
-    """D-002: Engine.__init__ must accept a max_request_length parameter."""
-    import inspect
-
+def _isolate_limit_config(monkeypatch, tmp_path):
+    monkeypatch.setattr(paths, "config_path", lambda: tmp_path / "config.json")
+    monkeypatch.delenv("EMBER_MAX_LENGTH", raising=False)
     model_dir = tmp_path / "model"
     model_dir.mkdir()
     (model_dir / "config.json").write_text("{}")
-    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
+    return model_dir
+
+
+def test_max_request_length_env_override(monkeypatch, tmp_path):
+    """D-002: EMBER_MAX_REQUEST_LENGTH env var must override the default."""
+    model_dir = _isolate_limit_config(monkeypatch, tmp_path)
+    monkeypatch.setenv("EMBER_MAX_REQUEST_LENGTH", "16384")
+    resolved = limits.from_config(model_dir, "flash")
+    assert resolved.max_request_length == 16384
+    assert resolved.max_request_length_source is LimitSource.OPERATOR
+
+
+def test_max_request_length_zero_means_no_cap(monkeypatch, tmp_path):
+    """D-002: EMBER_MAX_REQUEST_LENGTH=0 must resolve to 0 (no cap)."""
+    model_dir = _isolate_limit_config(monkeypatch, tmp_path)
+    monkeypatch.setenv("EMBER_MAX_REQUEST_LENGTH", "0")
+    resolved = limits.from_config(model_dir, "flash")
+    assert resolved.max_request_length == 0
+    assert resolved.max_request_length_source is LimitSource.OPERATOR
+
+
+def test_engine_accepts_max_request_length_param(monkeypatch, tmp_path):
+    """D-002: Engine.__init__ must take the per-request cap, through ``limits``."""
+    import inspect
+
     sig = inspect.signature(runtime.Engine.__init__)
-    assert "max_request_length" in sig.parameters, (
-        "Engine.__init__ must accept max_request_length"
+    assert "limits" in sig.parameters, "Engine.__init__ must accept limits"
+    assert "max_request_length" in Limits.model_fields
+
+
+def _counting_engine(monkeypatch, tmp_path, js, engine_limits):
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text(
+        json.dumps({"text_config": {"max_position_embeddings": 262144}})
     )
+    processor = SimpleNamespace(tokenizer=object())
+    monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), processor))
+    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: js)
+    return runtime.Engine(model_dir, limits=engine_limits)
+
+
+def _png_data_uri() -> str:
+    buffer = io.BytesIO()
+    Image.new("RGB", (8, 8), (220, 30, 30)).save(buffer, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
+
+
+QUESTIONS = {"urgent": {"type": "noul"}}
 
 
 def test_engine_token_cap_rejects_over_limit(monkeypatch, tmp_path):
     """D-002: advise must raise RequestTooLargeError when input exceeds the cap."""
-    model_dir = tmp_path / "model"
-    model_dir.mkdir()
-    (model_dir / "config.json").write_text("{}")
-
-    class FakeTokenizer:
-        def __call__(self, text: str, **kw: object) -> dict:
-            return {"input_ids": list(range(100))}
-
-    class FakeProcessor:
-        tokenizer = FakeTokenizer()
-
-    monkeypatch.setattr(
-        runtime, "load_clef", lambda *a, **kw: (object(), FakeProcessor())
-    )
-    engine = runtime.Engine(model_dir, max_request_length=50)
-    fake_module = type(
-        "M",
-        (),
-        {"systemone": staticmethod(lambda *a, **kw: {"answers": {}, "usage": {}})},
-    )()
-    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    engine = _counting_engine(monkeypatch, tmp_path, FakeJointModule(), _limits(50))
     with pytest.raises(runtime.RequestTooLargeError, match="50"):
-        engine.advise("some long state text", {})
+        engine.advise("x" * 60, {})
 
 
 def test_engine_token_cap_error_mentions_actual_length(monkeypatch, tmp_path):
     """D-002: the rejection error must name both the cap and the actual token count."""
-    model_dir = tmp_path / "model"
-    model_dir.mkdir()
-    (model_dir / "config.json").write_text("{}")
-
-    class FakeTokenizer:
-        def __call__(self, text: str, **kw: object) -> dict:
-            return {"input_ids": list(range(200))}
-
-    class FakeProcessor:
-        tokenizer = FakeTokenizer()
-
-    monkeypatch.setattr(
-        runtime, "load_clef", lambda *a, **kw: (object(), FakeProcessor())
-    )
-    engine = runtime.Engine(model_dir, max_request_length=100)
-    fake_module = type(
-        "M",
-        (),
-        {"systemone": staticmethod(lambda *a, **kw: {"answers": {}, "usage": {}})},
-    )()
-    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
-    with pytest.raises(ValueError, match="200"):
-        engine.advise("state", {})
+    engine = _counting_engine(monkeypatch, tmp_path, FakeJointModule(), _limits(100))
+    with pytest.raises(ValueError, match="200 tokens exceeds the 100-token"):
+        engine.advise("x" * 195, {})
 
 
 def test_engine_token_cap_accepts_under_limit(monkeypatch, tmp_path):
-    """D-002: advise must succeed when tokenized input is within the cap."""
-    model_dir = tmp_path / "model"
-    model_dir.mkdir()
-    (model_dir / "config.json").write_text("{}")
-
-    class FakeTokenizer:
-        def __call__(self, text: str, **kw: object) -> dict:
-            return {"input_ids": list(range(30))}
-
-    class FakeProcessor:
-        tokenizer = FakeTokenizer()
-
-    monkeypatch.setattr(
-        runtime, "load_clef", lambda *a, **kw: (object(), FakeProcessor())
-    )
-    engine = runtime.Engine(model_dir, max_request_length=50)
-    fake_response: dict = {
-        "answers": {},
-        "usage": {"input_tokens": 30, "output_tokens": 0},
-    }
-    fake_module = type(
-        "M", (), {"systemone": staticmethod(lambda *a, **kw: fake_response)}
-    )()
-    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
-    result = engine.advise("short state", {})
-    assert result == fake_response
+    """D-002: advise must succeed when the encoded request is within the cap."""
+    js = FakeJointModule()
+    engine = _counting_engine(monkeypatch, tmp_path, js, _limits(50))
+    result = engine.advise("x" * 25, {})
+    assert result["usage"]["input_tokens"] == 30
+    assert len(js.systemone_calls) == 1
 
 
 def test_engine_token_cap_zero_disables_cap(monkeypatch, tmp_path):
-    """D-002: max_request_length=0 must disable the per-request cap entirely."""
-    model_dir = tmp_path / "model"
-    model_dir.mkdir()
-    (model_dir / "config.json").write_text("{}")
-
-    class FakeTokenizer:
-        def __call__(self, text: str, **kw: object) -> dict:
-            # Return a huge token count — should not be rejected when cap is 0.
-            return {"input_ids": list(range(999999))}
-
-    class FakeProcessor:
-        tokenizer = FakeTokenizer()
-
-    monkeypatch.setattr(
-        runtime, "load_clef", lambda *a, **kw: (object(), FakeProcessor())
-    )
-    engine = runtime.Engine(model_dir, max_request_length=0)
-    fake_response: dict = {"answers": {}, "usage": {}}
-    fake_module = type(
-        "M", (), {"systemone": staticmethod(lambda *a, **kw: fake_response)}
-    )()
-    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
-    # Must not raise.
-    result = engine.advise("enormous state", {})
-    assert result == fake_response
+    """D-002: max_request_length=0 disables the cap; the effective maximum applies."""
+    js = FakeJointModule()
+    engine = _counting_engine(monkeypatch, tmp_path, js, _limits(0))
+    result = engine.advise("x" * 40000, {})
+    assert result["usage"]["input_tokens"] == 40005
+    assert js.systemone_calls[0]["max_length"] == 262144
 
 
 def test_engine_token_cap_error_mentions_env_var(monkeypatch, tmp_path):
     """D-002: rejection error must mention EMBER_MAX_REQUEST_LENGTH."""
-    model_dir = tmp_path / "model"
-    model_dir.mkdir()
-    (model_dir / "config.json").write_text("{}")
-
-    class FakeTokenizer:
-        def __call__(self, text: str, **kw: object) -> dict:
-            return {"input_ids": list(range(100))}
-
-    class FakeProcessor:
-        tokenizer = FakeTokenizer()
-
-    monkeypatch.setattr(
-        runtime, "load_clef", lambda *a, **kw: (object(), FakeProcessor())
-    )
-    engine = runtime.Engine(model_dir, max_request_length=50)
-    fake_module = type(
-        "M",
-        (),
-        {"systemone": staticmethod(lambda *a, **kw: {"answers": {}, "usage": {}})},
-    )()
-    monkeypatch.setattr(runtime, "joint_module", lambda *a, **kw: fake_module)
+    engine = _counting_engine(monkeypatch, tmp_path, FakeJointModule(), _limits(50))
     with pytest.raises(ValueError, match="EMBER_MAX_REQUEST_LENGTH"):
+        engine.advise("x" * 60, {})
+
+
+# ###########################################################################
+# Full counting: refuse or serve on the encoded request (FR-004 to FR-007)
+# ###########################################################################
+def test_a_request_at_the_enforced_limit_is_served(monkeypatch, tmp_path):
+    total = record_length({"state": "x" * 100, "questions": QUESTIONS})
+    js = FakeJointModule()
+    engine = _counting_engine(monkeypatch, tmp_path, js, _limits(total))
+    result = engine.advise("x" * 100, QUESTIONS)
+    assert result["usage"]["input_tokens"] == total
+
+
+def test_a_request_one_token_over_the_enforced_limit_is_refused(monkeypatch, tmp_path):
+    total = record_length({"state": "x" * 100, "questions": QUESTIONS})
+    js = FakeJointModule()
+    engine = _counting_engine(monkeypatch, tmp_path, js, _limits(total - 1))
+    with pytest.raises(runtime.RequestTooLargeError):
+        engine.advise("x" * 100, QUESTIONS)
+    assert js.systemone_calls == []
+
+
+def test_the_smaller_of_cap_and_maximum_is_enforced(monkeypatch, tmp_path):
+    js = FakeJointModule()
+    engine_limits = _limits(100, max_length=60)
+    engine = _counting_engine(monkeypatch, tmp_path, js, engine_limits)
+    with pytest.raises(runtime.RequestTooLargeError) as excinfo:
+        engine.advise("x" * 60, {})
+    assert "60-token maximum length (EMBER_MAX_LENGTH)" in str(excinfo.value)
+
+
+def test_a_disabled_cap_still_enforces_a_lowered_maximum(monkeypatch, tmp_path):
+    engine_limits = Limits(
+        max_length=60,
+        max_length_source=LimitSource.OPERATOR,
+        max_request_length=0,
+        max_request_length_source=LimitSource.OPERATOR,
+    )
+    engine = _counting_engine(monkeypatch, tmp_path, FakeJointModule(), engine_limits)
+    with pytest.raises(runtime.RequestTooLargeError) as excinfo:
+        engine.advise("x" * 60, {})
+    message = str(excinfo.value)
+    assert "60-token maximum length (EMBER_MAX_LENGTH)" in message
+    assert message.endswith("up to the model's 262144 tokens.")
+
+
+def test_the_refusal_carries_its_size_and_limits(monkeypatch, tmp_path):
+    engine_limits = _limits(50)
+    engine = _counting_engine(monkeypatch, tmp_path, FakeJointModule(), engine_limits)
+    with pytest.raises(runtime.RequestTooLargeError) as excinfo:
+        engine.advise("x" * 60, QUESTIONS)
+    error = excinfo.value
+    assert error.size == RequestSize(total=68, state=60, media=0, fixed=8)
+    assert error.limits == engine_limits
+    assert str(error) == refusal_message(error.size, engine_limits, 262144)
+
+
+def test_a_per_call_max_length_lowers_the_enforced_limit(monkeypatch, tmp_path):
+    js = FakeJointModule()
+    engine = _counting_engine(monkeypatch, tmp_path, js, _limits(1000))
+    with pytest.raises(runtime.RequestTooLargeError, match="50-token"):
+        engine.advise("x" * 60, {}, max_length=50)
+    engine.advise("x" * 40, {}, max_length=50)
+    assert js.systemone_calls[-1]["max_length"] == 50
+
+
+def test_a_malformed_request_skips_the_check_and_surfaces_systemone_error(
+    monkeypatch, tmp_path
+):
+    def reject(*args: object) -> dict:
+        raise ValueError("team: criteria must not be empty")
+
+    js = FakeJointModule(systemone=reject, encode_error=KeyError("criteria"))
+    engine = _counting_engine(monkeypatch, tmp_path, js, _limits(50))
+    with pytest.raises(ValueError, match="criteria must not be empty"):
+        engine.advise("x" * 60, {"team": {"type": "choice"}})
+
+
+def test_a_joint_module_without_encode_record_is_a_contract_error(
+    monkeypatch, tmp_path
+):
+    js = SimpleNamespace(systemone=lambda *a, **kw: {"answers": {}, "usage": {}})
+    engine = _counting_engine(monkeypatch, tmp_path, js, _limits(50))
+    with pytest.raises(RuntimeError, match="encode_record"):
         engine.advise("state", {})
+
+
+def test_an_answer_from_a_shortened_input_is_never_returned(
+    monkeypatch, tmp_path, caplog
+):
+    def shortened(model: object, processor: object, request: dict, max_length: int):
+        tokens = record_length(request) - 1
+        return {"answers": {}, "usage": {"input_tokens": tokens, "output_tokens": 0}}
+
+    js = FakeJointModule(systemone=shortened)
+    engine = _counting_engine(monkeypatch, tmp_path, js, _limits(0))
+    with caplog.at_level(logging.ERROR, logger="ember.serving.runtime"):
+        with pytest.raises(RuntimeError, match="size check mismatch"):
+            engine.advise("state", {})
+    assert [record.levelno for record in caplog.records] == [logging.ERROR]
+
+
+def test_media_kwargs_are_checked_before_counting(monkeypatch, tmp_path):
+    js = FakeJointModule()
+    engine = _counting_engine(monkeypatch, tmp_path, js, _limits(50))
+    with pytest.raises(ValueError, match="not permitted"):
+        engine.advise("state", {}, media_kwargs={"text": "override"})
+    assert js.encode_calls == []
+
+
+def test_media_kwargs_are_checked_before_any_media_is_decoded(monkeypatch, tmp_path):
+    engine = _counting_engine(monkeypatch, tmp_path, FakeJointModule(), _limits(50))
+    undecodable = "data:image/png;base64,AAAA"
+    with pytest.raises(ValueError, match="not permitted"):
+        engine.advise("state", {}, images=[undecodable], media_kwargs={"text": "x"})
+
+
+def test_media_are_decoded_before_counting(monkeypatch, tmp_path):
+    js = FakeJointModule()
+    engine = _counting_engine(monkeypatch, tmp_path, js, _limits(0))
+    engine.advise("state", {}, images=[_png_data_uri()])
+    assert isinstance(js.encode_calls[0]["record"]["images"][0], Image.Image)
 
 
 # ###########################################################################
