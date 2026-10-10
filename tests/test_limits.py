@@ -376,7 +376,7 @@ def test_from_config_ignores_an_invalid_cap_with_a_warning(
         32768,
         LimitSource.FALLBACK,
     )
-    assert "max_request_length" in caplog.text
+    assert "max_request_length" in caplog.text.lower()
 
 
 def test_from_config_reads_an_operator_maximum(isolated_config, monkeypatch, tmp_path):

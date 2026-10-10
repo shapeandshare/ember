@@ -59,6 +59,9 @@ DEFAULTS: dict[str, Any] = {
     "s3_max_bytes": 100 * 1024 * 1024 * 1024,
 }
 
+#: Integer keys whose default is unset, so the default alone can't type their env value.
+_NULLABLE_INTS = frozenset({"max_request_length"})
+
 
 def load() -> dict[str, Any]:
     """Load the config file, merged over the defaults.
@@ -109,7 +112,7 @@ def resolve(key: str, flag: Any = None, env: str | None = None) -> Any:
         default = DEFAULTS.get(key)
         if isinstance(default, bool):
             return value.lower() in ("1", "true", "yes", "on")
-        if isinstance(default, int):
+        if isinstance(default, int) or key in _NULLABLE_INTS:
             try:
                 return int(value)
             except ValueError:

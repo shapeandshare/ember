@@ -349,6 +349,15 @@ def test_config_show_masks_secrets(sandbox, capsys, monkeypatch):
     assert body["s3_secret_access_key"] == "***"
 
 
+@pytest.mark.parametrize(("value", "shown"), [("16384", 16384), ("abc", None)])
+def test_config_show_prints_the_request_cap_as_an_integer(
+    value, shown, sandbox, capsys, monkeypatch
+):
+    monkeypatch.setenv("EMBER_MAX_REQUEST_LENGTH", value)
+    assert cli.main(["config", "show"]) == 0
+    assert json.loads(capsys.readouterr().out)["max_request_length"] == shown
+
+
 def test_config_show_reflects_env_var_overrides_for_every_key(
     sandbox, capsys, monkeypatch
 ):
