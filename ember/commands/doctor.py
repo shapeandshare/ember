@@ -7,11 +7,14 @@ import collections.abc
 import platform
 import sys
 from pathlib import Path
+from typing import Any
+
+from pydantic import ValidationError
 
 from .. import models as models_mod
 from ..cfg import config, paths
 from ..cfg import endpoint as endpoint_mod
-from ..serving import hosted, process
+from ..serving import hosted, limits, process
 from .endpoint import endpoint_status, resolve_endpoint
 from .registration import registration_lines
 
@@ -147,6 +150,71 @@ def _doctor_check_models(
     return ok
 
 
+def _doctor_model_location() -> tuple[Path | None, str | None]:
+    """Return the selected model's directory and registry key.
+
+    Returns
+    -------
+    tuple[Path | None, str | None]
+        A configured hosted source's directory and ``None`` (it is outside the
+        registry); otherwise ``models.resolve_dir`` (``None`` when not pulled)
+        and ``models.registry_key`` for the selected model.
+    """
+    hosted_source = hosted.resolve()
+    if hosted_source is not None:
+        return hosted_source.model_dir, None
+    selected = config.resolve("model")
+    return models_mod.resolve_dir(selected), models_mod.registry_key(selected)
+
+
+def _live_limits(engine: Any) -> limits.Limits | None:
+    """Read the limits a server reports in its ``/health`` ``engine``, if any."""
+    if not isinstance(engine, dict) or "max_request_length" not in engine:
+        return None
+    try:
+        return limits.Limits.model_validate(
+            {field: engine.get(field) for field in limits.Limits.model_fields}
+        )
+    except ValidationError:
+        return None
+
+
+def _doctor_limits(
+    info: collections.abc.Callable[[str, str], None],
+    status: dict[str, Any],
+    model_dir: Path | None,
+    registry_key: str | None,
+) -> None:
+    """Emit the limits line: live from the endpoint, configured, or unknown.
+
+    Parameters
+    ----------
+    info : Callable[[str, str], None]
+        Emit an informational line.
+    status : dict[str, Any]
+        ``endpoint_status`` output for the configured endpoint.
+    model_dir : Path | None
+        The selected model's directory, or ``None`` when not pulled.
+    registry_key : str | None
+        The selected model's registry key, or ``None`` outside the registry.
+    """
+    if status["reachable"]:
+        engine = status.get("engine")
+        live = _live_limits(engine)
+        if engine is None:
+            info("limits", "unknown; the server has not loaded a model yet")
+        elif live is None:
+            info("limits", "unknown; the server does not report limits (older ember)")
+        else:
+            origin = "local server" if status["kind"] == "local" else status["url"]
+            info("limits", f"{live.summary()}; live from {origin}")
+    elif status["kind"] == "local":
+        configured = limits.from_config(model_dir, registry_key)
+        info("limits", f"{configured.summary()}; configured, server not running")
+    else:
+        info("limits", "unknown; remote endpoint unreachable")
+
+
 def cmd_doctor(args: argparse.Namespace) -> int:
     """Check platform, dependencies, model, and server (``ember doctor``).
 
@@ -204,6 +272,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     else:
         state = "reachable" if status["reachable"] else "unreachable"
         info("endpoint", f"{status['kind']} {status['url']} ({state})")
+        _doctor_limits(info, status, *_doctor_model_location())
     for label, detail in registration_lines(Path.cwd()):
         info(label, detail)
     return 0 if ok else 1

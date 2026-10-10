@@ -8,6 +8,7 @@ nothing touches the real project, user config, or running servers.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import importlib.metadata
 import json
 import os
@@ -410,6 +411,131 @@ def test_doctor_reports_the_hosted_s3_uri_when_configured(sandbox, monkeypatch, 
     assert "s3://my-bucket/clef-flash" in out
 
 
+# ###########################################################################
+# ember doctor: the limits line (contracts/cli.md)
+# ###########################################################################
+_LIVE_ENGINE = {
+    "model": "flash",
+    "device": "mps",
+    "dtype": "float16",
+    "max_length": 262144,
+    "max_length_source": "model",
+    "max_request_length": 8192,
+    "max_request_length_source": "measured",
+}
+_LIVE_LINE = (
+    "[info] limits: enforced 8192 tokens; max_length 262144 (model), "
+    "max_request_length 8192 (measured); "
+)
+
+
+def _health_body(engine: dict | None) -> dict:
+    return {
+        "status": "ok",
+        "pid": 1,
+        "engine": engine,
+        "version": "0.9.0",
+        "auth_required": False,
+    }
+
+
+def _doctor_limits_line(capsys) -> str:
+    out = capsys.readouterr().out
+    lines = [line for line in out.splitlines() if line.startswith("[info] limits:")]
+    assert len(lines) == 1, out
+    return lines[0]
+
+
+def test_doctor_shows_live_limits_from_the_local_server(sandbox, monkeypatch, capsys):
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
+    monkeypatch.setattr(
+        process, "health", lambda *args, **kwargs: _health_body(_LIVE_ENGINE)
+    )
+    assert cli.main(["doctor"]) == 0
+    assert _doctor_limits_line(capsys) == _LIVE_LINE + "live from local server"
+
+
+def test_doctor_shows_live_limits_from_a_remote_endpoint(sandbox, monkeypatch, capsys):
+    monkeypatch.setenv("EMBER_SERVER_URL", "https://decisions.example.com")
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        endpoint_cmd, "remote_health", lambda endpoint: _health_body(_LIVE_ENGINE)
+    )
+    assert cli.main(["doctor"]) == 0
+    assert (
+        _doctor_limits_line(capsys)
+        == _LIVE_LINE + "live from https://decisions.example.com"
+    )
+
+
+def test_doctor_shows_configured_limits_when_no_server_runs(
+    sandbox, monkeypatch, capsys
+):
+    for name in ("EMBER_MAX_LENGTH", "EMBER_MAX_REQUEST_LENGTH", "EMBER_MODEL_DIR"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setitem(
+        models.REGISTRY,
+        "flash",
+        dataclasses.replace(models.REGISTRY["flash"], max_request_length=None),
+    )
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
+    assert cli.main(["doctor"]) == 0
+    assert _doctor_limits_line(capsys) == (
+        "[info] limits: enforced 32768 tokens; max_length 32768 (fallback), "
+        "max_request_length 32768 (fallback); configured, server not running"
+    )
+
+
+def test_doctor_shows_configured_limits_for_a_model_not_pulled(
+    sandbox, monkeypatch, capsys
+):
+    for name in ("EMBER_MAX_LENGTH", "EMBER_MAX_REQUEST_LENGTH", "EMBER_MODEL_DIR"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: None)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
+    cli.main(["doctor"])
+    assert "max_length 32768 (fallback)" in _doctor_limits_line(capsys)
+
+
+def test_doctor_reports_unknown_limits_for_an_unreachable_remote(
+    sandbox, monkeypatch, capsys
+):
+    monkeypatch.setenv("EMBER_SERVER_URL", "https://decisions.example.com")
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
+    monkeypatch.setattr(endpoint_cmd, "remote_health", lambda endpoint: None)
+    assert cli.main(["doctor"]) == 0
+    assert (
+        _doctor_limits_line(capsys)
+        == "[info] limits: unknown; remote endpoint unreachable"
+    )
+
+
+def test_doctor_reports_unknown_limits_while_the_model_loads(
+    sandbox, monkeypatch, capsys
+):
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: _health_body(None))
+    assert cli.main(["doctor"]) == 0
+    assert _doctor_limits_line(capsys) == (
+        "[info] limits: unknown; the server has not loaded a model yet"
+    )
+
+
+def test_doctor_reports_unknown_limits_for_an_older_server(
+    sandbox, monkeypatch, capsys
+):
+    older = {"model": "flash", "device": "mps", "dtype": "float16", "max_length": 1}
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: _health_body(older))
+    assert cli.main(["doctor"]) == 0
+    assert _doctor_limits_line(capsys) == (
+        "[info] limits: unknown; the server does not report limits (older ember)"
+    )
+
+
 def test_uninstall_removes_global_installs_and_keeps_other_config(sandbox):
     assert cli.main(["init", "--opencode", "--global"]) == 0
     assert cli.main(["init", "--kilocode", "--global"]) == 0
@@ -521,13 +647,37 @@ def test_endpoint_status_marks_reachable_when_health_returns_body(
     monkeypatch.setattr(
         ep_mod,
         "remote_health",
-        lambda _: {"status": "ok", "version": "1.0.0", "auth_required": False},
+        lambda _: {
+            "status": "ok",
+            "version": "1.0.0",
+            "auth_required": False,
+            "engine": {"model": "flash", "max_request_length": 8192},
+        },
     )
     status = ep_mod.endpoint_status(ep)
     assert status["reachable"] is True
     assert status["ready"] == "ok"
     assert status["contract_version"] == "1.0.0"
     assert status["remote_auth_required"] is False
+    assert status["engine"] == {"model": "flash", "max_request_length": 8192}
+
+
+def test_endpoint_status_has_no_engine_when_unreachable(monkeypatch) -> None:
+    from ember.cfg.endpoint import Endpoint
+    from ember.commands import endpoint as ep_mod
+
+    ep = Endpoint(
+        url="https://decisions.example.com",
+        host="decisions.example.com",
+        scheme="https",
+        is_local=False,
+        allow_insecure_transport=False,
+        request_timeout=1.0,
+    )
+    monkeypatch.setattr(ep_mod, "remote_health", lambda _: None)
+    status = ep_mod.endpoint_status(ep)
+    assert status["reachable"] is False
+    assert status["engine"] is None
 
 
 def test_version_flag_reports_the_installed_distribution(capsys):
