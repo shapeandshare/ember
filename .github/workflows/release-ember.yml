@@ -135,6 +135,23 @@ jobs:
             fi
             exit "$code"
           fi
+
+          # Regenerate deployment/requirements.txt against the version cz bump
+          # just wrote to pyproject.toml, and fold it into the same bump
+          # commit (not pushed yet). Without this, the pinned ember-advise==
+          # version in the deployed container silently drifts behind every
+          # release until someone remembers to run `make
+          # deployment-requirements` by hand — see
+          # vault/decisions/2026-10-10-automate-deployment-requirements-in-release.md.
+          # deployment/** does not match this workflow's ember/**/evals/**
+          # paths filter, so amending it here carries no loop-prevention risk
+          # (see the Loop prevention note at the top of this file).
+          make deployment-requirements
+          if ! git diff --quiet -- deployment/requirements.txt; then
+            git add deployment/requirements.txt
+            git commit --amend --no-edit
+          fi
+
           BUMP_TAG="v$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)"
           echo "tag=${BUMP_TAG}" >> "$GITHUB_OUTPUT"
           echo "branch=ci/bump-${BUMP_TAG}" >> "$GITHUB_OUTPUT"
