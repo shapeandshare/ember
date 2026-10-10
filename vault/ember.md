@@ -72,6 +72,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-10-fast-bakery-strips-ember-advise-from-deploy-requirements]]
 - [[2026-10-10-probe-items-cannot-resolve-the-tolerance]]
 - [[2026-10-10-memory-checks-bound-each-models-cap]]
+- [[2026-10-10-remote-health-probe-sent-no-auth-header]]
 
 ### Sessions
 
