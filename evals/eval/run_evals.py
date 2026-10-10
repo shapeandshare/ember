@@ -102,15 +102,33 @@ def _model_name(engine: dict[str, Any]) -> str:
     return Path(raw).name
 
 
-def _engine(server: str) -> dict[str, Any]:
+def _health(server: str) -> dict[str, Any]:
+    """Return ``GET /health``'s body, authenticated, or ``{}`` on failure.
+
+    Parameters
+    ----------
+    server : str
+        The model server's base URL.
+
+    Returns
+    -------
+    dict[str, Any]
+        The parsed ``/health`` body (``status``, ``pid``, ``engine``,
+        ``version``, ``auth_required``), or ``{}`` if the request fails or
+        the response is not valid JSON. Sends ``build_auth_headers()`` so a
+        gateway-authenticated hosted deployment (one that gates ``/health``
+        behind the same credential as ``/v1/systemone``) is actually reached;
+        without it, a non-2xx response carries no ``engine``/``version`` keys
+        and this degrades to ``{}`` silently.
+    """
     try:
         response = httpx.get(
             f"{server}/health", timeout=5.0, headers=build_auth_headers()
         )
-        engine = response.json().get("engine")
+        body = response.json()
     except (httpx.HTTPError, ValueError):
         return {}
-    return engine if isinstance(engine, dict) else {}
+    return body if isinstance(body, dict) else {}
 
 
 def _load(
@@ -191,7 +209,9 @@ def run_evals(
         print(f"dry run: {len(items)} items listed, no requests sent")
         return 0
 
-    engine = _engine(server)
+    health = _health(server)
+    engine = health.get("engine") or {}
+    server_version = health.get("version")
     model = _model_name(engine)
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     run_id = f"{model}_{timestamp}"
@@ -245,6 +265,7 @@ def run_evals(
         "model": model,
         "model_spec": model_spec_info(model),
         "engine": engine,
+        "server_version": server_version,
         "host": host_info(),
         "server": server,
         "dataset": dataset_path.name,

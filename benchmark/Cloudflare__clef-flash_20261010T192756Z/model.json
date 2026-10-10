@@ -2,10 +2,15 @@
   "meta": {
     "run_id": "Cloudflare__clef-flash_20261010T192756Z",
     "run_at": "2026-10-10 19:27 UTC",
-    "generated_at": "2026-10-10 19:32 UTC",
+    "generated_at": "2026-10-10 19:57 UTC",
     "git_hash": "6ff5120",
     "model": "Cloudflare__clef-flash",
-    "model_spec": {},
+    "model_spec": {
+      "name": "flash",
+      "repo": "Cloudflare/clef-flash",
+      "params": "9B",
+      "revision": "17f0b0ad64efb65d273590632833508766b2aae6"
+    },
     "engine": {
       "model": "s3://obp-0ttxc8-metaflow/metaflow/model-pipelines-dev/Cloudflare__clef-flash/artifacts/model_file",
       "device": "cuda",
@@ -15,6 +20,7 @@
       "max_request_length": 24576,
       "max_request_length_source": "fallback"
     },
+    "server_version": null,
     "host": {
       "platform": "macOS-26.5.2-arm64-arm-64bit",
       "cpu": "Apple M5 Pro",

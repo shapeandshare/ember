@@ -5,7 +5,6 @@
     {%- assign durl = '/docs/' | append: doc.slug | append: '/' %}
     <li><a href="{{ durl | relative_url }}"{% if page.url == durl %} aria-current="page"{% endif %}>{{ doc.title }}</a></li>
     {%- endfor %}
-    {%- assign bench_home = site.data.benchmark.sections[0].anchor | default: "summary" %}
-    <li><a href="{{ '/results/' | append: bench_home | append: '/' | relative_url }}">Benchmark report</a></li>
+    <li><a href="{{ '/results/' | relative_url }}">Benchmark leaderboard</a></li>
   </ul>
 </nav>
