@@ -112,6 +112,7 @@ message kept).
 | `OOM` | `oom` | MPS ran out of memory |
 | `ACCURACY` | `accuracy` | Accuracy more than the tolerance below the 2K result |
 | `BRIER` | `brier` | Brier score more than the tolerance above the 2K result |
+| `ERROR` | `error` | An inference at that length and depth raised an error, or nothing ran there, so the cell can't be scored |
 
 ### ProbeModel (Pydantic)
 
@@ -165,7 +166,8 @@ first item's rows for that length, so the quality pass skips them by this key.
 ### CellResult (Pydantic; in `summary.json`)
 
 Fields: `model`, `length`, `depth`, `exploratory`, `n_items`, `accuracy`, `brier`, `ece`,
-`delta_accuracy`, `delta_accuracy_ci` (`[lo, hi]`), `delta_brier`, `delta_brier_ci`.
+`delta_accuracy`, `delta_accuracy_ci` (`[lo, hi]`), `delta_brier`, `delta_brier_ci`, and
+`n_errors` (inferences that raised; any error makes the cell unscorable).
 
 Deltas are paired: the same items at the same depth, compared against the 2K cell.
 Baseline cells have deltas of 0.
@@ -181,7 +183,7 @@ Baseline cells have deltas of 0.
 | `quality_ok` | bool; `None` when skipped for memory |
 | `passes` | bool |
 | `reason` | `FailureReason`; `None` when the length passes |
-| `failed_depth` | `Depth` for an `accuracy` or `brier` failure; otherwise `None` |
+| `failed_depth` | `Depth` for an `accuracy`, `brier`, or `error` failure; otherwise `None` |
 
 ### ModelVerdict (Pydantic)
 

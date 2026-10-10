@@ -96,16 +96,20 @@ def _cells(
     manifest: ProbeManifest,
 ) -> list[CellResult]:
     scores: dict[tuple[int, Depth], dict[str, ItemScore]] = defaultdict(dict)
+    errors: dict[tuple[int, Depth], int] = defaultdict(int)
     exploratory: dict[tuple[int, Depth], bool] = {}
     for row in rows:
-        if row.status is not RowStatus.OK:
-            continue
         cell = (row.length, row.depth)
-        scores[cell][row.item_id] = item_scores(items[row.item_id], row.answers)
+        if row.status is RowStatus.OOM:
+            continue  # a memory failure, judged from the length's memory
         exploratory[cell] = exploratory.get(cell, True) and row.exploratory
+        if row.status is RowStatus.ERROR:
+            errors[cell] += 1
+            continue
+        scores[cell][row.item_id] = item_scores(items[row.item_id], row.answers)
     baseline_length = manifest.lengths[0]
     cells: list[CellResult] = []
-    ordered = sorted(scores, key=lambda cell: (cell[0], _DEPTH_ORDER[cell[1]]))
+    ordered = sorted(exploratory, key=lambda cell: (cell[0], _DEPTH_ORDER[cell[1]]))
     for length, depth in ordered:
         by_item = scores[(length, depth)]
         base = scores.get((baseline_length, depth), {})
@@ -147,6 +151,7 @@ def _cells(
                         "delta_brier_ci": (0.0, 0.0)
                         if baseline
                         else delta_ci(brier, **ci),
+                        "n_errors": errors[(length, depth)],
                     }
                 )
             )

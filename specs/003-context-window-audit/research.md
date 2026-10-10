@@ -327,6 +327,8 @@ RAM and is applied unchanged. The decision record should show both numbers.
   - accuracy ≥ that depth's 2K accuracy − 0.02
   - Brier ≤ that depth's 2K Brier + 0.02
   - the length's peak memory fits the model's budget
+  - every inference at that depth succeeded: a cell with an errored row can't be scored,
+    so it fails the length with reason `error` instead of being scored on fewer items
 - **The cap** is the longest length that passes, along with every shorter length.
 - **If no length passes** (2K over budget), there is no cap. The default stays unchanged
   and the summary says so, leaving the call to a human.

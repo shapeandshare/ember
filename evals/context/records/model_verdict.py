@@ -5,7 +5,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from .depth import Depth
-from .failure_reason import QUALITY_REASONS, FailureReason
+from .failure_reason import DEPTH_REASONS, FailureReason
 
 
 class ModelVerdict(BaseModel):
@@ -13,7 +13,7 @@ class ModelVerdict(BaseModel):
 
     ``cap`` is the longest length that passes along with every shorter one, or
     ``None`` when none does. The failure fields are ``None`` when nothing
-    failed; ``first_failure_depth`` is set only for an accuracy or brier failure.
+    failed; ``first_failure_depth`` is set only for a depth failure.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -32,7 +32,7 @@ class ModelVerdict(BaseModel):
         elif self.first_failure_reason is None:
             raise ValueError("a failure needs a reason")
         elif (self.first_failure_depth is not None) != (
-            self.first_failure_reason in QUALITY_REASONS
+            self.first_failure_reason in DEPTH_REASONS
         ):
-            raise ValueError("first_failure_depth is set only for a quality failure")
+            raise ValueError("first_failure_depth is set only for a depth failure")
         return self

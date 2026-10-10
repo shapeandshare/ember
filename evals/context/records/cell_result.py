@@ -11,6 +11,7 @@ class CellResult(BaseModel):
     """Scores for one (model, length, depth), with deltas paired against 2K.
 
     Deltas pair the same items at the same depth; the 2K cells have deltas of 0.
+    ``n_errors`` counts inferences that raised; any error makes the cell unscorable.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -27,3 +28,4 @@ class CellResult(BaseModel):
     delta_accuracy_ci: tuple[float, float]
     delta_brier: float
     delta_brier_ci: tuple[float, float]
+    n_errors: int = Field(default=0, ge=0)

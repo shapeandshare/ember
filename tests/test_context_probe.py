@@ -201,6 +201,7 @@ def _cell(
     exploratory: bool = False,
     delta_accuracy: float = 0.0,
     delta_brier: float = 0.0,
+    n_errors: int = 0,
 ) -> CellResult:
     return CellResult(
         model="flash",
@@ -215,6 +216,7 @@ def _cell(
         delta_accuracy_ci=(delta_accuracy, delta_accuracy),
         delta_brier=delta_brier,
         delta_brier_ci=(delta_brier, delta_brier),
+        n_errors=n_errors,
     )
 
 
@@ -270,6 +272,7 @@ def test_the_probe_enums_have_their_contract_values():
         "oom",
         "accuracy",
         "brier",
+        "error",
     ]
 
 
@@ -720,7 +723,26 @@ def test_exploratory_cells_are_judged_on_their_paired_deltas():
 def test_a_missing_cell_fails_the_length():
     cells = [*_cells({2048: (0.9, 0.1)}), _cell(4096, Depth.START, 0.9, 0.1)]
     verdicts, _ = _evaluate(cells, _memory([2048, 4096]))
-    assert (verdicts[1].passes, verdicts[1].failed_depth) == (False, Depth.MIDDLE)
+    assert (verdicts[1].passes, verdicts[1].reason, verdicts[1].failed_depth) == (
+        False,
+        FailureReason.ERROR,
+        Depth.MIDDLE,
+    )
+
+
+def test_a_cell_with_an_errored_inference_fails_the_length():
+    cells = [
+        *_cells({2048: (0.9, 0.1)}),
+        _cell(4096, Depth.START, 0.9, 0.1),
+        _cell(4096, Depth.MIDDLE, 0.9, 0.1, n_errors=1),
+        _cell(4096, Depth.END, 0.9, 0.1),
+    ]
+    verdicts, verdict = _evaluate(cells, _memory([2048, 4096]))
+    assert (verdicts[1].reason, verdicts[1].failed_depth) == (
+        FailureReason.ERROR,
+        Depth.MIDDLE,
+    )
+    assert verdict.cap == 2048
 
 
 # ###########################################################################
@@ -757,6 +779,17 @@ def test_the_summary_records_the_median_latency_of_ok_rows(tmp_path):
     assert verdict.latency_ms_median == statistics.median(
         [100.0, 200.0, 300.0, 400.0, 500.0]
     )
+
+
+def test_an_errored_inference_is_counted_and_fails_its_length(tmp_path):
+    rows = _rows()
+    rows[-1] = _row("b2", 4096, Depth.END, status=RowStatus.ERROR)
+    summary = summarize.summarize(_write_run(tmp_path / "run", rows))
+    cell = next(c for c in summary.cells if (c.length, c.depth) == (4096, Depth.END))
+    assert (cell.n_items, cell.n_errors) == (1, 1)
+    verdict = next(v for v in summary.lengths if v.length == 4096)
+    assert (verdict.reason, verdict.failed_depth) == (FailureReason.ERROR, Depth.END)
+    assert summary.verdicts[0].cap == 2048
 
 
 def test_the_summary_digests_its_inputs(tmp_path):

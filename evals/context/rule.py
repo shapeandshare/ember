@@ -32,9 +32,9 @@ def _quality_failure(
 ) -> tuple[FailureReason, Depth] | None:
     for depth in depths:
         cell, base = cells.get(depth), baseline.get(depth)
-        if cell is None or base is None:
-            # Nothing measured at this depth: the length can't be shown to pass.
-            return FailureReason.ACCURACY, depth
+        if cell is None or base is None or cell.n_errors or base.n_errors:
+            # An errored or missing cell can't be scored, so the length can't pass.
+            return FailureReason.ERROR, depth
         if cell.exploratory:
             # A subset cell compares with 2K on the same items: its paired delta.
             drop, rise = cell.delta_accuracy, cell.delta_brier

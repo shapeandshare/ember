@@ -5,14 +5,14 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .depth import Depth
-from .failure_reason import QUALITY_REASONS, FailureReason
+from .failure_reason import DEPTH_REASONS, FailureReason
 
 
 class LengthVerdict(BaseModel):
     """Whether one length passes, and why not when it fails.
 
     A passing length has no reason. A failing one has a ``FailureReason``, and a
-    ``failed_depth`` exactly when the reason is ``accuracy`` or ``brier``.
+    ``failed_depth`` exactly when the reason is ``accuracy``, ``brier``, or ``error``.
     ``quality_ok`` is ``None`` when memory failed first.
     """
 
@@ -37,8 +37,6 @@ class LengthVerdict(BaseModel):
                 raise ValueError("a passing length has no failure")
         elif self.reason is None:
             raise ValueError("a failing length needs a reason")
-        elif (self.failed_depth is not None) != (self.reason in QUALITY_REASONS):
-            raise ValueError(
-                "failed_depth is set only for an accuracy or brier failure"
-            )
+        elif (self.failed_depth is not None) != (self.reason in DEPTH_REASONS):
+            raise ValueError("failed_depth is set only for a depth failure")
         return self
