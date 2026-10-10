@@ -49,6 +49,8 @@ Callers:
 | Field | Type | Rule |
 |-------|------|------|
 | `max_request_length` | `int \| None` = `None` | The cap the FR-010 rule chose for this model, set from the canonical probe run. `None` until measured. When set, 2,048 ≤ value ≤ declared maximum (a test checks this) |
+| `memory_budget_bytes` | `int` | Peak memory one request may use: the model's documented minimum (32 GiB for flash, 64 GiB for full). The probe fails any length over it. Moved here from the probe's `MEMORY_BUDGETS` on 2026-10-10 |
+| `fallback_request_length` | `int` | The default cap until measured: the longest probe length whose peak fits `memory_budget_bytes` (24,576 for flash, 16,384 for full), reported as `fallback`. Added 2026-10-10 |
 
 `registry_key(name) -> str | None` returns the registry key unless `EMBER_MODEL_DIR`
 overrides the directory. Callers pass `None` for a hosted (`EMBER_MODEL_S3_URI`) model.

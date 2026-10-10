@@ -52,8 +52,9 @@ Expected:
 - `engine` shows `max_length`, `max_length_source`, `max_request_length`, and
   `max_request_length_source` ([http-api.md](./contracts/http-api.md)).
 - The log has one `limits:` line from model load.
-- doctor prints `[info] limits: enforced 32768 tokens; …; live from local server`. Until
-  the probe has run, it shows `max_request_length 32768 (fallback)`.
+- doctor prints `[info] limits: enforced 24576 tokens; …; live from local server` for
+  flash. Until the probe has run, it shows `max_request_length 24576 (fallback)` (16384
+  for full).
 
 ```bash
 ember stop && ember doctor | grep limits
