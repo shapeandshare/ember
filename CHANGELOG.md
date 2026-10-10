@@ -1,3 +1,9 @@
+## v0.10.0 (2026-10-10)
+
+### Feat
+
+- **ember**: give each registered model its own memory-checked fallback request cap (#96)
+
 ## v0.9.1 (2026-10-10)
 
 ### Fix
