@@ -125,7 +125,8 @@ def refusal_message(size: RequestSize, limits: Limits, declared: int | None) -> 
         )
     else:
         name, setting = "maximum length", "EMBER_MAX_LENGTH"
-        if limits.max_length_source is LimitSource.MODEL:
+        at_declared = declared is not None and limits.max_length >= declared
+        if limits.max_length_source is LimitSource.MODEL or at_declared:
             hint = "This is the model's own maximum and cannot be raised."
         elif declared is None:
             # A fallback or operator maximum over an unknown declaration can be raised.
