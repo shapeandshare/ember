@@ -344,6 +344,7 @@ def test_allowed_media_kwargs_contains_expected_keys():
         "do_resize",
         "size",
         "do_convert_rgb",
+        "cap_pixels_per_frame",
     }
     assert expected == media.ALLOWED_MEDIA_KWARGS
 

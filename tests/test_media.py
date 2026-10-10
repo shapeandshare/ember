@@ -154,6 +154,7 @@ def test_check_media_kwargs_accepts_every_allowed_key():
         "do_resize": True,
         "size": {"shortest_edge": 8},
         "do_convert_rgb": True,
+        "cap_pixels_per_frame": True,
     }
     assert set(allowed) == media.ALLOWED_MEDIA_KWARGS
     media.check_media_kwargs(allowed)
@@ -164,8 +165,8 @@ def test_check_media_kwargs_rejects_an_unknown_key_listing_both_sets():
         media.check_media_kwargs({"zeta": 1, "alpha": 2, "fps": 1})
     assert str(excinfo.value) == (
         "media_kwargs keys not permitted: alpha, zeta. Permitted keys: "
-        "do_convert_rgb, do_resize, fps, max_frames, max_pixels, min_frames, "
-        "min_pixels, size"
+        "cap_pixels_per_frame, do_convert_rgb, do_resize, fps, max_frames, "
+        "max_pixels, min_frames, min_pixels, size"
     )
 
 
