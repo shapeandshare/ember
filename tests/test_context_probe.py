@@ -1131,3 +1131,26 @@ def test_resuming_a_reproduction_keeps_its_comparison_target(monkeypatch, tmp_pa
     args = argparse.Namespace(resume=copy_id, reproduce=None, items=None)
     _, manifest, original_dir = run_context._prepare(args)
     assert (manifest.reproduces, original_dir) == (RUN_ID, original)
+
+
+def test_a_resumed_worker_takes_its_first_failure_only_from_finished_lengths():
+    from evals.context import worker
+
+    summary = _summary().model_copy(
+        update={
+            "lengths": [
+                _length_verdict(
+                    length=2048,
+                    passes=True,
+                    quality_ok=True,
+                    reason=None,
+                    failed_depth=None,
+                ),
+                _length_verdict(length=4096),
+                _length_verdict(length=8192),
+            ]
+        }
+    )
+    assert worker.first_failure_at(summary, "flash", 2048) is None
+    assert worker.first_failure_at(summary, "flash", 4096) == 4096
+    assert worker.first_failure_at(summary, "flash", 8192) == 4096

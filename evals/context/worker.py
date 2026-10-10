@@ -21,6 +21,7 @@ from .padding import build_state
 from .records.depth import Depth
 from .records.probe_manifest import ProbeManifest
 from .records.probe_row import ProbeRow
+from .records.probe_summary import ProbeSummary
 from .records.row_status import RowStatus
 from .rows_file import append_row, pending, read_rows, repair
 from .summarize import dataset_items, load_manifest, rows_name, summarize
@@ -172,6 +173,20 @@ class _Prober:
         return [row for row in read_rows(self.path) if row.key in wanted]
 
 
+def first_failure_at(summary: ProbeSummary, model: str, upto: int) -> int | None:
+    """Return the model's first failing length among those up to ``upto``.
+
+    A resumed run may hold partial rows for longer lengths; only lengths whose
+    full pool has run count.
+    """
+    failing = [
+        verdict.length
+        for verdict in summary.lengths
+        if verdict.model == model and verdict.length <= upto and not verdict.passes
+    ]
+    return min(failing) if failing else None
+
+
 def run_model(run_dir: Path, model: str, *, pilot: bool = False) -> int:
     """Run ``model``'s cells for the run in ``run_dir``; return an exit code.
 
@@ -192,7 +207,7 @@ def run_model(run_dir: Path, model: str, *, pilot: bool = False) -> int:
     budget = manifest.models[model].memory_budget_bytes
     first_failure: int | None = None
     for length in lengths:
-        exploratory = first_failure is not None
+        exploratory = first_failure is not None and length > first_failure
         check = prober.run(
             [(manifest.item_ids[0], d) for d in depths], length, exploratory
         )
@@ -207,6 +222,5 @@ def run_model(run_dir: Path, model: str, *, pilot: bool = False) -> int:
             [(item_id, d) for item_id in pool for d in depths], length, exploratory
         )
         if not pilot and first_failure is None:
-            verdict = next(v for v in summarize(run_dir).verdicts if v.model == model)
-            first_failure = verdict.first_failure_length
+            first_failure = first_failure_at(summarize(run_dir), model, length)
     return 0
