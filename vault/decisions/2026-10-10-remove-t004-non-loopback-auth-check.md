@@ -14,7 +14,7 @@ code-refs:
   - docs/stride-tracker.csv
   - docs/stride-review.md
   - SECURITY.md
-  - deployment/deploy.yaml
+  - deployment/flash.yaml
   - deployment/README.md
 ---
 

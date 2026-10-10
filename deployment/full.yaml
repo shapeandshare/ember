@@ -1,0 +1,138 @@
+# Outerbounds App Deployment contract for ember, serving `full` (27B).
+#
+# Deploy with:
+#   outerbounds app deploy --config-file deployment/full.yaml --package-src-path . --readiness-condition async
+#
+# ember runs as the model server itself here (`ember serve`), not a client —
+# this pod *is* the EMBER_SERVER_URL a remote client points at. Regenerate
+# deployment/requirements.txt before every deploy (`make deployment-requirements`);
+# Outerbounds' Fast Bakery resolves dependencies from it, not from pyproject.toml
+# directly.
+#
+# GPU (constitution Article VI, "Apple Silicon and CUDA"): Outerbounds compute is
+# Linux, so there is no MPS here — EMBER_DEVICE=cuda targets an attached NVIDIA
+# GPU. torch's default PyPI wheel already includes CUDA support on Linux; no
+# special index or extra is needed.
+#
+# `name` is Outerbounds' globally unique deployment identifier — see
+# deployment/flash.yaml for the sibling deployment serving `flash` (9B); the
+# two must never share a name; they deploy and scale independently, and
+# (see `compute_pools` below) must not land on the same compute pool: `full`
+# needs a materially bigger GPU than `flash` does.
+
+name: ember-full
+port: 8765
+
+tags:
+  - team: your-team
+  - owner: you@example.com
+
+# EMBER_MODEL_S3_URI names the exact model location directly — there is no
+# REGISTRY lookup for this path (constitution Article V, "Model Loading"; see
+# ember/serving/hosted.py). This placeholder MUST be replaced with the real
+# S3 location of `full`'s uploaded weights before deploying — unlike
+# flash.yaml, which already points at a real, deployed location, `full`'s
+# weights have not been uploaded to a bucket yet as of this writing. The
+# path shape matches what ember/models.py downloads for `full` from Hugging
+# Face (Cloudflare/clef, revision 2f3de3dd85f379784083b0814d997ab627200f0c):
+# config.json, joint_schema_model.py, joint_head.safetensors,
+# joint_head_config.json, model.safetensors.index.json, and the sharded
+# model-*.safetensors weight files. EMBER_AUTOSTART=0 because this pod itself
+# is the server; nothing should try to spawn another one.
+# EMBER_SERVER_AUTH_TOKEN is deliberately NOT set — access control is handled
+# by Outerbounds' own `auth.type: API` below (every platform user already has
+# a personal Outerbounds/Metaflow token), so ember's own optional bearer-auth
+# layer would be redundant for this deployment.
+environment:
+  EMBER_HOST: "0.0.0.0"
+  EMBER_PORT: "8765"
+  EMBER_DEVICE: "cuda"
+  EMBER_MODEL_S3_URI: "s3://your-bucket/your-prefix/Cloudflare__clef/artifacts/model_file"
+  EMBER_AUTOSTART: "0"
+
+# No secrets needed: EMBER_MODEL_S3_URI downloads via the compute pool's
+# attached IAM role (boto3's default credential chain — see
+# vault/decisions/2026-10-08-optional-s3-credentials-iam-role.md), and
+# `auth.type: API` below (not an ember-side token) gates request access.
+secrets: []
+
+# `ember serve` runs the model server in the foreground — the correct mode
+# for a container (no pidfile/background lifecycle; `ember start` is for a
+# developer's own machine, not here).
+commands:
+  - ember serve
+
+# Fast Bakery resolves these from requirements.txt at build time.
+dependencies:
+  python: "3.12"
+  from_requirements_file: deployment/requirements.txt
+
+# Sized for `full` (27B) on CUDA in float16: ~55 GiB of weights
+# (ember/models.py REGISTRY["full"].approx_bytes), and COMPATIBILITY.md's
+# measured floor of 96 GB total memory (a 65,536-token request peaked at
+# 90.80 GiB on MPS; the long-context probe's memory check sized `full`'s own
+# `memory_budget_bytes` at 96 GiB for the identical reason — see
+# vault/decisions/2026-10-10-per-model-request-caps.md). `load_clef()`
+# (ember/serving/runtime.py) loads on CPU first, then moves to the GPU, so
+# system RAM must transiently hold the full float16 weights too — hence
+# `resources.memory` matching the GPU VRAM floor, the same pattern as
+# flash.yaml.
+#
+# GPU: full's ~55 GiB of float16 weights alone exceed every single-GPU
+# option in the G5/G6e family flash.yaml considers (A10G 24 GB, L40S 48 GB)
+# before activations or KV-cache are even counted — those pools are not
+# viable for `full` regardless of instance size within that family (the
+# VRAM ceiling does not improve with a bigger instance of the *same* GPU
+# model; see flash.yaml's comment). `full` needs an 80 GB-class GPU instead:
+# AWS's P5 family's single-GPU size, p5.4xlarge (1x NVIDIA H100, 80 GB HBM3,
+# 256 GiB system RAM, 16 vCPU), leaves roughly 25 GiB of VRAM headroom for
+# activations/KV-cache after the ~55 GiB of weights — untested against real
+# hardware (see COMPATIBILITY.md: "full ... not yet verified"). ember has no
+# multi-GPU support (`ember/serving/runtime.py::load_clef` moves the whole
+# model to one device with `.to(device)`), so a multi-GPU instance such as
+# p4d.24xlarge (8x A100 40 GB) does not help here — only a single GPU with
+# enough VRAM on its own does.
+#
+# cpu is intentionally moderate, not maxed to p5.4xlarge's full 16 vCPU —
+# inference itself runs on the GPU; the CPU only handles request routing,
+# tokenization, and the one-time S3 model download at startup, none of which
+# is CPU-intensive. Lowering cpu does NOT address a memory-constrained
+# compute pool (Kubernetes schedules cpu/memory independently) — if
+# `outerbounds app deploy` reports a pool's memory is insufficient, the pool
+# itself needs more RAM, not a smaller cpu request.
+#
+# disk follows flash.yaml's weights-to-disk ratio (30 GiB disk for ~18 GiB
+# weights, ~1.7x headroom for the download plus extraction), rounded up for
+# `full`'s larger weights: ~55 GiB x 1.7 ~= 92 GiB, rounded to 100Gi.
+resources:
+  cpu: "4"
+  memory: "96Gi"
+  disk: "100Gi"
+  gpu: "1"
+
+# compute_pools is OPTIONAL (see docs.outerbounds.com/outerbounds/inference-deep-dive
+# "Targeting compute pools") — left commented out here because, unlike
+# flash.yaml's `ai-sage-inf-gpu`, no pool with an 80 GB-class GPU has been
+# confirmed available in this workspace yet (see the `resources` comment
+# above for why flash's pool cannot serve `full`). Uncomment and name a pool
+# here only after confirming it has both enough schedulable system RAM (the
+# scheduler validates this one at deploy time — an undersized pool fails
+# immediately) AND enough GPU VRAM for `full` (NOT validated at deploy time;
+# an undersized GPU is silently accepted and only fails later, as a CUDA
+# out-of-memory error in the running pod's own logs — see
+# deployment/README.md's "Choosing the model and sizing GPU memory"), e.g.:
+#   compute_pools:
+#     - <your-p5-4xlarge-or-larger-pool>
+
+replicas:
+  fixed: 1
+
+# API auth, not Browser/None: Outerbounds gates the endpoint with each
+# caller's own platform token (no ember-side EMBER_SERVER_AUTH_TOKEN needed —
+# see the `environment` comment above). A remote client attaches it as
+# `x-api-key: <METAFLOW_SERVICE_AUTH_KEY>` per Outerbounds' own API-auth
+# contract (docs.outerbounds.com/outerbounds/first-inference-deployment).
+auth:
+  type: API
+
+generate_static_url: true

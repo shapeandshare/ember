@@ -43,22 +43,36 @@ deployment-requirements: $(EMBER) ## Regenerate deployment/requirements.txt from
 	$(UV) export --format requirements.txt --no-dev --no-editable --no-hashes --no-emit-project -o deployment/requirements.txt
 	$(PY) scripts/freeze_deployment_requirements.py
 
-deploy: deployment-requirements ## Deploy ember to Outerbounds (validates deploy.yaml is filled in first)
-	@if grep -q "<CONFIRM-" deployment/deploy.yaml; then \
-		printf "error: deployment/deploy.yaml still has unresolved <CONFIRM-...> placeholders:\n"; \
-		grep -n "<CONFIRM-" deployment/deploy.yaml; \
+# EMBER_DEPLOY_MODEL selects which of deployment/{flash,full}.yaml to deploy
+# (default flash, the pre-existing live deployment) — e.g.
+# `make deploy EMBER_DEPLOY_MODEL=full`. The app name (`ember-flash`/
+# `ember-full`) is fixed inside each file, not derived here, so a typo in
+# this variable fails at the missing-file check below rather than silently
+# targeting the wrong deployment.
+EMBER_DEPLOY_MODEL ?= flash
+EMBER_DEPLOY_CONFIG := deployment/$(EMBER_DEPLOY_MODEL).yaml
+
+deploy: deployment-requirements ## Deploy ember to Outerbounds (EMBER_DEPLOY_MODEL=flash|full, default flash)
+	@if [ ! -f "$(EMBER_DEPLOY_CONFIG)" ]; then \
+		printf "error: no such deployment config: %s\n" "$(EMBER_DEPLOY_CONFIG)"; \
+		printf "  choose EMBER_DEPLOY_MODEL=flash or EMBER_DEPLOY_MODEL=full\n"; \
+		exit 1; \
+	fi
+	@if grep -qE "your-(bucket|prefix)" "$(EMBER_DEPLOY_CONFIG)"; then \
+		printf "error: %s's EMBER_MODEL_S3_URI still has an unresolved placeholder:\n" "$(EMBER_DEPLOY_CONFIG)"; \
+		grep -nE "your-(bucket|prefix)" "$(EMBER_DEPLOY_CONFIG)"; \
 		exit 1; \
 	fi
 	$(UV) run outerbounds app deploy \
-		--config-file deployment/deploy.yaml \
+		--config-file $(EMBER_DEPLOY_CONFIG) \
 		--package-src-path . \
 		--readiness-condition async
 
-undeploy: ## Delete the ember deployment from Outerbounds (set EMBER_FORCE=1 to skip the prompt)
+undeploy: ## Delete an ember deployment from Outerbounds (EMBER_DEPLOY_MODEL=flash|full, default flash; set EMBER_FORCE=1 to skip the prompt)
 	@if [ "$(EMBER_FORCE)" != "1" ]; then \
-		printf "This will delete the 'ember' app deployment from Outerbounds. Set EMBER_FORCE=1 to skip this prompt.\n"; \
-		printf "Continue? [y/N] "; \
+		printf "This will delete the 'ember-%s' app deployment from Outerbounds.\n" "$(EMBER_DEPLOY_MODEL)"; \
+		printf "Set EMBER_FORCE=1 to skip this prompt. Continue? [y/N] "; \
 		read ans; \
 		[ "$$ans" = "y" ] || [ "$$ans" = "Y" ] || { printf "Aborted.\n"; exit 1; }; \
 	fi
-	$(UV) run outerbounds app delete --name ember --auto-approve
+	$(UV) run outerbounds app delete --name ember-$(EMBER_DEPLOY_MODEL) --auto-approve

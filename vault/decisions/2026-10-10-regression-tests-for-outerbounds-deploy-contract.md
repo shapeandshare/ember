@@ -11,7 +11,7 @@ updated: "2026-10-10"
 code-refs:
   - tests/test_http_api.py
   - tests/test_freeze_deployment_requirements.py
-  - deployment/deploy.yaml
+  - deployment/flash.yaml
   - deployment/requirements.txt
   - ember/serving/server.py
   - scripts/freeze_deployment_requirements.py

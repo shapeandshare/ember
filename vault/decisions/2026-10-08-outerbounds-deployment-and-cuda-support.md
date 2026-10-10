@@ -11,7 +11,7 @@ tags:
 code-refs:
   - ember/serving/runtime.py
   - ember/commands/lifecycle.py
-  - deployment/deploy.yaml
+  - deployment/flash.yaml
   - deployment/requirements.txt
   - deployment/README.md
   - shared/release.mk
