@@ -1,3 +1,9 @@
+## v0.8.1 (2026-10-09)
+
+### Fix
+
+- **ember**: STRIDE security mitigations — 11 threats resolved across all layers (#92)
+
 ## v0.8.0 (2026-10-09)
 
 ### BREAKING CHANGE
