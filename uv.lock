@@ -490,7 +490,7 @@ wheels = [
 
 [[package]]
 name = "ember-advise"
-version = "0.10.0"
+version = "0.10.1"
 source = { editable = "." }
 dependencies = [
     { name = "accelerate" },
