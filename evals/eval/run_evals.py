@@ -73,9 +73,41 @@ def _resolve_server(flag: str | None) -> str:
         return DEFAULT_SERVER
 
 
+def _model_name(engine: dict[str, Any]) -> str:
+    """Return a short, filesystem-safe model identifier from an engine dict.
+
+    Parameters
+    ----------
+    engine : dict[str, Any]
+        The ``engine`` object from ``GET /health`` (``Engine.describe()``).
+
+    Returns
+    -------
+    str
+        For a local server, ``engine["model"]`` is already the registry's
+        short name (``Engine.model_name`` defaults to ``model_dir.name``) and
+        is returned as-is. For a hosted/S3 deployment, ``engine["model"]`` is
+        the full ``s3://bucket/.../<model>/artifacts/<file>`` URI
+        (``model_name=hosted_source.uri`` in ``ember/serving/server.py``);
+        this returns the path segment just before ``artifacts``, the
+        meaningful model identifier, rather than the trailing filename.
+        ``"unknown"`` when ``model`` is missing.
+    """
+    raw = str(engine.get("model", "unknown"))
+    if raw.startswith("s3://"):
+        parts = [p for p in raw.split("/") if p]
+        if "artifacts" in parts:
+            return parts[parts.index("artifacts") - 1]
+        return parts[-1] if parts else "unknown"
+    return Path(raw).name
+
+
 def _engine(server: str) -> dict[str, Any]:
     try:
-        engine = httpx.get(f"{server}/health", timeout=5.0).json().get("engine")
+        response = httpx.get(
+            f"{server}/health", timeout=5.0, headers=build_auth_headers()
+        )
+        engine = response.json().get("engine")
     except (httpx.HTTPError, ValueError):
         return {}
     return engine if isinstance(engine, dict) else {}
@@ -160,7 +192,7 @@ def run_evals(
         return 0
 
     engine = _engine(server)
-    model = Path(str(engine.get("model_dir", "unknown"))).name
+    model = _model_name(engine)
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     run_id = f"{model}_{timestamp}"
     RESULTS_DIR.mkdir(exist_ok=True)
@@ -211,7 +243,7 @@ def run_evals(
         "timestamp": timestamp,
         "git_hash": git_hash(),
         "model": model,
-        "model_spec": model_spec_info(str(engine.get("model_dir", ""))),
+        "model_spec": model_spec_info(model),
         "engine": engine,
         "host": host_info(),
         "server": server,

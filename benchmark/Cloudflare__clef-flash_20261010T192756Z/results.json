@@ -1,0 +1,1365 @@
+{
+  "config": {
+    "run_id": "Cloudflare__clef-flash_20261010T192756Z",
+    "timestamp": "20261010T192756Z",
+    "git_hash": "6ff5120",
+    "model": "Cloudflare__clef-flash",
+    "model_spec": {},
+    "engine": {
+      "model": "s3://obp-0ttxc8-metaflow/metaflow/model-pipelines-dev/Cloudflare__clef-flash/artifacts/model_file",
+      "device": "cuda",
+      "dtype": "float16",
+      "max_length": 262144,
+      "max_length_source": "model",
+      "max_request_length": 24576,
+      "max_request_length_source": "fallback"
+    },
+    "host": {
+      "platform": "macOS-26.5.2-arm64-arm-64bit",
+      "cpu": "Apple M5 Pro",
+      "python": "3.12.13",
+      "packages": {
+        "ember-advise": "0.10.2",
+        "torch": "2.14.1",
+        "transformers": "5.18.0",
+        "mcp": "2.3.0"
+      }
+    },
+    "server": "https://api-c-cmvbev4e6i.merced.obp.outerbounds.com",
+    "dataset": "clef-flash.jsonl",
+    "dataset_file": "Cloudflare__clef-flash_20261010T192756Z_dataset.jsonl",
+    "dataset_sha256": "fbb98c3516153987634b11d1ac4c9307e56c43a7131e7de598de557e1c48a050",
+    "trace": "Cloudflare__clef-flash_20261010T192756Z_trace.jsonl",
+    "split": null,
+    "category": null,
+    "n_items": 475,
+    "n_errors": 0,
+    "latency_ms": {
+      "mean": 520.3,
+      "p50": 503.6,
+      "p95": 630.1,
+      "max": 1307.9
+    }
+  },
+  "summary": {
+    "overall": {
+      "items": 475,
+      "questions": 843,
+      "accuracy": 0.8268,
+      "accuracy_ci": [
+        0.8019,
+        0.8529
+      ],
+      "item_accuracy": 0.7432
+    },
+    "choice": {
+      "n": 359,
+      "accuracy": 0.922,
+      "accuracy_ci": [
+        0.8942,
+        0.9499
+      ],
+      "macro_f1": 0.9306,
+      "ece": 0.0834,
+      "mce": 0.2172,
+      "brier": 0.1378,
+      "acting": {
+        "n": 225,
+        "coverage": 0.6267,
+        "accuracy": 0.9867
+      },
+      "reliability": [
+        {
+          "low": 0.3,
+          "high": 0.4,
+          "n": 5,
+          "confidence": 0.3828,
+          "accuracy": 0.6
+        },
+        {
+          "low": 0.4,
+          "high": 0.5,
+          "n": 16,
+          "confidence": 0.4559,
+          "accuracy": 0.625
+        },
+        {
+          "low": 0.5,
+          "high": 0.6,
+          "n": 21,
+          "confidence": 0.5535,
+          "accuracy": 0.7143
+        },
+        {
+          "low": 0.6,
+          "high": 0.7,
+          "n": 18,
+          "confidence": 0.6616,
+          "accuracy": 0.7222
+        },
+        {
+          "low": 0.7,
+          "high": 0.8,
+          "n": 39,
+          "confidence": 0.7537,
+          "accuracy": 0.9231
+        },
+        {
+          "low": 0.8,
+          "high": 0.9,
+          "n": 79,
+          "confidence": 0.8547,
+          "accuracy": 0.9367
+        },
+        {
+          "low": 0.9,
+          "high": 1.0,
+          "n": 181,
+          "confidence": 0.9469,
+          "accuracy": 0.9945
+        }
+      ]
+    },
+    "noul": {
+      "n": 308,
+      "accuracy": 0.9026,
+      "accuracy_ci": [
+        0.8669,
+        0.9351
+      ],
+      "ece": 0.0952,
+      "mce": 0.1319,
+      "brier": 0.0733,
+      "acting": {
+        "n": 195,
+        "coverage": 0.6331,
+        "accuracy": 0.9897
+      },
+      "reliability": [
+        {
+          "low": 0.5,
+          "high": 0.6,
+          "n": 25,
+          "confidence": 0.5439,
+          "accuracy": 0.44
+        },
+        {
+          "low": 0.6,
+          "high": 0.7,
+          "n": 28,
+          "confidence": 0.656,
+          "accuracy": 0.75
+        },
+        {
+          "low": 0.7,
+          "high": 0.8,
+          "n": 60,
+          "confidence": 0.7514,
+          "accuracy": 0.8833
+        },
+        {
+          "low": 0.8,
+          "high": 0.9,
+          "n": 90,
+          "confidence": 0.8543,
+          "accuracy": 0.9778
+        },
+        {
+          "low": 0.9,
+          "high": 1.0,
+          "n": 105,
+          "confidence": 0.9517,
+          "accuracy": 1.0
+        }
+      ]
+    },
+    "score": {
+      "n": 176,
+      "accuracy": 0.5,
+      "accuracy_ci": [
+        0.4261,
+        0.5739
+      ],
+      "within_one": 0.858,
+      "mae": 0.5351,
+      "mae_ci": [
+        0.4718,
+        0.5947
+      ],
+      "rmse": 0.6864,
+      "rps": 0.109
+    },
+    "questions": {
+      "intent": {
+        "type": "choice",
+        "category": "intent_readiness",
+        "n": 108,
+        "accuracy": 0.9815,
+        "macro_f1": 0.9815,
+        "brier": 0.0282
+      },
+      "specific_enough": {
+        "type": "noul",
+        "category": "intent_readiness",
+        "n": 108,
+        "accuracy": 0.8333,
+        "brier": 0.1121
+      },
+      "failure_kind": {
+        "type": "choice",
+        "category": "failure_triage",
+        "n": 92,
+        "accuracy": 0.9565,
+        "macro_f1": 0.956,
+        "brier": 0.1016
+      },
+      "retry": {
+        "type": "noul",
+        "category": "failure_triage",
+        "n": 92,
+        "accuracy": 0.9891,
+        "brier": 0.0285
+      },
+      "risk": {
+        "type": "score",
+        "category": "change_risk",
+        "n": 92,
+        "accuracy": 0.5217,
+        "mae": 0.5287,
+        "rps": 0.1052
+      },
+      "needs_review": {
+        "type": "noul",
+        "category": "change_risk",
+        "n": 92,
+        "accuracy": 0.8804,
+        "brier": 0.0838
+      },
+      "owner": {
+        "type": "choice",
+        "category": "routing",
+        "n": 75,
+        "accuracy": 0.9733,
+        "macro_f1": 0.9732,
+        "brier": 0.0847
+      },
+      "effort": {
+        "type": "score",
+        "category": "effort_approach",
+        "n": 76,
+        "accuracy": 0.4211,
+        "mae": 0.5887,
+        "rps": 0.1238
+      },
+      "approach": {
+        "type": "choice",
+        "category": "effort_approach",
+        "n": 76,
+        "accuracy": 0.7368,
+        "macro_f1": 0.7315,
+        "brier": 0.4039
+      },
+      "dominant_red": {
+        "type": "noul",
+        "category": "vision_noul",
+        "n": 8,
+        "accuracy": 1.0,
+        "brier": 0.007
+      },
+      "dominant_colour": {
+        "type": "choice",
+        "category": "vision_choice",
+        "n": 8,
+        "accuracy": 1.0,
+        "macro_f1": 1.0,
+        "brier": 0.006
+      },
+      "alert_level": {
+        "type": "score",
+        "category": "vision_score",
+        "n": 8,
+        "accuracy": 1.0,
+        "mae": 0.0995,
+        "rps": 0.0103
+      },
+      "colour_changed": {
+        "type": "noul",
+        "category": "vision_video",
+        "n": 8,
+        "accuracy": 1.0,
+        "brier": 0.0113
+      }
+    },
+    "categories": {
+      "intent_readiness": {
+        "items": 108,
+        "item_accuracy": 0.8148,
+        "accuracy": 0.9074
+      },
+      "failure_triage": {
+        "items": 92,
+        "item_accuracy": 0.9457,
+        "accuracy": 0.9728
+      },
+      "change_risk": {
+        "items": 92,
+        "item_accuracy": 0.5217,
+        "accuracy": 0.7011
+      },
+      "routing": {
+        "items": 75,
+        "item_accuracy": 0.9733,
+        "accuracy": 0.9733
+      },
+      "effort_approach": {
+        "items": 76,
+        "item_accuracy": 0.3289,
+        "accuracy": 0.5789
+      },
+      "vision_noul": {
+        "items": 8,
+        "item_accuracy": 1.0,
+        "accuracy": 1.0
+      },
+      "vision_choice": {
+        "items": 8,
+        "item_accuracy": 1.0,
+        "accuracy": 1.0
+      },
+      "vision_score": {
+        "items": 8,
+        "item_accuracy": 1.0,
+        "accuracy": 1.0
+      },
+      "vision_video": {
+        "items": 8,
+        "item_accuracy": 1.0,
+        "accuracy": 1.0
+      }
+    },
+    "misses": [
+      {
+        "id": "intent_001",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2105
+      },
+      {
+        "id": "intent_003",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.45
+      },
+      {
+        "id": "intent_004",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4771
+      },
+      {
+        "id": "intent_005",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2892
+      },
+      {
+        "id": "intent_013",
+        "question": "intent",
+        "gold": "implement",
+        "predicted": "fix",
+        "signal": 0.477
+      },
+      {
+        "id": "intent_021",
+        "question": "specific_enough",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5103
+      },
+      {
+        "id": "failure_010",
+        "question": "failure_kind",
+        "gold": "environment",
+        "predicted": "flaky",
+        "signal": 0.4536
+      },
+      {
+        "id": "failure_012",
+        "question": "failure_kind",
+        "gold": "environment",
+        "predicted": "flaky",
+        "signal": 0.3959
+      },
+      {
+        "id": "failure_023",
+        "question": "failure_kind",
+        "gold": "test_bug",
+        "predicted": "logic_bug",
+        "signal": 0.4584
+      },
+      {
+        "id": "risk_001",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6791
+      },
+      {
+        "id": "risk_002",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5275
+      },
+      {
+        "id": "risk_003",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5048
+      },
+      {
+        "id": "risk_004",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6776
+      },
+      {
+        "id": "risk_005",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6046
+      },
+      {
+        "id": "risk_016",
+        "question": "risk",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.2959
+      },
+      {
+        "id": "risk_016",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2898
+      },
+      {
+        "id": "risk_018",
+        "question": "risk",
+        "gold": 2,
+        "predicted": 3,
+        "signal": 2.541
+      },
+      {
+        "id": "risk_019",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.0046
+      },
+      {
+        "id": "risk_022",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.6702
+      },
+      {
+        "id": "risk_022",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4472
+      },
+      {
+        "id": "risk_023",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.9747
+      },
+      {
+        "id": "risk_024",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.4136
+      },
+      {
+        "id": "effort_002",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5085
+      },
+      {
+        "id": "effort_003",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5626
+      },
+      {
+        "id": "effort_006",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.5022
+      },
+      {
+        "id": "effort_009",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 3,
+        "signal": 2.7832
+      },
+      {
+        "id": "effort_013",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.0136
+      },
+      {
+        "id": "effort_015",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.8466
+      },
+      {
+        "id": "effort_016",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 1.2888
+      },
+      {
+        "id": "effort_017",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.6064
+      },
+      {
+        "id": "effort_018",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 2.3772
+      },
+      {
+        "id": "effort_019",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.7501
+      },
+      {
+        "id": "effort_020",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.576
+      },
+      {
+        "id": "effort_020",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.381
+      },
+      {
+        "id": "intent_029",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2956
+      },
+      {
+        "id": "intent_031",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2271
+      },
+      {
+        "id": "intent_032",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4941
+      },
+      {
+        "id": "intent_048",
+        "question": "specific_enough",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5024
+      },
+      {
+        "id": "risk_025",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6365
+      },
+      {
+        "id": "risk_026",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5781
+      },
+      {
+        "id": "risk_027",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6519
+      },
+      {
+        "id": "risk_028",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6298
+      },
+      {
+        "id": "risk_030",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.7279
+      },
+      {
+        "id": "risk_043",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.0076
+      },
+      {
+        "id": "risk_044",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.1912
+      },
+      {
+        "id": "risk_045",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.3714
+      },
+      {
+        "id": "risk_045",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3513
+      },
+      {
+        "id": "risk_046",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.4578
+      },
+      {
+        "id": "risk_047",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.4574
+      },
+      {
+        "id": "risk_047",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3429
+      },
+      {
+        "id": "risk_048",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.9819
+      },
+      {
+        "id": "risk_048",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.401
+      },
+      {
+        "id": "effort_022",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.7122
+      },
+      {
+        "id": "effort_023",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 1.034
+      },
+      {
+        "id": "effort_027",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 3,
+        "signal": 2.7651
+      },
+      {
+        "id": "effort_029",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.774
+      },
+      {
+        "id": "effort_031",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.3548
+      },
+      {
+        "id": "effort_032",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.1928
+      },
+      {
+        "id": "effort_032",
+        "question": "approach",
+        "gold": "new_component",
+        "predicted": "minimal_patch",
+        "signal": 0.6597
+      },
+      {
+        "id": "effort_033",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.4967
+      },
+      {
+        "id": "effort_033",
+        "question": "approach",
+        "gold": "new_component",
+        "predicted": "minimal_patch",
+        "signal": 0.5202
+      },
+      {
+        "id": "effort_034",
+        "question": "approach",
+        "gold": "new_component",
+        "predicted": "minimal_patch",
+        "signal": 0.5051
+      },
+      {
+        "id": "effort_035",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.2266
+      },
+      {
+        "id": "effort_036",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.7466
+      },
+      {
+        "id": "effort_036",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.8108
+      },
+      {
+        "id": "effort_038",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6441
+      },
+      {
+        "id": "effort_038",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.7887
+      },
+      {
+        "id": "effort_039",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.49
+      },
+      {
+        "id": "effort_039",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "new_component",
+        "signal": 0.4082
+      },
+      {
+        "id": "effort_040",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 1.0678
+      },
+      {
+        "id": "effort_040",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.6671
+      },
+      {
+        "id": "intent_057",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3642
+      },
+      {
+        "id": "intent_059",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4961
+      },
+      {
+        "id": "intent_061",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.467
+      },
+      {
+        "id": "intent_063",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4103
+      },
+      {
+        "id": "intent_064",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4586
+      },
+      {
+        "id": "intent_085",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4773
+      },
+      {
+        "id": "intent_086",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3983
+      },
+      {
+        "id": "intent_089",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3734
+      },
+      {
+        "id": "intent_091",
+        "question": "specific_enough",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5285
+      },
+      {
+        "id": "intent_102",
+        "question": "intent",
+        "gold": "fix",
+        "predicted": "implement",
+        "signal": 0.5785
+      },
+      {
+        "id": "failure_062",
+        "question": "failure_kind",
+        "gold": "environment",
+        "predicted": "test_bug",
+        "signal": 0.5683
+      },
+      {
+        "id": "failure_076",
+        "question": "retry",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4441
+      },
+      {
+        "id": "risk_049",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5817
+      },
+      {
+        "id": "risk_050",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5755
+      },
+      {
+        "id": "risk_051",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.7288
+      },
+      {
+        "id": "risk_052",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6354
+      },
+      {
+        "id": "risk_053",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5504
+      },
+      {
+        "id": "risk_054",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.7041
+      },
+      {
+        "id": "risk_055",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5628
+      },
+      {
+        "id": "risk_056",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5679
+      },
+      {
+        "id": "risk_057",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.8074
+      },
+      {
+        "id": "risk_058",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5321
+      },
+      {
+        "id": "risk_059",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5552
+      },
+      {
+        "id": "risk_073",
+        "question": "risk",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.4062
+      },
+      {
+        "id": "risk_073",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3467
+      },
+      {
+        "id": "risk_076",
+        "question": "risk",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 0.921
+      },
+      {
+        "id": "risk_076",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1667
+      },
+      {
+        "id": "risk_081",
+        "question": "risk",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.4191
+      },
+      {
+        "id": "risk_081",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3157
+      },
+      {
+        "id": "risk_082",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.7804
+      },
+      {
+        "id": "risk_083",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.0611
+      },
+      {
+        "id": "risk_083",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.223
+      },
+      {
+        "id": "risk_084",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 0.9276
+      },
+      {
+        "id": "risk_084",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1271
+      },
+      {
+        "id": "risk_087",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.8445
+      },
+      {
+        "id": "risk_088",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.0042
+      },
+      {
+        "id": "risk_088",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2168
+      },
+      {
+        "id": "risk_089",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.9318
+      },
+      {
+        "id": "risk_090",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.0161
+      },
+      {
+        "id": "risk_092",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.4529
+      },
+      {
+        "id": "routing_072",
+        "question": "owner",
+        "gold": "unclear",
+        "predicted": "infra",
+        "signal": 0.6303
+      },
+      {
+        "id": "routing_074",
+        "question": "owner",
+        "gold": "unclear",
+        "predicted": "infra",
+        "signal": 0.8435
+      },
+      {
+        "id": "effort_041",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.7849
+      },
+      {
+        "id": "effort_044",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6344
+      },
+      {
+        "id": "effort_046",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 1.0219
+      },
+      {
+        "id": "effort_048",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.7746
+      },
+      {
+        "id": "effort_050",
+        "question": "approach",
+        "gold": "refactor",
+        "predicted": "new_component",
+        "signal": 0.4311
+      },
+      {
+        "id": "effort_052",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.612
+      },
+      {
+        "id": "effort_053",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.7508
+      },
+      {
+        "id": "effort_054",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.7691
+      },
+      {
+        "id": "effort_055",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 2.0746
+      },
+      {
+        "id": "effort_055",
+        "question": "approach",
+        "gold": "refactor",
+        "predicted": "minimal_patch",
+        "signal": 0.43
+      },
+      {
+        "id": "effort_056",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.4721
+      },
+      {
+        "id": "effort_058",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.9696
+      },
+      {
+        "id": "effort_059",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.3926
+      },
+      {
+        "id": "effort_059",
+        "question": "approach",
+        "gold": "new_component",
+        "predicted": "minimal_patch",
+        "signal": 0.6849
+      },
+      {
+        "id": "effort_060",
+        "question": "approach",
+        "gold": "new_component",
+        "predicted": "minimal_patch",
+        "signal": 0.5998
+      },
+      {
+        "id": "effort_062",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.5434
+      },
+      {
+        "id": "effort_064",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.956
+      },
+      {
+        "id": "effort_065",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.1048
+      },
+      {
+        "id": "effort_066",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.4166
+      },
+      {
+        "id": "effort_067",
+        "question": "approach",
+        "gold": "new_component",
+        "predicted": "minimal_patch",
+        "signal": 0.5619
+      },
+      {
+        "id": "effort_068",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.9578
+      },
+      {
+        "id": "effort_068",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.8405
+      },
+      {
+        "id": "effort_069",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.9395
+      },
+      {
+        "id": "effort_069",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.8514
+      },
+      {
+        "id": "effort_070",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.698
+      },
+      {
+        "id": "effort_071",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.5148
+      },
+      {
+        "id": "effort_072",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6381
+      },
+      {
+        "id": "effort_072",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.9341
+      },
+      {
+        "id": "effort_073",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.7842
+      },
+      {
+        "id": "effort_074",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6085
+      },
+      {
+        "id": "effort_074",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.8599
+      },
+      {
+        "id": "effort_075",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.7309
+      },
+      {
+        "id": "effort_076",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.7176
+      }
+    ]
+  }
+}

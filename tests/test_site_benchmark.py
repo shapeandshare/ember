@@ -99,3 +99,33 @@ def test_build_writes_the_headline_into_the_site_data(
     data = json.loads(written.read_text(encoding="utf-8"))
     model = json.loads(bench._latest_model().read_text(encoding="utf-8"))
     assert data["headline"] == bench.headline(model)
+
+
+def test_latest_model_picks_the_chronologically_newest_run(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """``_latest_model`` must pick the run with the latest ``meta.run_at``.
+
+    Run IDs are ``<model-name>_<timestamp>``, and the model-name prefix
+    varies (a local run is named after the registry dir, e.g.
+    ``clef-flash``; a hosted/S3 run is named after the S3 path segment,
+    e.g. ``Cloudflare__clef-flash``). Sorting bundles by directory name
+    (``sorted(..., key=lambda p: p.parent.name)``) breaks the moment two
+    runs have differently-cased prefixes: ``"Cloudflare__..."`` sorts
+    before ``"clef-flash_..."`` lexicographically (uppercase < lowercase in
+    ASCII) even when the ``Cloudflare__`` run happened a week later.
+    """
+    older = tmp_path / "clef-flash_20261003T203810Z"
+    newer = tmp_path / "Cloudflare__clef-flash_20261010T192756Z"
+    older.mkdir()
+    newer.mkdir()
+    (older / "model.json").write_text(
+        json.dumps({"meta": {"run_at": "2026-10-03 20:38 UTC"}}), encoding="utf-8"
+    )
+    (newer / "model.json").write_text(
+        json.dumps({"meta": {"run_at": "2026-10-10 19:27 UTC"}}), encoding="utf-8"
+    )
+    monkeypatch.setattr(bench, "BENCHMARK", tmp_path)
+    latest = bench._latest_model()
+    assert latest is not None
+    assert latest.parent.name == "Cloudflare__clef-flash_20261010T192756Z"
