@@ -30,8 +30,23 @@ BENCHMARK = REPO / "benchmark"
 OUT = SITE / "results"
 
 
+def _run_at(bundle: Path) -> str:
+    """Return a bundle's ``meta.run_at``, or ``""`` if missing/unreadable.
+
+    ``run_at`` (``"%Y-%m-%d %H:%M UTC"``) sorts correctly as a plain string.
+    Falling back to ``""`` keeps a malformed bundle sortable instead of
+    raising, ranking it oldest rather than hiding it from the glob entirely.
+    """
+    try:
+        meta = json.loads(bundle.read_text(encoding="utf-8")).get("meta", {})
+    except (OSError, ValueError):
+        return ""
+    run_at = meta.get("run_at")
+    return run_at if isinstance(run_at, str) else ""
+
+
 def _latest_model() -> Path | None:
-    bundles = sorted(BENCHMARK.glob("*/model.json"), key=lambda p: p.parent.name)
+    bundles = sorted(BENCHMARK.glob("*/model.json"), key=_run_at)
     return bundles[-1] if bundles else None
 
 
