@@ -52,6 +52,7 @@ Session-level decisions with their context and consequences.
 - [[2026-10-10-remove-t004-non-loopback-auth-check]]
 - [[2026-10-10-per-model-request-caps]]
 - [[2026-10-10-regression-tests-for-outerbounds-deploy-contract]]
+- [[2026-10-10-disable-torch-native-jit-for-cuda-compiler-gap]]
 
 ### Discoveries
 

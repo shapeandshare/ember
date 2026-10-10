@@ -12,6 +12,18 @@ Fixes applied:
   * PYTORCH_ENABLE_MPS_FALLBACK=1 so unimplemented MPS ops fall back to CPU
     instead of erroring (the Qwen3.5 Gated DeltaNet layers use a pure-PyTorch
     fallback path; a few ops may still be missing).
+  * TORCH_DISABLE_NATIVE_JIT=1 by default so torch 2.14's torch._native does
+    not register Triton-backed op overrides (e.g. aten::bmm's outer-product
+    specialization, hit by Qwen3.5's RoPE forward on CUDA) that JIT-compile a
+    kernel at first use via a C compiler — a minimal CUDA container (e.g.
+    Outerbounds' Fast Bakery base image) has none, and there is no supported
+    way to install one through that deployment's contract, so the first real
+    request on such a host raised an uncaught RuntimeError ("Failed to find
+    C compiler"). Set EMBER_TORCH_DISABLE_NATIVE_JIT=0 to opt back into the
+    Triton path on a host with a working compiler toolchain. Unlike the MPS
+    fallback above, torch provides no automatic fallback here — the override
+    is simply never registered, so the standard eager/ATen aten::bmm runs
+    instead (same operation, different and mature cuBLAS-backed kernel).
   * CPU -> target-device load (avoids the MPS loader segfault; CUDA has no
     such constraint but shares the same load path).
   * float16 on MPS and CUDA, float32 on CPU.
@@ -36,6 +48,9 @@ from typing import Any
 
 # Must be set before torch's dispatch tables are built.
 os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+os.environ.setdefault(
+    "TORCH_DISABLE_NATIVE_JIT", os.environ.get("EMBER_TORCH_DISABLE_NATIVE_JIT", "1")
+)
 
 import torch
 

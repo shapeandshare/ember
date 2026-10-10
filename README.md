@@ -280,6 +280,7 @@ maximum, and an unset `max_request_length` means the loaded model's own default 
 | --- | --- | --- |
 | `EMBER_HOST` / `EMBER_PORT` | `127.0.0.1` / `8765` | Local model server bind address |
 | `EMBER_DEVICE` | `auto` | `auto`, `mps`, `cuda`, or `cpu` |
+| `EMBER_TORCH_DISABLE_NATIVE_JIT` | `1` | Disables torch 2.14's `torch._native` Triton-backed op overrides (e.g. a `aten::bmm` outer-product specialization Qwen3.5's RoPE forward hits on CUDA), which JIT-compile via a C compiler that a minimal CUDA container (e.g. Outerbounds' Fast Bakery) usually lacks — without this, the first real CUDA request fails with `RuntimeError: Failed to find C compiler`. Set to `0` on a host with a working compiler toolchain to opt back into the (likely faster) Triton path; has no effect on MPS/CPU |
 | `EMBER_MODEL` | `flash` | `flash` (9B, default) or `full` (27B), both from Cloudflare's public Hugging Face repos |
 | `EMBER_MODEL_DIR` | — | Run weights from this directory instead of the pinned cache |
 | `EMBER_MAX_LENGTH` | `0` (the model's maximum: 262,144) | The most tokens the model processes; `0` derives it from the model's `config.json`, and a larger value is clamped to it |

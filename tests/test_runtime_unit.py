@@ -410,6 +410,66 @@ def test_cli_import_does_not_load_torch():
     assert result.stdout.strip() == "False", result.stderr
 
 
+# ###########################################################################
+# TORCH_DISABLE_NATIVE_JIT: torch 2.14's torch._native registers Triton-backed
+# ops (e.g. aten::bmm's outer-product specialization, hit by Qwen3.5's RoPE
+# forward on CUDA) that JIT-compile a kernel via Triton at first use — this
+# requires a C compiler, which a minimal CUDA container (e.g. Outerbounds'
+# Fast Bakery base image) does not have, and there is no way to install one
+# through that deployment's contract. Unlike PYTORCH_ENABLE_MPS_FALLBACK
+# (Apple Silicon), this failure is a hard RuntimeError with no automatic
+# fallback — see
+# vault/decisions/2026-10-10-disable-torch-native-jit-for-cuda-compiler-gap.md.
+# ###########################################################################
+_PRINT_TORCH_DISABLE_NATIVE_JIT = (
+    "import os, ember.serving.runtime; "
+    "print(os.environ.get('TORCH_DISABLE_NATIVE_JIT'))"
+)
+
+
+def test_runtime_import_sets_torch_disable_native_jit_before_torch_loads():
+    """runtime.py must set TORCH_DISABLE_NATIVE_JIT (torch's own kill switch
+    for all _native DSL-backed op registrations — Triton, CuteDSL, Helion)
+    before `import torch`, exactly like PYTORCH_ENABLE_MPS_FALLBACK. A
+    subprocess is required: torch is already imported in this test process,
+    so the module-level os.environ.setdefault has already run and checking
+    os.environ here would not prove the ordering. TORCH_DISABLE_NATIVE_JIT
+    is explicitly cleared from the subprocess's env: this test file's own
+    module-level `import ember.serving.runtime as runtime` already set it in
+    this pytest process, and subprocess.run inherits the parent's os.environ
+    by default — without clearing it, the child would start with the value
+    already set, defeating what this test is trying to prove."""
+    env = {k: v for k, v in os.environ.items() if k != "TORCH_DISABLE_NATIVE_JIT"}
+    result = subprocess.run(  # noqa: S603 - this interpreter with a literal script
+        [sys.executable, "-c", _PRINT_TORCH_DISABLE_NATIVE_JIT],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env=env,
+    )
+    assert result.stdout.strip() == "1", result.stderr
+
+
+def test_ember_torch_disable_native_jit_env_var_overrides_the_default():
+    """An operator with a working CUDA compiler toolchain (so the Triton path
+    actually works and may be faster) can opt back in by setting
+    EMBER_TORCH_DISABLE_NATIVE_JIT=0 — runtime.py must respect it rather than
+    always forcing TORCH_DISABLE_NATIVE_JIT=1. TORCH_DISABLE_NATIVE_JIT is
+    explicitly cleared from the subprocess's env for the same reason as
+    above (this test file's own module-level runtime import already set it
+    in this pytest process)."""
+    env = {k: v for k, v in os.environ.items() if k != "TORCH_DISABLE_NATIVE_JIT"}
+    env["EMBER_TORCH_DISABLE_NATIVE_JIT"] = "0"
+    result = subprocess.run(  # noqa: S603 - this interpreter with a literal script
+        [sys.executable, "-c", _PRINT_TORCH_DISABLE_NATIVE_JIT],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env=env,
+    )
+    assert result.stdout.strip() == "0", result.stderr
+
+
 def _endpoint(url: str, *, is_local: bool):
     from urllib.parse import urlparse
 
