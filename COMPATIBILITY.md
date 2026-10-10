@@ -141,12 +141,14 @@ under 0.1%.
   longest length the probe tests). A model outside the registry gets the lowest registry
   cap. The measured values and the probe run ID replace the fallbacks. Long requests are
   slow on `full`: 65,536 tokens took about 740 s on the M4 Max, inside the 900 s default
-  `EMBER_REQUEST_TIMEOUT`. The whole encoded request counts, including questions, schema,
-  the prompt wrapper, and media, so image-heavy requests near the cap that passed the
-  earlier state-only check may now be refused. An oversized request is refused with a 413
-  that states its token split, never truncated. The caps hold for the pinned model
-  revisions and are re-measured whenever a revision changes. `0` disables the cap; the
-  effective maximum still applies.
+  `EMBER_REQUEST_TIMEOUT`. The server runs one request at a time and admits up to four, so
+  a request queued behind a long one can outlast the timeout; raise
+  `EMBER_REQUEST_TIMEOUT` if agents send long `full` requests in parallel. The whole
+  encoded request counts, including questions, schema, the prompt wrapper, and media, so
+  image-heavy requests near the cap that passed the earlier state-only check may now be
+  refused. An oversized request is refused with a 413 that states its token split, never
+  truncated. The caps hold for the pinned model revisions and are re-measured whenever a
+  revision changes. `0` disables the cap; the effective maximum still applies.
 
 See also: [`README.md`](README.md) for install steps, and
 [`RESPONSIBLE_USE.md`](RESPONSIBLE_USE.md) for what the numbers mean.

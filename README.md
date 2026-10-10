@@ -288,7 +288,7 @@ maximum, and an unset `max_request_length` means the loaded model's own default 
 | `EMBER_AUTH_TOKEN` | — | Client credential for a remote endpoint |
 | `EMBER_AUTH_HEADER` | `Authorization` | Header carrying the credential; `Authorization` sends `Bearer <token>`, any other name sends the token verbatim |
 | `EMBER_ALLOW_INSECURE_TRANSPORT` | `0` | Allow plaintext `http` to a non-loopback endpoint (off by default) |
-| `EMBER_REQUEST_TIMEOUT` | `900` | Seconds the MCP client waits for each advise request, local or remote; a request near `full`'s cap takes about 12 minutes on an M4 Max |
+| `EMBER_REQUEST_TIMEOUT` | `900` | Seconds the MCP client waits for each advise request, local or remote. A request near `full`'s cap takes about 12 minutes on an M4 Max, and requests run one at a time, so raise this if long `full` requests overlap |
 | `EMBER_SERVER_AUTH_TOKEN` | — | When set, the server requires `Authorization: Bearer <token>` on `/v1/systemone` |
 | `EMBER_AUTOSTART` | `1` | Let the MCP server start a local server on demand (loopback only) |
 | `EMBER_START_TIMEOUT` | `300` | Seconds to wait for the model server to start |
