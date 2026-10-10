@@ -89,11 +89,11 @@ This installs the latest released wheel from PyPI.
 To pin a specific release tag from GitHub instead (no PyPI required):
 
 ```bash
-uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.8.1"
+uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.9.0"
 ```
 
 The repository is public, so the git install needs no credentials. To use SSH instead,
-install from `git+ssh://git@github.com/shapeandshare/ember@v0.8.1`.
+install from `git+ssh://git@github.com/shapeandshare/ember@v0.9.0`.
 
 Installed ember before the rename, as `gut`? Run `uv tool uninstall gut` first: both
 distributions provide the same commands.
@@ -514,11 +514,11 @@ approval per Article XI §11.2.
 
 ### Benchmark
 
-`evals/clef-flash.jsonl` is a 264-item benchmark covering the five agent-kit recipes (intent
+`evals/clef-flash.jsonl` is a 475-item benchmark covering the five agent-kit recipes (intent
 and readiness, failure triage, change risk, routing, effort and approach) plus four vision
-recipes (`vision_noul`, `vision_choice`, `vision_score`, `vision_video`): 456 scored questions
-(184 `choice`, 152 `noul`, 88 `score`, 32 across the four vision recipes), split into
-`dev` (130 items) and `test` (134). Vision items carry an `images` or `videos` field
+recipes (`vision_noul`, `vision_choice`, `vision_score`, `vision_video`): 843 scored questions
+(351 `choice`, 292 `noul`, 168 `score`, 32 across the four vision recipes), split into
+`dev` (236 items) and `test` (239). Vision items carry an `images` or `videos` field
 (base64 `data:` URIs) alongside `state` and `questions`. Each line is
 self-contained (`state`, the recipe's fixed question set, a gold label for every question, and
 a `rationale`), so other implementations can score it without this harness.

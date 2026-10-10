@@ -69,6 +69,13 @@ def test_dataset_has_at_least_100_unique_items() -> None:
     assert len({item["id"] for item in ITEMS}) == len(ITEMS)
 
 
+def test_there_are_enough_text_items_for_the_probe_to_resolve_its_tolerance() -> None:
+    # The 2026-10-10 pilot measured an item-level accuracy-delta sd of 0.2052; a 95%
+    # half-width of 0.02 at that sd needs (1.96 * 0.2052 / 0.02) ** 2, about 405 items.
+    text_items = [i for i in ITEMS if not (i.get("images") or i.get("videos"))]
+    assert len(text_items) >= 405
+
+
 def test_every_question_has_a_valid_gold_label_and_rationale() -> None:
     for item in ITEMS:
         assert item["split"] in {"dev", "test"}, item["id"]

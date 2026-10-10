@@ -168,10 +168,23 @@ No GPU compute pool yet? Edit `deploy.yaml`:
 `deployment/requirements.txt` is generated, not hand-maintained — never edit
 it directly. Run `make deployment-requirements` after any `pyproject.toml`/
 `uv.lock` change and commit the regenerated file alongside it. The target runs
-`uv export` (pinned to `uv.lock`, `--no-emit-project` so ember's own local-path
-self-reference isn't included) and then `scripts/freeze_deployment_requirements.py`,
-which resolves every PEP 508 environment marker (e.g. `; sys_platform ==
-'linux'`) against the Outerbounds deployment's actual target (Linux x86_64,
-CPython 3.12) and drops non-matching lines (Windows/emscripten-only packages)
-— Outerbounds' Fast Bakery requirements parser rejects markers outright,
-unlike `pip`.
+`uv export` (pinned to `uv.lock`, `--no-emit-project` so the export lists only
+third-party dependencies, not ember's own package) and then
+`scripts/freeze_deployment_requirements.py`, which (1) resolves every PEP 508
+environment marker (e.g. `; sys_platform == 'linux'`) against the Outerbounds
+deployment's actual target (Linux x86_64, CPython 3.12) and drops non-matching
+lines (Windows/emscripten-only packages) — Outerbounds' Fast Bakery
+requirements parser rejects markers outright, unlike `pip` — and (2) re-adds
+an explicit `ember-advise==<version>` line, pinned to the version in this
+checkout's `pyproject.toml`, because Fast Bakery only `pip install`s what this
+file lists and does not install the packaged source tree it copies in via
+`--package-src-path .` (without that line, `ember serve` in `commands:` fails
+with `ember: command not found`).
+
+**That pin must already be published on PyPI before you deploy** — if you've
+bumped `pyproject.toml`'s version locally but haven't released it yet (see
+"Lifecycle commands" in `AGENTS.md`), either deploy against the last
+*released* version, or cut the release first (`make release-ember`) and
+re-run `make deployment-requirements` against the released checkout; Fast
+Bakery's `pip install -r requirements.txt` will fail to resolve a version
+that isn't on PyPI yet.
