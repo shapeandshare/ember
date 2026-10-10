@@ -33,7 +33,7 @@ from typing import Any
 
 import httpx
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
 from evals.agent import judge, opencode, sandbox, summary  # noqa: E402
