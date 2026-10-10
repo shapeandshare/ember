@@ -995,3 +995,55 @@ def test_an_error_inside_the_sampled_block_propagates():
     with pytest.raises(RuntimeError, match="boom"), sampler:
         raise RuntimeError("boom")
     assert not sampler.running
+
+
+# ###########################################################################
+# run_context: the sizing gate and reproductions (PR #94 review)
+# ###########################################################################
+def test_a_failed_sizing_gate_clears_canonical():
+    manifest = _manifest(canonical=True)
+    failed = run_context._gate_result(manifest, 0.05)
+    passed = run_context._gate_result(manifest, 0.01)
+    assert (failed.sizing_passed, failed.canonical) == (False, False)
+    assert (passed.sizing_passed, passed.canonical) == (True, True)
+    assert failed.pilot_projected_half_width == 0.05
+    assert (
+        run_context._gate_result(manifest, math.inf).pilot_projected_half_width is None
+    )
+
+
+def _probe_dirs(monkeypatch, tmp_path):
+    import torch
+
+    results, runs = tmp_path / "results", tmp_path / "runs"
+    monkeypatch.setattr(run_context, "RESULTS_DIR", results)
+    monkeypatch.setattr(run_context, "RUNS_DIR", runs)
+    monkeypatch.setattr(torch.backends.mps, "is_available", lambda: True)
+    monkeypatch.setattr(run_context.process, "is_up", lambda *args: False)
+    return results, runs
+
+
+def test_resuming_a_run_whose_gate_failed_exits_2(monkeypatch, tmp_path, capsys):
+    results, _ = _probe_dirs(monkeypatch, tmp_path)
+    (results / RUN_ID).mkdir(parents=True)
+    manifest = _manifest(sizing_passed=False, pilot_projected_half_width=0.05)
+    (results / RUN_ID / "manifest.json").write_text(manifest.model_dump_json())
+    assert run_context.main(["--resume", RUN_ID]) == 2
+    assert "sizing gate" in capsys.readouterr().err
+
+
+def test_a_reproduction_carries_the_snapshot_dataset(monkeypatch, tmp_path):
+    import argparse
+
+    _, runs = _probe_dirs(monkeypatch, tmp_path)
+    snapshot = runs / RUN_ID
+    snapshot.mkdir(parents=True)
+    (snapshot / "dataset.jsonl").write_text(
+        "".join(json.dumps(i) + "\n" for i in ITEMS)
+    )
+    (snapshot / "manifest.json").write_text(_manifest().model_dump_json())
+    args = argparse.Namespace(resume=None, reproduce=RUN_ID, items=None)
+    run_dir, _, original = run_context._prepare(args)
+    assert original == snapshot
+    copied = (run_dir / "dataset.jsonl").read_bytes()
+    assert copied == (snapshot / "dataset.jsonl").read_bytes()

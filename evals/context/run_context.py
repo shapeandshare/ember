@@ -244,6 +244,20 @@ def _run_worker(run_dir: Path, model: str, *, pilot: bool = False) -> int:
     return subprocess.run(command, check=False).returncode  # noqa: S603 - own script
 
 
+def _gate_result(manifest: ProbeManifest, width: float) -> ProbeManifest:
+    """Record the pilot's half-width; a failed gate is never canonical."""
+    passed = width <= manifest.tolerance_accuracy
+    return manifest.model_copy(
+        update={
+            "pilot_projected_half_width": round(width, 6)
+            if math.isfinite(width)
+            else None,
+            "sizing_passed": passed,
+            "canonical": manifest.canonical and passed,
+        }
+    )
+
+
 def _sizing_gate(run_dir: Path, manifest: ProbeManifest) -> ProbeManifest | None:
     """Run the pilot and record its half-width; ``None`` if the worker failed."""
     model = "flash" if "flash" in manifest.models else next(iter(manifest.models))
@@ -266,14 +280,7 @@ def _sizing_gate(run_dir: Path, manifest: ProbeManifest) -> ProbeManifest | None
     width = projected_half_width(
         paired_deltas(accuracy(BASELINE_LENGTH), accuracy(_GATE_LENGTH))
     )
-    updated = manifest.model_copy(
-        update={
-            "pilot_projected_half_width": round(width, 6)
-            if math.isfinite(width)
-            else None,
-            "sizing_passed": width <= manifest.tolerance_accuracy,
-        }
-    )
+    updated = _gate_result(manifest, width)
     _write_manifest(run_dir, updated)
     print(
         f"sizing gate: projected half-width {width:.4f} "
@@ -301,6 +308,10 @@ def _prepare(args: argparse.Namespace) -> tuple[Path, ProbeManifest, Path | None
         )
     run_dir.mkdir(parents=True)
     _write_manifest(run_dir, manifest)
+    if original_dir is not None and (original_dir / summarize.DATASET_COPY).exists():
+        # A snapshot carries its own dataset; the reproduction must score that copy.
+        dataset = summarize.DATASET_COPY
+        copy_atomic(original_dir / dataset, run_dir / dataset)
     return run_dir, manifest, original_dir
 
 
@@ -332,6 +343,14 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 1
     print(f"run: {run_dir}", file=sys.stderr)
+    if manifest.sizing_passed is False:
+        print(
+            "error: this run's sizing gate failed (projected half-width "
+            f"{manifest.pilot_projected_half_width}); decide with a human before "
+            "spending the full run",
+            file=sys.stderr,
+        )
+        return 2
     if manifest.sizing_passed is None and _GATE_LENGTH in manifest.lengths:
         gated = _sizing_gate(run_dir, manifest)
         if gated is None:
