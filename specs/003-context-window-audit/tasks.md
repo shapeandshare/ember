@@ -338,7 +338,7 @@ the announced limit matches the model's real encoding.
       `limits.from_config(...)`; the line ends `configured, server not running`.
     - **unknown**: either of the two `unknown` lines.
   - Never import torch, and never change the exit code.
-- [ ] T026 [US1] Checkpoint:
+- [X] T026 [US1] Checkpoint:
   - T018–T021 are green: `make check`, plus `make test` for T021.
   - Run quickstart.md §3 for real:
     - `ember start`, then check `/health`, `ember logs | grep "limits:"`, and
@@ -415,8 +415,9 @@ its counted total. The MCP tool error text is intact (quickstart.md §4).
   - **End to end** (Article XI §11.4): add a `@pytest.mark.model` test that uses the
     `base_url` session server and `mcp_stdin_params`. Read the enforced limit from
     `/health` `engine`, call the `advise` tool over MCP stdio with a string state larger
-    than it, and assert the tool error text starts with
-    `ember server error 413: request too large:` and contains `Split: state`. The
+    than it, and assert the tool error text contains
+    `ember server error 413: request too large:` and `Split: state` (over stdio, mcp
+    prefixes tool errors with `Error executing tool advise: `). The
     refusal happens before inference, so the test is fast.
 - [X] T031 [P] [US2] In `tests/test_limits_model.py`, add failing model-backed tests:
   - **Exact totals**: for a dict state, a string state, and a state with one inline PNG
@@ -496,7 +497,7 @@ its counted total. The MCP tool error text is intact (quickstart.md §4).
     the model-max-length tests moved to `tests/test_limits.py`; in the
     `tests/test_media.py` row, add the allowlist tests.
   - **Recent Changes**: add an entry for exact counting, refusal, and limit reporting.
-- [ ] T037 [US2] Checkpoint:
+- [X] T037 [US2] Checkpoint:
   - T027–T031 are green: `make check`, plus `make test` for T031.
   - Run quickstart.md §4 for real:
     - cap 1024: 413 with the split
@@ -761,7 +762,7 @@ D-002.
     `$(PY) evals/context/run_context.py --smoke`
   - each with prerequisite `$(EMBER)` and `##` help text
   - add both to the `.PHONY` line (L4)
-- [ ] T058 [US3] Smoke run (quickstart.md §6):
+- [X] T058 [US3] Smoke run (quickstart.md §6):
   - `make eval-context-smoke` writes `results/context/<run_id>/manifest.json`,
     `rows-flash.jsonl`, and `summary.json`.
   - After `ember eval context --rescore <run_id>`, `summary.json`'s SHA-256 is unchanged.
@@ -974,7 +975,7 @@ that an oversized request is refused (not truncated) and how to use the split.
   - `make test-cov`: coverage at or above the T001 baseline and at least 81%; never lower
     `fail_under` in `pyproject.toml`
   - `make vault-audit`
-- [ ] T078 Run quickstart.md §1–§6 end to end on the reference machine. Record the size
+- [X] T078 Run quickstart.md §1–§6 end to end on the reference machine. Record the size
   check's added latency on a warm short text request in the performance notes in
   `COMPATIBILITY.md` (L116). The target is 5% or less; it is informational only.
 

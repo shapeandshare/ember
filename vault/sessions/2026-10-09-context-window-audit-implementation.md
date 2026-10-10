@@ -50,6 +50,22 @@ test first, then finish the follow-ups found along the way.
   The model-backed autostart test skips without weights. Doctor says "the server has not
   loaded a model yet" instead of "older ember" when `engine` is `null`.
 
+- **Verified on the reference machine** (M4 Max, 128 GB, flash weights pulled):
+  `make test-strict` passes (806 passed; the one skip is `full`, not pulled). On a live
+  server, `/health` and doctor report the limits with their sources, the `limits:` line
+  reaches the server log under `ember start`, and doctor shows configured and unknown
+  correctly. With the cap at 1,024, a 900-line state is refused with its split (state
+  2,700, media 0, fixed 142); a 1024x1024 PNG with a six-token state is refused with media
+  1,027 as the largest part, which the old state-only check let through; with the cap off
+  and `EMBER_MAX_LENGTH=1024`, the refusal names the maximum. The refusal reaches an MCP
+  client intact, after mcp's `Error executing tool advise: ` prefix. Counting adds about
+  0.4 ms to a warm 153-token request (about 0.65 s end to end).
+- **Probe smoke** (`context_20261010T015236Z`): 18 inferences in 2 m 42 s; rescoring is
+  byte-identical; padded totals land within one token of each length; peak-memory sanity
+  holds (RSS at start 0.90 GiB, 5% of the weights; 2K driver peak 18.88 GiB, 1.05x). One
+  inference takes about 5.6 s at 2K and 11.5 s at 4K, so the pilot (232 items at 2K and
+  16K) takes hours, not minutes, and a full canonical run days.
+
 ## Decisions and discoveries written back
 
 - [[2026-10-09-request-size-checks-miss-what-the-model-sees]] (resolution added)
