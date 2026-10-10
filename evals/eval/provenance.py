@@ -71,10 +71,26 @@ def host_info() -> dict[str, Any]:
 
 
 def model_spec_info(model_dir: str) -> dict[str, str | None]:
-    """Return the registry entry a model directory belongs to, or ``{}``."""
+    """Return the registry entry a model directory or name belongs to.
+
+    Parameters
+    ----------
+    model_dir : str
+        A local directory name (``spec.dir_name``), a pinned revision, or a
+        hosted/S3-derived model name following the ``<owner>__<repo>``
+        convention (``Cloudflare__clef-flash`` for the registry's
+        ``Cloudflare/clef-flash`` repo — see ``run_evals._model_name``,
+        which derives this from the S3 path segment before ``artifacts``).
+
+    Returns
+    -------
+    dict[str, str | None]
+        ``{}`` when no registry entry matches.
+    """
     name = Path(model_dir).name
     for spec in models.REGISTRY.values():
-        if name in (spec.dir_name, spec.revision):
+        hosted_name = spec.repo.replace("/", "__")
+        if name in (spec.dir_name, spec.revision, hosted_name):
             return {
                 "name": spec.name,
                 "repo": spec.repo,

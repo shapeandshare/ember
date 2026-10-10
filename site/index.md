@@ -3,8 +3,7 @@ layout: home
 title: ember
 description: A local gut feeling for coding agents. ember runs a decision model (currently Cloudflare's Clef) on your Apple Silicon Mac and answers typed judgment questions as calibrated probabilities.
 ---
-{%- assign bench_home = site.data.benchmark.sections[0].anchor | default: "summary" %}
-{%- assign bench_url = '/results/' | append: bench_home | append: '/' | relative_url %}
+{%- assign bench_url = '/results/' | relative_url %}
 {%- assign h = site.data.benchmark.headline %}
 <section class="splash-hero">
   <div class="hero-stage">
@@ -31,7 +30,7 @@ description: A local gut feeling for coding agents. ember runs a decision model 
   <p class="lede">Coding agents make judgment calls at every step: act or ask, retry or fix, ship or stop for review. ember answers each one with a calibrated probability, on your Mac, in about a second.</p>
   <div class="hero-actions">
     <a class="button button-primary" href="{{ '/docs/overview/' | relative_url }}">Read the docs</a>
-    <a class="button button-secondary" href="{{ '/results/' | append: bench_home | append: '/' | relative_url }}">Benchmark</a>
+    <a class="button button-secondary" href="{{ bench_url }}">Benchmark</a>
     <a class="hero-link" href="{{ site.github }}">Source on GitHub</a>
   </div>
 </section>
@@ -271,7 +270,7 @@ You need an Apple Silicon Mac with 32 GB of memory or more, about 18 GiB of free
    To pin a specific release tag from GitHub instead:
 
    ```bash
-   uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.10.3"
+   uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.11.0"
    ```
 
 2. **Download the model.** It's about 18 GB, and an interrupted download resumes.

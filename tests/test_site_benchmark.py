@@ -1,4 +1,7 @@
-"""The landing page's benchmark numbers come from the published benchmark run."""
+"""The site's benchmark pages: a leaderboard index plus one full detail
+report per tracked (model, deployment) run, built from every snapshotted
+``benchmark/<run-id>/model.json``.
+"""
 
 from __future__ import annotations
 
@@ -12,6 +15,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "build_site_benchmark.py"
+REAL_BENCHMARK = ROOT / "benchmark"
 
 
 def _load_build_site_benchmark() -> ModuleType:
@@ -62,6 +66,56 @@ MODEL = {
 }
 
 
+def _real_bundles() -> list[Path]:
+    """Copy of every tracked ``benchmark/<run-id>/`` directory for a sandboxed build."""
+    return sorted(REAL_BENCHMARK.glob("*/model.json"))
+
+
+def _leaderboard_row(**overrides: object) -> dict:
+    row = {
+        "run_id": "clef-flash_20261010T000000Z",
+        "run_at": "2026-10-10 00:00 UTC",
+        "model_key": "flash",
+        "model_name": "clef-flash",
+        "model_repo": "Cloudflare/clef-flash",
+        "params": "9B",
+        "deployment_key": "Remote hosted (GPU, CUDA)|cuda",
+        "deployment_label": "Remote hosted (GPU, CUDA)",
+        "device": "cuda",
+        "dtype": "float16",
+        "ember_server_version": "0.10.2",
+        "ember_client_version": "0.10.2",
+        "accuracy": 0.827,
+        "accuracy_ci": [0.802, 0.853],
+        "item_accuracy": 0.743,
+        "items": 475,
+        "questions": 843,
+        "latency_p50": 503.6,
+        "latency_p95": 630.1,
+    }
+    row.update(overrides)
+    return row
+
+
+def test_leaderboard_table_shows_the_deployment_label_not_a_url() -> None:
+    html = bench._leaderboard_table_html([_leaderboard_row()])
+    assert "Remote hosted (GPU, CUDA)" in html
+    assert "://" not in html
+
+
+def test_leaderboard_table_never_leaks_a_real_hostname() -> None:
+    """Even if a row's ``deployment_label`` somehow contained a scheme-less
+    hostname fragment, the table must never surface anything resembling a
+    URL for any field it renders (model, deployment, version, run_at).
+    """
+    row = _leaderboard_row(
+        deployment_label="Remote hosted (GPU, CUDA)",
+    )
+    html = bench._leaderboard_table_html([row])
+    for forbidden in ("http://", "https://", ".outerbounds.", ".com/"):
+        assert forbidden not in html
+
+
 def test_headline_reports_the_numbers_the_landing_page_shows() -> None:
     assert bench.headline(MODEL) == {
         "items": 264,
@@ -88,44 +142,87 @@ def test_headline_is_not_conservative_when_a_band_overclaims() -> None:
     assert bench.headline(model)["conservative"] is False
 
 
-def test_build_writes_the_headline_into_the_site_data(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    (tmp_path / "_data").mkdir()
-    monkeypatch.setattr(bench, "SITE", tmp_path)
-    monkeypatch.setattr(bench, "OUT", tmp_path / "results")
+@pytest.fixture
+def sandbox(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Copy every real tracked bundle into a sandbox benchmark/ tree."""
+    import shutil
+
+    bundles = REAL_BENCHMARK.glob("*")
+    sandbox_benchmark = tmp_path / "benchmark"
+    sandbox_benchmark.mkdir()
+    for run_dir in bundles:
+        if run_dir.is_dir():
+            shutil.copytree(run_dir, sandbox_benchmark / run_dir.name)
+    sandbox_site = tmp_path / "site"
+    (sandbox_site / "_data").mkdir(parents=True)
+    (sandbox_site / "assets").mkdir()
+    monkeypatch.setattr(bench, "BENCHMARK", sandbox_benchmark)
+    monkeypatch.setattr(bench, "SITE", sandbox_site)
+    monkeypatch.setattr(bench, "OUT", sandbox_site / "results")
+    return sandbox_site
+
+
+def test_build_writes_one_detail_page_set_per_leaderboard_row(sandbox: Path) -> None:
     assert bench.build() == 0
-    written = tmp_path / "_data" / "benchmark.json"
-    data = json.loads(written.read_text(encoding="utf-8"))
-    model = json.loads(bench._latest_model().read_text(encoding="utf-8"))
+    data = json.loads(
+        (sandbox / "_data" / "benchmark.json").read_text(encoding="utf-8")
+    )
+    run_ids = {row["run_id"] for row in data["leaderboard"]["rows"]}
+    assert len(run_ids) >= 1
+    for run_id in run_ids:
+        run_dir = sandbox / "results" / run_id
+        assert run_dir.is_dir(), f"missing detail pages for {run_id}"
+        assert (run_dir / "summary.md").exists()
+
+
+def test_build_writes_a_leaderboard_index_page(sandbox: Path) -> None:
+    assert bench.build() == 0
+    index = sandbox / "results" / "index.md"
+    assert index.exists()
+    text = index.read_text(encoding="utf-8")
+    assert "permalink: /results/" in text
+
+
+def test_leaderboard_index_uses_the_full_width_layout_not_the_sidebar_one(
+    sandbox: Path,
+) -> None:
+    """The leaderboard index has no per-page section nav (only a per-run
+    report does, via ``benchmark_nav.html``), so it must use the
+    sidebar-free ``leaderboard`` layout rather than ``benchmark`` — the
+    latter reserves a 220px nav column that would render empty on this
+    page.
+    """
+    assert bench.build() == 0
+    text = (sandbox / "results" / "index.md").read_text(encoding="utf-8")
+    assert "layout: leaderboard" in text
+
+
+def test_build_writes_the_headline_from_the_top_leaderboard_row(
+    sandbox: Path,
+) -> None:
+    assert bench.build() == 0
+    data = json.loads(
+        (sandbox / "_data" / "benchmark.json").read_text(encoding="utf-8")
+    )
+    rows = data["leaderboard"]["rows"]
+    assert rows, "expected at least one leaderboard row"
+    top_run_id = rows[0]["run_id"]
+    model = json.loads(
+        (sandbox.parent / "benchmark" / top_run_id / "model.json").read_text(
+            encoding="utf-8"
+        )
+    )
     assert data["headline"] == bench.headline(model)
 
 
-def test_latest_model_picks_the_chronologically_newest_run(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+def test_build_with_no_tracked_runs_fails_cleanly(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """``_latest_model`` must pick the run with the latest ``meta.run_at``.
-
-    Run IDs are ``<model-name>_<timestamp>``, and the model-name prefix
-    varies (a local run is named after the registry dir, e.g.
-    ``clef-flash``; a hosted/S3 run is named after the S3 path segment,
-    e.g. ``Cloudflare__clef-flash``). Sorting bundles by directory name
-    (``sorted(..., key=lambda p: p.parent.name)``) breaks the moment two
-    runs have differently-cased prefixes: ``"Cloudflare__..."`` sorts
-    before ``"clef-flash_..."`` lexicographically (uppercase < lowercase in
-    ASCII) even when the ``Cloudflare__`` run happened a week later.
-    """
-    older = tmp_path / "clef-flash_20261003T203810Z"
-    newer = tmp_path / "Cloudflare__clef-flash_20261010T192756Z"
-    older.mkdir()
-    newer.mkdir()
-    (older / "model.json").write_text(
-        json.dumps({"meta": {"run_at": "2026-10-03 20:38 UTC"}}), encoding="utf-8"
-    )
-    (newer / "model.json").write_text(
-        json.dumps({"meta": {"run_at": "2026-10-10 19:27 UTC"}}), encoding="utf-8"
-    )
-    monkeypatch.setattr(bench, "BENCHMARK", tmp_path)
-    latest = bench._latest_model()
-    assert latest is not None
-    assert latest.parent.name == "Cloudflare__clef-flash_20261010T192756Z"
+    empty_benchmark = tmp_path / "benchmark"
+    empty_benchmark.mkdir()
+    sandbox_site = tmp_path / "site"
+    (sandbox_site / "_data").mkdir(parents=True)
+    monkeypatch.setattr(bench, "BENCHMARK", empty_benchmark)
+    monkeypatch.setattr(bench, "SITE", sandbox_site)
+    monkeypatch.setattr(bench, "OUT", sandbox_site / "results")
+    assert bench.build() == 1

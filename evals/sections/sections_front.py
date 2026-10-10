@@ -116,15 +116,40 @@ def context(report: Report) -> Built:
     return ("context", "Context", blocks)
 
 
+def _software_fact(host: Mapping[str, Any], server_version: str | None) -> str:
+    """Return the 'Software' fact: Python, client packages, and server version.
+
+    A hosted deployment's client (running the benchmark) and server (running
+    the model) can run different ``ember-advise`` versions. When they match
+    (or the server version is unrecorded), show one version; when they
+    differ, label each side so the mismatch is visible rather than silently
+    showing only the client's.
+    """
+    packages = dict(host.get("packages", {}))
+    client_version = packages.pop("ember-advise", None)
+    parts = [f"Python {host.get('python', '?')}"]
+    if client_version is not None and server_version is not None:
+        if client_version == server_version:
+            parts.append(f"ember-advise {client_version}")
+        else:
+            parts.append(
+                f"ember-advise server {server_version}, client {client_version}"
+            )
+    elif client_version is not None:
+        parts.append(f"ember-advise {client_version}")
+    elif server_version is not None:
+        parts.append(f"ember-advise server {server_version}")
+    if packages:
+        parts.append(", ".join(f"{k} {v}" for k, v in packages.items()))
+    return ", ".join(parts)
+
+
 def system(report: Report) -> Built:
     """Build the system under test: architecture and exact environment."""
     meta, text = report["meta"], report["text"]
     spec, engine, host = meta["model_spec"], meta["engine"], meta["host"]
     nodes, edges = text["architecture"]["nodes"], text["architecture"]["edges"]
-    packages = ", ".join(f"{k} {v}" for k, v in host.get("packages", {}).items())
-    software = f"Python {host.get('python', '?')}" + (
-        f", {packages}" if packages else ""
-    )
+    software = _software_fact(host, meta.get("server_version"))
     window = engine.get("max_length")
     dataset = meta["dataset"]
     facts = [
@@ -146,7 +171,7 @@ def system(report: Report) -> Built:
             cell(f"{host.get('cpu', 'not recorded')}, {host.get('platform', '')}"),
         ),
         ("Software", cell(software)),
-        ("Server", code(meta["server"])),
+        ("Deployment", cell(meta.get("deployment_label", "not recorded"))),
         ("Commit", code(meta["git_hash"])),
         ("Run at", cell(meta["run_at"])),
         ("Report generated", cell(meta["generated_at"])),

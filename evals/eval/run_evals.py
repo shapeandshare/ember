@@ -21,12 +21,14 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 
@@ -38,6 +40,7 @@ from ember.cfg.endpoint import (  # noqa: E402
     InsecureEndpointError,
     InvalidEndpointError,
     build_auth_headers,
+    is_loopback_host,
 )
 
 from evals.eval.provenance import git_hash, host_info, model_spec_info  # noqa: E402
@@ -73,6 +76,50 @@ def _resolve_server(flag: str | None) -> str:
         return DEFAULT_SERVER
 
 
+_DEVICE_LABELS = {
+    "mps": "Apple Silicon, MPS",
+    "cuda": "GPU, CUDA",
+    "cpu": "CPU",
+}
+
+
+def _deployment_label(explicit: str | None, server: str, device: str | None) -> str:
+    """Return a generic deployment description, never the raw server URL.
+
+    Parameters
+    ----------
+    explicit : str | None
+        An operator-supplied label (``--deployment-label`` /
+        ``EMBER_DEPLOYMENT_LABEL``), e.g. ``"Remote hosted — NVIDIA A10G,
+        24 GB VRAM, g5.4xlarge"``. ember has no way to query the specific
+        GPU model or instance size from ``/health`` — only an operator
+        running the benchmark knows that, so this is the only path to
+        reporting it.
+    server : str
+        The model server's base URL. Used only to classify local vs. remote
+        (``ember.cfg.endpoint.is_loopback_host``); the URL itself is never
+        returned, so it never appears in published run provenance.
+    device : str | None
+        The engine's reported device (``"mps"``, ``"cuda"``, ``"cpu"``), or
+        ``None``/unknown.
+
+    Returns
+    -------
+    str
+        ``explicit`` when given. Otherwise ``"Local (...)"`` or
+        ``"Remote hosted (...)"`` plus a human label for ``device``
+        (``_DEVICE_LABELS``), or no parenthetical when the device is
+        unrecognised.
+    """
+    if explicit:
+        return explicit
+    location = (
+        "Local" if is_loopback_host(urlparse(server).hostname) else "Remote hosted"
+    )
+    device_label = _DEVICE_LABELS.get(device or "")
+    return f"{location} ({device_label})" if device_label else location
+
+
 def _model_name(engine: dict[str, Any]) -> str:
     """Return a short, filesystem-safe model identifier from an engine dict.
 
@@ -102,15 +149,33 @@ def _model_name(engine: dict[str, Any]) -> str:
     return Path(raw).name
 
 
-def _engine(server: str) -> dict[str, Any]:
+def _health(server: str) -> dict[str, Any]:
+    """Return ``GET /health``'s body, authenticated, or ``{}`` on failure.
+
+    Parameters
+    ----------
+    server : str
+        The model server's base URL.
+
+    Returns
+    -------
+    dict[str, Any]
+        The parsed ``/health`` body (``status``, ``pid``, ``engine``,
+        ``version``, ``auth_required``), or ``{}`` if the request fails or
+        the response is not valid JSON. Sends ``build_auth_headers()`` so a
+        gateway-authenticated hosted deployment (one that gates ``/health``
+        behind the same credential as ``/v1/systemone``) is actually reached;
+        without it, a non-2xx response carries no ``engine``/``version`` keys
+        and this degrades to ``{}`` silently.
+    """
     try:
         response = httpx.get(
             f"{server}/health", timeout=5.0, headers=build_auth_headers()
         )
-        engine = response.json().get("engine")
+        body = response.json()
     except (httpx.HTTPError, ValueError):
         return {}
-    return engine if isinstance(engine, dict) else {}
+    return body if isinstance(body, dict) else {}
 
 
 def _load(
@@ -166,8 +231,20 @@ def run_evals(
     category: str | None = None,
     dry_run: bool = False,
     dataset_path: Path = DATASET_PATH,
+    deployment_label: str | None = None,
 ) -> int:
-    """Score the dataset against ``server``; return a process exit code."""
+    """Score the dataset against ``server``; return a process exit code.
+
+    Parameters
+    ----------
+    deployment_label : str | None, optional
+        A generic description of the deployment being benchmarked, recorded
+        into the run's provenance and shown on the published report and
+        leaderboard instead of ``server`` (which is kept only in this run's
+        private, gitignored ``results/`` trace, never published). Falls back
+        to a label derived from whether ``server`` is loopback and the
+        reported device when not given — see ``_deployment_label``.
+    """
     if not dataset_path.exists():
         print(f"error: dataset not found at {dataset_path}", file=sys.stderr)
         return 1
@@ -191,8 +268,11 @@ def run_evals(
         print(f"dry run: {len(items)} items listed, no requests sent")
         return 0
 
-    engine = _engine(server)
+    health = _health(server)
+    engine = health.get("engine") or {}
+    server_version = health.get("version")
     model = _model_name(engine)
+    label = _deployment_label(deployment_label, server, engine.get("device"))
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     run_id = f"{model}_{timestamp}"
     RESULTS_DIR.mkdir(exist_ok=True)
@@ -219,7 +299,15 @@ def run_evals(
             latencies.append(elapsed)
             scored.update(
                 latency_ms=round(elapsed, 1),
-                model=body.get("model"),
+                # The server echoes its own loaded model identity in every
+                # response (Engine.advise -> systemone(request={"model":
+                # self.model_name, ...})), not the request's hardcoded
+                # "clef-flash" — for a hosted/S3 deployment that identity is
+                # the full s3://bucket/.../artifacts/<file> URI. _model_name
+                # derives the same short, published-safe identifier used for
+                # the run-level model field, so the per-item trace never
+                # carries the raw S3 location either.
+                model=_model_name({"model": body.get("model")}),
                 usage=body.get("usage", {}),
                 answers=body.get("answers", {}),
             )
@@ -245,8 +333,14 @@ def run_evals(
         "model": model,
         "model_spec": model_spec_info(model),
         "engine": engine,
+        "server_version": server_version,
         "host": host_info(),
+        # server is kept only for this run's own debugging — it lives in the
+        # private, gitignored results/ directory and is never read by
+        # analysis.build(), which publishes deployment_label instead (see
+        # vault/decisions/2026-10-10-generic-deployment-labels.md).
         "server": server,
+        "deployment_label": label,
         "dataset": dataset_path.name,
         "dataset_file": dataset_snapshot.name,
         "dataset_sha256": hashlib.sha256(dataset_path.read_bytes()).hexdigest(),
@@ -291,6 +385,17 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dry-run", action="store_true", help="list items without sending requests"
     )
+    parser.add_argument(
+        "--deployment-label",
+        default=None,
+        help=(
+            "generic description of the deployment for the published report, "
+            "e.g. 'Remote hosted (GPU, CUDA) - NVIDIA A10G, 24 GB VRAM, "
+            "g5.4xlarge' (default: $EMBER_DEPLOYMENT_LABEL, or derived from "
+            "whether --server is loopback plus the reported device — never "
+            "the server URL itself, which is not published)"
+        ),
+    )
     return parser
 
 
@@ -302,6 +407,8 @@ def main(argv: list[str] | None = None) -> int:
         category=args.category,
         dry_run=args.dry_run,
         dataset_path=args.dataset,
+        deployment_label=args.deployment_label
+        or os.environ.get("EMBER_DEPLOYMENT_LABEL"),
     )
 
 
