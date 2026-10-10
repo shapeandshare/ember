@@ -5,6 +5,8 @@ tool (Claude Code: `mcp__ember__advise`). Consult it at bounded decision points
 instead of guessing: user intent, error and test-failure triage, routing, yes/no gates, and
 risk, severity, or effort scores. It advises; you decide. Put all evidence in `state`;
 attach images as base64 data URIs in `images`.
+Oversized requests are refused with a token split, never truncated: trim the largest part
+and retry.
 Trust confidence >= 0.85, flag and verify between 0.60 and 0.85, and ask the user below
 0.60. Load the `ember-advise` skill or read the MCP resource `ember://guide`
 for schemas and recipes.
