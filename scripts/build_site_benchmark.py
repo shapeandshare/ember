@@ -121,7 +121,7 @@ def _leaderboard_table_html(rows: list[dict[str, Any]]) -> str:
     for row in rows:
         model_label = row["model_repo"] or row["model_name"]
         params = f" ({escape(row['params'])})" if row.get("params") else ""
-        deployment = escape(row["server"] or "?")
+        deployment = escape(row["deployment_label"] or "?")
         device = escape(row["device"] or "?")
         accuracy_lo, accuracy_hi = row["accuracy_ci"]
         accuracy = (

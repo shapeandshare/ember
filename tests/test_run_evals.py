@@ -8,6 +8,7 @@ goes empty.
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import httpx
@@ -152,6 +153,108 @@ def test_health_has_no_engine_or_version_on_403(monkeypatch: Any) -> None:
 
     assert health.get("engine") is None
     assert health.get("version") is None
+
+
+@pytest.mark.parametrize(
+    ("server", "device", "expected"),
+    [
+        ("http://127.0.0.1:8765", "mps", "Local (Apple Silicon, MPS)"),
+        ("http://127.0.0.1:8765", "cpu", "Local (CPU)"),
+        ("http://localhost:8765", "cuda", "Local (GPU, CUDA)"),
+        (
+            "https://api-example.outerbounds.app",
+            "cuda",
+            "Remote hosted (GPU, CUDA)",
+        ),
+        ("https://example.com", "cpu", "Remote hosted (CPU)"),
+        ("https://example.com", "mps", "Remote hosted (Apple Silicon, MPS)"),
+        ("https://example.com", "?", "Remote hosted"),
+    ],
+)
+def test_deployment_label_falls_back_to_local_or_remote_plus_device(
+    server: str, device: str, expected: str
+) -> None:
+    """Without an explicit label, ``_deployment_label`` derives a generic one
+    from whether the server is loopback and the engine's reported device —
+    never the raw server URL, which must not appear in published run
+    provenance (vault/decisions/2026-10-10-generic-deployment-labels.md).
+    """
+    assert run_evals._deployment_label(None, server, device) == expected
+
+
+def test_deployment_label_prefers_the_explicit_label_when_given() -> None:
+    """An explicit label (``--deployment-label`` / ``EMBER_DEPLOYMENT_LABEL``)
+    always wins over the derived fallback, so a real deployment can record
+    actual hardware detail (instance size, GPU model) that ember itself has
+    no way to query from ``/health``.
+    """
+    label = "Remote hosted — NVIDIA A10G, 24 GB VRAM, g5.4xlarge"
+    assert (
+        run_evals._deployment_label(label, "https://hosted.example.com", "cuda")
+        == label
+    )
+
+
+def test_run_evals_scrubs_the_s3_uri_from_every_trace_line(
+    monkeypatch: Any, tmp_path: Any
+) -> None:
+    """A hosted server echoes its own loaded model identity (a real S3 URI)
+    in every ``/v1/systemone`` response — the per-item trace line's
+    ``model`` field must record the derived short name, not the raw S3
+    location, or every trace line in a committed benchmark snapshot would
+    re-leak the real bucket path (vault/decisions/
+    2026-10-10-generic-deployment-labels.md).
+    """
+    from evals.eval import run_evals as run_evals_module
+
+    dataset = tmp_path / "dataset.jsonl"
+    item = {
+        "id": "item_001",
+        "split": "dev",
+        "category": "intent_readiness",
+        "state": "state",
+        "questions": {"intent": {"type": "choice", "criteria": {"a": "A", "b": "B"}}},
+        "gold_labels": {"intent": "a"},
+    }
+    dataset.write_text(json.dumps(item) + "\n", encoding="utf-8")
+
+    monkeypatch.setattr(run_evals_module, "RESULTS_DIR", tmp_path / "results")
+
+    def fake_health(server: str) -> dict[str, Any]:
+        return {"engine": {"device": "cuda"}, "version": "0.10.2"}
+
+    def fake_advise(server: str, item: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "model": (
+                "s3://real-bucket/real-prefix/Cloudflare__clef-flash/"
+                "artifacts/model_file"
+            ),
+            "answers": {
+                "intent": {
+                    "type": "choice",
+                    "choice": "a",
+                    "confidence": 0.9,
+                    "probabilities": {"a": 0.9, "b": 0.1},
+                }
+            },
+            "usage": {"input_tokens": 10, "output_tokens": 0},
+        }
+
+    monkeypatch.setattr(run_evals_module, "_health", fake_health)
+    monkeypatch.setattr(run_evals_module, "_advise", fake_advise)
+
+    exit_code = run_evals_module.run_evals(
+        "https://hosted.example.com", dataset_path=dataset
+    )
+    assert exit_code == 0
+
+    trace_files = list((tmp_path / "results").glob("*_trace.jsonl"))
+    assert len(trace_files) == 1
+    lines = trace_files[0].read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 1
+    scored = json.loads(lines[0])
+    assert scored["model"] == "Cloudflare__clef-flash"
+    assert "real-bucket" not in json.dumps(scored)
 
 
 def test_health_returns_empty_dict_on_connection_error(monkeypatch: Any) -> None:

@@ -171,7 +171,7 @@ def system(report: Report) -> Built:
             cell(f"{host.get('cpu', 'not recorded')}, {host.get('platform', '')}"),
         ),
         ("Software", cell(software)),
-        ("Server", code(meta["server"])),
+        ("Deployment", cell(meta.get("deployment_label", "not recorded"))),
         ("Commit", code(meta["git_hash"])),
         ("Run at", cell(meta["run_at"])),
         ("Report generated", cell(meta["generated_at"])),

@@ -1,8 +1,12 @@
-"""The 'System under test' section surfaces the server's ember version.
+"""The 'System under test' section surfaces the server's ember version and a
+generic deployment description, never a raw server URL.
 
 A hosted deployment's client (the machine running the benchmark) and server
 (the machine running the model) can run different ``ember-advise`` versions;
-the report must show both when they differ, not only the client's.
+the report must show both when they differ, not only the client's. The
+deployment itself is described generically (``meta.deployment_label``, e.g.
+"Remote hosted (GPU, CUDA)") — the real server URL never appears in the
+published report (vault/decisions/2026-10-10-generic-deployment-labels.md).
 """
 
 from __future__ import annotations
@@ -20,7 +24,10 @@ BASE_TEXT = {
 
 
 def _report(
-    *, server_version: str | None, client_version: str | None
+    *,
+    server_version: str | None,
+    client_version: str | None,
+    deployment_label: str = "Remote hosted (GPU, CUDA)",
 ) -> dict[str, Any]:
     packages: dict[str, str] = {}
     if client_version is not None:
@@ -37,7 +44,7 @@ def _report(
                 "python": "3.12.11",
                 "packages": packages,
             },
-            "server": "https://hosted.example.com",
+            "deployment_label": deployment_label,
             "git_hash": "abc1234",
             "run_at": "2026-10-10 00:00 UTC",
             "generated_at": "2026-10-10 00:05 UTC",
@@ -83,3 +90,26 @@ def test_software_fact_omits_server_version_when_not_recorded() -> None:
     software = facts["Software"].value
     assert "0.10.3" in software
     assert "server" not in software
+
+
+def test_system_table_shows_the_generic_deployment_label_not_a_url() -> None:
+    report = _report(
+        server_version="0.10.2",
+        client_version="0.10.2",
+        deployment_label="Remote hosted (GPU, CUDA)",
+    )
+    _, _, blocks = sections_front.system(report)
+    facts = _facts(blocks)
+    assert facts["Deployment"].value == "Remote hosted (GPU, CUDA)"
+    assert "Server" not in facts
+
+
+def test_system_table_never_contains_a_url_scheme() -> None:
+    """No fact in the System-under-test table may contain ``://`` — the
+    table must never leak a raw server URL, S3 URI, or similar.
+    """
+    report = _report(server_version="0.10.2", client_version="0.10.2")
+    _, _, blocks = sections_front.system(report)
+    facts = _facts(blocks)
+    for label, cell in facts.items():
+        assert "://" not in str(cell.value), f"{label} leaks a URL: {cell.value}"

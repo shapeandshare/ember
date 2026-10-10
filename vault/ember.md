@@ -55,6 +55,7 @@ Session-level decisions with their context and consequences.
 - [[2026-10-10-disable-torch-native-jit-for-cuda-compiler-gap]]
 - [[2026-10-10-automate-deployment-requirements-in-release]]
 - [[2026-10-10-leaderboard-style-benchmark-reporting]]
+- [[2026-10-10-generic-deployment-labels]]
 
 ### Discoveries
 

@@ -50,13 +50,16 @@ def deployment_key(meta: Mapping[str, Any]) -> str:
     Returns
     -------
     str
-        ``"{server}|{device}"``: the server URL and the engine device
-        together identify a deployment, since the same server URL could in
-        principle serve different devices over time, and the same device
+        ``"{deployment_label}|{device}"``: ``meta.deployment_label`` (a
+        generic description, e.g. ``"Remote hosted (GPU, CUDA)"`` — never
+        the raw server URL, which is not published; see
+        ``evals.eval.run_evals._deployment_label``) and the engine device
+        together identify a deployment, since the same label could in
+        principle describe different devices over time, and the same device
         name (e.g. ``cuda``) says nothing about which deployment it was.
     """
     engine = meta.get("engine") or {}
-    return f"{meta.get('server', '?')}|{engine.get('device', '?')}"
+    return f"{meta.get('deployment_label', '?')}|{engine.get('device', '?')}"
 
 
 def _row(
@@ -74,7 +77,7 @@ def _row(
         "model_repo": spec.get("repo"),
         "params": spec.get("params"),
         "deployment_key": deployment_key(meta),
-        "server": meta.get("server"),
+        "deployment_label": meta.get("deployment_label"),
         "device": engine.get("device"),
         "dtype": engine.get("dtype"),
         "ember_server_version": meta.get("server_version"),

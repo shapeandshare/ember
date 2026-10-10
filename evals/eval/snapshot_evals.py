@@ -39,6 +39,45 @@ def _latest() -> Path | None:
     return max(candidates, key=lambda p: p.stat().st_mtime)
 
 
+_CONFIG_LOCATION_KEYS = ("server",)
+_ENGINE_LOCATION_KEYS = ("model", "model_dir")
+
+
+def _public_results(results_path: Path) -> dict:
+    """Return ``results_path``'s contents with sensitive location fields removed.
+
+    The raw ``results/*_results.json`` a benchmark run writes locally is not
+    meant to be published as-is: ``config.server`` can be a real deployment
+    URL, and ``config.engine.model``/``model_dir`` can be a real S3 bucket
+    path or a local filesystem path carrying the operator's username. This
+    mirrors ``evals.analysis.build``'s scrubbing of the same fields when it
+    builds the published report model — this function applies the same rule
+    to the raw results file this script copies into the tracked bundle,
+    which would otherwise re-leak what ``model.json`` already strips (see
+    vault/decisions/2026-10-10-generic-deployment-labels.md).
+
+    Parameters
+    ----------
+    results_path : Path
+        Path to the run's ``*_results.json``.
+
+    Returns
+    -------
+    dict
+        The parsed results with ``_CONFIG_LOCATION_KEYS`` removed from
+        ``config`` and ``_ENGINE_LOCATION_KEYS`` removed from
+        ``config.engine``.
+    """
+    raw = json.loads(results_path.read_text(encoding="utf-8"))
+    config = {k: v for k, v in raw["config"].items() if k not in _CONFIG_LOCATION_KEYS}
+    config["engine"] = {
+        k: v
+        for k, v in (config.get("engine") or {}).items()
+        if k not in _ENGINE_LOCATION_KEYS
+    }
+    return {**raw, "config": config}
+
+
 def snapshot(results_path: Path) -> Path:
     """Write the tracked bundle for ``results_path`` and return its directory."""
     model = analysis.build(results_path)
@@ -47,7 +86,8 @@ def snapshot(results_path: Path) -> Path:
     out = BENCHMARK_DIR / str(run_id)
     out.mkdir(parents=True, exist_ok=True)
 
-    copy_atomic(results_path, out / "results.json")
+    public_results = _public_results(results_path)
+    write_atomic(out / "results.json", json.dumps(public_results, indent=2) + "\n")
     copy_atomic(results_path.with_name(meta["trace_file"]), out / "trace.jsonl")
     dataset = analysis.dataset_for(results_path, meta["dataset"])
     if dataset.exists():

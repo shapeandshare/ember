@@ -14,7 +14,6 @@
     "engine": {
       "device": "mps",
       "dtype": "float16",
-      "model_dir": "/Users/joshburt/Workbench/Repositories/ember/.models/clef-flash",
       "max_length": 262144
     },
     "host": {
@@ -28,7 +27,6 @@
         "mcp": "2.3.0"
       }
     },
-    "server": "http://127.0.0.1:8765",
     "dataset": {
       "name": "clef-flash.jsonl",
       "file": "clef-flash.jsonl",
@@ -41,7 +39,8 @@
     "n_items": 264,
     "n_errors": 0,
     "results_file": "clef-flash_20261003T203810Z_results.json",
-    "trace_file": "clef-flash_20261003T203810Z_trace.jsonl"
+    "trace_file": "clef-flash_20261003T203810Z_trace.jsonl",
+    "deployment_label": "Local (Apple Silicon, MPS)"
   },
   "text": {
     "title": "ember benchmark report",
