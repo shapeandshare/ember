@@ -67,3 +67,13 @@ model's repository, pinned revision, license, and distribution status.
 
 See also: [`PROVENANCE.md`](PROVENANCE.md) for material origins, and
 [`COMPATIBILITY.md`](COMPATIBILITY.md) for tested versions.
+
+## Evaluation data
+
+The long-context probe (`evals/context/`) pads benchmark states with text from one
+public-domain book, vendored at `evals/context/filler.txt`. It lives only in a checkout and
+is not part of the `ember-advise` distribution.
+
+| Work | Author | Source | Status | Changes | SHA-256 |
+| --- | --- | --- | --- | --- | --- |
+| *Moby-Dick; or, The Whale* (eBook #2701) | Herman Melville | [gutenberg.org/ebooks/2701.txt.utf-8](https://www.gutenberg.org/ebooks/2701.txt.utf-8) | Public domain | Kept only the text between the `*** START` and `*** END` markers, removed the transcriber's note, and normalized line endings to LF, so no Project Gutenberg header, licence, or other reference remains | `f4b274b0250e9c6239797efa7a30a05c78d9fca9a5bd0e2de2ed613e715c57d5` |
