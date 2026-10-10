@@ -47,7 +47,8 @@ class ProbeManifest(BaseModel):
 
     The rule parameters are fixed: a manifest that changes one is invalid.
     ``run_id`` is generated as ``context_<UTC timestamp>`` or given by
-    ``--run-id``; either way it must be a safe directory name.
+    ``--run-id``; either way it must be a safe directory name. ``reproduces`` names
+    the run a reproduction re-runs, so a resumed reproduction still compares.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -82,6 +83,7 @@ class ProbeManifest(BaseModel):
     exploratory_item_ids: list[str]
     pilot_projected_half_width: float | None = None
     sizing_passed: bool | None = None
+    reproduces: str | None = None
 
     @field_validator("run_id")
     @classmethod

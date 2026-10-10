@@ -1043,8 +1043,8 @@ def test_a_reproduction_carries_the_snapshot_dataset(monkeypatch, tmp_path):
     )
     (snapshot / "manifest.json").write_text(_manifest().model_dump_json())
     args = argparse.Namespace(resume=None, reproduce=RUN_ID, items=None)
-    run_dir, _, original = run_context._prepare(args)
-    assert original == snapshot
+    run_dir, manifest, original = run_context._prepare(args)
+    assert (original, manifest.reproduces) == (snapshot, RUN_ID)
     copied = (run_dir / "dataset.jsonl").read_bytes()
     assert copied == (snapshot / "dataset.jsonl").read_bytes()
 
@@ -1117,3 +1117,17 @@ def test_the_sizing_gate_fails_when_a_pilot_pair_is_missing():
     ]
     assert math.isfinite(run_context._pilot_width(manifest, rows, ITEM_BY_ID))
     assert math.isinf(run_context._pilot_width(manifest, rows[:-1], ITEM_BY_ID))
+
+
+def test_resuming_a_reproduction_keeps_its_comparison_target(monkeypatch, tmp_path):
+    import argparse
+
+    results, runs = _probe_dirs(monkeypatch, tmp_path)
+    original = _write_run(runs / RUN_ID, _rows())
+    copy_id = "context_20261010T000000Z"
+    (results / copy_id).mkdir(parents=True)
+    copy = _manifest(run_id=copy_id, reproduces=RUN_ID)
+    (results / copy_id / "manifest.json").write_text(copy.model_dump_json())
+    args = argparse.Namespace(resume=copy_id, reproduce=None, items=None)
+    _, manifest, original_dir = run_context._prepare(args)
+    assert (manifest.reproduces, original_dir) == (RUN_ID, original)

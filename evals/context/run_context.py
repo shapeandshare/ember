@@ -233,6 +233,7 @@ def _reproduction(
             "item_ids": item_ids,
             "exploratory_items": size,
             "exploratory_item_ids": exploratory,
+            "reproduces": original.run_id,
             **probe_items.provenance_fields(),
         }
     )
@@ -308,7 +309,9 @@ def _sizing_gate(run_dir: Path, manifest: ProbeManifest) -> ProbeManifest | None
 def _prepare(args: argparse.Namespace) -> tuple[Path, ProbeManifest, Path | None]:
     if args.resume:
         run_dir = RESULTS_DIR / args.resume
-        return run_dir, summarize.load_manifest(run_dir), None
+        resumed = summarize.load_manifest(run_dir)
+        source = _run_dir(resumed.reproduces) if resumed.reproduces else None
+        return run_dir, resumed, source
     if args.reproduce:
         original_dir = _run_dir(args.reproduce)
         manifest = _reproduction(
@@ -378,9 +381,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"summary: {summarize.write_summary(run_dir)}", file=sys.stderr)
     print("\n".join(_verdict_lines(run_dir)))
     if original_dir is not None:
-        differences = reproduce.compare(
-            original_dir, run_dir, rows_only=bool(args.items)
-        )
+        subset = manifest.item_ids != summarize.load_manifest(original_dir).item_ids
+        differences = reproduce.compare(original_dir, run_dir, rows_only=subset)
         for line in differences:
             print(f"differs: {line}")
         return 2 if differences else 0

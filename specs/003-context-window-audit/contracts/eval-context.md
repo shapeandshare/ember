@@ -58,7 +58,9 @@ evals/context/runs/<run_id>/       # tracked copy of the run a decision cites (-
 
   A reproduction narrowed with `--items N` re-runs only the first N items and compares
   rows only. A subset can't reproduce the full run's statistics, so verdicts aren't
-  compared. On any mismatch it exits 2 and lists the differences.
+  compared. On any mismatch it exits 2 and lists the differences. The reproduction's
+  manifest records the run it reproduces (`reproduces`), so a resumed reproduction still
+  compares.
 
 ## Canonical run
 

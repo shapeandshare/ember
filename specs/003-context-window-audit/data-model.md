@@ -143,6 +143,7 @@ message kept).
 | `exploratory_item_ids` | the seeded subset itself: `exploratory_items` ids drawn from `item_ids`, stratified by category. Run at lengths after the first failure |
 | `pilot_projected_half_width` | float; `None` before the pilot |
 | `sizing_passed` | bool; `None` before the pilot |
+| `reproduces` | the run id a reproduction re-runs, or `None`; a resumed reproduction still compares against it |
 
 ### ProbeRow (Pydantic; one line of `rows-<model>.jsonl`)
 
