@@ -37,8 +37,14 @@ flash.
 - **Review.** Copilot flagged that the spec, the agent-kit contract, the quickstart, and the
   data model still required the shared 32,768; they now state the per-model rule. It then
   flagged that 16,384 would leave full 0.46 GiB of its budget. The maintainer chose to keep
-  4 GiB of every budget free for the OS, so full falls back to 8,192; flash's 24,576
-  already leaves 4.17 GiB.
+  4 GiB of every budget free for the OS, which put full at 8,192; flash's 24,576 already
+  leaves 4.17 GiB.
+- **More memory for full.** The maintainer preferred 16K and up with more memory, so full
+  now requires 96 GB. Measured at 32,768 tokens (73.10 GiB, 325 s) and 65,536 (90.80 GiB,
+  740 s), its fallback is 65,536, and the default `EMBER_REQUEST_TIMEOUT` rose from 300 s
+  to 900 s so that such a request can finish.
+- **Main moved.** #95 (the benchmark) and #97 merged, and v0.9.0 was released, while #96
+  was open; #96 merged main back in.
 
 ## Decisions and discoveries written back
 
@@ -48,7 +54,7 @@ flash.
 
 ## Follow-ups
 
-- Review the 211 new labels, then re-run the pilot.
+- Re-run the pilot on the 443-item benchmark that #95 merged.
 - Before the measured caps ship, decide whether the FR-010 rule should keep the same 4 GiB
   reserve.
 - Run a canonical `make eval-context` on a clean tree, then set the measured caps
