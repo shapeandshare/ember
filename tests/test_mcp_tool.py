@@ -614,3 +614,72 @@ def test_server_5xx_error_returns_generic_message(stub_env, stub_server, monkeyp
     error_text = str(exc_info.value)
     assert "/home/" not in error_text, "5xx body must not forward filesystem paths"
     assert "500" in error_text
+
+
+# ###########################################################################
+# Over-limit refusals reach the agent intact (contracts/mcp-tool.md)
+# ###########################################################################
+def _refusals() -> list[str]:
+    from ember.serving.limit_source import LimitSource
+    from ember.serving.limits import Limits
+    from ember.serving.request_size import RequestSize, refusal_message
+
+    def caps(max_length, max_source, cap, cap_source):
+        return Limits(
+            max_length=max_length,
+            max_length_source=max_source,
+            max_request_length=cap,
+            max_request_length_source=cap_source,
+        )
+
+    model, operator = LimitSource.MODEL, LimitSource.OPERATOR
+    return [
+        refusal_message(
+            RequestSize(total=41230, state=39800, media=0, fixed=1430),
+            caps(262144, model, 32768, LimitSource.FALLBACK),
+            262144,
+        ),
+        refusal_message(
+            RequestSize(total=2600, state=900, media=1200, fixed=500),
+            caps(1024, operator, 0, operator),
+            262144,
+        ),
+        refusal_message(
+            RequestSize(total=300000, state=298570, media=0, fixed=1430),
+            caps(262144, model, 0, operator),
+            262144,
+        ),
+        refusal_message(
+            RequestSize(total=3000, state=10, media=0, fixed=2990),
+            caps(262144, model, 2048, operator),
+            262144,
+        ),
+    ]
+
+
+@pytest.mark.parametrize("message", _refusals())
+def test_a_refusal_reaches_the_agent_intact(
+    message, stub_env, stub_server, monkeypatch
+):
+    url, _ = stub_server(status=413, raw=json.dumps({"detail": message}))
+    with pytest.raises(ToolError) as exc_info:
+        _call_direct(monkeypatch, url)
+    assert str(exc_info.value) == "ember server error 413: " + message
+
+
+@pytest.mark.model
+def test_mcp_refuses_an_oversized_request_end_to_end(base_url: str) -> None:
+    engine = httpx.get(f"{base_url}/health", timeout=10.0).json()["engine"]
+    cap, maximum = engine["max_request_length"], engine["max_length"]
+    enforced = min(cap, maximum) if cap else maximum
+    arguments = {
+        "input": {
+            "state": "word " * (enforced + 100),
+            "questions": {"urgent": {"type": "noul", "instructions": "Is it urgent?"}},
+        }
+    }
+    result = asyncio.run(_call_advise(mcp_stdin_params(base_url), arguments))
+    assert result.is_error is True
+    text = result.content[0].text
+    assert text.startswith("ember server error 413: request too large:")
+    assert "Split: state" in text
