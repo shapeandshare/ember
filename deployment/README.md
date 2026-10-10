@@ -204,7 +204,7 @@ smaller "just for the OS" number. Concretely:
 | Model | Instance | GPU VRAM | System RAM | Fit |
 | --- | --- | --- | --- | --- |
 | `flash` (9B, ~18 GiB weights) | `g5.2xlarge` (1x A10G) | 24 GB (~22.3 GiB usable) | 32 GiB | VRAM: tight (~4 GiB headroom). RAM: matches the request almost exactly — little schedulable margin, risks the same "memory exceeds available" failure as an undersized pool. |
-| `flash` | `g5.4xlarge` (1x A10G) | 24 GB (~22.3 GiB usable) | 64 GiB | VRAM: same tight ~4 GiB headroom as `g5.2xlarge` — bigger instance size does **not** add VRAM within the same GPU model. RAM: real margin below the 32Gi request. **This is `flash.yaml`'s target** (`ai-sage-inf-gpu`). |
+| `flash` | `g5.4xlarge` (1x A10G) | 24 GB (~22.3 GiB usable) | 64 GiB | VRAM: same tight ~4 GiB headroom as `g5.2xlarge` — bigger instance size does **not** add VRAM within the same GPU model. RAM: real margin below the 32Gi request. **This is `flash.yaml`'s target.** |
 | `flash` | `g6e.xlarge`+ (1x L40S) | 48 GB | varies | VRAM: comfortable headroom — AWS's own recommended upgrade path from G5 for memory-bound LLM serving. Not yet used or verified. |
 | `full` (27B, ~55 GiB weights) | any G5/G6e size above | 24–48 GB | — | **Does not fit at all** — `full`'s weights alone (~55 GiB) exceed even L40S's 48 GB before activations/KV-cache are counted. |
 | `full` | `p5.4xlarge` (1x H100) | 80 GB HBM3 | 256 GiB | VRAM: ~25 GiB headroom for activations/KV-cache after ~55 GiB of weights. RAM: comfortable margin above the 96Gi request. **This is `full.yaml`'s target** — not yet deployed or verified against real hardware. |

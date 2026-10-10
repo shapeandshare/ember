@@ -27,34 +27,42 @@ for that model specifically, ahead of actually deploying `full`.
 
 Direct request to prepare a second deployment config for `full` and "ensure the compute is
 accurate." `full` (27B, ~55 GiB of float16 weights) cannot share `flash`'s compute pool
-(`ai-sage-inf-gpu`, confirmed only sized for `flash`'s ~18 GiB on a single A10G/24 GB GPU) —
-sizing `full.yaml` from `flash.yaml` with bigger numbers on the same pool would not work;
-it needs a fundamentally different GPU class. Argo CD and Slack sessions were both expired
-during this session (no VPN), so `ai-sage-inf-gpu`'s exact underlying instance type could not
-be confirmed directly; sizing instead comes from `ember/models.py`'s own declared
-`memory_budget_bytes`/`approx_bytes` for `full` (96 GiB / 55 GiB) and COMPATIBILITY.md's
-already-documented hardware table, cross-checked against AWS's own published GPU instance
-specs (G5/A10G, G6e/L40S, P5/H100) via a web search, not against a live pool reading.
+(a single-A10G/24 GB pool, only sized for `flash`'s ~18 GiB) — sizing `full.yaml` from
+`flash.yaml` with bigger numbers on the same pool would not work; it needs a fundamentally
+different GPU class. Argo CD and Slack sessions were both expired during this session (no
+VPN), so the live pool's exact underlying instance type could not be confirmed directly;
+sizing instead comes from `ember/models.py`'s own declared `memory_budget_bytes`/
+`approx_bytes` for `full` (96 GiB / 55 GiB) and COMPATIBILITY.md's already-documented
+hardware table, cross-checked against AWS's own published GPU instance specs (G5/A10G,
+G6e/L40S, P5/H100) via a web search, not against a live pool reading.
+
+A same-day follow-up request made every deployment YAML in the repo generic (no real S3
+bucket or compute pool name): `flash.yaml` briefly carried the actual live deployment's S3
+URI and pool name (committed in this same change, at direct request, to document a working
+deployment) before this follow-up reverted it to the same `your-bucket`/commented-out-pool
+placeholder convention `full.yaml` always used. This note's own text is scrubbed of the real
+pool name for the same reason, even though it is an accurate record of what was
+investigated.
 
 ## Decision
 
 - **Two files, one per registry model**: `deployment/flash.yaml` (renamed from
-  `deployment/deploy.yaml`, `name: ember-flash`, real values preserved — the live
-  deployment's actual S3 URI and `ai-sage-inf-gpu` compute pool) and `deployment/full.yaml`
-  (new, `name: ember-full`). Outerbounds requires a globally unique `name` per deployment,
-  confirmed via its own CLI reference docs.
+  `deployment/deploy.yaml`, `name: ember-flash`) and `deployment/full.yaml` (new,
+  `name: ember-full`). Outerbounds requires a globally unique `name` per deployment,
+  confirmed via its own CLI reference docs. Both files are fully generic: a placeholder
+  `EMBER_MODEL_S3_URI` and a commented-out `compute_pools` example, filled in locally
+  (never committed) by whoever actually deploys.
 - **`full.yaml`'s `resources` come from the registry, not a guess**: `memory: 96Gi` (matches
   `REGISTRY["full"].memory_budget_bytes` exactly — the same number the long-context probe's
   memory check already derived independently, see
   [[2026-10-10-per-model-request-caps]]), `disk: 100Gi` (`flash.yaml`'s 30Gi-for-18GiB ratio
   applied to `full`'s ~55 GiB of weights, rounded up).
-- **`full.yaml`'s `compute_pools` is deliberately left commented out**, not pinned to
-  `ai-sage-inf-gpu` or any other pool: `full`'s ~55 GiB of weights alone exceed every
-  single-GPU option in the G5/G6e families (A10G 24 GB, L40S 48 GB) before activations or
-  KV-cache are even counted. The only viable AWS single-GPU instance found is `p5.4xlarge`
-  (1x H100, 80 GB HBM3, 256 GiB system RAM) — documented in both files' comments and
-  `deployment/README.md`'s sizing table, but not yet confirmed to exist as an available
-  compute pool in this workspace, so nothing is pinned until that's verified.
+- **`full.yaml`'s `compute_pools` is deliberately left commented out**: `full`'s ~55 GiB of
+  weights alone exceed every single-GPU option in the G5/G6e families (A10G 24 GB, L40S
+  48 GB) before activations or KV-cache are even counted. The only viable AWS single-GPU
+  instance found is `p5.4xlarge` (1x H100, 80 GB HBM3, 256 GiB system RAM) — documented in
+  both files' comments and `deployment/README.md`'s sizing table, but not yet confirmed to
+  exist as an available compute pool in any workspace, so nothing is pinned.
 - **`ember` has no multi-GPU support** (`ember/serving/runtime.py::load_clef` moves the
   whole model to one device with `.to(device)`), so a multi-GPU instance like
   `p4d.24xlarge` (8x A100 40 GB) does not help `full` — confirmed by reading the loader
@@ -88,19 +96,20 @@ specs (G5/A10G, G6e/L40S, P5/H100) via a web search, not against a live pool rea
   referencing that exact path breaks. Searched the whole repo (code, docs, Makefile,
   `.github/workflows/`) for the literal path before renaming; nothing outside `deployment/`,
   `tests/`, `scripts/`, and the five vault notes above referenced it, and all are now fixed.
-- `full.yaml` cannot actually be deployed yet: its `EMBER_MODEL_S3_URI` is still a
-  placeholder (no bucket has `full`'s weights uploaded as of this writing) and no
-  compute pool is pinned. `make deploy EMBER_DEPLOY_MODEL=full` will correctly refuse with
-  an actionable error until the S3 URI is filled in; the compute pool must be confirmed to
-  exist and sized correctly (an 80 GB-class GPU) before a real deploy attempt — an
-  undersized pool would be silently accepted by the Kubernetes scheduler (system RAM is
-  the only thing validated at deploy time; GPU VRAM is not) and only fail later as a CUDA
-  out-of-memory error inside the running pod.
-- `ai-sage-inf-gpu`'s exact instance type is still unconfirmed directly (no Argo CD/Slack
-  access this session) — `flash.yaml`'s existing `resources` already matched it empirically
-  (per the file's own pre-existing comments about two earlier rejected pools), so this
-  decision does not change flash's behavior, only adds full's sizing alongside it from
-  first principles (the registry's own declared numbers).
+- Neither file is deployable as committed: both `EMBER_MODEL_S3_URI` values are
+  placeholders and neither pins a `compute_pools` entry. `make deploy` (either
+  `EMBER_DEPLOY_MODEL=flash` or `=full`) correctly refuses with an actionable error until
+  the S3 URI is filled in locally; the deploying operator must also confirm a real compute
+  pool exists and is sized correctly before a real deploy attempt — an undersized pool
+  would be silently accepted by the Kubernetes scheduler (system RAM is the only thing
+  validated at deploy time; GPU VRAM is not) and only fail later as a CUDA out-of-memory
+  error inside the running pod.
+- The live pool's exact instance type is still unconfirmed directly (no Argo CD/Slack
+  access this session) — `flash.yaml`'s `resources` numbers still reflect its own
+  pre-existing empirical history (two earlier rejected pools, documented in its comments),
+  so this decision does not change flash's resource sizing, only adds full's sizing
+  alongside it from first principles (the registry's own declared numbers) and keeps both
+  files' bucket/pool fields generic.
 
 ## References
 

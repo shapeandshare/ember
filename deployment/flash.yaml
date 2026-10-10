@@ -39,7 +39,7 @@ environment:
   EMBER_HOST: "0.0.0.0"
   EMBER_PORT: "8765"
   EMBER_DEVICE: "cuda"
-  EMBER_MODEL_S3_URI: "s3://obp-0ttxc8-metaflow/metaflow/model-pipelines-dev/Cloudflare__clef-flash/artifacts/model_file"
+  EMBER_MODEL_S3_URI: "s3://your-bucket/your-prefix/Cloudflare__clef-flash/artifacts/model_file"
   EMBER_AUTOSTART: "0"
 
 # No secrets needed: EMBER_MODEL_S3_URI downloads via the compute pool's
@@ -100,17 +100,18 @@ resources:
   gpu: "1"
 
 # compute_pools is OPTIONAL (see docs.outerbounds.com/outerbounds/inference-deep-dive
-# "Targeting compute pools") — omit it entirely to let Outerbounds
-# auto-select any eligible pool in your workspace's default perimeter that
-# has "Inference deployments" enabled (Compute Pool UI → Advanced Routing)
-# and can satisfy `resources` above. Pinned here to `ai-sage-inf-gpu`
-# (confirmed to satisfy flash's resources above) for cost tracking and
-# compute isolation from `full`'s deployment (deployment/full.yaml), which
-# needs a different, larger-VRAM pool and must not land on this one. Two
-# earlier candidate pools were both explicitly tried and rejected ("memory
-# requirement 32Gi exceeds available ~14-15Gi") before this one.
-compute_pools:
-  - ai-sage-inf-gpu
+# "Targeting compute pools") — left commented out here so Outerbounds
+# auto-selects any eligible pool in your workspace's default perimeter
+# that has "Inference deployments" enabled (Compute Pool UI → Advanced
+# Routing) and can satisfy `resources` above. Pin an explicit pool only if
+# you need cost tracking, compute isolation (especially from `full`'s
+# deployment, deployment/full.yaml, which needs a different, larger-VRAM
+# pool and must not land on the same one as this), or a specific GPU class
+# (see the docs section above), and have confirmed it actually has enough
+# schedulable memory and VRAM for `flash` (see the `resources` comment
+# above) — e.g.:
+#   compute_pools:
+#     - <your-g5-4xlarge-or-larger-pool>
 
 replicas:
   fixed: 1

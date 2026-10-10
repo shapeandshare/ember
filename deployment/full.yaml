@@ -111,10 +111,10 @@ resources:
   gpu: "1"
 
 # compute_pools is OPTIONAL (see docs.outerbounds.com/outerbounds/inference-deep-dive
-# "Targeting compute pools") — left commented out here because, unlike
-# flash.yaml's `ai-sage-inf-gpu`, no pool with an 80 GB-class GPU has been
-# confirmed available in this workspace yet (see the `resources` comment
-# above for why flash's pool cannot serve `full`). Uncomment and name a pool
+# "Targeting compute pools") — left commented out here because `full` needs
+# an 80 GB-class GPU pool, which is a materially different (and larger) pool
+# than whatever `flash.yaml` targets (see the `resources` comment above for
+# why flash's pool cannot serve `full`). Uncomment and name a pool
 # here only after confirming it has both enough schedulable system RAM (the
 # scheduler validates this one at deploy time — an undersized pool fails
 # immediately) AND enough GPU VRAM for `full` (NOT validated at deploy time;
