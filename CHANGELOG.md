@@ -1,3 +1,13 @@
+## v0.9.0 (2026-10-10)
+
+### Feat
+
+- **ember**: count requests in full, refuse oversized ones, and measure per-model caps (#94)
+
+### Fix
+
+- **ember**: install ember-advise itself in the Outerbounds deploy image (#97)
+
 ## v0.8.1 (2026-10-09)
 
 ### Fix

@@ -271,7 +271,7 @@ You need an Apple Silicon Mac with 32 GB of memory or more, about 18 GiB of free
    To pin a specific release tag from GitHub instead:
 
    ```bash
-   uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.8.1"
+   uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.9.0"
    ```
 
 2. **Download the model.** It's about 18 GB, and an interrupted download resumes.
