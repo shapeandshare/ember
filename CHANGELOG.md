@@ -1,3 +1,9 @@
+## v0.11.1 (2026-10-10)
+
+### Fix
+
+- **ember**: generic deployment labels on the leaderboard, never raw URLs (#114)
+
 ## v0.11.0 (2026-10-10)
 
 ### Feat
