@@ -47,6 +47,11 @@ class ModelSpec:
         Human-readable parameter count (e.g. ``"9B"``).
     approx_bytes : int
         Approximate on-disk size of the pulled weights, in bytes.
+    memory_budget_bytes : int
+        The most memory one request may peak at on this model: the unified
+        memory of the smallest Mac it is documented to run on (32 GiB for
+        ``flash``, 64 GiB for ``full``). The long-context probe fails any
+        length whose peak exceeds it.
     revision : str | None
         Optional Hugging Face Hub commit/branch/tag to download — a
         convenience for targeting a specific known-good version, not a
@@ -66,6 +71,7 @@ class ModelSpec:
     dir_name: str
     params: str
     approx_bytes: int
+    memory_budget_bytes: int
     revision: str | None = None
     kind: str = "decision"
     max_request_length: int | None = None
@@ -78,6 +84,7 @@ REGISTRY: dict[str, ModelSpec] = {
         "clef-flash",
         "9B",
         18 * 2**30,
+        memory_budget_bytes=32 * 2**30,
         revision="17f0b0ad64efb65d273590632833508766b2aae6",
     ),
     "full": ModelSpec(
@@ -86,6 +93,7 @@ REGISTRY: dict[str, ModelSpec] = {
         "clef",
         "27B",
         55 * 2**30,
+        memory_budget_bytes=64 * 2**30,
         revision="2f3de3dd85f379784083b0814d997ab627200f0c",
     ),
 }

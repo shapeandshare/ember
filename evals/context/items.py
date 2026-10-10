@@ -24,7 +24,6 @@ DATASET_PATH = provenance.REPO_ROOT / "evals" / "clef-flash.jsonl"
 #: Items whose unpadded request exceeds this leave too little room at 2K.
 UNPADDED_LIMIT = 2048 - 64
 MEDIA_KEYS = ("images", "videos")
-MEMORY_BUDGETS = {"flash": 32 * 2**30, "full": 64 * 2**30}
 
 
 def load_items(path: Path = DATASET_PATH) -> list[dict[str, Any]]:
@@ -108,7 +107,7 @@ def probe_model(name: str, recommended_max_memory: int | None = None) -> ProbeMo
         repo=spec.repo,
         revision=spec.revision,
         params=spec.params,
-        memory_budget_bytes=MEMORY_BUDGETS[spec.name],
+        memory_budget_bytes=spec.memory_budget_bytes,
         recommended_max_memory_bytes=recommended_max_memory,
     )
 

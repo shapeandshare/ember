@@ -321,6 +321,11 @@ def test_default_request_cap_outside_the_registry(monkeypatch):
     assert default_request_cap(None) == (32768, LimitSource.FALLBACK)
 
 
+def test_every_registered_model_declares_a_memory_budget_above_its_weights():
+    for spec in models.REGISTRY.values():
+        assert spec.memory_budget_bytes > spec.approx_bytes
+
+
 def test_registry_key_names_the_registry_entry(monkeypatch):
     monkeypatch.delenv("EMBER_MODEL_DIR", raising=False)
     assert models.registry_key("FLASH") == "flash"
