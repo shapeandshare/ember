@@ -575,26 +575,30 @@ def test_health_version_is_the_installed_distribution_version() -> None:
 
 
 # ###########################################################################
-# T-004: host config must be validated against loopback when auth is disabled
+# T-004 (wontfix, see docs/stride-tracker.csv): non-loopback binding without
+# bearer auth is an accepted operator responsibility, not a server-enforced
+# failure — a non-loopback host MUST start regardless of whether
+# EMBER_SERVER_AUTH_TOKEN is set, so a deployment behind its own gateway auth
+# (e.g. Outerbounds' auth.type: API) is not forced to also configure ember's
+# own token. See vault/decisions/2026-10-10-remove-t004-non-loopback-auth-check.md.
 # ###########################################################################
-def test_lifespan_raises_on_non_loopback_host_without_auth(monkeypatch) -> None:
-    """T-004: Starting the server on a non-loopback address without
-    EMBER_SERVER_AUTH_TOKEN must raise RuntimeError (fail-fast before ready).
-    Exposing the unauthenticated inference endpoint beyond loopback removes the
-    only security boundary."""
+def test_lifespan_allows_non_loopback_host_without_auth(monkeypatch) -> None:
+    """A non-loopback host with no EMBER_SERVER_AUTH_TOKEN must start normally —
+    access control for a non-loopback deployment is the operator's
+    responsibility (e.g. a platform-level gateway), not ember's to enforce."""
     monkeypatch.setenv("EMBER_HOST", "0.0.0.0")  # noqa: S104
     monkeypatch.delenv("EMBER_SERVER_AUTH_TOKEN", raising=False)
     from ember.serving import server as server_mod
     from fastapi.testclient import TestClient
 
-    with pytest.raises(RuntimeError, match=r"EMBER_HOST|non-loopback|auth"):
-        with TestClient(server_mod.app):
-            pass
+    with TestClient(server_mod.app) as client:
+        resp = client.get("/health")
+    assert resp.status_code == 200
 
 
 def test_lifespan_allows_non_loopback_host_when_auth_is_enabled(monkeypatch) -> None:
-    """T-004: A non-loopback host is allowed when EMBER_SERVER_AUTH_TOKEN is
-    set — the bearer-auth layer becomes the security boundary."""
+    """A non-loopback host is also allowed when EMBER_SERVER_AUTH_TOKEN is
+    set — the bearer-auth layer is still available as defense in depth."""
     monkeypatch.setenv("EMBER_HOST", "0.0.0.0")  # noqa: S104
     monkeypatch.setenv("EMBER_SERVER_AUTH_TOKEN", "secret")
     resp = _in_process_client().get("/health")
@@ -602,7 +606,7 @@ def test_lifespan_allows_non_loopback_host_when_auth_is_enabled(monkeypatch) -> 
 
 
 def test_lifespan_allows_loopback_host_without_auth(monkeypatch) -> None:
-    """T-004: The default loopback address must continue to work without auth."""
+    """The default loopback address must continue to work without auth."""
     monkeypatch.setenv("EMBER_HOST", "127.0.0.1")
     monkeypatch.delenv("EMBER_SERVER_AUTH_TOKEN", raising=False)
     resp = _in_process_client().get("/health")

@@ -14,6 +14,7 @@ _A chronological log of every scan run. Newest first._
 
 | Scan Date  | New Threats | Resolved | Regressed | Total Open | Scope |
 |------------|-------------|----------|-----------|------------|-------|
+| 2026-10-10 | +0   | +0       | +1        | 5          | T-004 regressed `fixed` → `wontfix`: the non-loopback-without-auth RuntimeError broke the documented Outerbounds deployment (EMBER_HOST=0.0.0.0, no EMBER_SERVER_AUTH_TOKEN, access control delegated to `auth.type: API`). Access control for a non-loopback deployment is now the operator's responsibility. Also fixed an unrelated pre-existing ID collision: the distinct, still-open "config file without integrity check" finding was mislabeled T-004 in this document's detailed register; renumbered to T-006 (`docs/stride-tracker.csv` never had it duplicated). See vault/decisions/2026-10-10-remove-t004-non-loopback-auth-check.md. |
 | 2026-10-09 (003 review) | +1   | +0       | +0        | 5          | PR #94 review — D-007 opened: media are decoded in full before the size check; `media_kwargs` now validated before decoding |
 | 2026-10-09 (impl 3) | +0   | +0       | +0        | 4          | PR feedback pass — D-004 reverted to open (RotatingFileHandler does not rotate child subprocess output); S3 path traversal guard added; _sanitize_error scalar detail redaction; audit log moved to CLI stderr; behavioral tests replace inspect-source assertions |
 | 2026-10-09 (impl 2) | +0   | -7       | +0        | 4          | implementation pass 2 — R-003, R-004, I-003 fixed; S-003, T-005, I-005, I-006, R-005 accepted (documented in SECURITY.md) |
@@ -95,7 +96,7 @@ _A single flat table covering every threat across all STRIDE categories. Sorted:
 | R-004 | R   | MEDIUM   | fixed    | cli       | Z4: model lifecycle                       | model rm / uninstall --purge-models not logged          | —                                                                                 | 2026-10-04 | 2026-10-09     | 2026-10-09 |
 | I-001 | I   | MEDIUM   | fixed    | server    | Z2: /health response                      | /health disclosed model_dir filesystem path             | → vault/decisions/2026-10-02-expose-prometheus-metrics-on-the-server.md            | 2026-10-04 | 2026-10-09     | 2026-10-09 |
 | I-002 | I   | MEDIUM   | fixed    | mcp       | Z1→Z0: ToolError messages                 | ToolError forwarded raw server error bodies             | —                                                                                 | 2026-10-04 | 2026-10-09     | 2026-10-09 |
-| T-004 | T   | MEDIUM   | fixed    | server    | Z4: config.json / server lifespan         | Non-loopback host binding without bearer auth           | —                                                                                 | 2026-10-04 | 2026-10-09     | 2026-10-09 |
+| T-004 | T   | MEDIUM   | wontfix  | server    | Z4: config.json / server lifespan         | Non-loopback host binding without bearer auth           | → vault/decisions/2026-10-10-remove-t004-non-loopback-auth-check.md               | 2026-10-04 | 2026-10-10     | —          |
 | R-002 | R   | MEDIUM   | fixed    | mcp       | Z0→Z1: advise tool call                   | advise calls not logged with question IDs / model label | —                                                                                 | 2026-10-04 | 2026-10-09     | 2026-10-09 |
 | D-004 | D   | MEDIUM   | open     | server    | Z4: server.log                            | server.log subprocess output cannot be rotated in-process | —                                                                               | 2026-10-04 | 2026-10-09     | —          |
 | D-005 | D   | MEDIUM   | fixed    | server    | Z4: autostart TOCTOU                      | Multiple MCP autostart calls race to spawn server       | —                                                                                 | 2026-10-04 | 2026-10-09     | 2026-10-09 |
@@ -222,7 +223,7 @@ _Per-category context for each threat — scenario, gap, mitigation, and trust-z
 
 | ID    | Severity | Status   | Component | Flow / Component                     | Title                                                      | First Seen | Last Confirmed | Resolved   |
 |-------|----------|----------|-----------|--------------------------------------|------------------------------------------------------------|------------|----------------|------------|
-| T-004 | MEDIUM   | open     | server    | Z4: config.json                      | Config file loaded without integrity check                 | 2026-10-04 | 2026-10-09     | —          |
+| T-006 | MEDIUM   | open     | server    | Z4: config.json                      | Config file loaded without integrity check                 | 2026-10-04 | 2026-10-09     | —          |
 | T-005 | MEDIUM   | open     | server    | Z4: server.pid                       | Pidfile has no integrity check                             | 2026-10-04 | 2026-10-09     | —          |
 | T-001 | CRITICAL | wontfix  | runtime   | Z4→Z3: EMBER_MODEL_DIR + sys.path    | Executable Python imported from model-controlled directory | 2026-10-04 | 2026-10-09     | —          |
 | T-002 | HIGH     | fixed    | runtime   | Z4→Z3: EMBER_MODEL_DIR               | EMBER_MODEL_DIR accepted without directory validation      | 2026-10-04 | 2026-10-04     | 2026-10-05 |
@@ -264,13 +265,17 @@ _Per-category context for each threat — scenario, gap, mitigation, and trust-z
 
 ---
 
-#### T-004: Config file loaded without integrity check
+#### T-006: Config file loaded without integrity check
 - **Severity**: MEDIUM
 - **Status**: open
 - **Component**: server
 - **Flow**: Z4 (config.json) → Z2 (server config)
 - **First seen**: 2026-10-04
 - **Last confirmed**: 2026-10-09
+- **Renumbered 2026-10-10**: this finding was previously mislabeled T-004, colliding with the
+  distinct, genuinely-T-004 "Non-loopback host binding without bearer auth" finding (flat
+  table above, `docs/stride-tracker.csv`). Renumbered to T-006 to resolve the ID collision;
+  content and status unchanged.
 - **Threat scenario**: An attacker with write access to `~/Library/Application Support/ember/config.json` can tamper with `host` (expose server beyond loopback), inject `server_auth_token` (add a backdoor bearer token), alter `s3_access_key_id`/`s3_secret_access_key` (exfiltrate AWS credentials on next S3 pull), or change `server_url` (redirect client to attacker's server). The config is loaded without any integrity check or value validation.
 - **Gap** (confirmed in current code):
   ```python
@@ -691,9 +696,9 @@ The major architectural change since the last scan is constitution Article V v3.
 - The S3 hosted path (E-003) introduces a networked variant of the same risk — mitigated by IAM/bucket ACLs rather than code-level checks.
 - The `EMBER_MODEL_DIR` env var remains the highest-severity single-point attack surface for local deployments.
 
-### 2. Bearer auth adds a new config-tampering surface (T-004 expansion)
+### 2. Bearer auth adds a new config-tampering surface (T-006 expansion)
 
-The addition of `server_auth_token` to the config schema means a tampered `config.json` can now (a) disable authentication on a server that should be protected, or (b) add a backdoor credential to a server the operator thought was unprotected. The T-004 finding is unchanged in severity but its blast radius has increased.
+The addition of `server_auth_token` to the config schema means a tampered `config.json` can now (a) disable authentication on a server that should be protected, or (b) add a backdoor credential to a server the operator thought was unprotected. The T-006 finding is unchanged in severity but its blast radius has increased. (Renumbered from T-004 on 2026-10-10 — see T-006's entry for the ID-collision note.)
 
 ### 3. The loopback boundary is the primary security perimeter
 
@@ -729,7 +734,8 @@ No CI-layer threats identified. SHA-pinned actions, `permissions: {}`, `persist-
 | T-001     | Executable Python from model-controlled dir           | constitution Article V v3.0.0 (explicit architectural design)                          | Wontfix — constitutional decision; no code-level mitigation intended                            |
 | T-002     | EMBER_MODEL_DIR without directory validation          | —                                                                                      | Fixed (2026-10-05); structurally: Article V superseded the fix with a broader policy            |
 | T-003     | Unreserved media_kwargs forwarded                     | vault/discoveries/2026-10-02-media-refs-are-data-uris-not-host-paths.md               | Fixed — ALLOWED_MEDIA_KWARGS allowlist confirmed in runtime.py                                  |
-| T-004     | Config file without integrity check                   | constitution Article XIII §13.5                                                        | Architectural gap — value validation is missing; blast radius expanded with new auth/S3 keys    |
+| T-004     | Non-loopback host binding without bearer auth         | vault/decisions/2026-10-10-remove-t004-non-loopback-auth-check.md                      | Wontfix — access control for a non-loopback deployment is the operator's responsibility          |
+| T-006     | Config file without integrity check                   | constitution Article XIII §13.5                                                        | Architectural gap — value validation is missing; blast radius expanded with new auth/S3 keys    |
 | T-005     | Pidfile without integrity check                       | constitution Article IV                                                                | `_is_ember_server` is a strong compensating control; residual gap accepted                      |
 | R-001     | stop() no audit log                                   | constitution Article IV; _append_audit_log() in process.py                             | Fixed — audit log confirmed in process.py:304, 310                                              |
 | R-002     | advise calls not logged                               | —                                                                                      | Architectural gap — no existing control                                                          |
@@ -768,9 +774,12 @@ No CI-layer threats identified. SHA-pinned actions, `permissions: {}`, `persist-
 
 ### Short-term (MEDIUM)
 
-2. **T-004 — Validate host value in config before binding**
-   - In `server.py` lifespan or `process.spawn()`, validate the `host` config value is a loopback address when `EMBER_SERVER_AUTH_TOKEN` is unset.
-   - Effort: Low (5–10 lines).
+2. **T-006 — Validate config.json value integrity before use**
+   - Validate `host`/`server_auth_token`/S3 credential values read from `config.json` are
+     well-formed before use, since a tampered config file can redirect or weaken the server
+     with no detection today. (No longer host-vs-loopback-specific: T-004, which previously
+     enforced exactly that at startup, is now `wontfix` — see its entry.)
+   - Effort: Low–Medium.
 
 3. **D-006 — Add timeout and size guard to S3 download**
    - Add `EMBER_S3_DOWNLOAD_TIMEOUT` (default: 3600s) and a size preflight check to `s3.download_prefix()`.
