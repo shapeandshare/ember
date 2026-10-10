@@ -727,10 +727,10 @@ MUST pass the constitution check.
   memory checks set flash's to 24,576 (27.83 GiB of 32 GiB; 32,768 peaked at 32.35 GiB).
   full now requires 96 GB (it was 64), and its fallback is 65,536 (90.80 GiB of 96 GiB).
   A model outside the registry gets the lowest registry cap, measured or fallback. The
-  default `EMBER_REQUEST_TIMEOUT` rises from 300 s to 900 s (and the generated Codex
-  `tool_timeout_sec` with it), because 65,536 tokens on full take about 740 s on an M4
-  Max. The probe's sizing pilot could not resolve its 2-point accuracy tolerance with 232
-  text items (half-width 0.0264), so the benchmark grows to 443 (#95). See
+  default `EMBER_REQUEST_TIMEOUT` rises from 300 s to 900 s, and the generated Codex
+  `tool_timeout_sec` to 1,260 s to cover autostart too, because 65,536 tokens on full take
+  about 740 s on an M4 Max. The probe's sizing pilot could not resolve its 2-point accuracy
+  tolerance with 232 text items (half-width 0.0264), so the benchmark grows to 443 (#95). See
   `vault/decisions/2026-10-10-per-model-request-caps.md`.
 - 2026-10-09: context window audit, part 1 (`specs/003-context-window-audit/`): requests are
   counted in full (state, media, questions, schema, prompt wrapper) with upstream

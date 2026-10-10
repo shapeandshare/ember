@@ -48,10 +48,11 @@ _SERVER_KEY = "ember"
 _AUTH_ENV_VAR = "EMBER_AUTH_TOKEN"
 
 #: Explicit timeouts (Codex's own documented/code-path defaults disagree; pin ours).
-#: The tool timeout matches ember's default request timeout, so Codex never gives up
-#: on a request that ember is still waiting for.
+#: Codex's tool timeout bounds the whole call: up to 300 s of autostart
+#: (EMBER_START_TIMEOUT), then up to 900 s for the request (EMBER_REQUEST_TIMEOUT),
+#: plus a minute of margin, so Codex never gives up on a call ember is still serving.
 _STARTUP_TIMEOUT_SEC = 30
-_TOOL_TIMEOUT_SEC = 900
+_TOOL_TIMEOUT_SEC = 1260
 
 #: Matches an ember table header: `[mcp_servers.ember]`, `[mcp_servers.ember.env]`,
 #: tolerant of whitespace around dots and a trailing comment.
