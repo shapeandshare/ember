@@ -212,6 +212,26 @@ body {
   .docs-nav { position: static; }
 }
 
+/* --- leaderboard --------------------------------------------------------- */
+/* Full-width, no sidebar: the leaderboard index has no per-page section nav
+   (unlike a per-run report, which reuses .doc-layout via benchmark_nav.html),
+   so reserving .doc-layout's 220px nav column here would leave it empty. */
+
+.leaderboard-page {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 0;
+}
+.leaderboard-page .doc-content > h1:first-child { margin-top: 0; }
+.leaderboard-page table.leaderboard {
+  display: block;
+  overflow-x: auto;
+  width: max-content;
+  max-width: 100%;
+}
+.leaderboard-page table.leaderboard td,
+.leaderboard-page table.leaderboard th { white-space: nowrap; }
+
 /* --- prose ------------------------------------------------------------- */
 
 h1, h2, h3, h4 { line-height: 1.25; letter-spacing: -0.01em; margin: 2rem 0 0.75rem; }

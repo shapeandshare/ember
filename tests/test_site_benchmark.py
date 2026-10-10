@@ -183,6 +183,20 @@ def test_build_writes_a_leaderboard_index_page(sandbox: Path) -> None:
     assert "permalink: /results/" in text
 
 
+def test_leaderboard_index_uses_the_full_width_layout_not_the_sidebar_one(
+    sandbox: Path,
+) -> None:
+    """The leaderboard index has no per-page section nav (only a per-run
+    report does, via ``benchmark_nav.html``), so it must use the
+    sidebar-free ``leaderboard`` layout rather than ``benchmark`` — the
+    latter reserves a 220px nav column that would render empty on this
+    page.
+    """
+    assert bench.build() == 0
+    text = (sandbox / "results" / "index.md").read_text(encoding="utf-8")
+    assert "layout: leaderboard" in text
+
+
 def test_build_writes_the_headline_from_the_top_leaderboard_row(
     sandbox: Path,
 ) -> None:

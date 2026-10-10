@@ -215,7 +215,7 @@ def build() -> int:
         }
 
     (OUT / "index.md").write_text(
-        _page("benchmark", "Leaderboard", "/results/", _leaderboard_page_body(rows)),
+        _page("leaderboard", "Leaderboard", "/results/", _leaderboard_page_body(rows)),
         encoding="utf-8",
     )
 
