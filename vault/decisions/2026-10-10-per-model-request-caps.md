@@ -53,8 +53,9 @@ so that the probe can resolve its accuracy tolerance.
 - **flash** keeps its 32 GiB budget and falls back to 24,576 (27.83 GiB, 4.17 GiB free).
   **full** now requires 96 GB and falls back to 65,536, the longest probe length (90.80
   GiB, 5.20 GiB free).
-- **Wait 900 s.** `EMBER_REQUEST_TIMEOUT` defaults to 900 s instead of 300 s, and the
-  generated Codex `tool_timeout_sec` matches it, so a request at full's default can finish.
+- **Wait 900 s.** `EMBER_REQUEST_TIMEOUT` defaults to 900 s instead of 300 s, so a request
+  at full's default can finish. The generated Codex `tool_timeout_sec` is 1,260 s, enough
+  for a 300 s autostart, the 900 s request, and a minute of margin.
 - **Grow the benchmark; keep the tolerance.** Loosening the 2-point tolerance after seeing
   pilot data would undo its pre-declaration, so 211 curated text items take the benchmark
   to 443 (projected half-width about 0.019; merged in #95).
