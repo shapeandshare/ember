@@ -112,6 +112,20 @@ user-supplied input.
 
 The following are known, accepted risks for the default single-user loopback deployment. They are tracked in `docs/stride-review.md` and will not be fixed unless the deployment model changes.
 
+**Non-loopback binding without bearer auth (T-004):** Setting `EMBER_HOST` to a non-loopback
+address (e.g. `0.0.0.0`, required by platforms like Outerbounds that route traffic to a fixed
+container port) does not require `EMBER_SERVER_AUTH_TOKEN` to be set. `/v1/systemone` is
+unauthenticated in that configuration unless the operator sets the token or fronts the server
+with their own gateway/proxy auth — ember cannot distinguish "bound wide open on a hostile
+network" from "bound wide behind a platform's own access-gated ingress" (e.g. Outerbounds'
+`auth.type: API`, which authenticates every request before it reaches the pod). An earlier
+version of ember refused to start in this configuration at all; that refusal broke the
+documented Outerbounds deployment example (`deployment/deploy.yaml`), which deliberately
+relies on platform-level auth instead of ember's own token. Setting `EMBER_HOST` to anything
+other than `127.0.0.1` without *some* access control — ember's token, a reverse proxy, or a
+platform gateway — is the operator's responsibility to get right. See
+`vault/decisions/2026-10-10-remove-t004-non-loopback-auth-check.md`.
+
 **Pidfile integrity (T-005):** `server.pid` is a plain-text file with no cryptographic signature. The `_is_ember_server` check (verifying the process command string via `/bin/ps`) plus cross-checking the `/health` endpoint's reported PID are strong compensating controls. An attacker would need local write access to the state directory *and* the ability to spawn a process with matching argv — a high bar on a single-user workstation.
 
 **`/health` and `/metrics` information disclosure (I-005, I-006):** `GET /health` returns the server PID, package version, and whether bearer auth is required. `GET /metrics` exposes `ember_model_info{model,device,dtype}`. These endpoints are intentionally unauthenticated (they are used for health probes and Prometheus scraping). In the default loopback-only deployment any process on the same host can read them; in a shared-namespace environment (see above) they disclose server identity. If this is a concern, front the server with an authenticating reverse proxy.

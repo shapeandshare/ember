@@ -49,6 +49,7 @@ Session-level decisions with their context and consequences.
 - [[2026-10-08-outerbounds-deployment-and-cuda-support]]
 - [[2026-10-08-doctor-reports-registration-from-config-files]]
 - [[2026-10-09-publish-releases-to-pypi-and-the-mcp-registry]]
+- [[2026-10-10-remove-t004-non-loopback-auth-check]]
 - [[2026-10-10-per-model-request-caps]]
 
 ### Discoveries

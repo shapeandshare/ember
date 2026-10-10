@@ -36,7 +36,6 @@ from pydantic import BaseModel, Field
 
 from .. import models
 from ..cfg import config
-from ..cfg.endpoint import is_loopback_host
 from . import hosted, limits
 from .runtime import AdmissionError, Engine, RequestTooLargeError
 
@@ -151,18 +150,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         :mod:`ember.serving.hosted`).
     """
     global _ENGINE
-    # T-004: Reject a non-loopback host when no bearer auth is configured.
-    # Without auth, the loopback interface is the only security boundary —
-    # exposing the unauthenticated inference endpoint beyond loopback removes it.
-    host = str(config.resolve("host"))
-    if not is_loopback_host(host) and not config.resolve("server_auth_token"):
-        raise RuntimeError(
-            f"EMBER_HOST={host!r} is a non-loopback address but "
-            "EMBER_SERVER_AUTH_TOKEN is not set. "
-            "Serving an unauthenticated inference endpoint beyond loopback "
-            "removes the only security boundary. "
-            "Either bind to 127.0.0.1 or set EMBER_SERVER_AUTH_TOKEN."
-        )
+    # T-004 (wontfix, docs/stride-tracker.csv): binding to a non-loopback host
+    # with no EMBER_SERVER_AUTH_TOKEN is allowed — access control for a
+    # non-loopback deployment is the operator's responsibility (e.g. a
+    # platform-level gateway such as Outerbounds' auth.type: API), not
+    # something ember can safely assume to enforce on its own. See
+    # vault/decisions/2026-10-10-remove-t004-non-loopback-auth-check.md.
     hosted_source = hosted.resolve()
     if hosted_source is not None:
         name = hosted_source.uri
