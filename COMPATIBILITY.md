@@ -113,7 +113,9 @@ CUDA host has been recorded here yet. Update this note once one has.
 | Video frame inputs | Verified | Expected, not yet verified | Expected, slower |
 
 Observed on the tested hardware: model load in about 5 seconds, and a warm request in
-about 0.9 to 1.3 seconds for 220 to 360 input tokens.
+about 0.9 to 1.3 seconds for 220 to 360 input tokens. Counting the full request before
+inference adds about 0.4 ms to a warm 153-token request (about 0.65 seconds end to end),
+under 0.1%.
 
 ## Known issues
 
