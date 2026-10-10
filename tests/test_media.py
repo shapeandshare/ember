@@ -139,3 +139,36 @@ def test_decode_videos_enforces_the_cap_across_several_videos():
     videos = [[_png_data_uri()] * half, [_png_data_uri()] * half]
     with pytest.raises(ValueError, match="too many video frames"):
         media.decode_videos(videos)
+
+
+# ###########################################################################
+# media_kwargs allowlist (T-003)
+# ###########################################################################
+def test_check_media_kwargs_accepts_every_allowed_key():
+    allowed = {
+        "min_pixels": 256,
+        "max_pixels": 1024,
+        "fps": 1.0,
+        "min_frames": 1,
+        "max_frames": 4,
+        "do_resize": True,
+        "size": {"shortest_edge": 8},
+        "do_convert_rgb": True,
+    }
+    assert set(allowed) == media.ALLOWED_MEDIA_KWARGS
+    media.check_media_kwargs(allowed)
+
+
+def test_check_media_kwargs_rejects_an_unknown_key_listing_both_sets():
+    with pytest.raises(ValueError, match="not permitted") as excinfo:
+        media.check_media_kwargs({"zeta": 1, "alpha": 2, "fps": 1})
+    assert str(excinfo.value) == (
+        "media_kwargs keys not permitted: alpha, zeta. Permitted keys: "
+        "do_convert_rgb, do_resize, fps, max_frames, max_pixels, min_frames, "
+        "min_pixels, size"
+    )
+
+
+def test_check_media_kwargs_rejects_the_formerly_reserved_text_key():
+    with pytest.raises(ValueError, match="not permitted: text"):
+        media.check_media_kwargs({"text": "override"})

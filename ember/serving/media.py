@@ -32,6 +32,46 @@ MAX_IMAGE_PIXELS = 178_956_970  # Pillow's default, enforced before decode
 #: A JSON media reference: a data URI string or a {content_type, base64} object.
 MediaRef = str | dict[str, Any]
 
+#: Explicit allowlist of processor keyword arguments callers may pass through.
+#: Switching from a blocklist to an allowlist (T-003) closes the gap where any
+#: non-reserved key was forwarded unchecked to joint_schema_model.systemone.
+ALLOWED_MEDIA_KWARGS = frozenset(
+    {
+        "min_pixels",
+        "max_pixels",
+        "fps",
+        "min_frames",
+        "max_frames",
+        "do_resize",
+        "size",
+        "do_convert_rgb",
+    }
+)
+
+
+def check_media_kwargs(kwargs: dict[str, Any]) -> None:
+    """Reject processor keyword arguments outside ``ALLOWED_MEDIA_KWARGS`` (T-003).
+
+    Parameters
+    ----------
+    kwargs : dict[str, Any]
+        The request's ``media_kwargs``.
+
+    Raises
+    ------
+    ValueError
+        If any key is not allowed; the message lists the disallowed keys and
+        the permitted ones.
+    """
+    disallowed = set(kwargs) - ALLOWED_MEDIA_KWARGS
+    if disallowed:
+        raise ValueError(
+            "media_kwargs keys not permitted: "
+            + ", ".join(sorted(disallowed))
+            + ". Permitted keys: "
+            + ", ".join(sorted(ALLOWED_MEDIA_KWARGS))
+        )
+
 
 def _decode_bytes(raw: bytes, source: str) -> Image.Image:
     try:
