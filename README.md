@@ -274,7 +274,7 @@ Settings resolve as **CLI flag > environment variable > config file > default**.
 is JSON at `ember config path` (keys `model`, `host`, `port`, `device`, `max_length`,
 `server_url`, `auth_token`, `auth_header`, `allow_insecure_transport`, `request_timeout`,
 `server_auth_token`, `max_request_length`; a `max_length` of `0` means the model's own
-maximum, and an unset `max_request_length` means the loaded model's measured default).
+maximum, and an unset `max_request_length` means the loaded model's own default cap).
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
@@ -283,7 +283,7 @@ maximum, and an unset `max_request_length` means the loaded model's measured def
 | `EMBER_MODEL` | `flash` | `flash` (9B, default) or `full` (27B), both from Cloudflare's public Hugging Face repos |
 | `EMBER_MODEL_DIR` | — | Run weights from this directory instead of the pinned cache |
 | `EMBER_MAX_LENGTH` | `0` (the model's maximum: 262,144) | The most tokens the model processes; `0` derives it from the model's `config.json`, and a larger value is clamped to it |
-| `EMBER_MAX_REQUEST_LENGTH` | unset: the model's measured default (32,768 for `flash` and `full` until measured) | Per-request cap on the whole encoded request (state, media, questions, schema, prompt wrapper), checked before inference. A request over it is refused with a 413 that states its token split, never truncated. `0` disables the cap; the maximum still applies |
+| `EMBER_MAX_REQUEST_LENGTH` | unset: the loaded model's own default, its measured cap or, until measured, its fallback (24,576 for `flash`, the longest length that fits its memory; 32,768 for `full`) | Per-request cap on the whole encoded request (state, media, questions, schema, prompt wrapper), checked before inference. A request over it is refused with a 413 that states its token split, never truncated. `0` disables the cap; the maximum still applies |
 | `EMBER_SERVER_URL` | `http://127.0.0.1:8765` | Inference endpoint the client sends to; loopback by default, may be remote |
 | `EMBER_AUTH_TOKEN` | — | Client credential for a remote endpoint |
 | `EMBER_AUTH_HEADER` | `Authorization` | Header carrying the credential; `Authorization` sends `Bearer <token>`, any other name sends the token verbatim |

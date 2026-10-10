@@ -6,7 +6,7 @@ Don't ask it to write text or code, explain, do math, or judge facts not in the 
 
 Asking well:
 - Put ALL evidence in `state` (string or JSON); attach images or video frames as base64 data URIs in `images`/`videos`. It sees only what you pass.
-- Requests over the token cap (32,768 for flash) are refused, never truncated; the error's split shows what to cut: state, media, or questions.
+- Requests over the token cap (24,576 for flash) are refused, never truncated; the error's split shows what to cut: state, media, or questions.
 - Pass raw evidence, not your conclusion: a verdict written into `state` gets echoed back.
 - Make options mutually exclusive with crisp descriptions; add an "unclear" option when the space is open.
 - Batch related questions in one call (same cost). Keep a fixed question set per decision type: questions are weighed jointly.

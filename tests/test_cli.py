@@ -486,14 +486,18 @@ def test_doctor_shows_configured_limits_when_no_server_runs(
     monkeypatch.setitem(
         models.REGISTRY,
         "flash",
-        dataclasses.replace(models.REGISTRY["flash"], max_request_length=None),
+        dataclasses.replace(
+            models.REGISTRY["flash"],
+            max_request_length=None,
+            fallback_request_length=20480,
+        ),
     )
     monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
     monkeypatch.setattr(process, "health", lambda *args, **kwargs: None)
     assert cli.main(["doctor"]) == 0
     assert _doctor_limits_line(capsys) == (
-        "[info] limits: enforced 32768 tokens; max_length 32768 (fallback), "
-        "max_request_length 32768 (fallback); configured, server not running"
+        "[info] limits: enforced 20480 tokens; max_length 32768 (fallback), "
+        "max_request_length 20480 (fallback); configured, server not running"
     )
 
 

@@ -23,9 +23,6 @@ _log = logging.getLogger(__name__)
 #: Effective maximum used when a model's config.json declares none.
 FALLBACK_MAX_LENGTH = 32768
 
-#: Per-request cap used until a model's cap is measured.
-FALLBACK_REQUEST_CAP = 32768
-
 _MAX_LENGTH_SOURCES = frozenset(
     {LimitSource.MODEL, LimitSource.FALLBACK, LimitSource.OPERATOR}
 )
@@ -153,6 +150,12 @@ def model_max_length(model_dir: str | os.PathLike[str]) -> int:
     return FALLBACK_MAX_LENGTH if declared is None else declared
 
 
+def _registry_cap(spec: models.ModelSpec) -> tuple[int, LimitSource]:
+    if spec.max_request_length is not None:
+        return spec.max_request_length, LimitSource.MEASURED
+    return spec.fallback_request_length, LimitSource.FALLBACK
+
+
 def default_request_cap(registry_key: str | None) -> tuple[int, LimitSource]:
     """Return the per-request cap that applies when no operator sets one.
 
@@ -165,10 +168,10 @@ def default_request_cap(registry_key: str | None) -> tuple[int, LimitSource]:
     Returns
     -------
     tuple[int, LimitSource]
-        A registry model's measured cap (``measured``), or
-        ``FALLBACK_REQUEST_CAP`` until it is measured (``fallback``). Outside
-        the registry: the lowest measured registry cap, or
-        ``FALLBACK_REQUEST_CAP`` when none is measured (``fallback`` either way).
+        A registry model's measured cap (``measured``), or its own
+        ``fallback_request_length`` until it is measured (``fallback``).
+        Nothing is known about the memory of a model outside the registry, so
+        it gets the lowest of the registry models' caps (``fallback``).
 
     Raises
     ------
@@ -176,16 +179,9 @@ def default_request_cap(registry_key: str | None) -> tuple[int, LimitSource]:
         If ``registry_key`` names no registry entry.
     """
     if registry_key is not None:
-        measured = models.get(registry_key).max_request_length
-        if measured is not None:
-            return measured, LimitSource.MEASURED
-        return FALLBACK_REQUEST_CAP, LimitSource.FALLBACK
-    caps = [
-        spec.max_request_length
-        for spec in models.REGISTRY.values()
-        if spec.max_request_length is not None
-    ]
-    return (min(caps) if caps else FALLBACK_REQUEST_CAP), LimitSource.FALLBACK
+        return _registry_cap(models.get(registry_key))
+    lowest = min(_registry_cap(spec)[0] for spec in models.REGISTRY.values())
+    return lowest, LimitSource.FALLBACK
 
 
 def _operator_value(name: str, raw: int | str | None) -> int | None:

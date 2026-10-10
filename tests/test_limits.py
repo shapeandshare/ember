@@ -15,7 +15,6 @@ from ember.serving.governing_limit import GoverningLimit
 from ember.serving.limit_source import LimitSource
 from ember.serving.limits import (
     FALLBACK_MAX_LENGTH,
-    FALLBACK_REQUEST_CAP,
     Limits,
     declared_max_length,
     default_request_cap,
@@ -43,6 +42,13 @@ def _measure(monkeypatch, name: str, cap: int | None) -> None:
     spec = models.REGISTRY[name]
     monkeypatch.setitem(
         models.REGISTRY, name, dataclasses.replace(spec, max_request_length=cap)
+    )
+
+
+def _fallback(monkeypatch, name: str, cap: int) -> None:
+    spec = models.REGISTRY[name]
+    monkeypatch.setitem(
+        models.REGISTRY, name, dataclasses.replace(spec, fallback_request_length=cap)
     )
 
 
@@ -185,14 +191,15 @@ def test_unset_values_use_the_declared_maximum_and_the_measured_cap(monkeypatch)
 
 def test_an_unreadable_config_and_an_unmeasured_model_fall_back(monkeypatch):
     _measure(monkeypatch, "flash", None)
+    _fallback(monkeypatch, "flash", 20480)
     limits = resolve(None, "flash")
     assert limits == Limits(
         max_length=FALLBACK_MAX_LENGTH,
         max_length_source=LimitSource.FALLBACK,
-        max_request_length=FALLBACK_REQUEST_CAP,
+        max_request_length=20480,
         max_request_length_source=LimitSource.FALLBACK,
     )
-    assert FALLBACK_MAX_LENGTH == FALLBACK_REQUEST_CAP == 32768
+    assert FALLBACK_MAX_LENGTH == 32768
 
 
 def test_a_model_outside_the_registry_gets_the_lowest_measured_cap(monkeypatch):
@@ -209,14 +216,25 @@ def test_a_model_outside_the_registry_gets_the_lowest_measured_cap(monkeypatch):
     )
 
 
-def test_a_model_outside_the_registry_falls_back_when_nothing_is_measured(
-    monkeypatch,
-):
+def test_a_model_outside_the_registry_gets_the_lowest_fallback(monkeypatch):
     _measure(monkeypatch, "flash", None)
     _measure(monkeypatch, "full", None)
+    _fallback(monkeypatch, "flash", 24576)
+    _fallback(monkeypatch, "full", 12288)
     limits = resolve(DECLARED, None)
     assert (limits.max_request_length, limits.max_request_length_source) == (
-        32768,
+        12288,
+        LimitSource.FALLBACK,
+    )
+
+
+def test_a_model_outside_the_registry_counts_unmeasured_fallbacks(monkeypatch):
+    _measure(monkeypatch, "flash", 16384)
+    _measure(monkeypatch, "full", None)
+    _fallback(monkeypatch, "full", 8192)
+    limits = resolve(DECLARED, None)
+    assert (limits.max_request_length, limits.max_request_length_source) == (
+        8192,
         LimitSource.FALLBACK,
     )
 
@@ -285,10 +303,11 @@ def test_an_invalid_operator_maximum_is_ignored_with_a_warning(value, caplog):
 @pytest.mark.parametrize("value", [-5, "-5", "abc", 1.5, True])
 def test_an_invalid_operator_cap_is_ignored_with_a_warning(value, monkeypatch, caplog):
     _measure(monkeypatch, "flash", None)
+    _fallback(monkeypatch, "flash", 20480)
     with caplog.at_level(logging.WARNING):
         limits = resolve(DECLARED, "flash", max_request_length=value)
     assert (limits.max_request_length, limits.max_request_length_source) == (
-        32768,
+        20480,
         LimitSource.FALLBACK,
     )
     assert "max_request_length" in caplog.text
@@ -302,9 +321,13 @@ def test_integer_strings_are_operator_values():
 # ###########################################################################
 # (e) default_request_cap and the registry
 # ###########################################################################
-def test_default_request_cap_falls_back_until_the_model_is_measured(monkeypatch):
+def test_default_request_cap_uses_each_models_own_fallback_until_measured(monkeypatch):
     _measure(monkeypatch, "flash", None)
-    assert default_request_cap("flash") == (32768, LimitSource.FALLBACK)
+    _measure(monkeypatch, "full", None)
+    _fallback(monkeypatch, "flash", 20480)
+    _fallback(monkeypatch, "full", 12288)
+    assert default_request_cap("flash") == (20480, LimitSource.FALLBACK)
+    assert default_request_cap("full") == (12288, LimitSource.FALLBACK)
 
 
 def test_default_request_cap_uses_the_measured_value(monkeypatch):
@@ -318,12 +341,25 @@ def test_default_request_cap_outside_the_registry(monkeypatch):
     assert default_request_cap(None) == (8192, LimitSource.FALLBACK)
     _measure(monkeypatch, "flash", None)
     _measure(monkeypatch, "full", None)
-    assert default_request_cap(None) == (32768, LimitSource.FALLBACK)
+    _fallback(monkeypatch, "flash", 24576)
+    _fallback(monkeypatch, "full", 12288)
+    assert default_request_cap(None) == (12288, LimitSource.FALLBACK)
 
 
 def test_every_registered_model_declares_a_memory_budget_above_its_weights():
     for spec in models.REGISTRY.values():
         assert spec.memory_budget_bytes > spec.approx_bytes
+
+
+def test_every_registered_model_declares_its_own_fallback():
+    for spec in models.REGISTRY.values():
+        assert spec.fallback_request_length >= 2048
+
+
+def test_flash_falls_back_to_the_longest_length_that_fit_its_memory_check():
+    # Memory check, 2026-10-10: 24,576 tokens peaked at 27.83 GiB and 32,768 at
+    # 32.35 GiB, against flash's 32 GiB budget.
+    assert models.get("flash").fallback_request_length == 24576
 
 
 def test_registry_key_names_the_registry_entry(monkeypatch):
@@ -345,7 +381,7 @@ def test_from_config_defaults(isolated_config, tmp_path):
     assert limits == Limits(
         max_length=DECLARED,
         max_length_source=LimitSource.MODEL,
-        max_request_length=32768,
+        max_request_length=models.get("flash").fallback_request_length,
         max_request_length_source=LimitSource.FALLBACK,
     )
 
@@ -378,7 +414,7 @@ def test_from_config_ignores_an_invalid_cap_with_a_warning(
     with caplog.at_level(logging.WARNING):
         limits = from_config(_model_dir(tmp_path), "flash")
     assert (limits.max_request_length, limits.max_request_length_source) == (
-        32768,
+        models.get("flash").fallback_request_length,
         LimitSource.FALLBACK,
     )
     assert "max_request_length" in caplog.text.lower()

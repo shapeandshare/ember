@@ -133,15 +133,17 @@ under 0.1%.
   `EMBER_DEVICE=cpu ember restart` when calibrated probabilities matter.
 - **Context length.** The effective maximum is 262,144 tokens, declared by both models'
   `config.json` (`EMBER_MAX_LENGTH=0` derives it; it is not a fixed 16384 cap). Each
-  request is also held to a per-model cap (`EMBER_MAX_REQUEST_LENGTH`): 32,768 tokens for
-  `flash` and `full` as the interim fallback until the long-context probe
-  (`make eval-context`, MPS on an M4 Max with 128 GB) measures them; the measured values
-  and the probe run ID replace it. The whole encoded request counts, including questions,
-  schema, the prompt wrapper, and media, so image-heavy requests near the cap that passed
-  the earlier state-only check may now be refused. An oversized request is refused with a
-  413 that states its token split, never truncated. The caps hold for the pinned model
-  revisions and are re-measured whenever a revision changes. `0` disables the cap; the
-  effective maximum still applies.
+  request is also held to a per-model cap (`EMBER_MAX_REQUEST_LENGTH`). Until the
+  long-context probe (`make eval-context`, MPS on an M4 Max with 128 GB) measures a model,
+  its default is its own fallback: 24,576 tokens for `flash`, the longest probe length
+  whose peak memory fits its 32 GiB budget (24,576 peaked at 27.83 GiB and 32,768 at
+  32.35 GiB), and 32,768 for `full`. A model outside the registry gets the lowest
+  registry cap. The measured values and the probe run ID replace the fallbacks. The whole
+  encoded request counts, including questions, schema, the prompt wrapper, and media, so
+  image-heavy requests near the cap that passed the earlier state-only check may now be
+  refused. An oversized request is refused with a 413 that states its token split, never
+  truncated. The caps hold for the pinned model revisions and are re-measured whenever a
+  revision changes. `0` disables the cap; the effective maximum still applies.
 
 See also: [`README.md`](README.md) for install steps, and
 [`RESPONSIBLE_USE.md`](RESPONSIBLE_USE.md) for what the numbers mean.

@@ -1,6 +1,6 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-09 (context window audit: requests are counted in full with upstream `encode_record` and refused, never truncated, above the enforced limit; `/health`, the load log, and `ember doctor` report both limits with their sources)
+**Last updated**: 2026-10-10 (per-model request caps: every registry model declares its memory budget and its own fallback cap, the longest probe length that fits that budget; flash falls back to 24,576)
 
 ## What this repo is
 
@@ -598,8 +598,12 @@ spacing values, or component styles outside the design system.
   (`min(cap, max)`, or the maximum when the cap is `0`) gets a 413 that states its token
   split; it is never truncated, and an answer whose `usage.input_tokens` differs from the
   count becomes a 500. Agent-facing error text must contain no `/`: the MCP layer rewrites
-  anything path-like. An unset `max_request_length` means the loaded model's measured default
-  (`ModelSpec.max_request_length`; 32,768 until measured).
+  anything path-like. An unset `max_request_length` means the loaded model's own default: its
+  measured cap (`ModelSpec.max_request_length`) or, until measured, its fallback
+  (`ModelSpec.fallback_request_length`, the longest probe length that fits its
+  `memory_budget_bytes`). There is no shared fallback: models need different amounts of
+  memory, so every registry entry declares its own, and a model outside the registry gets
+  the lowest registry cap.
 - **Metric names and labels are public API** (`ember/serving/server.py`): change
   `ember_advise_*` / `ember_model_info` together with the README and `tests/test_metrics.py`.
   They live in a dedicated `CollectorRegistry`, so only ember metrics are exposed — no
@@ -669,7 +673,10 @@ spacing values, or component styles outside the design system.
   in-process `Engine` with the cap disabled, one worker subprocess per model, opens no
   ports, and only warns if an ember server is running. Keep it out of `make check`, `make
   test`, and CI. Re-run `make eval-context` and re-set `ModelSpec.max_request_length` (and the
-  numbers in the kit, README, and COMPATIBILITY) whenever a model's `revision` changes.
+  numbers in the kit, README, and COMPATIBILITY) whenever a model's `revision` changes. A new
+  registry entry declares its own `memory_budget_bytes` and sets `fallback_request_length`
+  from a one-item memory check (see
+  `vault/decisions/2026-10-10-per-model-request-caps.md`).
 - **The agent eval is the only code that launches opencode.** `ember eval agent`
   (`evals/eval/run_agent_evals.py`, `evals/agent/`) runs `opencode run --pure` in a temporary
   sandbox with a private HOME and XDG dirs and no port (constitution Article IV). Keep it out of
@@ -712,6 +719,15 @@ MUST pass the constitution check.
 
 ## Recent Changes
 
+- 2026-10-10: per-model request caps: the shared 32,768 fallback is gone. Every `REGISTRY`
+  entry declares its own `memory_budget_bytes` (moved from the probe's `MEMORY_BUDGETS`) and
+  `fallback_request_length`, the longest probe length whose peak memory fits that budget,
+  used until the probe measures the model's cap. A one-item memory check set flash's to
+  24,576 (27.83 GiB peak; 32,768 peaked at 32.35 GiB, over its 32 GiB budget). A model
+  outside the registry gets the lowest registry cap, measured or fallback. The probe's
+  sizing pilot could not resolve its 2-point accuracy tolerance with 232 text items
+  (half-width 0.0264), so the benchmark grows to 443 (PR #95). See
+  `vault/decisions/2026-10-10-per-model-request-caps.md`.
 - 2026-10-09: context window audit, part 1 (`specs/003-context-window-audit/`): requests are
   counted in full (state, media, questions, schema, prompt wrapper) with upstream
   `encode_record` (`ember/serving/request_size.py`) and refused with a 413 that states the

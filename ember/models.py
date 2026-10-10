@@ -52,6 +52,11 @@ class ModelSpec:
         memory of the smallest Mac it is documented to run on (32 GiB for
         ``flash``, 64 GiB for ``full``). The long-context probe fails any
         length whose peak exceeds it.
+    fallback_request_length : int
+        This model's per-request cap until the probe measures one: the longest
+        probe length whose peak memory fits ``memory_budget_bytes``. Each model
+        declares its own because memory needs differ by model; it is reported
+        as ``fallback``.
     revision : str | None
         Optional Hugging Face Hub commit/branch/tag to download — a
         convenience for targeting a specific known-good version, not a
@@ -72,6 +77,7 @@ class ModelSpec:
     params: str
     approx_bytes: int
     memory_budget_bytes: int
+    fallback_request_length: int
     revision: str | None = None
     kind: str = "decision"
     max_request_length: int | None = None
@@ -85,6 +91,9 @@ REGISTRY: dict[str, ModelSpec] = {
         "9B",
         18 * 2**30,
         memory_budget_bytes=32 * 2**30,
+        # The longest probe length that fits 32 GiB: 24,576 tokens peaked at
+        # 27.83 GiB and 32,768 at 32.35 GiB (memory check, 2026-10-10).
+        fallback_request_length=24576,
         revision="17f0b0ad64efb65d273590632833508766b2aae6",
     ),
     "full": ModelSpec(
@@ -94,6 +103,8 @@ REGISTRY: dict[str, ModelSpec] = {
         "27B",
         55 * 2**30,
         memory_budget_bytes=64 * 2**30,
+        # The old shared fallback, kept until full's memory check runs.
+        fallback_request_length=32768,
         revision="2f3de3dd85f379784083b0814d997ab627200f0c",
     ),
 }

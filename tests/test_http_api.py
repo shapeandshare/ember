@@ -319,7 +319,7 @@ def test_lifespan_uses_hosted_source_when_configured(monkeypatch, tmp_path) -> N
     assert "skip_integrity" not in captured
     assert "max_length" not in captured
     assert "max_request_length" not in captured
-    # A hosted model is outside the registry: the lowest measured cap applies.
+    # A hosted model is outside the registry: the lowest registry cap applies.
     limits = captured["limits"]
     assert limits.max_request_length == 8192
     assert limits.max_request_length_source is LimitSource.FALLBACK
@@ -381,9 +381,17 @@ def _registry_model_dir(monkeypatch, tmp_path):
 def test_health_engine_reports_the_limits_and_their_sources(
     monkeypatch, tmp_path
 ) -> None:
+    import dataclasses
+
+    from ember import models
     from ember.serving import runtime
 
     _measure_flash(monkeypatch, tmp_path, None)
+    monkeypatch.setitem(
+        models.REGISTRY,
+        "flash",
+        dataclasses.replace(models.REGISTRY["flash"], fallback_request_length=20480),
+    )
     _registry_model_dir(monkeypatch, tmp_path)
     monkeypatch.setattr(runtime, "load_clef", lambda *a, **kw: (object(), object()))
 
@@ -392,7 +400,7 @@ def test_health_engine_reports_the_limits_and_their_sources(
 
     assert engine["max_length"] == 262144
     assert engine["max_length_source"] == "model"
-    assert engine["max_request_length"] == 32768
+    assert engine["max_request_length"] == 20480
     assert engine["max_request_length_source"] == "fallback"
 
 
