@@ -26,7 +26,8 @@
   percentage points below and Brier score at most 0.02 above that model's own 2K result,
   with the probe sized so this tolerance is measurable; the probe also records peak memory
   and latency per length, and any length whose peak memory exceeds the model's documented
-  minimum (32 GB for flash, 64 GB for full) is ruled out.
+  minimum (32 GB for flash, 64 GB for full) is ruled out. (Updated 2026-10-10: full's
+  documented minimum is now 96 GB; see FR-010.)
 - Q: Should the measured cap be one default shared by every model, or a separate default
   for each registered model? → A: Per-model: each registered model (flash, full) gets its
   own measured cap as its default, as the effective maximum already derives from the
@@ -139,7 +140,7 @@ from its measured curve by a rule fixed in advance (FR-010), judged on the worst
 and recorded as a decision that supersedes the current unmeasured mitigation (D-002),
 citing the probe run.
 
-**Why this priority**: The current 32,768-token cap was a safety mitigation, not a
+**Why this priority**: The 32,768-token cap from D-002 was a safety mitigation, not a
 measured choice, and the model ships with an untested 16,384-token reference default;
 Cloudflare's published results are at that default. Without the curve, any cap is a guess.
 It ranks below US1/US2 because the guarantees must exist before the number is tuned, but
@@ -208,8 +209,7 @@ agents how to react when a request is refused.
 - Both `flash` and `full`: each has its own measured default cap; limits are reported
   and enforced for the loaded model, and the probe covers both.
 - A model outside the registry (a custom weights directory or an S3 model location): its
-  default cap is the lowest measured registry cap (32,768 while none is measured),
-  reported as a fallback.
+  default cap is the lowest registry cap, measured or fallback, reported as a fallback.
 - The request cap is set above the model's effective maximum (including cap disabled):
   the lower effective bound governs so nothing is silently shortened.
 - Empty or trivial states are unaffected; no spurious refusals.
@@ -218,8 +218,8 @@ agents how to react when a request is refused.
   alone over the limit; there is no partial-processing fallback.
 - A call to a remote endpoint: the client's behavior is unchanged; the guarantee is
   enforced by the serving ember and depends on its version.
-- The rule yields a cap below today's 32,768 tokens: the default decreases, some requests
-  accepted today are refused, and the documentation states the change.
+- The rule yields a cap below the model's memory-checked fallback: the default decreases,
+  some requests accepted before are refused, and the documentation states the change.
 - A longer length passes the rule after a shorter one fails (noise or non-monotone
   quality): the cap stops at the last length before the first failure.
 
@@ -278,11 +278,15 @@ agents how to react when a request is refused.
   tested length, meets all of the following for that model at the worst of the three
   evidence depths — accuracy at most 2 percentage points below, and Brier score at most
   0.02 above, that model's own 2K result — and whose peak memory stays within that model's
-  documented minimum (32 GB for `flash`, 64 GB for `full`). Until a model is measured, its
-  default stays at 32,768 (reported as a fallback). A model outside the registry (a custom
-  weights directory or an S3 model location) defaults to the lowest measured registry cap,
-  or 32,768 while none is measured. This refines the clarification answer "the lower of
-  the two" for the case where fewer than two models are measured. The resulting change
+  documented minimum (32 GB for `flash`; 96 GB for `full`, raised from 64 GB on
+  2026-10-10). Until a model is measured, its
+  default is its own fallback: the longest tested length whose peak memory leaves at least
+  4 GiB of that minimum free for the OS, reported as a fallback (updated 2026-10-10; it was
+  a shared 32,768). A
+  model outside the registry (a custom weights directory or an S3 model location)
+  defaults to the lowest registry cap, measured or fallback. This refines the
+  clarification answer "the lower of the two" for the case where fewer than two models
+  are measured. The resulting change
   MUST cite the probe run ID and MUST be recorded as a decision superseding the D-002
   record.
 - **FR-011**: README's configuration table and COMPATIBILITY.md MUST state the effective
@@ -306,8 +310,9 @@ agents how to react when a request is refused.
   from the loaded model's configuration, with an identifiable documented fallback.
 - **Per-request cap**: The operator-configurable limit (which can be disabled) that ember
   checks before inference; its default is the loaded model's measured cap (FR-010). A
-  model not yet measured gets 32,768, and a model outside the registry gets the lowest
-  measured registry value (32,768 while none is measured); both are reported as fallbacks.
+  model not yet measured gets its own memory-checked fallback (24,576 for `flash`, 65,536
+  for `full`), and a model outside the registry gets the lowest registry cap; both are
+  reported as fallbacks.
 - **Enforced limit**: The lower of the per-request cap (when enabled) and the effective
   maximum; the refusal names whichever of the two was hit.
 - **Encoded request size**: The count of everything the model would see: the state as the
@@ -321,8 +326,9 @@ agents how to react when a request is refused.
   length and depth with 95% intervals on the differences from 2K, and peak memory and
   latency per length.
 - **Cap decision record**: The recorded decision choosing each registered model's default
-  cap by the FR-010 rule, citing the probe run; supersedes D-002, the current unmeasured
-  32,768-token mitigation.
+  cap by the FR-010 rule, citing the probe run; supersedes D-002, the unmeasured
+  32,768-token mitigation, and the memory-checked fallbacks that replaced it in the
+  interim.
 - **Limit report**: What `ember doctor` shows for the effective maximum and the cap: each
   value labeled live (advertised by a server's health response), configured (from local
   settings), or unknown, plus the cap's source (measured default, fallback, or operator
@@ -373,9 +379,11 @@ agents how to react when a request is refused.
   fails the rule.
 - Operators may still raise or lower limits through the existing settings; the
   no-silent-shortening guarantee holds regardless of the values they choose.
-- Until the probe measures a model, its default cap stays at today's 32,768, reported as
-  a fallback. Because requests are now counted in full (questions, schema, and media
-  included), some requests accepted today may be refused before the measured caps land.
+- Until the probe measures a model, its default cap is its own memory-checked fallback
+  (24,576 for `flash`, 65,536 for `full`), reported as a fallback. Because requests are
+  now counted in full (questions, schema, and media included) and flash's fallback is
+  below the old 32,768, some requests accepted before may be refused before the measured
+  caps land.
 - The over-limit default is refusal only: ember never truncates a request, silently or
   otherwise. Explicit truncation-with-signal is not a path in this feature; if caller UX
   later demands it, it would be an additive, documented change.

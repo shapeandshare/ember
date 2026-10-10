@@ -7,7 +7,7 @@ Each step gives a command and what you should see. Formats are defined in
 
 ## Prerequisites
 
-- An Apple Silicon Mac with at least 32 GB of memory for flash, or 64 GB for full. The
+- An Apple Silicon Mac with at least 32 GB of memory for flash, or 96 GB for full. The
   reference machine is an M4 Max with 128 GB.
 - Dependencies and the pinned flash weights: `make bootstrap`.
 - The full model, which the probe also needs: `ember model pull full`.
@@ -52,8 +52,9 @@ Expected:
 - `engine` shows `max_length`, `max_length_source`, `max_request_length`, and
   `max_request_length_source` ([http-api.md](./contracts/http-api.md)).
 - The log has one `limits:` line from model load.
-- doctor prints `[info] limits: enforced 32768 tokens; …; live from local server`. Until
-  the probe has run, it shows `max_request_length 32768 (fallback)`.
+- doctor prints `[info] limits: enforced 24576 tokens; …; live from local server` for
+  flash. Until the probe has run, it shows `max_request_length 24576 (fallback)` (65536
+  for full).
 
 ```bash
 ember stop && ember doctor | grep limits

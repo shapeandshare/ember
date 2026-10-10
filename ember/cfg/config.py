@@ -33,12 +33,14 @@ DEFAULTS: dict[str, Any] = {
     # Remote inference (see specs/001-remote-inference-servers/). `server_url` is where
     # the client sends advise requests; loopback by default (local-first). The auth_*
     # keys carry the client credential; `server_auth_token` is the optional token the
-    # HTTP server itself requires. `request_timeout` bounds a remote request.
+    # HTTP server itself requires. `request_timeout` bounds each advise request, local
+    # or remote; 900 s covers a request at full's 65,536-token default (about 740 s on
+    # an M4 Max).
     "server_url": "http://127.0.0.1:8765",
     "auth_token": None,  # nosec B105 - None default: no client credential
     "auth_header": "Authorization",
     "allow_insecure_transport": False,
-    "request_timeout": 300,
+    "request_timeout": 900,
     "server_auth_token": None,  # nosec B105 - None default: server auth disabled
     # AWS S3 connection for EMBER_MODEL_S3_URI (see ember.serving.hosted): a
     # hosted deployment (e.g. Outerbounds) that supplies the model's S3

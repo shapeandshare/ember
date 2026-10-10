@@ -17,7 +17,7 @@ from . import config
 
 HTTP_PORT = 80
 HTTPS_PORT = 443
-DEFAULT_TIMEOUT = 300
+DEFAULT_TIMEOUT = 900
 
 
 class InvalidEndpointError(ValueError):

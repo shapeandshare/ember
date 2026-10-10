@@ -6,6 +6,7 @@ item selection, the sizing gate, reproduction, and the memory sampler.
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import json
 import math
@@ -16,6 +17,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from ember import models
 from evals.context import (
     filler,
     items,
@@ -874,6 +876,16 @@ def test_the_exploratory_subset_is_seeded_and_stratified():
 def test_the_exploratory_subset_takes_every_item_when_there_are_few():
     pool = [{"id": f"r{n}", "category": "routing"} for n in range(3)]
     assert items.exploratory_subset(pool, 48, seed=0) == ["r0", "r1", "r2"]
+
+
+def test_a_probe_model_takes_its_memory_budget_from_the_registry(monkeypatch):
+    spec = models.REGISTRY["flash"]
+    monkeypatch.setitem(
+        models.REGISTRY,
+        "flash",
+        dataclasses.replace(spec, memory_budget_bytes=40 * 2**30),
+    )
+    assert items.probe_model("flash").memory_budget_bytes == 40 * 2**30
 
 
 def test_the_projected_half_width_is_1_96_sd_over_root_n():

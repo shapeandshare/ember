@@ -42,7 +42,7 @@ def test_resolve_defaults_to_loopback(monkeypatch, tmp_path) -> None:
     resolved = ep.Endpoint.resolve()
     assert resolved.is_local is True
     assert resolved.url == "http://127.0.0.1:8765"
-    assert resolved.request_timeout == 300
+    assert resolved.request_timeout == 900
 
 
 def test_resolve_rejects_non_http_scheme(monkeypatch, tmp_path) -> None:

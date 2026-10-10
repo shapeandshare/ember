@@ -19,7 +19,7 @@ Unchanged and applied to every key:
 | `auth_token` | `EMBER_AUTH_TOKEN` | str | unset (`None`) | client | **yes** |
 | `auth_header` | `EMBER_AUTH_HEADER` | str | `Authorization` | client | no |
 | `allow_insecure_transport` | `EMBER_ALLOW_INSECURE_TRANSPORT` | bool | `false` | client | no |
-| `request_timeout` | `EMBER_REQUEST_TIMEOUT` | int (seconds) | `300` | client | no |
+| `request_timeout` | `EMBER_REQUEST_TIMEOUT` | int (seconds) | `900` | client | no |
 | `server_auth_token` | `EMBER_SERVER_AUTH_TOKEN` | str | unset (`None`) | server (HTTP) | **yes** |
 
 Existing keys (`model`, `host`, `port`, `device`, `max_length`, `max_request_length`) are
@@ -38,7 +38,8 @@ configures where the **client** sends requests. They may point at the same local
     (see [contracts/http-api.md](./http-api.md)), so a custom header normally pairs with an
     operator-managed proxy/gateway.
 - `request_timeout` bounds each advise request; exceeding it yields the timeout failure class
-  (research D5) naming the configured value. Default `300` preserves today's hardcoded value.
+  (research D5) naming the configured value. Default `900`; it was `300` until 2026-10-10,
+  when it rose so that a request at full's 65,536-token default can finish.
 - Environment variable wins over the config file for the same key (Clarification 4).
 - `server_auth_token` unset ⇒ server auth disabled (delegate to proxy); set ⇒ server requires
   `Authorization: Bearer <token>` on `POST /v1/systemone` only.

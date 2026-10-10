@@ -64,7 +64,7 @@ ember eval context [--models flash,full] [--lengths 2048,4096,...] [--items N]
 | `2` | The sizing gate failed, or `--reproduce` found a mismatch |
 
 **Output**: Progress goes to stderr. When the run finishes, it prints one line per model,
-for example `flash: cap 32768 (first failure at 65536: memory)`.
+for example `flash: cap 24576 (first failure at 32768: memory)`.
 
 ## Make targets (`shared/testing.mk`)
 

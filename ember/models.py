@@ -47,6 +47,16 @@ class ModelSpec:
         Human-readable parameter count (e.g. ``"9B"``).
     approx_bytes : int
         Approximate on-disk size of the pulled weights, in bytes.
+    memory_budget_bytes : int
+        The most memory one request may peak at on this model: the unified
+        memory of the smallest Mac it is documented to run on (32 GiB for
+        ``flash``, 96 GiB for ``full``). The long-context probe fails any
+        length whose peak exceeds it.
+    fallback_request_length : int
+        This model's per-request cap until the probe measures one: the longest
+        probe length whose peak memory leaves at least 4 GiB of
+        ``memory_budget_bytes`` free for the OS. Each model declares its own
+        because memory needs differ by model; it is reported as ``fallback``.
     revision : str | None
         Optional Hugging Face Hub commit/branch/tag to download — a
         convenience for targeting a specific known-good version, not a
@@ -66,6 +76,8 @@ class ModelSpec:
     dir_name: str
     params: str
     approx_bytes: int
+    memory_budget_bytes: int
+    fallback_request_length: int
     revision: str | None = None
     kind: str = "decision"
     max_request_length: int | None = None
@@ -78,6 +90,11 @@ REGISTRY: dict[str, ModelSpec] = {
         "clef-flash",
         "9B",
         18 * 2**30,
+        memory_budget_bytes=32 * 2**30,
+        # The longest probe length that leaves 4 GiB of 32 GiB free: 24,576
+        # tokens peaked at 27.83 GiB and 32,768 at 32.35 GiB (memory check,
+        # 2026-10-10).
+        fallback_request_length=24576,
         revision="17f0b0ad64efb65d273590632833508766b2aae6",
     ),
     "full": ModelSpec(
@@ -86,6 +103,10 @@ REGISTRY: dict[str, ModelSpec] = {
         "clef",
         "27B",
         55 * 2**30,
+        memory_budget_bytes=96 * 2**30,
+        # The longest probe length, 65,536 tokens, peaked at 90.80 GiB and so
+        # leaves 4 GiB of 96 GiB free (memory check, 2026-10-10).
+        fallback_request_length=65536,
         revision="2f3de3dd85f379784083b0814d997ab627200f0c",
     ),
 }

@@ -27,7 +27,7 @@ public API: change it together with README and `tests/test_http_api.py`.
     "dtype": "float16",
     "max_length": 262144,
     "max_length_source": "model",
-    "max_request_length": 32768,
+    "max_request_length": 24576,
     "max_request_length_source": "fallback"
   },
   "version": "0.9.0",

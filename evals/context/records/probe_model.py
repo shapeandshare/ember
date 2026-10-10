@@ -19,7 +19,8 @@ class ProbeModel(BaseModel):
     params : str
         Human-readable parameter count.
     memory_budget_bytes : int
-        The pre-declared peak-memory budget: 32 GiB for flash, 64 GiB for full.
+        The model's peak-memory budget from the registry: 32 GiB for flash,
+        96 GiB for full.
     recommended_max_memory_bytes : int | None
         ``torch.mps.recommended_max_memory()``, recorded for context only.
     """

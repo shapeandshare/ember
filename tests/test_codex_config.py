@@ -64,7 +64,7 @@ def test_write_fresh_file_has_expected_ember_section(
     assert "EMBER_AUTH_TOKEN" in entry["env_vars"]
     assert entry["enabled"] is True
     assert entry["startup_timeout_sec"] == 30
-    assert entry["tool_timeout_sec"] == 300
+    assert entry["tool_timeout_sec"] == 1260
 
 
 def test_write_merges_with_existing_config(tmp_path: pytest.TempPathFactory) -> None:
