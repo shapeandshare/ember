@@ -95,6 +95,13 @@ and fixed via TDD before it could ship broken.
   Fast Bakery resolves for its own platform; `--no-editable` so the export installs ember
   itself from the packaged source tree (`pip install .`) rather than referencing a dev-only
   editable path that won't exist in the deployed pod.
+  **Correction (2026-10-10):** this claim was wrong — see
+  [[2026-10-10-fast-bakery-strips-ember-advise-from-deploy-requirements]]. The actual export
+  command also passes `--no-emit-project`, which omits `ember-advise` from the file
+  entirely; Fast Bakery never runs `pip install .` on the packaged source tree, so the
+  deployed container had no `ember` executable at all (`ember serve` failed with `command
+  not found`). `scripts/freeze_deployment_requirements.py` now explicitly re-adds
+  `ember-advise==<version>` after resolving markers.
 - **`make deployment-requirements`** (`shared/release.mk`): the one-command way to regenerate
   it, documented as a required pre-deploy step in `deployment/README.md`.
 - **`deployment/README.md`**: prerequisites (GPU pool, S3 bucket with the model's files,
