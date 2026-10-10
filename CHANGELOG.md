@@ -1,3 +1,9 @@
+## v0.10.2 (2026-10-10)
+
+### Fix
+
+- **ember**: disable torch._native's Triton JIT by default for CUDA (#106)
+
 ## v0.10.1 (2026-10-10)
 
 ### Fix
