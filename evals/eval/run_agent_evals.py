@@ -39,10 +39,9 @@ sys.path.insert(0, str(REPO_ROOT))
 from evals.agent import judge, opencode, sandbox, summary  # noqa: E402
 from evals.agent.condition import Condition  # noqa: E402
 from evals.agent.scenarios import SCENARIOS  # noqa: E402
+from evals.eval.provenance import git_hash, host_info  # noqa: E402
+from evals.eval.run_evals import _resolve_server  # noqa: E402
 from evals.export import write_atomic  # noqa: E402
-
-from .provenance import git_hash, host_info  # noqa: E402
-from .run_evals import _resolve_server  # noqa: E402
 
 RESULTS_DIR = REPO_ROOT / "results"
 DEFAULT_MODELS = (

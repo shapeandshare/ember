@@ -212,3 +212,28 @@ def test_run_evals_default_dataset_exists():
     from evals.eval import run_evals
 
     assert run_evals.DATASET_PATH == DATASET
+
+
+@pytest.mark.parametrize(
+    "script",
+    [
+        "evals/eval/run_evals.py",
+        "evals/eval/report_evals.py",
+        "evals/eval/snapshot_evals.py",
+        "evals/eval/run_agent_evals.py",
+        "evals/context/run_context.py",
+    ],
+)
+def test_eval_scripts_run_directly_as_make_runs_them(script):
+    import subprocess
+    import sys
+
+    root = Path(__file__).resolve().parents[1]
+    result = subprocess.run(  # noqa: S603 - this interpreter, a repo script, --help
+        [sys.executable, str(root / script), "--help"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=root,
+    )
+    assert result.returncode == 0, result.stderr[-2000:]
