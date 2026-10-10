@@ -9,6 +9,7 @@ import httpx
 
 from ..cfg import config
 from ..cfg import endpoint as endpoint_mod
+from ..cfg.endpoint import build_auth_headers
 from ..serving import process
 
 
@@ -55,6 +56,11 @@ def resolve_endpoint(args: argparse.Namespace) -> endpoint_mod.Endpoint:
 def remote_health(endpoint: endpoint_mod.Endpoint) -> dict[str, Any] | None:
     """Probe a remote endpoint's ``/health``; return the body or ``None``.
 
+    Sends the same credential header the ``advise`` call path uses
+    (:func:`build_auth_headers`) — a gateway-authenticated deployment (e.g.
+    Outerbounds' ``auth.type: API``) may gate ``/health`` too, and an
+    unauthenticated probe would otherwise be misreported as unreachable.
+
     Parameters
     ----------
     endpoint : endpoint_mod.Endpoint
@@ -67,7 +73,9 @@ def remote_health(endpoint: endpoint_mod.Endpoint) -> dict[str, Any] | None:
     """
     try:
         resp = httpx.get(
-            f"{endpoint.url}/health", timeout=min(endpoint.request_timeout, 5.0)
+            f"{endpoint.url}/health",
+            timeout=min(endpoint.request_timeout, 5.0),
+            headers=build_auth_headers(),
         )
         if resp.status_code == 200:
             body: dict[str, Any] = resp.json()

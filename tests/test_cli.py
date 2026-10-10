@@ -702,6 +702,48 @@ def test_endpoint_status_has_no_engine_when_unreachable(monkeypatch) -> None:
     assert status["engine"] is None
 
 
+def test_remote_health_sends_configured_auth_header(sandbox, monkeypatch) -> None:
+    """`ember status`/`ember doctor` must authenticate their own /health probe
+    the same way the advise call path does — a gateway-authenticated remote
+    deployment (e.g. Outerbounds' auth.type: API, which gates /health too)
+    must not be reported unreachable just because the probe sent no
+    credential at all."""
+    from ember.cfg.endpoint import Endpoint
+    from ember.commands.endpoint import remote_health
+
+    monkeypatch.setenv("EMBER_AUTH_TOKEN", "secret-token")
+    monkeypatch.setenv("EMBER_AUTH_HEADER", "x-api-key")
+
+    captured: dict[str, object] = {}
+
+    def _fake_get(url, timeout=None, headers=None):
+        captured["url"] = url
+        captured["headers"] = headers
+
+        class _Resp:
+            status_code = 200
+
+            def json(self):
+                return {"status": "ok"}
+
+        return _Resp()
+
+    monkeypatch.setattr("httpx.get", _fake_get)
+
+    ep = Endpoint(
+        url="https://decisions.example.com",
+        host="decisions.example.com",
+        scheme="https",
+        is_local=False,
+        allow_insecure_transport=False,
+        request_timeout=5.0,
+    )
+    body = remote_health(ep)
+
+    assert body == {"status": "ok"}
+    assert captured["headers"] == {"x-api-key": "secret-token"}
+
+
 def test_version_flag_reports_the_installed_distribution(capsys):
     name = tomllib.loads(
         (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text()
