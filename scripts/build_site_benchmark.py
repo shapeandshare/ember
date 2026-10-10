@@ -131,7 +131,7 @@ def _leaderboard_table_html(rows: list[dict[str, Any]]) -> str:
         latency = (
             f"{row['latency_p50']:.0f} ms" if row["latency_p50"] is not None else "—"
         )
-        run_url = f"/results/{row['run_id']}/summary/"
+        run_url = f"{{{{ '/results/{row['run_id']}/summary/' | relative_url }}}}"
         body_rows.append(
             "<tr>"
             f'<td><a href="{run_url}">{escape(str(model_label))}{params}</a></td>'
