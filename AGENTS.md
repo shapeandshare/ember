@@ -1,6 +1,6 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-09 (distribution: installs pin the release tag, the distribution is renamed `ember-advise` and releases publish it to PyPI and the MCP Registry, a Claude Code plugin marketplace, and the opencode plugin's separate release track retired)
+**Last updated**: 2026-10-09 (context window audit: requests are counted in full with upstream `encode_record` and refused, never truncated, above the enforced limit; `/health`, the load log, and `ember doctor` report both limits with their sources)
 
 ## What this repo is
 
@@ -78,8 +78,13 @@ ember/
   serving/            # HTTP model server, MPS runtime, lifecycle, media
     server.py         #   FastAPI: POST /v1/systemone, GET /health (reports pid)
     runtime.py        #   MPS-safe loader (CPU load → .to("mps")) + Engine
+    devices.py        #   pick_device / pick_dtype (Article VI)
+    limits.py         #   Limits: effective maximum + per-request cap, with sources (torch-free)
+    limit_source.py   #   LimitSource: model, fallback, operator, measured
+    governing_limit.py #  GoverningLimit: cap, maximum
+    request_size.py   #   exact request count via upstream encode_record + refusal message
     process.py        #   warm-server lifecycle (pidfile + HTTP health)
-    media.py          #   base64 data-URI / {content_type,base64} → PIL decoder
+    media.py          #   base64 data-URI / {content_type,base64} → PIL decoder; media_kwargs allowlist
   mcp/                # MCP stdio server and wire types
     mcp_server.py     #   MCP stdio server: advise tool, instructions, ember://guide
     mcp_types.py      #   Pydantic wire types: Question, AdviseInput
@@ -118,6 +123,7 @@ scripts/              # make-only dev tools: MPS smoke, MCP e2e, site build, pro
 tests/                # pytest suite (unit + model-backed, host-isolated)
 site/                 # Jekyll GitHub Pages site (docs, brand assets, benchmark report generated at build)
 benchmark/            # tracked benchmark runs (results, trace, dataset, model.json) the site renders
+evals/context/        # long-context probe: padding, memory sampler, cap rule; runs/ holds cited snapshots
 vault/                # project memory (Obsidian): decisions, discoveries, sessions
   ember.md            #   hub note; every note must be reachable from it
   _meta/              #   tags.md (controlled vocabulary) and templates/
@@ -157,6 +163,7 @@ vault/                # project memory (Obsidian): decisions, discoveries, sessi
 | `make vault-audit` | Audit `vault/` notes: frontmatter, tags, wikilinks, code-refs, orphans |
 | `make eval-run` / `make eval-export` | Model benchmark (`evals/clef-flash.jsonl`) / reviewer report bundle |
 | `make eval-snapshot` | Copy the latest run into `benchmark/` for the site to render |
+| `make eval-context` / `make eval-context-smoke` | Long-context probe on MPS: per-model request caps (hours) / smoke (minutes) |
 | `make eval-agent` / `make eval-agent-smoke` | Agent-in-the-loop eval through opencode (opt-in; spends provider credit) |
 | `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000`, rebuilt and reloaded in the browser on every edit (needs Docker) |
 | `make release-dry` | Preview the next ember version bump without changes |
@@ -323,7 +330,7 @@ base URL and MCP stdio parameters for integration tests.
 |-----------|---------------|
 | `tests/test_agent_kit.py` | Kit contract: instructions size, skill frontmatter, guide resource |
 | `tests/test_cli.py` | CLI paths: onboarding, init, lifecycle on unused ports, doctor, uninstall |
-| `tests/test_media.py` | Media decoding: data URIs, {content_type,base64} objects, rejection of URLs |
+| `tests/test_media.py` | Media decoding: data URIs, {content_type,base64} objects, rejection of URLs; the `media_kwargs` allowlist |
 | `tests/test_metrics.py` | Prometheus endpoint: counter/gauge lifecycle, registry isolation |
 | `tests/test_mcp_tool.py` | MCP protocol: tool discovery, advise over stdio, error handling, autostart |
 | `tests/test_opencode_plugin.py` | Plugin install/uninstall, config merge/remove |
@@ -333,13 +340,17 @@ base URL and MCP stdio parameters for integration tests.
 | `tests/test_registration.py` | Doctor's per-harness registration report: next steps, untrusted/unapproved flags, Claude Code plugin, legacy vault hint |
 | `tests/test_distribution.py` | Release contract: pinned git installs, commitizen `version_files`, `server.json`, the `mcp-name` marker, the Claude Code marketplace/plugin and its mirrored skill |
 | `tests/test_repo_root.py` | Checkout and main-worktree root discovery from `.git` on disk |
-| `tests/test_runtime_unit.py` | Runtime helpers: device selection, model max length, mcp_server isolation |
+| `tests/test_runtime_unit.py` | Runtime helpers: device selection, the Engine's limits, full-count refusals and the size-check invariant, mcp_server isolation (the model-max-length tests moved to `tests/test_limits.py`) |
+| `tests/test_limits.py` | Limit resolution: `LimitSource`/`GoverningLimit`, `Limits` rules, the contracts/config.md table, `from_config`, `declared_max_length`, torch-free import |
+| `tests/test_request_size.py` | Exact request counting with a fake joint module, and the refusal message contract |
+| `tests/test_limits_model.py` | Model-backed: declared maximum, exact totals, the limit boundary, the refusal matrix, a ~1M-token state |
 | `tests/test_vault_audit.py` | Vault audit script: frontmatter, tags, wikilinks, code-refs, orphans |
 | `tests/test_http_api.py` | HTTP API call paths: GET /health, POST /v1/systemone across all question types, request-validation errors |
 | `tests/test_eval_benchmark.py` | Benchmark dataset integrity: schema, gold labels, split coverage |
 | `tests/test_advise_evals.py` | Calibration evals (model-backed): recipe correctness end-to-end |
 | `tests/test_agent_eval.py` | Agent-in-the-loop eval: judge scoring, sandbox lifecycle |
 | `tests/test_eval_report.py` | Report generation: HTML structure, Markdown fidelity, chart output |
+| `tests/test_context_probe.py` | Long-context probe (no model): records, padding, scoring, the cap rule, summary determinism, resume, items, reproduction, memory sampler |
 | `packages/opencode-plugin/index.test.js` | npm plugin config hook: env defaults and overrides (`node --test index.test.js`) |
 
 **Writing new tests — unit pattern** (`tests/test_<module>.py`):
@@ -578,8 +589,17 @@ spacing values, or component styles outside the design system.
   remote URLs and local paths are rejected so an agent cannot make the warm server read host
   files or fetch URLs. Video frames must be decoded to PIL before Clef's processor — string
   frames need `torchcodec`, which we do not ship.
-- **`max_length` of `0` means "the model's maximum"** (`ember/cfg/config.py` → `Engine` →
-  `runtime.model_max_length`). Do not reintroduce a hardcoded 16384 cap.
+- **`max_length` of `0` means "the model's maximum"** (`ember/cfg/config.py` →
+  `limits.from_config` → `Engine`; resolved in `ember/serving/limits.py`). Do not reintroduce
+  a hardcoded 16384 cap.
+- **Size checks count the whole encoded request** with upstream `encode_record` at
+  `max_length=sys.maxsize` (`ember/serving/request_size.py`), never `str(state)`: questions,
+  schema, prompt wrapper, and media count too. A request over the enforced limit
+  (`min(cap, max)`, or the maximum when the cap is `0`) gets a 413 that states its token
+  split; it is never truncated, and an answer whose `usage.input_tokens` differs from the
+  count becomes a 500. Agent-facing error text must contain no `/`: the MCP layer rewrites
+  anything path-like. An unset `max_request_length` means the loaded model's measured default
+  (`ModelSpec.max_request_length`; 32,768 until measured).
 - **Metric names and labels are public API** (`ember/serving/server.py`): change
   `ember_advise_*` / `ember_model_info` together with the README and `tests/test_metrics.py`.
   They live in a dedicated `CollectorRegistry`, so only ember metrics are exposed — no
@@ -645,6 +665,11 @@ spacing values, or component styles outside the design system.
   asset `benchmark.css`. The run produces data; the website renders the HTML. `site/results/`
   is generated and gitignored. `ember eval export` still writes a portable single-file HTML for
   external reviewers.
+- **The long-context probe is not a test.** `ember eval context` (`evals/context/`) runs an
+  in-process `Engine` with the cap disabled, one worker subprocess per model, opens no
+  ports, and only warns if an ember server is running. Keep it out of `make check`, `make
+  test`, and CI. Re-run `make eval-context` and re-set `ModelSpec.max_request_length` (and the
+  numbers in the kit, README, and COMPATIBILITY) whenever a model's `revision` changes.
 - **The agent eval is the only code that launches opencode.** `ember eval agent`
   (`evals/eval/run_agent_evals.py`, `evals/agent/`) runs `opencode run --pure` in a temporary
   sandbox with a private HOME and XDG dirs and no port (constitution Article IV). Keep it out of
@@ -687,6 +712,19 @@ MUST pass the constitution check.
 
 ## Recent Changes
 
+- 2026-10-09: context window audit, part 1 (`specs/003-context-window-audit/`): requests are
+  counted in full (state, media, questions, schema, prompt wrapper) with upstream
+  `encode_record` (`ember/serving/request_size.py`) and refused with a 413 that states the
+  token split, never truncated; a size-check mismatch is a 500. Limits resolve in
+  `ember/serving/limits.py` (`LimitSource`, `GoverningLimit`); the load log, `/health`
+  `engine`, and `ember doctor` (live, configured, or unknown) report each limit with its
+  source, and `server.main` routes `ember.*` logs through uvicorn's handler so the
+  `limits:` line reaches `ember logs`. `max_request_length` now defaults to unset: the loaded
+  model's measured cap, 32,768 until measured. `pick_device`/`pick_dtype` moved to
+  `ember/serving/devices.py` and the `media_kwargs` allowlist to `ember/serving/media.py`,
+  taking `runtime.py` under 400 lines. Part 2 adds the long-context probe
+  (`evals/context/`, `ember eval context`, `make eval-context`) that measures each model's
+  cap; the measured caps land once a canonical run is snapshotted.
 - 2026-10-09: the distribution is renamed `gut` → `ember-advise` (PyPI's `gut` is an empty
   project owned by someone else; its JSON API 404s, which hid that). Commands are unchanged
   plus an `ember-advise` alias for `uvx ember-advise mcp`; existing `gut` tool installs need
