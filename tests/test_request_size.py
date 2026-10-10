@@ -200,13 +200,20 @@ def test_a_lowered_maximum_with_an_unknown_declared_maximum():
     assert message.endswith("Operators can raise EMBER_MAX_LENGTH.")
 
 
-@pytest.mark.parametrize("source", [LimitSource.MODEL, LimitSource.FALLBACK])
-def test_the_models_own_maximum_cannot_be_raised(source):
+def test_the_models_own_maximum_cannot_be_raised():
     size = RequestSize(total=300000, state=298570, media=0, fixed=1430)
-    limits = _caps(DECLARED, source, 0, LimitSource.OPERATOR)
+    limits = _caps(DECLARED, LimitSource.MODEL, 0, LimitSource.OPERATOR)
     message = refusal_message(size, limits, DECLARED)
     assert "exceeds the 262144-token maximum length (EMBER_MAX_LENGTH)." in message
     assert message.endswith("This is the model's own maximum and cannot be raised.")
+
+
+def test_a_fallback_maximum_can_be_raised_by_an_operator():
+    size = RequestSize(total=40000, state=38570, media=0, fixed=1430)
+    limits = _caps(32768, LimitSource.FALLBACK, 0, LimitSource.OPERATOR)
+    message = refusal_message(size, limits, None)
+    assert "exceeds the 32768-token maximum length (EMBER_MAX_LENGTH)." in message
+    assert message.endswith("Operators can raise EMBER_MAX_LENGTH.")
 
 
 def test_a_cap_above_the_maximum_lets_the_maximum_govern():

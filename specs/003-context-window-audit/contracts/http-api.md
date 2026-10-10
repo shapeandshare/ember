@@ -62,7 +62,7 @@ request too large: {total} tokens exceeds the {limit}-token {limit_name} ({setti
 | `{limit}` | the enforced limit |
 | `{limit_name}`, `{setting}` | `per-request cap` and `EMBER_MAX_REQUEST_LENGTH` when the cap governs (`GoverningLimit.CAP`); `maximum length` and `EMBER_MAX_LENGTH` when the effective maximum governs (`GoverningLimit.MAXIMUM`) |
 | `{advice}` | if `fixed > limit`: `The questions alone exceed the limit: ask fewer or shorter questions, then retry.`; otherwise: `Reduce the largest part (shorten the state, attach fewer or smaller images or frames, or ask fewer questions), then retry.` |
-| `{operator_hint}` | when the cap governs: `Operators can raise EMBER_MAX_REQUEST_LENGTH (0 removes the cap; the maximum length then applies).`; when an operator lowered the maximum: `Operators can raise EMBER_MAX_LENGTH up to the model's {declared} tokens.`; when the declared maximum governs: `This is the model's own maximum and cannot be raised.` |
+| `{operator_hint}` | when the cap governs: `Operators can raise EMBER_MAX_REQUEST_LENGTH (0 removes the cap; the maximum length then applies).`; when an operator lowered the maximum: `Operators can raise EMBER_MAX_LENGTH up to the model's {declared} tokens.`; when the declared maximum is unknown (the 32,768 fallback, or an operator value over an unreadable declaration): `Operators can raise EMBER_MAX_LENGTH.`; when the declared maximum governs: `This is the model's own maximum and cannot be raised.` |
 
 **Constraints**:
 - The message never contains `/` or `\`. That keeps it intact through the MCP layer's
