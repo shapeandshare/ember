@@ -63,7 +63,8 @@ the 2,048 and 16,384 rows at the middle depth before the run exits 2, which is h
 
 Under the pre-declared rule, flash's measured cap can never exceed 24,576 and full's can
 never exceed 16,384, so a shared 32,768 default was inadmissible on memory alone for both.
-Each model now carries its own memory-checked fallback; see
+Each model now carries its own memory-checked fallback, which keeps 4 GiB of its budget
+free for the OS: 24,576 for flash and 8,192 for full; see
 [[2026-10-10-per-model-request-caps]].
 
 ## References
