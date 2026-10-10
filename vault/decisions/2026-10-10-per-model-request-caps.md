@@ -73,6 +73,9 @@ so that the probe can resolve its accuracy tolerance.
   memory set `EMBER_MAX_REQUEST_LENGTH`.
 - Harnesses have their own tool-call limits (Claude Code's `MCP_TOOL_TIMEOUT`, for one), so
   a long full request may need those raised too.
+- The server runs one request at a time and admits up to four (`MAX_PENDING_ADVISE`,
+  D-001), so a request queued behind long full requests can outlast the 900 s timeout.
+  If that bites, failing fast while the engine is busy beats raising the timeout again.
 - The 4 GiB reserve applies to the fallbacks only. The pre-declared FR-010 rule still
   compares a measured cap's peak with the whole budget, so a measured cap could land closer
   to the budget than its fallback. Revisit that before the measured caps ship.
