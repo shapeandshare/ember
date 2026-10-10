@@ -11,6 +11,7 @@ import asyncio
 import base64
 import io
 import json
+import os
 import ssl
 import threading
 import time
@@ -18,6 +19,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import httpx
 import pytest
+from ember import models
 from ember.agent_kit import api as agent_kit
 from ember.cfg.endpoint import Endpoint
 from ember.mcp import mcp_server
@@ -146,6 +148,11 @@ def test_mcp_autostart_reports_a_missing_model_quickly(tmp_path) -> None:
 
 @pytest.mark.model
 def test_mcp_autostart_launches_server_on_configured_port(tmp_path) -> None:
+    # The spawned server resolves the model the same way, so skip like the others.
+    if models.resolve_dir(None) is None:
+        if os.environ.get("EMBER_REQUIRE_MODEL") == "1":
+            pytest.fail("model not pulled (EMBER_REQUIRE_MODEL=1)")
+        pytest.skip("model not pulled")
     pidfile = tmp_path / "server.pid"
     params = mcp_stdin_params(
         f"http://127.0.0.1:{free_port()}",
