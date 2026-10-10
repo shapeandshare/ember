@@ -688,5 +688,6 @@ def test_mcp_refuses_an_oversized_request_end_to_end(base_url: str) -> None:
     result = asyncio.run(_call_advise(mcp_stdin_params(base_url), arguments))
     assert result.is_error is True
     text = result.content[0].text
-    assert text.startswith("ember server error 413: request too large:")
+    # Over stdio, mcp prefixes tool errors with "Error executing tool advise: ".
+    assert "ember server error 413: request too large:" in text
     assert "Split: state" in text
