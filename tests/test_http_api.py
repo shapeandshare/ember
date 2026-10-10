@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import base64
 import io
+from pathlib import Path
 
 import httpx
 import pytest
@@ -618,4 +619,59 @@ def test_lifespan_allows_loopback_host_without_auth(monkeypatch) -> None:
     monkeypatch.setenv("EMBER_HOST", "127.0.0.1")
     monkeypatch.delenv("EMBER_SERVER_AUTH_TOKEN", raising=False)
     resp = _in_process_client().get("/health")
+    assert resp.status_code == 200
+
+
+# ###########################################################################
+# Regression: deployment/deploy.yaml's exact declared environment must not
+# make lifespan() refuse to start. This is the contract that broke twice in
+# practice — once when T-004 was added without checking it against the
+# already-committed Outerbounds deploy config (see
+# vault/decisions/2026-10-10-remove-t004-non-loopback-auth-check.md) — so any
+# *future* startup-time guard added to lifespan() is automatically checked
+# against the real shipped deployment artifact, not just synthetic env vars.
+# ###########################################################################
+def _deploy_yaml_environment() -> dict[str, str]:
+    """Parse the ``environment:`` block from ``deployment/deploy.yaml``.
+
+    Returns
+    -------
+    dict[str, str]
+        The declared environment variable names and values, stringified
+        (``deploy.yaml`` quotes every value, but be defensive regardless).
+    """
+    import yaml
+
+    root = Path(__file__).resolve().parents[1]
+    manifest = yaml.safe_load((root / "deployment" / "deploy.yaml").read_text())
+    return {str(k): str(v) for k, v in manifest["environment"].items()}
+
+
+def test_lifespan_accepts_deploy_yaml_environment_as_committed(monkeypatch) -> None:
+    """``ember serve`` under deploy.yaml's exact declared environment must not
+    raise at startup. Both ``hosted.resolve`` and ``models.resolve_dir`` are
+    mocked to skip real S3/model-loading work (out of scope for a unit test:
+    no network, no CUDA on this host) — leaving only the startup-refusal
+    class of behavior (host/auth checks, config validation) under test,
+    exactly as it would run before any model-loading work begins. This is
+    the Article XIV ``model not found`` pit-of-success path: the server
+    starts unloaded (health reports "loading", advise returns 503) rather
+    than crashing, which is itself the behavior the existing three
+    lifespan_* tests above already rely on."""
+    from unittest.mock import patch
+
+    from ember.serving import server as server_mod
+    from fastapi.testclient import TestClient
+
+    env = _deploy_yaml_environment()
+    for key, value in env.items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.delenv("EMBER_SERVER_AUTH_TOKEN", raising=False)
+
+    with (
+        patch("ember.serving.server.hosted.resolve", return_value=None),
+        patch("ember.serving.server.models.resolve_dir", return_value=None),
+    ):
+        with TestClient(server_mod.app) as client:
+            resp = client.get("/health")
     assert resp.status_code == 200

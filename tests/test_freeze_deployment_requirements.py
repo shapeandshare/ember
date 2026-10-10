@@ -70,3 +70,24 @@ def test_main_errors_when_requirements_file_missing(tmp_path, monkeypatch) -> No
     exit_code = freeze.main()
 
     assert exit_code != 0
+
+
+def test_committed_requirements_file_has_the_ember_advise_pin() -> None:
+    """Regression guard on the real, committed artifact — not a synthetic
+    fixture. ``uv export --no-emit-project`` strips ember-advise's own
+    package from the export (see the module docstring); this is exactly the
+    gap that shipped a container with no ``ember`` executable at all
+    (``ember: command not found`` — see
+    vault/discoveries/2026-10-10-fast-bakery-strips-ember-advise-from-deploy-requirements.md).
+    If someone edits ``deployment/requirements.txt`` by hand, regenerates it
+    with a stale script, or ``make deployment-requirements`` is simply
+    forgotten before a commit, this test catches the regression in CI rather
+    than at the next live deploy."""
+    lines = freeze.REQUIREMENTS_PATH.read_text().splitlines()
+    pins = [line for line in lines if line.startswith("ember-advise==")]
+    assert len(pins) == 1, (
+        "deployment/requirements.txt must contain exactly one ember-advise==<version> "
+        "line (Fast Bakery only pip installs what this file lists and does not "
+        "install the packaged source tree it copies in separately) — run "
+        "`make deployment-requirements` to regenerate it."
+    )
