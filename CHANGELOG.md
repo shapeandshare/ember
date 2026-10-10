@@ -1,3 +1,15 @@
+## v0.10.3 (2026-10-10)
+
+### Fix
+
+- **ember**: send auth headers to /health in the benchmark runner (#109)
+- **site**: build_site_benchmark.py picked the "latest" tracked
+benchmark/<run-id>/ bundle by sorting directory names lexicographically.
+A hosted run's directory name (Cloudflare__clef-flash_<ts>) can sort
+before an older local run's (clef-flash_<ts>) in ASCII order (uppercase <
+lowercase), silently keeping a stale run live on the public site. Now
+sorts by each bundle's meta.run_at instead.
+
 ## v0.10.2 (2026-10-10)
 
 ### Fix
