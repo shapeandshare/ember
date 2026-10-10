@@ -8,8 +8,9 @@ markers at all and rejects any line containing one (see
 ``vault/decisions/`` for the deploy-time failure this fixes).
 
 This script evaluates every marker against the Outerbounds deployment's actual
-target environment (Linux x86_64, CPython 3.12 — see ``deployment/deploy.yaml``)
-and rewrites the file in place: lines whose marker is true for that target keep
+target environment (Linux x86_64, CPython 3.12 — see ``deployment/flash.yaml``
+and ``deployment/full.yaml``, which share this one requirements.txt) and
+rewrites the file in place: lines whose marker is true for that target keep
 their pinned version with the marker stripped; lines whose marker is false for
 that target (e.g. ``sys_platform == 'win32'``, ``sys_platform == 'emscripten'``)
 are dropped entirely. Unmarked lines pass through unchanged. This keeps
@@ -23,7 +24,7 @@ the export — but Outerbounds' Fast Bakery only ``pip install``s what this file
 and does not implicitly install the packaged source tree it copies in via
 ``--package-src-path .``. Without an explicit ``ember-advise`` line, the deployed
 container never gets the ``[project.scripts]`` entry points (``ember``, ``gut``,
-``ember-mcp``), and ``commands: [ember serve]`` in ``deployment/deploy.yaml`` fails
+``ember-mcp``), and ``commands: [ember serve]`` in either deployment config fails
 with ``ember: command not found``. This script re-adds ``ember-advise==<version>``,
 pinned to the version in ``pyproject.toml``, after resolving markers.
 
@@ -44,9 +45,9 @@ _PYPROJECT_PATH = ROOT / "pyproject.toml"
 with _PYPROJECT_PATH.open("rb") as _pyproject_file:
     _PROJECT_VERSION = tomllib.load(_pyproject_file)["project"]["version"]
 
-# The Outerbounds compute pool's environment (deployment/deploy.yaml: Linux
-# container, CUDA on x86_64 NVIDIA GPUs, CPython 3.12). Keep in sync with
-# dependencies.python in deployment/deploy.yaml.
+# The Outerbounds compute pool's environment (deployment/flash.yaml and
+# deployment/full.yaml: Linux container, CUDA on x86_64 NVIDIA GPUs, CPython
+# 3.12). Keep in sync with dependencies.python in both files.
 _TARGET_ENVIRONMENT = {
     "implementation_name": "cpython",
     "implementation_version": "3.12.0",

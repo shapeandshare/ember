@@ -13,16 +13,31 @@ an `s3://bucket/prefix` location (`EMBER_MODEL_S3_URI`) rather than a pinned
 supplied at start time" for the mechanism, and constitution Article V ("Model
 Loading") for why no integrity hash is checked against that location.
 
+There are two deployment configs, one per model, because they need
+materially different compute (see "Choosing the model and sizing GPU memory"
+below) and Outerbounds requires each deployment to have a globally unique
+`name`:
+
+| File | Model | `name` | GPU floor |
+| --- | --- | --- | --- |
+| `deployment/flash.yaml` | `flash` (9B) | `ember-flash` | 24 GB (A10G, tight) |
+| `deployment/full.yaml` | `full` (27B) | `ember-full` | 80 GB (H100/A100-80GB) |
+
+Deploy each independently (`outerbounds app deploy --config-file deployment/<file>.yaml ...`);
+they run as separate pods with separate URLs, and the benchmark leaderboard
+(`/results/` on the site) shows each as its own row once you run the
+benchmark against it (`EMBER_SERVER_URL` pointed at that deployment's URL).
+
 ## Prerequisites
 
 1. **A GPU-backed compute pool sized for the model**, not just "has a GPU"
-   (Outerbounds UI → Compute) for the CUDA path in `deploy.yaml` (constitution
-   Article VI, "Apple Silicon and CUDA" — CUDA is the hosted-deployment
-   device; MPS is Apple-Silicon-only and unavailable on Outerbounds' Linux
-   compute). A CPU-only pool works too — see "CPU-only deployment" below.
-   Two distinct resources must both fit, and Outerbounds only validates one
-   of them at deploy time:
-   - **System RAM** (`resources.memory` in `deploy.yaml`) is checked by the
+   (Outerbounds UI → Compute) for the CUDA path in `flash.yaml`/`full.yaml`
+   (constitution Article VI, "Apple Silicon and CUDA" — CUDA is the
+   hosted-deployment device; MPS is Apple-Silicon-only and unavailable on
+   Outerbounds' Linux compute). A CPU-only pool works too — see "CPU-only
+   deployment" below. Two distinct resources must both fit, and Outerbounds
+   only validates one of them at deploy time:
+   - **System RAM** (`resources.memory` in each file) is checked by the
      scheduler at deploy time — an undersized pool fails immediately with
      `AppCreationFailedException: ... memory requirement <X>Gi exceeds
      available <Y>Ki`. This happened against two different pools during this
@@ -41,7 +56,7 @@ Loading") for why no integrity hash is checked against that location.
    `joint_head_config.json`, `model.safetensors.index.json`, and the
    sharded `model-*.safetensors` weight files — the same shape
    `ember/models.py` downloads for `flash`/`full` from Hugging Face).
-3. **No secret integration needed for the common case.** `deploy.yaml` ships
+3. **No secret integration needed for the common case.** Both files ship
    with `secrets: []`:
    - Access control is `auth.type: API` (below) — Outerbounds gates the
      endpoint with each caller's own existing platform token, so ember's own
@@ -72,13 +87,21 @@ Loading") for why no integrity hash is checked against that location.
 
 ```sh
 # Regenerate requirements.txt from uv.lock — do this before every deploy so
-# Fast Bakery resolves the exact dependency set CI/tests ran against.
+# Fast Bakery resolves the exact dependency set CI/tests ran against. Both
+# deployments share the same requirements.txt.
 make deployment-requirements
 
-# Fill in deployment/deploy.yaml's placeholders first (team/owner tags and the
-# model's S3 location), then:
+# Fill in the chosen file's placeholders first (team/owner tags, and for
+# full.yaml the model's S3 location and compute_pools — flash.yaml's are
+# already filled in for the live flash deployment), then:
 uv run outerbounds app deploy \
-  --config-file deployment/deploy.yaml \
+  --config-file deployment/flash.yaml \
+  --package-src-path . \
+  --readiness-condition async
+
+# ...and/or, separately, for full:
+uv run outerbounds app deploy \
+  --config-file deployment/full.yaml \
   --package-src-path . \
   --readiness-condition async
 ```
@@ -174,25 +197,30 @@ the weights but not a long request fails only when such a request runs; lower
 **System RAM and GPU VRAM are sized independently, and only one is a single
 AWS "instance size" knob.** `load_clef()` (`ember/serving/runtime.py`) loads
 the model on CPU first, then moves it to the GPU — so system RAM must
-transiently hold the full float16 weights too, which is why
-`deploy.yaml`'s `resources.memory` matches the GPU VRAM floor rather than
-being a much smaller "just for the OS" number. Concretely, for `flash` on
-AWS's G5 family (1x NVIDIA A10G, 24 GB VRAM / ~22.3 GiB usable — **every**
-g5.*xlarge single-GPU size has the identical GPU and VRAM; only system RAM,
-vCPU, and disk scale with size):
+transiently hold the full float16 weights too, which is why each file's
+`resources.memory` matches the GPU VRAM floor rather than being a much
+smaller "just for the OS" number. Concretely:
 
-| Instance | GPU VRAM | System RAM | Fits `flash`? |
-| --- | --- | --- | --- |
-| `g5.2xlarge` | 24 GB (~22.3 GiB usable) | 32 GiB | VRAM: tight (~4 GiB headroom). RAM: matches the request almost exactly — little schedulable margin, risks the same "memory exceeds available" failure as an undersized pool. |
-| `g5.4xlarge` | 24 GB (~22.3 GiB usable) | 64 GiB | VRAM: same tight ~4 GiB headroom as `g5.2xlarge` — bigger instance size does **not** add VRAM within the same GPU model. RAM: real margin below the 32Gi request. |
-| `g6e.xlarge`+ (NVIDIA L40S) | 48 GB | varies | VRAM: comfortable headroom — AWS's own recommended upgrade path from G5 for memory-bound LLM serving. Not yet used or verified for this deployment. |
+| Model | Instance | GPU VRAM | System RAM | Fit |
+| --- | --- | --- | --- | --- |
+| `flash` (9B, ~18 GiB weights) | `g5.2xlarge` (1x A10G) | 24 GB (~22.3 GiB usable) | 32 GiB | VRAM: tight (~4 GiB headroom). RAM: matches the request almost exactly — little schedulable margin, risks the same "memory exceeds available" failure as an undersized pool. |
+| `flash` | `g5.4xlarge` (1x A10G) | 24 GB (~22.3 GiB usable) | 64 GiB | VRAM: same tight ~4 GiB headroom as `g5.2xlarge` — bigger instance size does **not** add VRAM within the same GPU model. RAM: real margin below the 32Gi request. **This is `flash.yaml`'s target.** |
+| `flash` | `g6e.xlarge`+ (1x L40S) | 48 GB | varies | VRAM: comfortable headroom — AWS's own recommended upgrade path from G5 for memory-bound LLM serving. Not yet used or verified. |
+| `full` (27B, ~55 GiB weights) | any G5/G6e size above | 24–48 GB | — | **Does not fit at all** — `full`'s weights alone (~55 GiB) exceed even L40S's 48 GB before activations/KV-cache are counted. |
+| `full` | `p5.4xlarge` (1x H100) | 80 GB HBM3 | 256 GiB | VRAM: ~25 GiB headroom for activations/KV-cache after ~55 GiB of weights. RAM: comfortable margin above the 96Gi request. **This is `full.yaml`'s target** — not yet deployed or verified against real hardware. |
 
-A10G's ~22.3 GiB usable VRAM leaving only ~4 GiB for `flash`'s activations and
-KV-cache is a **genuinely tight fit, not yet verified against real NVIDIA
-hardware** (see COMPATIBILITY.md) — if the pod's own logs show a CUDA
-out-of-memory error after the Kubernetes scheduler already accepted the
-deployment, the fix is a bigger-VRAM GPU model (e.g. L40S/G6e), not a bigger
-instance size of the same GPU.
+Every single-GPU size within one AWS GPU family (every `g5.*xlarge`, for
+example) has the *identical* GPU and VRAM — only system RAM, vCPU, and disk
+scale with instance size. A10G's ~22.3 GiB usable VRAM leaving only ~4 GiB
+for `flash`'s activations and KV-cache is a **genuinely tight fit, not yet
+verified against real NVIDIA hardware** (see COMPATIBILITY.md) — if the
+pod's own logs show a CUDA out-of-memory error after the Kubernetes
+scheduler already accepted the deployment, the fix is a bigger-VRAM GPU
+model (e.g. L40S/G6e for `flash`, or P5/H100 for `full`), not a bigger
+instance size of the same GPU. ember has no multi-GPU support
+(`load_clef()` moves the whole model to one device), so a multi-GPU
+instance such as `p4d.24xlarge` (8x A100 40 GB) does not help `full` either
+— only a single GPU with enough VRAM on its own does.
 
 Three independent settings control what actually loads and how much memory it
 needs:
@@ -201,7 +229,7 @@ needs:
 | --- | --- | --- |
 | `EMBER_MODEL_S3_URI` (or `EMBER_MODEL` for a `REGISTRY` entry) | **Which model** — this is what actually determines the VRAM requirement | `s3://my-bucket/clef-flash` (9B) vs. a `full`-sized (27B) location |
 | `EMBER_DEVICE` | **Which accelerator** — `cuda`/`mps` load in float16 (smaller footprint); `cpu` loads in float32 (~2x the memory, see "CPU-only deployment" below) | `cuda` |
-| `resources.gpu` / `compute_pools` in `deploy.yaml` | **How much VRAM is actually available** — this is capacity planning, not a software setting; pick a pool whose GPU memory exceeds the chosen model's float16 footprint with headroom | a pool with 24–40 GB+ VRAM for `flash` |
+| `resources.gpu` / `compute_pools` in `flash.yaml`/`full.yaml` | **How much VRAM is actually available** — this is capacity planning, not a software setting; pick a pool whose GPU memory exceeds the chosen model's float16 footprint with headroom | a pool with 24–48 GB+ VRAM for `flash`, 80 GB+ for `full` |
 
 `EMBER_MAX_LENGTH`/`EMBER_MAX_REQUEST_LENGTH` (see README.md's env var table) bound
 context length, which indirectly affects KV-cache memory at long contexts, but
@@ -210,7 +238,8 @@ itself doesn't fit.
 
 ## CPU-only deployment
 
-No GPU compute pool yet? Edit `deploy.yaml`:
+No GPU compute pool yet? Edit whichever of `flash.yaml`/`full.yaml` you're
+deploying:
 
 - `EMBER_DEVICE: "cpu"` instead of `"cuda"`.
 - Remove `resources.gpu` and roughly double `resources.memory` (CPU loads in

@@ -323,8 +323,9 @@ ember supports any model that can run under its loader contract (constitution Ar
 "Model Loading"); it is not a hand-maintained allowlist of individually hash-verified weights,
 so a URI-supplied location loads directly, with no pin or hash to check against.
 
-A complete Outerbounds deployment example — `deploy.yaml`, a generated `requirements.txt`,
-and a `make deployment-requirements` target — lives in [`deployment/`](deployment/README.md).
+Complete Outerbounds deployment examples — `flash.yaml`/`full.yaml` (one per model, since
+they need different compute), a generated `requirements.txt`, and a
+`make deployment-requirements` target — live in [`deployment/`](deployment/README.md).
 
 ### Remote inference
 
