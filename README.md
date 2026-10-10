@@ -374,7 +374,14 @@ forces `EMBER_AUTOSTART=0` — there is nothing local to autostart. **The creden
 never written to the file**: export `EMBER_AUTH_TOKEN` in the shell that launches the agent
 (or your GUI app's environment) instead, so a secret never lands in a config file that might
 be project-committed. Without `--server-url`, `ember init` behaves exactly as before (a local
-loopback entry).
+loopback entry). Restart the harness afterward to pick up the new MCP registration.
+
+This only updates the generated harness config — `ember status`/`ember doctor` run directly
+from your shell still check the **local** default unless you also export the same
+`EMBER_SERVER_URL`/`EMBER_AUTH_HEADER`/`EMBER_AUTH_TOKEN` in your shell, or persist
+`server_url`/`auth_header` (never the token) in ember's own config file
+(`ember config path`). See `deployment/README.md`'s "Verifying from the shell" for the exact
+steps and what a healthy response looks like.
 
 ## Metrics
 

@@ -97,17 +97,64 @@ API` is set, Outerbounds requires each caller's own platform token as
 `x-api-key` (not an ember-minted `EMBER_SERVER_AUTH_TOKEN` — see
 [Writing your first Deployment](https://docs.outerbounds.com/outerbounds/first-inference-deployment/)
 for how to obtain it, e.g. `METAFLOW_SERVICE_AUTH_KEY` from your local
-Metaflow config, or a minted machine-user token for a non-interactive caller):
+Metaflow config at `~/.metaflowconfig/config.json`, or a minted machine-user
+token for a non-interactive caller):
 
 ```sh
-ember init --opencode --server-url https://<your-app>.outerbounds.app --auth-header x-api-key
+# Install the CLI first if it isn't already (uv tool install, not this repo's
+# .venv — ember init --global must run from the installed tool so it records
+# the right ember-mcp path):
+uv tool install --python 3.12 ember-advise
+
+# Register whichever harness(es) you use — --opencode, --kilocode, --codex
+# can be combined; the same --server-url/--auth-header apply to all of them:
+ember init --opencode --kilocode --global \
+  --server-url https://<your-app>.outerbounds.app --auth-header x-api-key
+
 export EMBER_AUTH_TOKEN=<your own Outerbounds/Metaflow API token>
+# e.g.: export EMBER_AUTH_TOKEN="$(python3 -c \
+#   "import json; print(json.load(open('$HOME/.metaflowconfig/config.json'))['METAFLOW_SERVICE_AUTH_KEY'])")"
 ```
 
 `EMBER_AUTH_TOKEN` is **never** written to `opencode.json`/`kilo.json`/the
 plugin file — export it in the shell that launches the agent (see README.md
 "Remote inference"). `--auth-header` accepts any header name; `x-api-key` is
 sent verbatim, `Authorization` (the default) is sent as `Bearer <token>`.
+Restart the harness (opencode, Kilo Code) afterward to pick up the new MCP
+registration.
+
+### Verifying from the shell (`ember status` / `ember doctor`)
+
+`ember init` only writes `server_url`/`auth_header` into the MCP entry's
+environment block inside `opencode.json`/`kilo.json` — it does not change
+ember's own config file, so running `ember status` or `ember doctor` directly
+from your shell still reports the **local** default (`127.0.0.1:8765`)
+unless you also point ember's own config at the remote endpoint:
+
+```sh
+# Either export the same variables in your shell:
+export EMBER_SERVER_URL=https://<your-app>.outerbounds.app
+export EMBER_AUTH_HEADER=x-api-key
+export EMBER_AUTH_TOKEN=<your own Outerbounds/Metaflow API token>
+ember status
+
+# ...or persist server_url/auth_header (never the token) in ember's config
+# file so you don't have to export them every session:
+cat > "$(ember config path)" <<'JSON'
+{
+  "server_url": "https://<your-app>.outerbounds.app",
+  "auth_header": "x-api-key"
+}
+JSON
+export EMBER_AUTH_TOKEN=<your own Outerbounds/Metaflow API token>
+ember status
+```
+
+A healthy remote deployment reports `"reachable": true, "ready": "ok"` with
+an `engine` block describing the loaded model; `/health` is probed with the
+same credential header as the real `advise` call, so a gateway-authenticated
+deployment like this one (Outerbounds' `auth.type: API`) is never
+misreported as unreachable.
 
 ## Choosing the model and sizing GPU memory
 
