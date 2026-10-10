@@ -17,18 +17,32 @@ are dropped entirely. Unmarked lines pass through unchanged. This keeps
 rather than re-resolving them, while producing a plain, marker-free file Fast
 Bakery can parse.
 
+``uv export`` is run with ``--no-emit-project`` (see ``make deployment-requirements``
+in ``shared/release.mk``) so the project's own package is deliberately absent from
+the export — but Outerbounds' Fast Bakery only ``pip install``s what this file lists
+and does not implicitly install the packaged source tree it copies in via
+``--package-src-path .``. Without an explicit ``ember-advise`` line, the deployed
+container never gets the ``[project.scripts]`` entry points (``ember``, ``gut``,
+``ember-mcp``), and ``commands: [ember serve]`` in ``deployment/deploy.yaml`` fails
+with ``ember: command not found``. This script re-adds ``ember-advise==<version>``,
+pinned to the version in ``pyproject.toml``, after resolving markers.
+
 Run via ``make deployment-requirements``, never directly against a stale file.
 """
 
 from __future__ import annotations
 
 import sys
+import tomllib
 from pathlib import Path
 
 from packaging.markers import Marker
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIREMENTS_PATH = ROOT / "deployment" / "requirements.txt"
+_PYPROJECT_PATH = ROOT / "pyproject.toml"
+with _PYPROJECT_PATH.open("rb") as _pyproject_file:
+    _PROJECT_VERSION = tomllib.load(_pyproject_file)["project"]["version"]
 
 # The Outerbounds compute pool's environment (deployment/deploy.yaml: Linux
 # container, CUDA on x86_64 NVIDIA GPUs, CPython 3.12). Keep in sync with
@@ -76,6 +90,26 @@ def _resolve_line(line: str) -> str | None:
     return None
 
 
+def _ensure_ember_advise_pin(lines: list[str]) -> list[str]:
+    """Add ``ember-advise==<version>`` if ``--no-emit-project`` stripped it.
+
+    Parameters
+    ----------
+    lines : list[str]
+        Resolved requirements-file lines (markers already stripped/dropped).
+
+    Returns
+    -------
+    list[str]
+        ``lines`` unchanged if an ``ember-advise==`` pin is already present
+        (idempotent re-runs); otherwise ``lines`` with the pin appended.
+    """
+    pin = f"ember-advise=={_PROJECT_VERSION}"
+    if any(line.startswith("ember-advise==") for line in lines):
+        return lines
+    return [*lines, pin]
+
+
 def main() -> int:
     """Rewrite ``deployment/requirements.txt`` with markers resolved for Linux.
 
@@ -89,6 +123,7 @@ def main() -> int:
         return 1
     lines = REQUIREMENTS_PATH.read_text().splitlines()
     resolved = [out for line in lines if (out := _resolve_line(line)) is not None]
+    resolved = _ensure_ember_advise_pin(resolved)
     REQUIREMENTS_PATH.write_text("\n".join(resolved) + "\n")
     return 0
 

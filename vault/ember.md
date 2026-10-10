@@ -67,6 +67,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-09-docker-desktop-drops-deletion-events]]
 - [[2026-10-09-pypi-json-api-hides-empty-projects]]
 - [[2026-10-09-request-size-checks-miss-what-the-model-sees]]
+- [[2026-10-10-fast-bakery-strips-ember-advise-from-deploy-requirements]]
 
 ### Sessions
 
