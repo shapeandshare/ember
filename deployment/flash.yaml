@@ -1,7 +1,7 @@
-# Outerbounds App Deployment contract for ember.
+# Outerbounds App Deployment contract for ember, serving `flash` (9B).
 #
 # Deploy with:
-#   outerbounds app deploy --config-file deployment/deploy.yaml --package-src-path . --readiness-condition async
+#   outerbounds app deploy --config-file deployment/flash.yaml --package-src-path . --readiness-condition async
 #
 # ember runs as the model server itself here (`ember serve`), not a client —
 # this pod *is* the EMBER_SERVER_URL a remote client points at. Regenerate
@@ -15,8 +15,12 @@
 # special index or extra is needed. Set EMBER_DEVICE=cpu instead (and size
 # `resources` roughly 2x larger — CPU loads in float32) if no GPU compute pool
 # is available yet.
+#
+# `name` is Outerbounds' globally unique deployment identifier — see
+# deployment/full.yaml for the sibling deployment serving `full` (27B); the two
+# must never share a name; they deploy and scale independently.
 
-name: ember
+name: ember-flash
 port: 8765
 
 tags:
@@ -56,8 +60,12 @@ dependencies:
   from_requirements_file: deployment/requirements.txt
 
 # Sized for `flash` (9B) on CUDA in float16 (~18 GiB weights + activations/KV
-# cache headroom). Double disk/memory roughly for `full` (27B), or if running
-# EMBER_DEVICE=cpu instead (float32 is ~2x the float16 footprint).
+# cache headroom). See deployment/full.yaml for `full` (27B), which needs a
+# materially different compute pool, not just bigger numbers on this one —
+# full's ~55 GiB of float16 weights alone exceed any single-A10G GPU's VRAM
+# (see that file's resources comment). Roughly double disk/memory versus this
+# file's numbers if running EMBER_DEVICE=cpu instead (float32 is ~2x the
+# float16 footprint).
 #
 # Targets a g5.4xlarge node (1x NVIDIA A10G, 24 GB VRAM / ~22.3 GiB usable;
 # 64 GiB system RAM; 16 vCPU) — chosen after two earlier pools both rejected
@@ -95,13 +103,13 @@ resources:
 # "Targeting compute pools") — left commented out here so Outerbounds
 # auto-selects any eligible pool in your workspace's default perimeter
 # that has "Inference deployments" enabled (Compute Pool UI → Advanced
-# Routing) and can satisfy `resources` above. Two candidate pools were both
-# explicitly tried and rejected ("memory requirement 32Gi exceeds
-# available ~14-15Gi") — they are NOT viable regardless of whether a pool is
-# named here or left to auto-select. Pin an explicit pool only if you need
-# cost tracking, compute isolation, or a specific GPU class (see the docs
-# section above) and have confirmed it actually has enough schedulable memory
-# and VRAM for `flash` (see the `resources` comment above) — e.g.:
+# Routing) and can satisfy `resources` above. Pin an explicit pool only if
+# you need cost tracking, compute isolation (especially from `full`'s
+# deployment, deployment/full.yaml, which needs a different, larger-VRAM
+# pool and must not land on the same one as this), or a specific GPU class
+# (see the docs section above), and have confirmed it actually has enough
+# schedulable memory and VRAM for `flash` (see the `resources` comment
+# above) — e.g.:
 #   compute_pools:
 #     - <your-g5-4xlarge-or-larger-pool>
 

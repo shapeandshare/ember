@@ -10,7 +10,7 @@ updated: "2026-10-10"
 code-refs:
   - ember/serving/runtime.py
   - tests/test_runtime_unit.py
-  - deployment/deploy.yaml
+  - deployment/flash.yaml
   - README.md
   - COMPATIBILITY.md
 ---

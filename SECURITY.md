@@ -120,7 +120,7 @@ with their own gateway/proxy auth — ember cannot distinguish "bound wide open 
 network" from "bound wide behind a platform's own access-gated ingress" (e.g. Outerbounds'
 `auth.type: API`, which authenticates every request before it reaches the pod). An earlier
 version of ember refused to start in this configuration at all; that refusal broke the
-documented Outerbounds deployment example (`deployment/deploy.yaml`), which deliberately
+documented Outerbounds deployment examples (`deployment/flash.yaml`, `deployment/full.yaml`), which deliberately
 relies on platform-level auth instead of ember's own token. Setting `EMBER_HOST` to anything
 other than `127.0.0.1` without *some* access control — ember's token, a reverse proxy, or a
 platform gateway — is the operator's responsibility to get right. See

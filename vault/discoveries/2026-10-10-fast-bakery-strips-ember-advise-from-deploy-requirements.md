@@ -10,7 +10,7 @@ created: "2026-10-10"
 updated: "2026-10-10"
 code-refs:
   - scripts/freeze_deployment_requirements.py
-  - deployment/deploy.yaml
+  - deployment/flash.yaml
   - deployment/requirements.txt
   - shared/release.mk
 ---
