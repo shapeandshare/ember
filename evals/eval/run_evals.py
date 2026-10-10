@@ -20,11 +20,8 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib.metadata
 import json
-import platform
 import shutil
-import subprocess
 import sys
 import time
 from datetime import UTC, datetime
@@ -36,7 +33,6 @@ import httpx
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
-from ember import models  # noqa: E402
 from ember.cfg.endpoint import (  # noqa: E402
     Endpoint,
     InsecureEndpointError,
@@ -44,6 +40,7 @@ from ember.cfg.endpoint import (  # noqa: E402
     build_auth_headers,
 )
 
+from evals.eval.provenance import git_hash, host_info, model_spec_info  # noqa: E402
 from evals.export import write_atomic  # noqa: E402
 from evals.metrics import aggregate, score_item  # noqa: E402
 
@@ -51,7 +48,6 @@ DATASET_PATH = REPO_ROOT / "evals" / "clef-flash.jsonl"
 RESULTS_DIR = REPO_ROOT / "results"
 DEFAULT_SERVER = "http://127.0.0.1:8765"
 TIMEOUT = 120.0
-PACKAGES = ("ember-advise", "torch", "transformers", "mcp")
 
 
 def _resolve_server(flag: str | None) -> str:
@@ -75,60 +71,6 @@ def _resolve_server(flag: str | None) -> str:
         return Endpoint.resolve().url
     except (InvalidEndpointError, InsecureEndpointError):
         return DEFAULT_SERVER
-
-
-def _git_hash() -> str:
-    try:
-        out = subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"],  # noqa: S607
-            cwd=str(REPO_ROOT),
-            stderr=subprocess.DEVNULL,
-            text=True,
-        )
-    except (OSError, subprocess.CalledProcessError):
-        return "unknown"
-    return out.strip()
-
-
-def _cpu() -> str:
-    try:
-        out = subprocess.check_output(
-            ["sysctl", "-n", "machdep.cpu.brand_string"],  # noqa: S607
-            stderr=subprocess.DEVNULL,
-            text=True,
-        )
-    except (OSError, subprocess.CalledProcessError):
-        return platform.processor() or "unknown"
-    return out.strip()
-
-
-def _host() -> dict[str, Any]:
-    packages: dict[str, str] = {}
-    for name in PACKAGES:
-        try:
-            packages[name] = importlib.metadata.version(name)
-        except importlib.metadata.PackageNotFoundError:
-            continue
-    return {
-        "platform": platform.platform(),
-        "cpu": _cpu(),
-        "python": platform.python_version(),
-        "packages": packages,
-    }
-
-
-def _model_spec(model_dir: str) -> dict[str, str]:
-    """The pinned registry entry a model directory belongs to, if any."""
-    name = Path(model_dir).name
-    for spec in models.REGISTRY.values():
-        if name in (spec.dir_name, spec.revision):
-            return {
-                "name": spec.name,
-                "repo": spec.repo,
-                "params": spec.params,
-                "revision": spec.revision,
-            }
-    return {}
 
 
 def _engine(server: str) -> dict[str, Any]:
@@ -267,11 +209,11 @@ def run_evals(
     config = {
         "run_id": run_id,
         "timestamp": timestamp,
-        "git_hash": _git_hash(),
+        "git_hash": git_hash(),
         "model": model,
-        "model_spec": _model_spec(str(engine.get("model_dir", ""))),
+        "model_spec": model_spec_info(str(engine.get("model_dir", ""))),
         "engine": engine,
-        "host": _host(),
+        "host": host_info(),
         "server": server,
         "dataset": dataset_path.name,
         "dataset_file": dataset_snapshot.name,
