@@ -13,7 +13,6 @@
     "engine": {
       "device": "mps",
       "dtype": "float16",
-      "model_dir": "/Users/joshburt/Workbench/Repositories/ember/.models/clef-flash",
       "max_length": 262144
     },
     "host": {
@@ -27,7 +26,6 @@
         "mcp": "2.3.0"
       }
     },
-    "server": "http://127.0.0.1:8765",
     "dataset": "clef-flash.jsonl",
     "dataset_sha256": "6a457f6badb7dd53b50a9ce04857d4d01e885d4718f3eb6db9db58658d9f923c",
     "trace": "clef-flash_20261003T203810Z_trace.jsonl",
@@ -40,7 +38,8 @@
       "p50": 922.5,
       "p95": 1091.1,
       "max": 1544.5
-    }
+    },
+    "deployment_label": "Local (Apple Silicon, MPS)"
   },
   "summary": {
     "overall": {

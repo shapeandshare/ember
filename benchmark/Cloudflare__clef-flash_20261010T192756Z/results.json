@@ -11,7 +11,6 @@
       "revision": "17f0b0ad64efb65d273590632833508766b2aae6"
     },
     "engine": {
-      "model": "s3://obp-0ttxc8-metaflow/metaflow/model-pipelines-dev/Cloudflare__clef-flash/artifacts/model_file",
       "device": "cuda",
       "dtype": "float16",
       "max_length": 262144,
@@ -30,7 +29,6 @@
         "mcp": "2.3.0"
       }
     },
-    "server": "https://api-c-cmvbev4e6i.merced.obp.outerbounds.com",
     "dataset": "clef-flash.jsonl",
     "dataset_file": "Cloudflare__clef-flash_20261010T192756Z_dataset.jsonl",
     "dataset_sha256": "fbb98c3516153987634b11d1ac4c9307e56c43a7131e7de598de557e1c48a050",
@@ -44,7 +42,8 @@
       "p50": 503.6,
       "p95": 630.1,
       "max": 1307.9
-    }
+    },
+    "deployment_label": "Remote hosted (GPU, CUDA)"
   },
   "summary": {
     "overall": {

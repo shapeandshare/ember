@@ -152,6 +152,127 @@ def test_meta_server_version_is_none_when_not_recorded(report: dict) -> None:
     assert report["meta"]["server_version"] is None
 
 
+def test_meta_never_carries_the_raw_server_url(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """The published report model must never carry a raw server URL.
+
+    ``analysis.build``'s return value is written verbatim to the tracked,
+    public ``benchmark/<run-id>/model.json`` (see
+    ``evals/eval/snapshot_evals.py``) and rendered on the public leaderboard
+    and report site. A real hosted deployment's URL is operator-identifying
+    infrastructure detail, not published-report content — only
+    ``meta.deployment_label`` (a generic description) is published; the
+    config's ``server`` field, kept only in the private, gitignored
+    ``results/`` trace for the operator's own reference, must not survive
+    into the report model at all (vault/decisions/
+    2026-10-10-generic-deployment-labels.md).
+    """
+    directory = tmp_path_factory.mktemp("results")
+    run_id = "clef-flash_20261003T000002Z"
+    result = metrics.score_item(ITEMS[0], _answers(ITEMS[0], right=True))
+    result.update(latency_ms=900.0, model="clef-flash", usage={}, answers={})
+    trace = directory / f"{run_id}_trace.jsonl"
+    trace.write_text(json.dumps(result) + "\n", encoding="utf-8")
+    config = {
+        "run_id": run_id,
+        "timestamp": "20261003T000002Z",
+        "git_hash": "abc1234",
+        "model": "clef-flash",
+        "model_spec": {},
+        "engine": {"device": "cuda", "dtype": "float16"},
+        "deployment_label": "Remote hosted (GPU, CUDA)",
+        "host": {
+            "platform": "macOS-26.0-arm64",
+            "cpu": "Apple M4 Max",
+            "python": "3.12.11",
+            "packages": {"ember-advise": "0.10.3"},
+        },
+        "server": "https://api-c-secretid123.merced.obp.outerbounds.com",
+        "dataset": DATASET.name,
+        "dataset_sha256": hashlib.sha256(DATASET.read_bytes()).hexdigest(),
+        "trace": trace.name,
+        "split": None,
+        "category": None,
+        "n_items": 1,
+        "n_errors": 0,
+        "latency_ms": {"mean": 900.0, "p50": 900.0, "p95": 900.0, "max": 900.0},
+    }
+    results = directory / f"{run_id}_results.json"
+    results.write_text(
+        json.dumps({"config": config, "summary": metrics.aggregate([result])}),
+        encoding="utf-8",
+    )
+    report = analysis.build(results, dataset_path=DATASET)
+    assert report["meta"]["deployment_label"] == "Remote hosted (GPU, CUDA)"
+    assert "server" not in report["meta"]
+    serialized = json.dumps(report)
+    assert "outerbounds.com" not in serialized
+    assert "secretid123" not in serialized
+
+
+def test_meta_scrubs_engine_model_location_from_the_published_report(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """``meta.engine`` must not carry a real S3 URI or local filesystem path.
+
+    ``Engine.describe()``'s ``model``/``model_dir`` fields can be a real S3
+    bucket location (hosted deployment) or a real local filesystem path
+    (including the operator's username, for a local run) — neither belongs
+    in the published report model.
+    """
+    directory = tmp_path_factory.mktemp("results")
+    run_id = "clef-flash_20261003T000003Z"
+    result = metrics.score_item(ITEMS[0], _answers(ITEMS[0], right=True))
+    result.update(latency_ms=900.0, model="clef-flash", usage={}, answers={})
+    trace = directory / f"{run_id}_trace.jsonl"
+    trace.write_text(json.dumps(result) + "\n", encoding="utf-8")
+    config = {
+        "run_id": run_id,
+        "timestamp": "20261003T000003Z",
+        "git_hash": "abc1234",
+        "model": "clef-flash",
+        "model_spec": {},
+        "engine": {
+            "model": (
+                "s3://real-bucket-name/real-prefix/clef-flash/artifacts/model_file"
+            ),
+            "model_dir": (
+                "/Users/realusername/Workbench/Repositories/ember/.models/clef-flash"
+            ),
+            "device": "cuda",
+            "dtype": "float16",
+        },
+        "deployment_label": "Remote hosted (GPU, CUDA)",
+        "host": {
+            "platform": "macOS-26.0-arm64",
+            "cpu": "Apple M4 Max",
+            "python": "3.12.11",
+            "packages": {"ember-advise": "0.10.3"},
+        },
+        "dataset": DATASET.name,
+        "dataset_sha256": hashlib.sha256(DATASET.read_bytes()).hexdigest(),
+        "trace": trace.name,
+        "split": None,
+        "category": None,
+        "n_items": 1,
+        "n_errors": 0,
+        "latency_ms": {"mean": 900.0, "p50": 900.0, "p95": 900.0, "max": 900.0},
+    }
+    results = directory / f"{run_id}_results.json"
+    results.write_text(
+        json.dumps({"config": config, "summary": metrics.aggregate([result])}),
+        encoding="utf-8",
+    )
+    report = analysis.build(results, dataset_path=DATASET)
+    assert "model" not in report["meta"]["engine"]
+    assert "model_dir" not in report["meta"]["engine"]
+    assert report["meta"]["engine"]["device"] == "cuda"
+    serialized = json.dumps(report)
+    assert "real-bucket-name" not in serialized
+    assert "realusername" not in serialized
+
+
 def test_narrative_placeholders_are_filled(report: dict) -> None:
     text = report["text"]
     paragraphs = (

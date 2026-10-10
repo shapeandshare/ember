@@ -55,6 +55,33 @@ def _pct(value: float) -> str:
     return f"{value * 100:.1f}%"
 
 
+_ENGINE_LOCATION_KEYS = ("model", "model_dir")
+
+
+def _public_engine(engine: Mapping[str, Any]) -> dict[str, Any]:
+    """Return ``engine`` with any model-location field removed.
+
+    ``Engine.describe()``'s ``model`` field can be a real S3 URI (a hosted
+    deployment) and a local run's (undocumented, pre-``describe()``-contract)
+    ``model_dir`` can be a real filesystem path carrying the operator's
+    username — neither belongs in the published report model (see
+    ``meta.deployment_label``, which replaces the raw server URL for the
+    same reason). ``device``/``dtype``/the limit fields are all still
+    published.
+
+    Parameters
+    ----------
+    engine : Mapping[str, Any]
+        The run's recorded ``engine`` dict.
+
+    Returns
+    -------
+    dict[str, Any]
+        A copy of ``engine`` with ``_ENGINE_LOCATION_KEYS`` removed.
+    """
+    return {k: v for k, v in engine.items() if k not in _ENGINE_LOCATION_KEYS}
+
+
 def _signal(question: Mapping[str, Any]) -> float:
     key = {"choice": "confidence", "noul": "p_true", "score": "expected"}
     return float(question[key[question["type"]]])
@@ -762,10 +789,10 @@ def build(results_path: Path, *, dataset_path: Path | None = None) -> Record:
             "git_hash": config["git_hash"],
             "model": config["model"],
             "model_spec": config.get("model_spec") or {},
-            "engine": config.get("engine") or {},
+            "engine": _public_engine(config.get("engine") or {}),
             "server_version": config.get("server_version"),
             "host": config.get("host") or {},
-            "server": config.get("server"),
+            "deployment_label": config.get("deployment_label") or "not recorded",
             "dataset": {
                 "name": config["dataset"],
                 "file": dataset_path.name,

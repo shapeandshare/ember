@@ -20,7 +20,7 @@ def _run(
     model_spec: dict[str, Any] | None = None,
     device: str = "mps",
     dtype: str = "float16",
-    server: str = "http://127.0.0.1:8765",
+    deployment_label: str = "Local (Apple Silicon, MPS)",
     server_version: str | None = None,
     client_version: str | None = "0.10.2",
     accuracy: float = 0.80,
@@ -42,7 +42,7 @@ def _run(
             "engine": {"device": device, "dtype": dtype},
             "server_version": server_version,
             "host": {"packages": packages},
-            "server": server,
+            "deployment_label": deployment_label,
             "n_items": items,
             "n_errors": 0,
         },
@@ -59,7 +59,7 @@ def _run(
     }
 
 
-def test_deployment_key_groups_same_server_and_device() -> None:
+def test_deployment_key_groups_same_label_and_device() -> None:
     a = _run(run_id="a", run_at="2026-10-01 00:00 UTC", model="clef-flash")
     b = _run(run_id="b", run_at="2026-10-02 00:00 UTC", model="clef-flash")
     assert leaderboard.deployment_key(a["meta"]) == leaderboard.deployment_key(
@@ -67,14 +67,14 @@ def test_deployment_key_groups_same_server_and_device() -> None:
     )
 
 
-def test_deployment_key_distinguishes_different_servers_or_devices() -> None:
+def test_deployment_key_distinguishes_different_labels_or_devices() -> None:
     local = _run(run_id="a", run_at="2026-10-01 00:00 UTC", model="clef-flash")
     hosted = _run(
         run_id="b",
         run_at="2026-10-02 00:00 UTC",
         model="clef-flash",
         device="cuda",
-        server="https://hosted.example.com",
+        deployment_label="Remote hosted (GPU, CUDA)",
     )
     assert leaderboard.deployment_key(local["meta"]) != leaderboard.deployment_key(
         hosted["meta"]
@@ -119,7 +119,7 @@ def test_build_keeps_only_the_latest_run_per_model_and_deployment() -> None:
         model="Cloudflare__clef-flash",
         model_spec={"name": "flash", "repo": "Cloudflare/clef-flash"},
         device="cuda",
-        server="https://hosted.example.com",
+        deployment_label="Remote hosted (GPU, CUDA)",
     )
     board = leaderboard.build([older_local, newer_local, hosted])
     run_ids = {row["run_id"] for row in board["rows"]}
@@ -143,7 +143,7 @@ def test_row_carries_version_and_datetime_fields() -> None:
         model="Cloudflare__clef-flash",
         model_spec={"name": "flash", "repo": "Cloudflare/clef-flash", "params": "9B"},
         device="cuda",
-        server="https://hosted.example.com",
+        deployment_label="Remote hosted (GPU, CUDA)",
         server_version="0.10.2",
         client_version="0.10.3",
     )
@@ -155,6 +155,7 @@ def test_row_carries_version_and_datetime_fields() -> None:
     assert row["device"] == "cuda"
     assert row["model_repo"] == "Cloudflare/clef-flash"
     assert row["params"] == "9B"
+    assert row["deployment_label"] == "Remote hosted (GPU, CUDA)"
 
 
 def test_row_version_fields_are_none_when_not_recorded() -> None:
@@ -169,6 +170,25 @@ def test_row_version_fields_are_none_when_not_recorded() -> None:
     (row,) = board["rows"]
     assert row["ember_server_version"] is None
     assert row["ember_client_version"] is None
+
+
+def test_row_never_carries_a_raw_url() -> None:
+    """A leaderboard row must never carry a raw server URL field — only the
+    generic ``deployment_label`` (vault/decisions/
+    2026-10-10-generic-deployment-labels.md). This is the data the site's
+    leaderboard table renders directly, so a URL field here would be
+    published verbatim.
+    """
+    run = _run(
+        run_id="a",
+        run_at="2026-10-10 19:27 UTC",
+        model="clef-flash",
+        deployment_label="Remote hosted (GPU, CUDA)",
+    )
+    board = leaderboard.build([run])
+    (row,) = board["rows"]
+    assert "server" not in row
+    assert "://" not in str(row["deployment_label"])
 
 
 def test_build_with_no_runs_returns_empty_rows() -> None:

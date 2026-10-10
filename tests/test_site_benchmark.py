@@ -71,6 +71,51 @@ def _real_bundles() -> list[Path]:
     return sorted(REAL_BENCHMARK.glob("*/model.json"))
 
 
+def _leaderboard_row(**overrides: object) -> dict:
+    row = {
+        "run_id": "clef-flash_20261010T000000Z",
+        "run_at": "2026-10-10 00:00 UTC",
+        "model_key": "flash",
+        "model_name": "clef-flash",
+        "model_repo": "Cloudflare/clef-flash",
+        "params": "9B",
+        "deployment_key": "Remote hosted (GPU, CUDA)|cuda",
+        "deployment_label": "Remote hosted (GPU, CUDA)",
+        "device": "cuda",
+        "dtype": "float16",
+        "ember_server_version": "0.10.2",
+        "ember_client_version": "0.10.2",
+        "accuracy": 0.827,
+        "accuracy_ci": [0.802, 0.853],
+        "item_accuracy": 0.743,
+        "items": 475,
+        "questions": 843,
+        "latency_p50": 503.6,
+        "latency_p95": 630.1,
+    }
+    row.update(overrides)
+    return row
+
+
+def test_leaderboard_table_shows_the_deployment_label_not_a_url() -> None:
+    html = bench._leaderboard_table_html([_leaderboard_row()])
+    assert "Remote hosted (GPU, CUDA)" in html
+    assert "://" not in html
+
+
+def test_leaderboard_table_never_leaks_a_real_hostname() -> None:
+    """Even if a row's ``deployment_label`` somehow contained a scheme-less
+    hostname fragment, the table must never surface anything resembling a
+    URL for any field it renders (model, deployment, version, run_at).
+    """
+    row = _leaderboard_row(
+        deployment_label="Remote hosted (GPU, CUDA)",
+    )
+    html = bench._leaderboard_table_html([row])
+    for forbidden in ("http://", "https://", ".outerbounds.", ".com/"):
+        assert forbidden not in html
+
+
 def test_headline_reports_the_numbers_the_landing_page_shows() -> None:
     assert bench.headline(MODEL) == {
         "items": 264,
@@ -136,6 +181,20 @@ def test_build_writes_a_leaderboard_index_page(sandbox: Path) -> None:
     assert index.exists()
     text = index.read_text(encoding="utf-8")
     assert "permalink: /results/" in text
+
+
+def test_leaderboard_index_uses_the_full_width_layout_not_the_sidebar_one(
+    sandbox: Path,
+) -> None:
+    """The leaderboard index has no per-page section nav (only a per-run
+    report does, via ``benchmark_nav.html``), so it must use the
+    sidebar-free ``leaderboard`` layout rather than ``benchmark`` — the
+    latter reserves a 220px nav column that would render empty on this
+    page.
+    """
+    assert bench.build() == 0
+    text = (sandbox / "results" / "index.md").read_text(encoding="utf-8")
+    assert "layout: leaderboard" in text
 
 
 def test_build_writes_the_headline_from_the_top_leaderboard_row(
