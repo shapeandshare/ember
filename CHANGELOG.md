@@ -1,3 +1,9 @@
+## v0.11.0 (2026-10-10)
+
+### Feat
+
+- **ember**: leaderboard-style benchmark reporting across models and deployments (#111)
+
 ## v0.10.3 (2026-10-10)
 
 ### Fix
