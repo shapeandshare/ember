@@ -1141,6 +1141,13 @@ def test_media_kwargs_are_checked_before_counting(monkeypatch, tmp_path):
     assert js.encode_calls == []
 
 
+def test_media_kwargs_are_checked_before_any_media_is_decoded(monkeypatch, tmp_path):
+    engine = _counting_engine(monkeypatch, tmp_path, FakeJointModule(), _limits(50))
+    undecodable = "data:image/png;base64,AAAA"
+    with pytest.raises(ValueError, match="not permitted"):
+        engine.advise("state", {}, images=[undecodable], media_kwargs={"text": "x"})
+
+
 def test_media_are_decoded_before_counting(monkeypatch, tmp_path):
     js = FakeJointModule()
     engine = _counting_engine(monkeypatch, tmp_path, js, _limits(0))

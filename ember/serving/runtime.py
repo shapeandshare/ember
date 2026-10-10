@@ -319,12 +319,13 @@ class Engine:
             "state": state,
             "questions": questions,
         }
+        if media_kwargs:
+            media.check_media_kwargs(media_kwargs)
         if images:
             request["images"] = media.decode_images(images)
         if videos:
             request["videos"] = media.decode_videos(videos)
         if media_kwargs:
-            media.check_media_kwargs(media_kwargs)
             request["media_kwargs"] = media_kwargs
         applied = self.limits
         if max_length is not None:
