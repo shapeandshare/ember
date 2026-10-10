@@ -1,6 +1,6 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-10 (per-model request caps: every registry model declares its memory budget and its own fallback cap, the longest probe length that fits that budget; flash falls back to 24,576)
+**Last updated**: 2026-10-10 (per-model request caps: every registry model declares its memory budget and its own fallback cap, the longest probe length that fits that budget; flash falls back to 24,576 and full to 16,384)
 
 ## What this repo is
 
@@ -722,8 +722,9 @@ MUST pass the constitution check.
 - 2026-10-10: per-model request caps: the shared 32,768 fallback is gone. Every `REGISTRY`
   entry declares its own `memory_budget_bytes` (moved from the probe's `MEMORY_BUDGETS`) and
   `fallback_request_length`, the longest probe length whose peak memory fits that budget,
-  used until the probe measures the model's cap. A one-item memory check set flash's to
-  24,576 (27.83 GiB peak; 32,768 peaked at 32.35 GiB, over its 32 GiB budget). A model
+  used until the probe measures the model's cap. One-item memory checks set flash's to
+  24,576 (27.83 GiB peak; 32,768 peaked at 32.35 GiB, over its 32 GiB budget) and full's to
+  16,384 (63.54 GiB; 24,576 peaked at 68.40 GiB, over its 64 GiB budget). A model
   outside the registry gets the lowest registry cap, measured or fallback. The probe's
   sizing pilot could not resolve its 2-point accuracy tolerance with 232 text items
   (half-width 0.0264), so the benchmark grows to 443 (PR #95). See

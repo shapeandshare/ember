@@ -103,8 +103,9 @@ REGISTRY: dict[str, ModelSpec] = {
         "27B",
         55 * 2**30,
         memory_budget_bytes=64 * 2**30,
-        # The old shared fallback, kept until full's memory check runs.
-        fallback_request_length=32768,
+        # The longest probe length that fits 64 GiB: 16,384 tokens peaked at
+        # 63.54 GiB and 24,576 at 68.40 GiB (memory check, 2026-10-10).
+        fallback_request_length=16384,
         revision="2f3de3dd85f379784083b0814d997ab627200f0c",
     ),
 }
