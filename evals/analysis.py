@@ -122,7 +122,11 @@ def _items(trace: Sequence[Record], dataset: Mapping[str, Record]) -> list[Recor
             if q["type"] == "noul":
                 p_true = float(q["p_true"])
                 entry["p_true"] = p_true
-                entry["confidence"] = float(q["confidence"]) if "confidence" in q else max(p_true, 1.0 - p_true)
+                entry["confidence"] = (
+                    float(q["confidence"])
+                    if "confidence" in q
+                    else max(p_true, 1.0 - p_true)
+                )
             elif q["type"] == "choice":
                 entry["confidence"] = float(q["confidence"])
             elif q["type"] == "score":
@@ -759,6 +763,7 @@ def build(results_path: Path, *, dataset_path: Path | None = None) -> Record:
             "model": config["model"],
             "model_spec": config.get("model_spec") or {},
             "engine": config.get("engine") or {},
+            "server_version": config.get("server_version"),
             "host": config.get("host") or {},
             "server": config.get("server"),
             "dataset": {

@@ -1,9 +1,12 @@
 <nav class="docs-nav" aria-label="Benchmark report">
-  <span class="docs-nav-home">Benchmark report</span>
+  <span class="docs-nav-home"><a href="{{ '/results/' | relative_url }}">Leaderboard</a></span>
+  {%- assign run = site.data.benchmark.runs[page.run_id] %}
+  {%- if run %}
   <ul>
-    {%- for s in site.data.benchmark.sections %}
-    {%- assign surl = '/results/' | append: s.anchor | append: '/' %}
+    {%- for s in run.sections %}
+    {%- assign surl = '/results/' | append: page.run_id | append: '/' | append: s.anchor | append: '/' %}
     <li><a href="{{ surl | relative_url }}"{% if page.url == surl %} aria-current="page"{% endif %}><span class="nav-num">{{ s.number }}</span>{{ s.title }}</a></li>
     {%- endfor %}
   </ul>
+  {%- endif %}
 </nav>

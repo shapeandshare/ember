@@ -97,6 +97,61 @@ def test_report_model_is_complete_and_serialisable(report: dict) -> None:
     json.dumps(report)
 
 
+def test_meta_carries_server_version_when_recorded(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """``meta.server_version`` surfaces the server's ember version.
+
+    A hosted deployment's client and server can run different ember
+    versions; the report must distinguish them, not only report the
+    client's ``host.packages["ember-advise"]`` version.
+    """
+    directory = tmp_path_factory.mktemp("results")
+    run_id = "clef-flash_20261003T000001Z"
+    result = metrics.score_item(ITEMS[0], _answers(ITEMS[0], right=True))
+    result.update(latency_ms=900.0, model="clef-flash", usage={}, answers={})
+    trace = directory / f"{run_id}_trace.jsonl"
+    trace.write_text(json.dumps(result) + "\n", encoding="utf-8")
+    config = {
+        "run_id": run_id,
+        "timestamp": "20261003T000001Z",
+        "git_hash": "abc1234",
+        "model": "clef-flash",
+        "model_spec": {},
+        "engine": {"device": "cuda", "dtype": "float16"},
+        "server_version": "0.10.2",
+        "host": {
+            "platform": "macOS-26.0-arm64",
+            "cpu": "Apple M4 Max",
+            "python": "3.12.11",
+            "packages": {"ember-advise": "0.10.3"},
+        },
+        "server": "https://hosted.example.com",
+        "dataset": DATASET.name,
+        "dataset_sha256": hashlib.sha256(DATASET.read_bytes()).hexdigest(),
+        "trace": trace.name,
+        "split": None,
+        "category": None,
+        "n_items": 1,
+        "n_errors": 0,
+        "latency_ms": {"mean": 900.0, "p50": 900.0, "p95": 900.0, "max": 900.0},
+    }
+    results = directory / f"{run_id}_results.json"
+    results.write_text(
+        json.dumps({"config": config, "summary": metrics.aggregate([result])}),
+        encoding="utf-8",
+    )
+    report = analysis.build(results, dataset_path=DATASET)
+    assert report["meta"]["server_version"] == "0.10.2"
+
+
+def test_meta_server_version_is_none_when_not_recorded(report: dict) -> None:
+    """Older runs with no ``server_version`` in their config degrade to
+    ``None`` rather than raising a ``KeyError``.
+    """
+    assert report["meta"]["server_version"] is None
+
+
 def test_narrative_placeholders_are_filled(report: dict) -> None:
     text = report["text"]
     paragraphs = (

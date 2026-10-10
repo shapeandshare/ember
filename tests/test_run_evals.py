@@ -13,16 +13,18 @@ from typing import Any
 import httpx
 import pytest
 from evals.eval import run_evals
+from evals.eval.provenance import model_spec_info
 
 
-def test_engine_sends_auth_headers_when_configured(monkeypatch: Any) -> None:
-    """``_engine`` must send the configured auth header to ``/health``.
+def test_health_sends_auth_headers_when_configured(monkeypatch: Any) -> None:
+    """``_health`` must send the configured auth header to ``/health``.
 
     A hosted endpoint that requires auth (e.g. ``x-api-key``) returns 403 to
     an unauthenticated ``/health`` request. Without the header, the response
-    body carries no ``engine`` key and ``_engine`` silently returns ``{}``,
-    so the run's ``model``/``model_spec``/``engine`` provenance is lost even
-    though the request to ``/v1/systemone`` itself succeeds.
+    body carries no ``engine``/``version`` keys and ``_health`` silently
+    returns ``{}``, so the run's ``model``/``model_spec``/``engine``/server
+    ``version`` provenance is lost even though the request to
+    ``/v1/systemone`` itself succeeds.
     """
     monkeypatch.setenv("EMBER_AUTH_TOKEN", "secret-token")
     monkeypatch.setenv("EMBER_AUTH_HEADER", "x-api-key")
@@ -33,7 +35,14 @@ def test_engine_sends_auth_headers_when_configured(monkeypatch: Any) -> None:
         captured_headers.update(request.headers)
         if request.headers.get("x-api-key") != "secret-token":
             return httpx.Response(403, json={"error": "forbidden"})
-        return httpx.Response(200, json={"engine": {"model_dir": "clef-flash"}})
+        return httpx.Response(
+            200,
+            json={
+                "engine": {"model_dir": "clef-flash"},
+                "version": "0.10.2",
+                "auth_required": False,
+            },
+        )
 
     transport = httpx.MockTransport(handler)
     real_get = httpx.get
@@ -46,12 +55,13 @@ def test_engine_sends_auth_headers_when_configured(monkeypatch: Any) -> None:
 
     monkeypatch.setattr(httpx, "get", fake_get)
     try:
-        engine = run_evals._engine("https://hosted.example.com")
+        health = run_evals._health("https://hosted.example.com")
     finally:
         monkeypatch.setattr(httpx, "get", real_get)
 
     assert "x-api-key" in captured_headers
-    assert engine == {"model_dir": "clef-flash"}
+    assert health["engine"] == {"model_dir": "clef-flash"}
+    assert health["version"] == "0.10.2"
 
 
 @pytest.mark.parametrize(
@@ -85,9 +95,40 @@ def test_model_name_handles_local_and_s3_engine_values(
     assert run_evals._model_name(engine) == expected
 
 
-def test_engine_returns_empty_dict_on_403(monkeypatch: Any) -> None:
-    """Without credentials, a 403 response still parses as JSON with no
-    ``engine`` key, and ``_engine`` degrades to ``{}`` rather than raising.
+@pytest.mark.parametrize(
+    ("name", "expected_registry_name"),
+    [
+        ("clef-flash", "flash"),
+        ("Cloudflare__clef-flash", "flash"),
+        ("clef", "full"),
+        ("Cloudflare__clef", "full"),
+        ("not-a-known-model", None),
+    ],
+)
+def test_model_spec_info_matches_hosted_s3_derived_names(
+    name: str, expected_registry_name: str | None
+) -> None:
+    """``model_spec_info`` must recognise a hosted/S3-derived model name.
+
+    A local run's derived name is the registry ``dir_name`` (``clef-flash``).
+    A hosted/S3 run's derived name (``_model_name`` in ``run_evals.py``) is
+    the S3 path segment before ``artifacts``, which follows the convention
+    ``<repo-owner>__<repo-name>`` (``Cloudflare__clef-flash`` for
+    ``Cloudflare/clef-flash``). Both must resolve to the same registry entry
+    so a leaderboard can group hosted and local runs of the same model
+    together.
+    """
+    spec = model_spec_info(name)
+    if expected_registry_name is None:
+        assert spec == {}
+    else:
+        assert spec.get("name") == expected_registry_name
+
+
+def test_health_has_no_engine_or_version_on_403(monkeypatch: Any) -> None:
+    """Without credentials, a 403 response still parses as JSON, but carries
+    no ``engine``/``version`` keys; callers must use ``.get(...)``, not
+    assume a 2xx shape.
     """
     monkeypatch.delenv("EMBER_AUTH_TOKEN", raising=False)
 
@@ -105,8 +146,29 @@ def test_engine_returns_empty_dict_on_403(monkeypatch: Any) -> None:
 
     monkeypatch.setattr(httpx, "get", fake_get)
     try:
-        engine = run_evals._engine("https://hosted.example.com")
+        health = run_evals._health("https://hosted.example.com")
     finally:
         monkeypatch.setattr(httpx, "get", real_get)
 
-    assert engine == {}
+    assert health.get("engine") is None
+    assert health.get("version") is None
+
+
+def test_health_returns_empty_dict_on_connection_error(monkeypatch: Any) -> None:
+    """A transport-level failure (connection refused, timeout) degrades
+    ``_health`` to ``{}`` rather than raising.
+    """
+
+    def fake_get(
+        url: str, *, timeout: float, headers: dict[str, str] | None = None
+    ) -> httpx.Response:
+        raise httpx.ConnectError("connection refused")
+
+    real_get = httpx.get
+    monkeypatch.setattr(httpx, "get", fake_get)
+    try:
+        health = run_evals._health("https://unreachable.example.com")
+    finally:
+        monkeypatch.setattr(httpx, "get", real_get)
+
+    assert health == {}
