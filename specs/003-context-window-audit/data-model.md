@@ -125,7 +125,7 @@ message kept).
 |-------|-------------|
 | `run_id` | matches `^context_\d{8}T\d{6}Z$`, or the value given by `--run-id` |
 | `created_at` | ISO 8601, UTC |
-| `canonical` | bool; false for `--smoke`, `--items`, or `--lengths` subsets, and for a dirty tree |
+| `canonical` | bool; false for `--smoke`, `--items`, `--lengths`, or `--models` subsets (a run must cover every registered model), and for a dirty tree |
 | `git_hash`, `git_dirty`, `ember_version` | from `evals/eval/provenance.py` |
 | `host` | platform, chip, RAM bytes, Python, pinned package versions |
 | `device`, `dtype` | `mps`, `float16` |
@@ -144,6 +144,7 @@ message kept).
 | `pilot_projected_half_width` | float; `None` before the pilot |
 | `sizing_passed` | bool; `None` before the pilot |
 | `reproduces` | the run id a reproduction re-runs, or `None`; a resumed reproduction still compares against it |
+| `completed` | bool; set only after every worker finished, so a rescored partial run is never snapshotted |
 
 ### ProbeRow (Pydantic; one line of `rows-<model>.jsonl`)
 

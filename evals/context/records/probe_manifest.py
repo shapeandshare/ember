@@ -49,6 +49,8 @@ class ProbeManifest(BaseModel):
     ``run_id`` is generated as ``context_<UTC timestamp>`` or given by
     ``--run-id``; either way it must be a safe directory name. ``reproduces`` names
     the run a reproduction re-runs, so a resumed reproduction still compares.
+    ``completed`` is set only after every worker finished, so a rescored partial
+    run is never snapshotted.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -84,6 +86,7 @@ class ProbeManifest(BaseModel):
     pilot_projected_half_width: float | None = None
     sizing_passed: bool | None = None
     reproduces: str | None = None
+    completed: bool = False
 
     @field_validator("run_id")
     @classmethod

@@ -65,7 +65,9 @@ evals/context/runs/<run_id>/       # tracked copy of the run a decision cites (-
 ## Canonical run
 
 A run cited by a decision record must meet all of these:
-- It is a full run: no `--smoke`, `--items`, or `--lengths` subset.
+- It is a full run over every registered model: no `--smoke`, `--items`, `--lengths`, or
+  `--models` subset.
+- It completed: every worker finished (`completed: true` in the manifest).
 - Its sizing gate passed.
 - `git_dirty` is false.
 - It is snapshotted into `evals/context/runs/`.

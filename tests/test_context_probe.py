@@ -1097,7 +1097,9 @@ def test_a_snapshot_refuses_a_run_that_is_not_finished_and_canonical(
 
 def test_a_snapshot_copies_a_finished_canonical_run(monkeypatch, tmp_path):
     results, runs = _probe_dirs(monkeypatch, tmp_path)
-    run = _write_run(results / RUN_ID, _rows(), canonical=True, sizing_passed=True)
+    run = _write_run(
+        results / RUN_ID, _rows(), canonical=True, sizing_passed=True, completed=True
+    )
     summarize.write_summary(run)
     assert run_context.main(["--snapshot", RUN_ID]) == 0
     assert sorted(path.name for path in (runs / RUN_ID).iterdir()) == [
@@ -1131,6 +1133,25 @@ def test_resuming_a_reproduction_keeps_its_comparison_target(monkeypatch, tmp_pa
     args = argparse.Namespace(resume=copy_id, reproduce=None, items=None)
     _, manifest, original_dir = run_context._prepare(args)
     assert (manifest.reproduces, original_dir) == (RUN_ID, original)
+
+
+def test_a_snapshot_refuses_a_rescored_run_that_never_finished(monkeypatch, tmp_path):
+    results, runs = _probe_dirs(monkeypatch, tmp_path)
+    run = _write_run(results / RUN_ID, _rows(), canonical=True, sizing_passed=True)
+    summarize.write_summary(run)
+    assert run_context.main(["--snapshot", RUN_ID]) == 1
+    assert not (runs / RUN_ID).exists()
+
+
+@pytest.mark.parametrize(
+    ("chosen", "canonical"), [(None, True), ("flash,full", True), ("flash", False)]
+)
+def test_a_run_over_a_subset_of_the_models_is_not_canonical(chosen, canonical):
+    import argparse
+
+    args = argparse.Namespace(smoke=False, items=None, lengths=None, models=chosen)
+    names = chosen.split(",") if chosen else ["flash", "full"]
+    assert run_context._canonical(args, names) is canonical
 
 
 def test_a_resumed_worker_takes_its_first_failure_only_from_finished_lengths():

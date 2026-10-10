@@ -53,7 +53,7 @@ ember eval context [--models flash,full] [--lengths 2048,4096,...] [--items N]
 | `--smoke` | flash only, lengths 2048 and 4096, 3 items, 3 depths. Takes minutes; non-canonical |
 | `--rescore ID` | Rebuild `summary.json` from the rows and manifest. The output is byte-identical for the same inputs |
 | `--reproduce ID` | Re-run ID's pinned inputs into a new run and compare the two ([eval-context.md](./eval-context.md)) |
-| `--snapshot ID` | Copy a finished canonical run whose sizing gate passed into the tracked `evals/context/runs/ID/`, with its dataset; refuses any other run |
+| `--snapshot ID` | Copy a completed canonical run whose sizing gate passed into the tracked `evals/context/runs/ID/`, with its dataset; refuses any other run |
 
 **Exit codes**:
 

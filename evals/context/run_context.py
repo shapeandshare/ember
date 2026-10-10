@@ -134,7 +134,7 @@ def _rescore(run_id: str) -> int:
 def _snapshot(run_id: str) -> int:
     source = RESULTS_DIR / run_id
     manifest = summarize.load_manifest(source)
-    finished = (source / summarize.SUMMARY).exists()
+    finished = manifest.completed and (source / summarize.SUMMARY).exists()
     if not (finished and manifest.canonical and manifest.sizing_passed):
         raise ValueError(
             f"{run_id} is not a finished canonical run whose sizing gate passed; "
@@ -178,6 +178,12 @@ def _lengths(args: argparse.Namespace) -> list[int]:
     return sorted(chosen)
 
 
+def _canonical(args: argparse.Namespace, names: list[str]) -> bool:
+    """Return whether a run covers every registered model, item, and length."""
+    subset = args.smoke or args.items or args.lengths
+    return not subset and set(names) == set(models.REGISTRY)
+
+
 def _new_manifest(args: argparse.Namespace) -> ProbeManifest:
     # import-placement:allow - transformers loads only when a run starts
     from transformers import AutoProcessor
@@ -205,7 +211,7 @@ def _new_manifest(args: argparse.Namespace) -> ProbeManifest:
         kept = kept[:limit]
     return probe_items.build_manifest(
         run_id=args.run_id or new_run_id(),
-        canonical=not (args.smoke or args.items or args.lengths),
+        canonical=_canonical(args, names),
         model_names=names,
         kept=kept,
         excluded=excluded,
@@ -298,10 +304,9 @@ def _sizing_gate(run_dir: Path, manifest: ProbeManifest) -> ProbeManifest | None
     width = _pilot_width(manifest, rows, items)
     updated = _gate_result(manifest, width)
     _write_manifest(run_dir, updated)
+    items_run = len(manifest.item_ids)
     print(
-        f"sizing gate: projected half-width {width:.4f} "
-        f"over {len(manifest.item_ids)} items",
-        file=sys.stderr,
+        f"sizing gate: half-width {width:.4f} over {items_run} items", file=sys.stderr
     )
     return updated
 
@@ -362,10 +367,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     print(f"run: {run_dir}", file=sys.stderr)
     if manifest.sizing_passed is False:
+        width = manifest.pilot_projected_half_width
         print(
-            "error: this run's sizing gate failed (projected half-width "
-            f"{manifest.pilot_projected_half_width}); decide with a human before "
-            "spending the full run",
+            f"error: this run's sizing gate failed (half-width {width})",
             file=sys.stderr,
         )
         return 2
@@ -378,6 +382,8 @@ def main(argv: list[str] | None = None) -> int:
     for model in manifest.models:
         if _run_worker(run_dir, model) != 0:
             return 1
+    finished = summarize.load_manifest(run_dir).model_copy(update={"completed": True})
+    _write_manifest(run_dir, finished)
     print(f"summary: {summarize.write_summary(run_dir)}", file=sys.stderr)
     print("\n".join(_verdict_lines(run_dir)))
     if original_dir is not None:
