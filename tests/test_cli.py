@@ -571,6 +571,15 @@ def test_uninstall_removes_global_codex_entry(sandbox):
     assert remaining["mcp_servers"]["other"]["command"] == "other-server"
 
 
+def test_eval_context_passes_its_arguments_to_the_probe(monkeypatch):
+    from evals.context import run_context
+
+    calls: list[list[str]] = []
+    monkeypatch.setattr(run_context, "main", lambda argv: calls.append(argv) or 0)
+    assert cli.main(["eval", "context", "--smoke"]) == 0
+    assert calls == [["--smoke"]]
+
+
 def test_eval_commands_require_a_checkout(monkeypatch):
     monkeypatch.setitem(sys.modules, "evals.eval", None)
     monkeypatch.setitem(sys.modules, "evals.eval.run_evals", None)
