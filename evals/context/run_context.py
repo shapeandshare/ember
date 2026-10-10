@@ -132,6 +132,12 @@ def _rescore(run_id: str) -> int:
 def _snapshot(run_id: str) -> int:
     source = RESULTS_DIR / run_id
     manifest = summarize.load_manifest(source)
+    finished = (source / summarize.SUMMARY).exists()
+    if not (finished and manifest.canonical and manifest.sizing_passed):
+        raise ValueError(
+            f"{run_id} is not a finished canonical run whose sizing gate passed; "
+            "only those are snapshotted into evals/context/runs"
+        )
     target = RUNS_DIR / run_id
     for path in sorted(source.iterdir()):
         if path.name in (summarize.MANIFEST, summarize.SUMMARY) or path.name.startswith(

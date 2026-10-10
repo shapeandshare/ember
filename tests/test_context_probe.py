@@ -1080,3 +1080,29 @@ def test_pinned_filler_reads_and_verifies_the_manifest_copy(tmp_path):
     assert worker.pinned_filler(manifest) == "call me ishmael"
     with pytest.raises(ValueError, match="SHA-256"):
         worker.pinned_filler(_manifest(filler_path=str(path)))
+
+
+# ###########################################################################
+# run_context: snapshots, the pilot's pairs, and resumed reproductions
+# ###########################################################################
+def test_a_snapshot_refuses_a_run_that_is_not_finished_and_canonical(
+    monkeypatch, tmp_path, capsys
+):
+    results, runs = _probe_dirs(monkeypatch, tmp_path)
+    _write_run(results / RUN_ID, _rows())
+    assert run_context.main(["--snapshot", RUN_ID]) == 1
+    assert "canonical" in capsys.readouterr().err
+    assert not (runs / RUN_ID).exists()
+
+
+def test_a_snapshot_copies_a_finished_canonical_run(monkeypatch, tmp_path):
+    results, runs = _probe_dirs(monkeypatch, tmp_path)
+    run = _write_run(results / RUN_ID, _rows(), canonical=True, sizing_passed=True)
+    summarize.write_summary(run)
+    assert run_context.main(["--snapshot", RUN_ID]) == 0
+    assert sorted(path.name for path in (runs / RUN_ID).iterdir()) == [
+        "dataset.jsonl",
+        "manifest.json",
+        "rows-flash.jsonl",
+        "summary.json",
+    ]
