@@ -858,8 +858,12 @@ class TestStack:
         assert outputs["InstanceId"] == "i-0001"
         assert outputs["RoleArn"] == "arn:aws:iam::123:role/r"
 
-    def test_stack_first_failure_reason_returns_message(self) -> None:
-        """first_failure_reason() returns the first CREATE_FAILED event reason."""
+    def test_stack_first_failure_reason_returns_root_cause(self) -> None:
+        """first_failure_reason() returns the earliest failure's reason.
+
+        describe_stack_events returns events newest-first, so the cascade
+        victim ("Resource creation cancelled") arrives before the root cause.
+        """
         from ember_aws.names import DeploymentName
         from ember_aws.stack import Stack
 
@@ -868,12 +872,12 @@ class TestStack:
             "StackEvents": [
                 {
                     "ResourceStatus": "CREATE_FAILED",
-                    "ResourceStatusReason": "out of capacity",
-                    "LogicalResourceId": "Instance",
+                    "ResourceStatusReason": "Resource creation cancelled",
+                    "LogicalResourceId": "InstanceRole",
                 },
                 {
                     "ResourceStatus": "CREATE_FAILED",
-                    "ResourceStatusReason": "second failure",
+                    "ResourceStatusReason": "GroupDescription is invalid",
                     "LogicalResourceId": "SecurityGroup",
                 },
             ]
@@ -882,7 +886,7 @@ class TestStack:
         names = DeploymentName(name="default")
         stack = Stack(clients=clients, names=names)
         reason = stack.first_failure_reason()
-        assert reason == "out of capacity"
+        assert reason == "GroupDescription is invalid"
 
     def test_stack_first_failure_reason_none_when_no_failures(self) -> None:
         """first_failure_reason() returns None when no CREATE_FAILED events."""

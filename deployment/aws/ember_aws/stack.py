@@ -150,16 +150,17 @@ class Stack:
     # ------------------------------------------------------------------
 
     def first_failure_reason(self) -> str | None:
-        """Return the reason from the first CREATE_FAILED stack event.
+        """Return the reason from the earliest (root-cause) CREATE_FAILED event.
+
+        Events arrive newest-first, so the earliest failure is the root cause.
 
         Returns
         -------
         str | None
-            The ``ResourceStatusReason`` of the first ``CREATE_FAILED`` event,
-            or ``None`` if there are no failures.
+            The root-cause ``ResourceStatusReason``, or ``None``.
         """
         resp = self._clients.cfn.describe_stack_events(StackName=self._names.stack_name)
-        for event in resp.get("StackEvents", []):
+        for event in reversed(resp.get("StackEvents", [])):
             if event.get("ResourceStatus") == "CREATE_FAILED":
                 return str(event.get("ResourceStatusReason", "unknown reason"))
         return None
