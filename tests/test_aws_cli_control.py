@@ -795,7 +795,7 @@ class TestAwsDownMakeRecipe:
             ["make", "-n", "aws-down", "CONFIRM=mydeployment", "NAME=mydeployment"],  # noqa: S607
             capture_output=True,
             text=True,
-            cwd="/Users/joshburt/Workbench/Repositories/ember",
+            cwd=str(REPO_ROOT),
         )
         combined = result.stdout + result.stderr
         assert "--confirm" in combined
@@ -807,7 +807,7 @@ class TestAwsDownMakeRecipe:
             ["make", "-n", "aws-status"],  # noqa: S607
             capture_output=True,
             text=True,
-            cwd="/Users/joshburt/Workbench/Repositories/ember",
+            cwd=str(REPO_ROOT),
         )
         combined = result.stdout + result.stderr
         assert "status" in combined
