@@ -6,7 +6,14 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from .render.blocks import Section
-from .sections import sections_agent, sections_front, sections_results, sections_review
+from .sections import (
+    sections_agent,
+    sections_decisions,
+    sections_front,
+    sections_results,
+    sections_review,
+    sections_scores,
+)
 
 BUILDERS: tuple[Callable[[Mapping[str, Any]], sections_front.Built], ...] = (
     sections_front.summary,
@@ -16,9 +23,9 @@ BUILDERS: tuple[Callable[[Mapping[str, Any]], sections_front.Built], ...] = (
     sections_front.metrics,
     sections_results.results,
     sections_results.calibration,
-    sections_results.decisions,
-    sections_results.ordinal,
-    sections_results.confusion,
+    sections_decisions.decisions,
+    sections_scores.ordinal,
+    sections_scores.confusion,
     sections_review.errors,
     sections_review.latency,
     sections_review.limitations,
