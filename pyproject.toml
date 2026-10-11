@@ -1,7 +1,7 @@
 [project]
 name = "ember-advise"
 version = "0.11.1"
-description = "A local gut feeling for coding agents: calibrated advice over MCP from Cloudflare's Clef model on Apple Silicon."
+description = "A gut feeling for coding agents: calibrated advice over MCP from Cloudflare's Clef model, run locally or on a server."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 license = "MIT"
@@ -113,7 +113,7 @@ disallow_incomplete_defs = true
 check_untyped_defs = true
 no_implicit_optional = true
 show_error_codes = true
-files = ["ember"]
+files = ["ember", "evals/dataset", "evals/risk_metrics.py"]
 untyped_calls_exclude = ["transformers"]
 
 [[tool.mypy.overrides]]
@@ -161,5 +161,5 @@ source = ["ember"]
 omit = ["tests/*", "scripts/*"]
 
 [tool.coverage.report]
-fail_under = 81
+fail_under = 94
 show_missing = true

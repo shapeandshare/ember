@@ -136,6 +136,24 @@ jobs:
             exit "$code"
           fi
 
+          # Record the benchmark dataset version this release was measured on:
+          # the content hash (id, category, split, state, media, questions,
+          # gold labels — annotations never change it) goes in as the first
+          # line of the new version's CHANGELOG section, so the release notes
+          # extracted from that section below carry it too. CHANGELOG.md does
+          # not match this workflow's ember/**/evals/** paths filter, so
+          # amending it here carries no loop-prevention risk.
+          BUMP_HEADING="## v$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)"
+          DATASET_HASH=$(uv run python -m evals.dataset.hashes --json \
+            | uv run python -c 'import json, sys; print(json.load(sys.stdin)["dataset_content_sha256"])')
+          awk -v heading="$BUMP_HEADING" -v line="Benchmark dataset: ${DATASET_HASH}" '
+            { print }
+            !done && index($0, heading) == 1 { print ""; print line; done=1 }
+          ' CHANGELOG.md > CHANGELOG.md.tmp
+          mv CHANGELOG.md.tmp CHANGELOG.md
+          git add CHANGELOG.md
+          git commit --amend --no-edit
+
           # Regenerate deployment/requirements.txt against the version cz bump
           # just wrote to pyproject.toml, and fold it into the same bump
           # commit (not pushed yet). Without this, the pinned ember-advise==

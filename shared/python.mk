@@ -19,7 +19,7 @@ format-check: $(EMBER) ## Check formatting without modifying
 	$(UV) run ruff format --check ember tests scripts
 
 typecheck: $(EMBER) ## Run mypy strict type check
-	$(UV) run mypy ember
+	$(UV) run mypy
 
 security: $(EMBER) ## Run bandit security scan
 	$(UV) run bandit -r ember -c pyproject.toml
