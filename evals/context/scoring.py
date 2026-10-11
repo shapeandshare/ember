@@ -8,13 +8,13 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from ..metrics import (
+from ..metric_functions import (
     bootstrap_ci,
     brier_binary,
     brier_multiclass,
     calibration_error,
-    score_question,
 )
+from ..metrics import score_question
 
 #: Question types the rule gates on; ``score`` questions are recorded, not gated.
 GATED_TYPES = frozenset({"noul", "choice"})
