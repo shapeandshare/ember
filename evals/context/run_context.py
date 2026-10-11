@@ -204,6 +204,35 @@ def _resolve_device(args: argparse.Namespace) -> str:
     return "mps"
 
 
+def _effective_device(args: argparse.Namespace) -> str:
+    """Resolve the probe device, inheriting a resumed run's recorded device.
+
+    An explicit ``--device`` or ``EMBER_DEVICE`` wins; a resume or
+    reproduction without either inherits the source manifest's device, so a
+    CUDA run can be resumed on a CUDA host without repeating the flag.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed probe arguments.
+
+    Returns
+    -------
+    str
+        ``"mps"`` or ``"cuda"``.
+    """
+    import os  # import-placement:allow - os is stdlib, deferred for clarity
+
+    if not args.device and not os.environ.get("EMBER_DEVICE"):
+        run_id = args.resume or args.reproduce
+        if run_id:
+            try:
+                return summarize.load_manifest(_run_dir(run_id)).device
+            except (FileNotFoundError, KeyError, ValueError):
+                pass  # _prepare re-raises with the run's real error
+    return _resolve_device(args)
+
+
 def _cuda_budget_bytes(model_name: str) -> int | None:
     """Return gpu_memory_gib * 2**30 from sizing.json for the model, or None."""
     import json  # import-placement:allow - json is stdlib, deferred for clarity
@@ -217,6 +246,28 @@ def _cuda_budget_bytes(model_name: str) -> int | None:
             if gib is not None:
                 return int(gib) * 2**30
     return None
+
+
+def _cuda_budgets(names: list[str]) -> dict[str, int]:
+    """Return each model's CUDA memory budget from its own sizing row.
+
+    Parameters
+    ----------
+    names : list[str]
+        Registry model keys in the run.
+
+    Returns
+    -------
+    dict[str, int]
+        Model key → budget in bytes; models with no default sizing row are
+        omitted, so they keep their registry-declared budget.
+    """
+    budgets: dict[str, int] = {}
+    for name in names:
+        value = _cuda_budget_bytes(name)
+        if value is not None:
+            budgets[name] = value
+    return budgets
 
 
 def _new_manifest(args: argparse.Namespace) -> ProbeManifest:
@@ -248,9 +299,9 @@ def _new_manifest(args: argparse.Namespace) -> ProbeManifest:
     recommended: int | None = None
     if device == "mps":
         recommended = int(torch.mps.recommended_max_memory())
-    budget: int | None = None
+    budget: dict[str, int] | None = None
     if device == "cuda":
-        budget = _cuda_budget_bytes(names[0])
+        budget = _cuda_budgets(names)
     return probe_items.build_manifest(
         run_id=args.run_id or new_run_id(),
         canonical=_canonical(args, names),
@@ -403,7 +454,7 @@ def main(argv: list[str] | None = None) -> int:
             return _rescore(args.rescore)
         if args.snapshot:
             return _snapshot(args.snapshot)
-        device = _resolve_device(args)
+        device = _effective_device(args)
         if not _check_device(device):
             if device == "cuda":
                 print(

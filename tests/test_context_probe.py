@@ -1247,6 +1247,41 @@ def test_probe_accepts_cuda_device_in_manifest():
     assert manifest.device == "cuda"
 
 
+def test_cuda_budgets_are_resolved_per_model() -> None:
+    """CUDA budgets come from each model's own sizing row, not names[0]."""
+    from evals.context import run_context
+
+    budgets = run_context._cuda_budgets(["flash", "full"])
+
+    assert budgets["flash"] == 48 * 2**30
+    assert "full" not in budgets
+
+
+def test_resume_inherits_the_recorded_device(monkeypatch, tmp_path) -> None:
+    """--resume without an explicit device inherits the run's device."""
+    results, _runs = _probe_dirs(monkeypatch, tmp_path)
+    _write_run(results / RUN_ID, _rows(), device="cuda")
+    monkeypatch.delenv("EMBER_DEVICE", raising=False)
+
+    from evals.context import run_context
+
+    args = run_context._parser().parse_args(["--resume", RUN_ID])
+
+    assert run_context._effective_device(args) == "cuda"
+
+
+def test_explicit_device_wins_over_the_recorded_one(monkeypatch, tmp_path) -> None:
+    """--device overrides the device recorded in a resumed run."""
+    results, _runs = _probe_dirs(monkeypatch, tmp_path)
+    _write_run(results / RUN_ID, _rows(), device="cuda")
+
+    from evals.context import run_context
+
+    args = run_context._parser().parse_args(["--resume", RUN_ID, "--device", "mps"])
+
+    assert run_context._effective_device(args) == "mps"
+
+
 # ###########################################################################
 # run_context: snapshots, the pilot's pairs, and resumed reproductions
 # ###########################################################################

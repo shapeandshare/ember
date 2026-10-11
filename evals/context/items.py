@@ -152,7 +152,7 @@ def build_manifest(
     device: str = "mps",
     dataset_path: Path = DATASET_PATH,
     recommended_max_memory: int | None = None,
-    memory_budget_bytes: int | None = None,
+    memory_budget_bytes: dict[str, int] | None = None,
 ) -> ProbeManifest:
     """Assemble a manifest; a dirty tree is never canonical."""
     fields = provenance_fields()
@@ -163,7 +163,11 @@ def build_manifest(
         device=device,
         dtype="float16",
         models={
-            name: probe_model(name, recommended_max_memory, memory_budget_bytes)
+            name: probe_model(
+                name,
+                recommended_max_memory,
+                None if memory_budget_bytes is None else memory_budget_bytes.get(name),
+            )
             for name in model_names
         },
         dataset_path=_relative(dataset_path),
