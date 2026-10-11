@@ -59,7 +59,7 @@ are bundled. Lettering inside generated concept PNGs is generated imagery.
 
 ## License boundaries
 
-- **Project:** [LICENSE](LICENSE) declares MIT, copyright 2026 shapeandshare;
+- **Project:** [LICENSE](LICENSE) declares MIT, copyright 2026 Joshua C. Burt;
   `pyproject.toml` and the plugin package agree. No separate brand-asset license has
   been declared. The JSON records this existing repository default rather than
   inventing a new license or assigning someone else's copyright.
