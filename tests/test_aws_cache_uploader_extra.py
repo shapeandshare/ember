@@ -39,6 +39,7 @@ def _make_s3_client(
 
     s3.head_object.side_effect = head_object
     s3.put_object.return_value = {}
+    s3.upload_file.return_value = None
     return s3
 
 
@@ -51,7 +52,7 @@ class TestCacheUploaderUpload:
     """CacheUploader.upload() uploads files and writes the manifest last."""
 
     def test_uploads_new_files(self, tmp_path: Path) -> None:
-        """upload() calls put_object for each new file."""
+        """upload() streams each new file and writes the manifest."""
         from ember_aws.cache_uploader import CacheUploader
 
         # Create a fake model directory with one file
@@ -69,8 +70,35 @@ class TestCacheUploaderUpload:
             local_path=model_dir,
         )
 
-        # Should have called put_object at least twice: the file + the manifest
-        assert s3.put_object.call_count >= 2
+        # The file streams through upload_file; the manifest is the put_object.
+        assert s3.upload_file.call_count == 1
+        assert s3.put_object.call_count == 1
+
+    def test_streams_model_shards_via_upload_file(self, tmp_path: Path) -> None:
+        """upload() streams each file with upload_file, preserving sha metadata."""
+        from ember_aws.cache_uploader import CacheUploader
+
+        file_name = "model-00001-of-00004.safetensors"
+        file_data = b"weights"
+        model_dir = tmp_path / "model"
+        model_dir.mkdir()
+        (model_dir / file_name).write_bytes(file_data)
+
+        s3 = _make_s3_client()
+        uploader = CacheUploader(s3_client=s3)
+        uploader.upload(
+            model="flash",
+            revision="rev123",
+            bucket="my-bucket",
+            prefix="models/",
+            local_path=model_dir,
+        )
+
+        [call] = s3.upload_file.call_args_list
+        assert call.kwargs["Filename"] == str(model_dir / file_name)
+        assert call.kwargs["Bucket"] == "my-bucket"
+        assert call.kwargs["Key"] == f"models/flash/rev123/{file_name}"
+        assert call.kwargs["ExtraArgs"]["Metadata"]["sha256"] == _sha256(file_data)
 
     def test_manifest_written_last(self, tmp_path: Path) -> None:
         """upload() writes the manifest as the final put_object call."""
@@ -121,7 +149,11 @@ class TestCacheUploaderUpload:
         # Only the manifest should be uploaded (the file was skipped)
         put_keys = [call.kwargs.get("Key", "") for call in s3.put_object.call_args_list]
         assert all("manifest.json" in k or k == "" for k in put_keys if k)
-        # config.json should NOT be in the put calls
+        # config.json should NOT be uploaded through either path
+        upload_keys = [
+            call.kwargs.get("Key", "") for call in s3.upload_file.call_args_list
+        ]
+        assert not any("config.json" in k for k in upload_keys)
         assert not any("config.json" in k for k in put_keys)
 
     def test_uploads_file_when_size_differs(self, tmp_path: Path) -> None:
@@ -145,9 +177,11 @@ class TestCacheUploaderUpload:
             local_path=model_dir,
         )
 
-        # config.json should be re-uploaded
-        put_keys = [call.kwargs.get("Key", "") for call in s3.put_object.call_args_list]
-        assert any("config.json" in k for k in put_keys)
+        # config.json should be re-uploaded (via the streaming transfer)
+        upload_keys = [
+            call.kwargs.get("Key", "") for call in s3.upload_file.call_args_list
+        ]
+        assert any("config.json" in k for k in upload_keys)
 
     def test_manifest_contains_uploaded_files(self, tmp_path: Path) -> None:
         """upload() writes a manifest that lists all uploaded files."""

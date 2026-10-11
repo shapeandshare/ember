@@ -240,14 +240,10 @@ def test_cache_add_uploads_all_files(tmp_path: Path) -> None:
     cache = ModelCache(clients=clients, downloader=downloader)
     cache.add("flash", bucket=_BUCKET, prefix=_PREFIX)
 
-    # All files plus manifest should be uploaded
-    put_calls = s3.put_object.call_args_list
-    uploaded_keys = [
-        c.kwargs.get("Key", c.args[1] if len(c.args) > 1 else "") for c in put_calls
-    ]
-    # At minimum config.json and model.safetensors should be uploaded
-    assert any("config.json" in k for k in uploaded_keys)
-    assert any("model.safetensors" in k for k in uploaded_keys)
+    # Files stream through upload_file; only the manifest is a put_object.
+    upload_keys = [c.kwargs.get("Key", "") for c in s3.upload_file.call_args_list]
+    assert any("config.json" in k for k in upload_keys)
+    assert any("model.safetensors" in k for k in upload_keys)
 
 
 def test_cache_add_manifest_is_last_put(tmp_path: Path) -> None:

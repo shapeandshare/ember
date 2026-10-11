@@ -34,6 +34,9 @@ class CacheUploader:
     ) -> None:
         """Upload all allowed files and write the manifest last.
 
+        Files stream through the S3 managed multipart transfer, so a
+        multi-gigabyte shard is never read into memory whole.
+
         Parameters
         ----------
         model : str
@@ -80,14 +83,13 @@ class CacheUploader:
             except ClientError:
                 pass
 
-            # Upload the file.
-            with file_path.open("rb") as fh:
-                self._s3.put_object(
-                    Bucket=bucket,
-                    Key=s3_key,
-                    Body=fh.read(),
-                    Metadata={"sha256": file_sha256},
-                )
+            # Stream the shard in managed multipart parts, never a full read.
+            self._s3.upload_file(
+                Filename=str(file_path),
+                Bucket=bucket,
+                Key=s3_key,
+                ExtraArgs={"Metadata": {"sha256": file_sha256}},
+            )
             cached_files.append(
                 CachedFile(
                     path=str(rel_path),
