@@ -1,3 +1,11 @@
+## v0.12.0 (2026-10-11)
+
+Benchmark dataset: 1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367
+
+### Feat
+
+- **ember**: benchmark foundations — dataset tooling, usage token split, versioned leaderboard (Phase 0) (#117)
+
 ## v0.11.1 (2026-10-10)
 
 ### Fix
