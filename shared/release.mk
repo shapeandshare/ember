@@ -13,6 +13,10 @@ opencode: $(EMBER) ## Install local opencode plugin and ember-advise skill
 	$(EMBER) init --opencode
 
 setup: sync ## First-time setup: deps only (no model weights; see `make download`)
+	@if [ ! -f .env ]; then \
+		cp .env.example .env; \
+		printf "created .env from .env.example — fill in your credentials\n"; \
+	fi
 
 bootstrap: setup download init doctor ## Full first-run: deps + weights + MCP config + readiness
 

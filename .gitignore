@@ -40,3 +40,5 @@ vault/.trash/
 .ob_apps/
 *.egg-info/
 /.aws-tools.installed
+# Local secrets — never commit
+.env
