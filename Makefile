@@ -17,10 +17,6 @@
 #     shared/aws.mk      — aws-preflight, aws-cache, aws-up, aws-status, aws-stop, aws-start, aws-replace, aws-logs, aws-ssh, aws-token, aws-rotate-token, aws-down, aws-verify, aws-tools, aws-tools-rm
 SHELL := /bin/bash
 
-# Load .env if present — never override values already in the environment
--include .env
-export
-
 REPO_ROOT := $(CURDIR)
 VENV      := $(REPO_ROOT)/.venv
 PY        := $(VENV)/bin/python

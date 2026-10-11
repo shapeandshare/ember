@@ -17,6 +17,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from . import dotenv
 from ._cli_parsers import (
     add_cache,
     add_deploy,
@@ -173,13 +174,14 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
-    """CLI entry point.
+    """CLI entry point; loads ``.env`` (environment wins) then dispatches.
 
     Returns
     -------
     int
         Exit code.
     """
+    dotenv.load()
     return build(sys.argv[1:])
 
 
