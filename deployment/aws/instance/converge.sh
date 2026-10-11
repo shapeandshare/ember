@@ -11,6 +11,8 @@
 
 set -euo pipefail
 
+trap 'echo "converge: FAILED at line ${LINENO}" >&2' ERR
+
 DEPLOYMENT_NAME="{{DEPLOYMENT_NAME}}"
 REGION="{{REGION}}"
 CONFIG_PARAM="{{CONFIG_PARAM}}"

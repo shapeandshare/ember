@@ -432,6 +432,31 @@ def test_ember_service_restart_on_failure() -> None:
     assert "Restart=on-failure" in unit, "ember.service must have Restart=on-failure"
 
 
+def test_boot_units_mirror_output_to_console() -> None:
+    """Boot units must mirror output to the console for out-of-band diagnosis.
+
+    On the first live deploy ember-converge.service failed and the journal was
+    unreachable (the tailnet policy denied Tailscale SSH), leaving only the EC2
+    serial console — which showed the unit failed but not why.
+    """
+    for unit in (
+        "ember-tailscale.service",
+        "ember-converge.service",
+        "ember-idle.service",
+        "ember.service",
+    ):
+        text = _read_instance(unit)
+        assert "StandardOutput=journal+console" in text, unit
+        assert "StandardError=journal+console" in text, unit
+
+
+def test_converge_reports_failing_line() -> None:
+    """converge.sh must name the failing line, since set -e aborts silently."""
+    script = _read_instance("converge.sh")
+    assert "trap" in script, "converge.sh must install an ERR trap"
+    assert "LINENO" in script, "the ERR trap must report the failing line number"
+
+
 # ---------------------------------------------------------------------------
 # T021: ember-tailscale.service invariants
 # ---------------------------------------------------------------------------

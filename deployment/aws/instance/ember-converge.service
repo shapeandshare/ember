@@ -8,8 +8,8 @@ Before=ember.service
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/local/bin/converge.sh
-StandardOutput=journal
-StandardError=journal
+StandardOutput=journal+console
+StandardError=journal+console
 SyslogIdentifier=ember-converge
 
 [Install]

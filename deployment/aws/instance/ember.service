@@ -11,8 +11,8 @@ EnvironmentFile=/etc/ember/env
 ExecStart=/home/ember/.local/bin/ember serve
 Restart=on-failure
 RestartSec=10
-StandardOutput=journal
-StandardError=journal
+StandardOutput=journal+console
+StandardError=journal+console
 SyslogIdentifier=ember
 
 [Install]

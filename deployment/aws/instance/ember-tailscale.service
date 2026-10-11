@@ -9,8 +9,8 @@ ConditionPathExists=!/var/lib/ember/tailscale-joined
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/local/bin/tailscale-join.sh
-StandardOutput=journal
-StandardError=journal
+StandardOutput=journal+console
+StandardError=journal+console
 SyslogIdentifier=ember-tailscale
 
 [Install]

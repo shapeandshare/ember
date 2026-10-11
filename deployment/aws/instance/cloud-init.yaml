@@ -115,6 +115,8 @@ runcmd:
     #!/bin/bash
     set -euo pipefail
 
+    trap 'echo "converge: FAILED at line ${LINENO}" >&2' ERR
+
     DEPLOYMENT_NAME="{{DEPLOYMENT_NAME}}"
     REGION="{{REGION}}"
     CONFIG_PARAM="{{CONFIG_PARAM}}"
@@ -336,8 +338,8 @@ runcmd:
     [Service]
     Type=oneshot
     ExecStart=/etc/ember/idle.sh
-    StandardOutput=journal
-    StandardError=journal
+    StandardOutput=journal+console
+    StandardError=journal+console
     UNIT_EOF
 
   # Write ember-idle.timer
@@ -369,8 +371,8 @@ runcmd:
     Type=oneshot
     RemainAfterExit=yes
     ExecStart=/usr/local/bin/tailscale-join.sh
-    StandardOutput=journal
-    StandardError=journal
+    StandardOutput=journal+console
+    StandardError=journal+console
     SyslogIdentifier=ember-tailscale
 
     [Install]
@@ -390,8 +392,8 @@ runcmd:
     Type=oneshot
     RemainAfterExit=yes
     ExecStart=/usr/local/bin/converge.sh
-    StandardOutput=journal
-    StandardError=journal
+    StandardOutput=journal+console
+    StandardError=journal+console
     SyslogIdentifier=ember-converge
 
     [Install]
@@ -414,8 +416,8 @@ runcmd:
     ExecStart=/home/ember/.local/bin/ember serve
     Restart=on-failure
     RestartSec=10
-    StandardOutput=journal
-    StandardError=journal
+    StandardOutput=journal+console
+    StandardError=journal+console
     SyslogIdentifier=ember
 
     [Install]
