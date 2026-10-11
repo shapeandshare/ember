@@ -560,6 +560,83 @@ def test_cache_destroy_refused_while_deployments_exist() -> None:
         cache.destroy(confirm=_BUCKET, bucket=_BUCKET)
 
 
+def test_cache_destroy_refused_while_a_deploy_is_in_progress() -> None:
+    """cache destroy fails closed while a deployment stack is in progress."""
+    from ember_aws.model_cache import CacheInUseError
+
+    deployment_stacks = [
+        {"StackName": "ember-default", "StackStatus": "CREATE_IN_PROGRESS"}
+    ]
+    cfn = _make_cfn_client(cache_stack_exists=True)
+
+    def list_stacks(StackStatusFilter: list[str]) -> dict[str, Any]:  # noqa: N803
+        return {
+            "StackSummaries": [
+                s for s in deployment_stacks if s["StackStatus"] in StackStatusFilter
+            ]
+        }
+
+    cfn.list_stacks.side_effect = list_stacks
+    s3 = _make_s3_client()
+    clients = _make_aws_clients(s3=s3, cfn=cfn)
+
+    cache = ModelCache(clients=clients)
+    with pytest.raises(CacheInUseError):
+        cache.destroy(confirm=_BUCKET, bucket=_BUCKET)
+
+
+def test_cache_destroy_refused_before_a_deploy_stack_exists() -> None:
+    """cache destroy fails closed on a deploy intent without a stack."""
+    from ember_aws.model_cache import CacheInUseError
+
+    cfn = _make_cfn_client(cache_stack_exists=True)
+    s3 = _make_s3_client()
+    clients = _make_aws_clients(s3=s3, cfn=cfn)
+    paginator = MagicMock()
+    paginator.paginate.return_value = [
+        {"Parameters": [{"Name": "/ember/default/config", "Value": "{}"}]}
+    ]
+    clients.ssm.get_paginator.return_value = paginator
+
+    cache = ModelCache(clients=clients)
+    with pytest.raises(CacheInUseError):
+        cache.destroy(confirm=_BUCKET, bucket=_BUCKET)
+
+
+def test_cache_destroy_deletes_the_bucket_and_waits_for_the_stack() -> None:
+    """destroy() empties and deletes the bucket, then the stack, and waits."""
+    cfn = _make_cfn_client(cache_stack_exists=True)
+    s3 = _make_s3_client()
+    s3.list_objects_v2.return_value = {
+        "Contents": [{"Key": "models/flash/rev/manifest.json"}],
+        "IsTruncated": False,
+    }
+    clients = _make_aws_clients(s3=s3, cfn=cfn)
+
+    cache = ModelCache(clients=clients)
+    cache.destroy(confirm=_BUCKET, bucket=None)
+
+    s3.delete_object.assert_called_once()
+    s3.delete_bucket.assert_called_once_with(Bucket=_BUCKET)
+    cfn.delete_stack.assert_called_once_with(StackName="ember-model-cache")
+    cfn.get_waiter.return_value.wait.assert_called_once_with(
+        StackName="ember-model-cache"
+    )
+
+
+def test_cache_destroy_with_explicit_bucket_keeps_the_managed_stack() -> None:
+    """destroy() with --bucket deletes that bucket, never the managed stack."""
+    cfn = _make_cfn_client(cache_stack_exists=True)
+    s3 = _make_s3_client()
+    clients = _make_aws_clients(s3=s3, cfn=cfn)
+
+    cache = ModelCache(clients=clients)
+    cache.destroy(confirm=_BUCKET, bucket=_BUCKET)
+
+    s3.delete_bucket.assert_called_once_with(Bucket=_BUCKET)
+    cfn.delete_stack.assert_not_called()
+
+
 # ---------------------------------------------------------------------------
 # --bucket/--prefix skips stack creation
 # ---------------------------------------------------------------------------

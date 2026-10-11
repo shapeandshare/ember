@@ -491,8 +491,9 @@ class TestModelCacheDestroy:
             deployment_stacks=[],
         )
         mc = _make_cache(clients)
-        mc.destroy(confirm=_BUCKET, bucket=_BUCKET)
+        mc.destroy(confirm=_BUCKET)
         clients.s3.delete_object.assert_called()
+        clients.s3.delete_bucket.assert_called_once_with(Bucket=_BUCKET)
         clients.cfn.delete_stack.assert_called_once_with(StackName=_CACHE_STACK_NAME)
 
     def test_destroy_uses_stack_bucket_when_none_given(self) -> None:

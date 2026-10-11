@@ -12,6 +12,7 @@ from .cache_guard import (
     _CACHE_STACK_NAME,
     CacheInUseError,
     ConfirmationError,
+    check_no_deployments,
     check_not_in_use,
 )
 from .cache_uploader import CacheUploader
@@ -294,22 +295,27 @@ class ModelCache:
         confirm: str,
         bucket: str | None = None,
     ) -> None:
-        """Delete the entire cache bucket and stack.
+        """Delete the cache: its objects, its bucket, and the managed stack.
+
+        With an explicit ``bucket``, only that bucket is deleted; the managed
+        cache stack is left alone.
 
         Parameters
         ----------
         confirm : str
             Must exactly match the bucket name to proceed.
         bucket : str | None
-            S3 bucket name; if ``None``, uses the managed cache stack.
+            S3 bucket name; if ``None``, uses the managed cache stack and its
+            stack is deleted afterwards (waiting for completion).
 
         Raises
         ------
         ConfirmationError
             If ``confirm`` does not match the bucket name.
         CacheInUseError
-            If any ``ember-*`` deployment stack exists.
+            If any deployment exists or is being prepared.
         """
+        managed = bucket is None
         if bucket is None:
             bucket = self._stack_bucket()
             if not bucket:
@@ -321,18 +327,14 @@ class ModelCache:
                 f"pass --confirm {bucket}"
             )
 
-        _active = ["CREATE_COMPLETE", "UPDATE_COMPLETE", "UPDATE_ROLLBACK_COMPLETE"]
-        stacks = self._clients.cfn.list_stacks(StackStatusFilter=_active)
-        for stack_summary in stacks.get("StackSummaries", []):
-            stack_name = stack_summary.get("StackName", "")
-            if stack_name.startswith("ember-") and stack_name != _CACHE_STACK_NAME:
-                raise CacheInUseError(
-                    f"deployment {stack_name!r} exists; destroy it first with "
-                    f"`make aws-down NAME={stack_name[len('ember-') :]}`"
-                )
+        check_no_deployments(self._clients)
 
         resp = self._clients.s3.list_objects_v2(Bucket=bucket)
         for obj in resp.get("Contents", []):
             self._clients.s3.delete_object(Bucket=bucket, Key=obj["Key"])
+        self._clients.s3.delete_bucket(Bucket=bucket)
 
-        self._clients.cfn.delete_stack(StackName=_CACHE_STACK_NAME)
+        if managed:
+            self._clients.cfn.delete_stack(StackName=_CACHE_STACK_NAME)
+            waiter = self._clients.cfn.get_waiter("stack_delete_complete")
+            waiter.wait(StackName=_CACHE_STACK_NAME)

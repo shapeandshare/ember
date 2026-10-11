@@ -8,6 +8,81 @@ from typing import Any
 #: The CloudFormation stack name for the shared model cache.
 _CACHE_STACK_NAME = "ember-model-cache"
 
+#: Every non-deleted CloudFormation stack status.
+_LIVE_STACK_STATUSES = [
+    "CREATE_IN_PROGRESS",
+    "CREATE_FAILED",
+    "CREATE_COMPLETE",
+    "ROLLBACK_IN_PROGRESS",
+    "ROLLBACK_FAILED",
+    "ROLLBACK_COMPLETE",
+    "DELETE_IN_PROGRESS",
+    "DELETE_FAILED",
+    "UPDATE_IN_PROGRESS",
+    "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS",
+    "UPDATE_COMPLETE",
+    "UPDATE_FAILED",
+    "UPDATE_ROLLBACK_IN_PROGRESS",
+    "UPDATE_ROLLBACK_FAILED",
+    "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS",
+    "UPDATE_ROLLBACK_COMPLETE",
+    "REVIEW_IN_PROGRESS",
+    "IMPORT_IN_PROGRESS",
+    "IMPORT_COMPLETE",
+    "IMPORT_ROLLBACK_IN_PROGRESS",
+    "IMPORT_ROLLBACK_FAILED",
+    "IMPORT_ROLLBACK_COMPLETE",
+]
+
+
+def _raise_in_use(name: str) -> None:
+    """Raise CacheInUseError naming the deployment that uses the cache.
+
+    Parameters
+    ----------
+    name : str
+        Deployment name.
+
+    Raises
+    ------
+    CacheInUseError
+        Always.
+    """
+    raise CacheInUseError(
+        f"deployment {name!r} exists; destroy it first with `make aws-down NAME={name}`"
+    )
+
+
+def check_no_deployments(clients: Any) -> None:
+    """Raise CacheInUseError if any deployment exists or is being prepared.
+
+    A deploy writes its SSM config before creating its stack, so scanning
+    both non-deleted stacks and ``/ember/*/config`` parameters covers the
+    pre-stack window and every in-progress state.
+
+    Parameters
+    ----------
+    clients : Any
+        An :class:`~ember_aws.aws_clients.AwsClients` instance (or a mock).
+
+    Raises
+    ------
+    CacheInUseError
+        If any deployment stack exists in a non-deleted state, or any
+        ``/ember/*/config`` deployment-intent parameter exists.
+    """
+    stacks = clients.cfn.list_stacks(StackStatusFilter=_LIVE_STACK_STATUSES)
+    for stack_summary in stacks.get("StackSummaries", []):
+        stack_name = stack_summary.get("StackName", "")
+        if stack_name.startswith("ember-") and stack_name != _CACHE_STACK_NAME:
+            _raise_in_use(stack_name[len("ember-") :])
+    paginator = clients.ssm.get_paginator("get_parameters_by_path")
+    for page in paginator.paginate(Path="/ember", Recursive=True):
+        for param in page.get("Parameters", []):
+            name = param.get("Name", "")
+            if name.endswith("/config"):
+                _raise_in_use(name.split("/")[-2])
+
 
 class CacheInUseError(Exception):
     """Raised when a cache removal is refused because a deployment uses it.
@@ -64,8 +139,7 @@ def check_not_in_use(
         or if an active deployment's config cannot be read.
     """
     expected_uri = f"s3://{bucket}/{prefix}{model}/{revision}".rstrip("/")
-    _active = ["CREATE_COMPLETE", "UPDATE_COMPLETE", "UPDATE_ROLLBACK_COMPLETE"]
-    stacks = clients.cfn.list_stacks(StackStatusFilter=_active)
+    stacks = clients.cfn.list_stacks(StackStatusFilter=_LIVE_STACK_STATUSES)
     for stack_summary in stacks.get("StackSummaries", []):
         stack_name = stack_summary.get("StackName", "")
         if not stack_name.startswith("ember-") or stack_name == _CACHE_STACK_NAME:
