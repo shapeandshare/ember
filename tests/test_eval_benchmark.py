@@ -9,7 +9,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import pytest
-from evals import metrics
+from evals import metric_functions, metrics
 
 DATASET = Path(__file__).resolve().parents[1] / "evals" / "clef-flash.jsonl"
 ITEMS = [
@@ -113,30 +113,93 @@ def test_every_label_appears_in_each_split(split: str) -> None:
 
 
 # ###########################################################################
+# Registries (specs/004: FR-001, FR-003a)
+# ###########################################################################
+
+
+def test_every_dataset_recipe_is_registered() -> None:
+    from evals.dataset.recipes import RECIPES
+
+    categories = {item["category"] for item in ITEMS}
+    assert categories <= set(RECIPES), categories - set(RECIPES)
+    assert set(RECIPES) <= categories, set(RECIPES) - categories
+
+
+def test_every_score_question_declares_its_scale() -> None:
+    from evals.dataset.scales import SCALES
+
+    declared = set()
+    for item in ITEMS:
+        for qid, spec in item["questions"].items():
+            if spec["type"] != "score":
+                continue
+            key = (item["category"], qid)
+            declared.add(key)
+            scale = SCALES.get(key)
+            assert scale is not None, key
+            assert spec["criteria"][0] == scale.low, key
+            assert spec["criteria"][-1] == scale.high, key
+            if scale.dangerous_from is not None:
+                assert scale.dangerous_from < len(spec["criteria"]), key
+    assert set(SCALES) == declared
+
+
+def test_score_scorer_is_monotonic_with_unit_adjacent_error() -> None:
+    """A one-hot distribution at level k predicts k; adjacent levels differ by 1."""
+    seen = set()
+    for item in ITEMS:
+        for qid, spec in item["questions"].items():
+            if spec["type"] != "score" or (item["category"], qid) in seen:
+                continue
+            seen.add((item["category"], qid))
+            levels = len(spec["criteria"])
+            expected = []
+            for k in range(levels):
+                answer = {
+                    "type": "score",
+                    "score": float(k),
+                    "probabilities": {str(j): float(j == k) for j in range(levels)},
+                }
+                record = metrics.score_question(spec, k, answer)
+                assert record["predicted"] == k, (qid, k)
+                assert record["abs_error"] == 0.0, (qid, k)
+                expected.append(record["expected"])
+                if k + 1 < levels:
+                    shifted = {**answer, "score": float(k + 1)}
+                    assert metrics.score_question(spec, k, shifted)["abs_error"] == 1.0
+            assert expected == sorted(expected)
+            assert len(set(expected)) == levels
+
+
+# ###########################################################################
 # Metrics
 # ###########################################################################
 
 
 def test_calibration_error_is_zero_when_confidence_matches_accuracy() -> None:
-    ece, mce = metrics.calibration_error([0.75] * 4, [True, True, True, False])
+    ece, mce = metric_functions.calibration_error([0.75] * 4, [True, True, True, False])
     assert ece == pytest.approx(0.0)
     assert mce == pytest.approx(0.0)
 
 
 def test_calibration_error_measures_the_gap() -> None:
-    ece, _ = metrics.calibration_error([0.8] * 10, [True] * 9 + [False])
+    ece, _ = metric_functions.calibration_error([0.8] * 10, [True] * 9 + [False])
     assert ece == pytest.approx(0.1)
 
 
 def test_brier_scores() -> None:
-    assert metrics.brier_multiclass([{"a": 1.0, "b": 0.0}], ["a"]) == pytest.approx(0.0)
-    assert metrics.brier_multiclass([{"a": 0.0, "b": 1.0}], ["a"]) == pytest.approx(2.0)
-    assert metrics.brier_binary([0.8], [True]) == pytest.approx(0.04)
+    assert metric_functions.brier_multiclass(
+        [{"a": 1.0, "b": 0.0}], ["a"]
+    ) == pytest.approx(0.0)
+    assert metric_functions.brier_multiclass(
+        [{"a": 0.0, "b": 1.0}], ["a"]
+    ) == pytest.approx(2.0)
+    assert metric_functions.brier_binary([0.8], [True]) == pytest.approx(0.04)
 
 
 def test_ranked_probability_score_rewards_near_misses() -> None:
     def rps(probabilities: list[float]) -> float:
-        return metrics.ranked_probability_score([probabilities], [0])
+        return metric_functions.ranked_probability_score([probabilities], [0])
 
     assert rps([1.0, 0.0, 0.0, 0.0]) == pytest.approx(0.0)
     assert rps([0.0, 1.0, 0.0, 0.0]) == pytest.approx(1 / 3)
@@ -145,15 +208,17 @@ def test_ranked_probability_score_rewards_near_misses() -> None:
 
 def test_macro_f1_averages_per_class_scores() -> None:
     # a: tp=1 fp=1 fn=0 -> 2/3; b: tp=0 fp=0 fn=1 -> 0
-    assert metrics.macro_f1(["a", "a"], ["a", "b"]) == pytest.approx(1 / 3)
+    assert metric_functions.macro_f1(["a", "a"], ["a", "b"]) == pytest.approx(1 / 3)
 
 
 def test_perfect_answers_score_perfectly() -> None:
     summary = metrics.aggregate(
         [metrics.score_item(item, _answers(item, right=True)) for item in ITEMS]
     )
-    assert summary["overall"]["questions"] == sum(len(i["gold_labels"]) for i in ITEMS)
+    scored = summary["overall"]["questions"] + summary["capability"]["questions"]
+    assert scored == sum(len(i["gold_labels"]) for i in ITEMS)
     assert summary["overall"]["accuracy"] == 1.0
+    assert summary["capability"]["accuracy"] == 1.0
     assert summary["score"]["mae"] == 0.0
     assert summary["misses"] == []
 
@@ -229,6 +294,7 @@ def test_run_evals_default_dataset_exists():
         "evals/eval/snapshot_evals.py",
         "evals/eval/run_agent_evals.py",
         "evals/context/run_context.py",
+        "scripts/audit_data_sources.py",
     ],
 )
 def test_eval_scripts_run_directly_as_make_runs_them(script):
