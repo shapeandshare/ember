@@ -21,7 +21,6 @@ import signal
 import subprocess
 import time
 from pathlib import Path
-from typing import Any
 
 from .sandbox import Sandbox, git_env
 from .tool_call import ToolCall
