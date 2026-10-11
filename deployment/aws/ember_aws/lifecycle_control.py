@@ -140,6 +140,8 @@ class LifecycleControl:
 
         stack = Stack(clients=self._clients, names=names)
         if not stack.exists():
+            self._tailscale.delete_devices(names.hostname, deployment.tailscale_tag)
+            self._delete_ssm_params(names)
             print("nothing deployed")
             return
 

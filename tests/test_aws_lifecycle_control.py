@@ -546,6 +546,21 @@ class TestDestroy:
 
         clients.cfn.delete_stack.assert_not_called()
 
+    def test_destroy_when_no_stack_cleans_up_leftovers(self) -> None:
+        """destroy() removes tailnet devices and SSM params when no stack exists."""
+        from ember_aws.deployment import Deployment
+
+        ssm_params = {"/ember/default/server-token": "tok"}
+        lc, clients, ts = _make_lifecycle_control(
+            stack_exists=False, ssm_params=ssm_params
+        )
+        deployment = Deployment(name="default", model="flash")
+
+        lc.destroy(deployment, confirm="default")
+
+        ts.delete_devices.assert_called_once()
+        clients.ssm.delete_parameters.assert_called()
+
 
 # ---------------------------------------------------------------------------
 # T033: rotate_token
