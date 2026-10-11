@@ -103,7 +103,7 @@ layout: default
     const appear = still ? 0 : 2200; // a replacement question fades in
     const dwell = 450; // pointer rest before a hover counts as asking
     const firstArrival = 1500;
-    const arrivalGap = 3000;
+    const arrivalGap = 6000;
     const idleWait = 4000; // quiet time before ember asks itself
     const between = 3000; // gap between two self-asked conversations
 
@@ -227,7 +227,7 @@ layout: default
         fill(li);
         arrive(li);
       }
-      setTimeout(spawnLoop, randomBetween(1200, 3000));
+      setTimeout(spawnLoop, randomBetween(2400, 6000));
     };
     const departLoop = () => {
       const here = present();
