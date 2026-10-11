@@ -48,21 +48,36 @@ deployments there. Destroying a deployment never touches this bucket.
   Preflight can't check this through the API; it prints a reminder. If it's
   off, `tailscale serve` fails on the instance and the deploy health check
   times out. Check `make aws-logs NAME=<name> UNIT=tailscale` if that happens.
-- **`tag:ember` defined** in your tailnet policy with `tagOwners` set to the
-  OAuth client's tag. Example policy fragment:
+- **`tag:ember` created** in your tailnet. ember instances join the tailnet
+  under this tag; the OAuth client must own it so it can mint auth keys.
+
+  **UI path** (recommended): Admin console → Access Controls → Tags →
+  "Create tag". Set:
+  - Tag name: `ember` (Tailscale prepends `tag:` automatically)
+  - Tag owner: your admin user, group, or `autogroup:admin`
+
+  **ACL JSON path**: add to the `tagOwners` block in Admin console →
+  Access Controls:
 
   ```json
   "tagOwners": {
-    "tag:ember": ["tag:ember-operator"]
+    "tag:ember": ["autogroup:admin"]
   }
   ```
 
-  The OAuth client itself must carry `tag:ember-operator` (or whichever tag
-  you put in `tagOwners`). Preflight mints and immediately deletes a test key
-  to catch tag-ownership errors before anything is created.
+  Preflight mints and immediately deletes a test key to catch tag-ownership
+  errors before anything is created.
 
-- **An OAuth client** with scopes `auth_keys` and `devices:core`, scoped to
-  `tag:ember`. Create it at Admin console → Settings → OAuth clients. Export:
+- **An OAuth client** scoped to `tag:ember`. Create it at Admin console →
+  Settings → OAuth clients. Required scopes:
+
+  | Category | Scope | Access |
+  | --- | --- | --- |
+  | Keys | Auth Keys | Write |
+  | Devices | Core | Write |
+  | DNS | DNS | Read |
+
+  In the **Tags** field enter `tag:ember` (the tag you created above). Export:
 
   ```bash
   export TS_OAUTH_CLIENT_ID=<client-id>
@@ -300,11 +315,20 @@ first, so the name stays stable.
 ## Troubleshooting
 
 **Preflight fails with `✗ tailscale-oauth`**
-Export `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_CLIENT_SECRET` and re-run.
+Export `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_CLIENT_SECRET` and re-run. If you
+haven't created the OAuth client yet, go to Admin console → Settings → OAuth
+clients and create one with scopes **Auth Keys (write)**, **Devices → Core
+(write)**, and **DNS (read)**; set the Tags field to `tag:ember`. See the
+Tailscale prerequisites above for step-by-step instructions.
 
 **Preflight fails with `✗ tailscale-tag`**
-The OAuth client can't mint keys for `tag:ember`. Check `tagOwners` in your
-tailnet policy: the tag must be owned by the OAuth client's own tag.
+The OAuth client can't mint keys for `tag:ember`. Two things must both be true:
+1. The tag `ember` exists in your tailnet (Admin console → Access Controls →
+   Tags, or `tagOwners` in the ACL JSON).
+2. The OAuth client was created with `tag:ember` in its Tags field.
+
+Re-create the OAuth client with the Tags field set to `tag:ember` after
+ensuring the tag exists. See the Tailscale prerequisites above.
 
 **Preflight fails with `✗ tailscale-magicdns`**
 Enable MagicDNS in the Tailscale admin console (DNS page) and re-run.

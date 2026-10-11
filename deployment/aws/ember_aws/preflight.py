@@ -272,10 +272,15 @@ class Preflight:
                 ok=False,
                 problem=f"Tailscale OAuth token exchange failed: {exc}",
                 fix=(
-                    "set TS_OAUTH_CLIENT_ID and TS_OAUTH_CLIENT_SECRET "
-                    "(create an OAuth client at "
+                    "set TS_OAUTH_CLIENT_ID and TS_OAUTH_CLIENT_SECRET. "
+                    "Create an OAuth client at "
                     "https://login.tailscale.com/admin/settings/oauth "
-                    "with scopes auth_keys and devices:core)"
+                    "with scopes: Auth Keys (write), Devices > Core (write), "
+                    "DNS (read). In the Tags field enter 'tag:ember' "
+                    "(create that tag first at "
+                    "https://login.tailscale.com/admin/acls/file under Tags, "
+                    "or via Admin console -> Access Controls -> Tags -> Create tag, "
+                    "name 'ember', owner = your admin user or group)"
                 ),
                 blocking=True,
             )
@@ -309,8 +314,13 @@ class Preflight:
                 ok=False,
                 problem=f"tag {tag!r} is not owned by this OAuth client: {exc}",
                 fix=(
-                    f"add {tag!r} to tagOwners in your Tailscale ACL policy "
-                    "(admin console → Access Controls → tagOwners)"
+                    f"ensure {tag!r} exists and is owned by your OAuth client. "
+                    "UI path: Admin console -> Access Controls -> Tags -> "
+                    "Create tag, name 'ember', owner = your admin user or group. "
+                    "ACL JSON path: add to tagOwners: "
+                    f'"{tag}": ["autogroup:admin"] '
+                    "(Admin console → Access Controls). "
+                    "Then re-create the OAuth client with Tags = 'tag:ember'"
                 ),
                 blocking=True,
             )
