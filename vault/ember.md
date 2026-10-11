@@ -85,6 +85,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-10-eval-harness-health-probe-also-sent-no-auth-header]]
 - [[2026-10-11-hosted-cache-treats-partial-dir-as-complete]]
 - [[2026-10-11-tailscale-oauth-scope-and-suffix]]
+- [[2026-10-11-cloud-init-dropped-invalid-user-data]]
 
 ### Sessions
 
@@ -94,6 +95,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-09-context-window-audit-implementation]] — full-request counting, refusals, limit reporting, and the long-context probe
 - [[2026-10-10-pilot-gate-and-per-model-caps]] — the pilot's sizing gate, memory checks, per-model fallback caps, and a larger benchmark
 - [[2026-10-10-benchmark-foundations]] — Phase 0 of the benchmark categories programme: dataset tooling, the register, the token split, resumable runs, versioned leaderboard
+- [[2026-10-11-first-live-aws-deploy]] — the first live `aws-up`: nine real-API bugs, one open converge failure
 
 Append-only session logs, never pruned.
 
