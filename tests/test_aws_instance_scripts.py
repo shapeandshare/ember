@@ -960,6 +960,20 @@ def test_cloud_init_marks_the_cache_complete() -> None:
     assert "os.replace" in text, "the marker must be written atomically"
 
 
+def test_cloud_init_installs_the_idle_units() -> None:
+    """cloud-init must write idle.sh, its service, and its timer."""
+    text = _read_instance("cloud-init.yaml")
+    assert "cat > /etc/ember/idle.sh" in text, (
+        "cloud-init must install idle.sh where ember-idle.service runs it"
+    )
+    assert "cat > /etc/systemd/system/ember-idle.service" in text, (
+        "cloud-init must install the idle service unit"
+    )
+    assert "cat > /etc/systemd/system/ember-idle.timer" in text, (
+        "cloud-init must install the idle timer unit"
+    )
+
+
 # ---------------------------------------------------------------------------
 # T047: idle.sh invariants
 # ---------------------------------------------------------------------------
