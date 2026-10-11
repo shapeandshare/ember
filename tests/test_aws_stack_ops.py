@@ -493,15 +493,15 @@ class TestStackUpdateHasReplacement:
 
 
 # ---------------------------------------------------------------------------
-# pick_subnet() error paths
+# pick_subnets() error paths
 # ---------------------------------------------------------------------------
 
 
-class TestStackPickSubnetErrors:
-    """Stack.pick_subnet() raises ValueError when no VPC or subnet is found."""
+class TestStackPickSubnetsErrors:
+    """Stack.pick_subnets() raises ValueError when no VPC or subnet is found."""
 
     def test_raises_when_no_default_vpc(self) -> None:
-        """pick_subnet() raises ValueError when no default VPC exists."""
+        """pick_subnets() raises ValueError when no default VPC exists."""
         import pytest
 
         clients = _make_clients()
@@ -509,10 +509,10 @@ class TestStackPickSubnetErrors:
 
         stack = _make_stack(clients)
         with pytest.raises(ValueError, match="no default VPC"):
-            stack.pick_subnet("g6e.xlarge")
+            stack.pick_subnets("g6e.xlarge")
 
     def test_raises_when_no_matching_subnet(self) -> None:
-        """pick_subnet() raises ValueError when no subnet is in an AZ offering the
+        """pick_subnets() raises ValueError when no subnet is in an AZ offering the
         type."""
         import pytest
 
@@ -541,7 +541,7 @@ class TestStackPickSubnetErrors:
         }
         stack = _make_stack(clients)
         with pytest.raises(ValueError, match="no subnet"):
-            stack.pick_subnet("g6e.xlarge")
+            stack.pick_subnets("g6e.xlarge")
 
 
 # ---------------------------------------------------------------------------

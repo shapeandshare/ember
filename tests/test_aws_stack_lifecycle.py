@@ -150,7 +150,7 @@ def _make_mock_stack() -> Any:
     """Create a fully configured mock Stack instance."""
     mock_stack = MagicMock()
     mock_stack.exists.return_value = False
-    mock_stack.pick_subnet.return_value = ("subnet-aaa", "vpc-bbb")
+    mock_stack.pick_subnets.return_value = [("subnet-aaa", "vpc-bbb")]
     mock_stack.resolve_image_id.return_value = "ami-0abc1234"
     mock_stack.outputs.return_value = {
         "InstanceId": "i-0001",
@@ -225,7 +225,7 @@ class TestDeployOrder:
         ):
             mock_stack = MagicMock()
             mock_stack.exists.return_value = False
-            mock_stack.pick_subnet.return_value = ("subnet-aaa", "vpc-bbb")
+            mock_stack.pick_subnets.return_value = [("subnet-aaa", "vpc-bbb")]
             mock_stack.resolve_image_id.return_value = "ami-0abc1234"
             mock_stack.outputs.return_value = {
                 "InstanceId": "i-0001",
@@ -655,6 +655,53 @@ class TestDeployOrder:
 
         assert exc_info.value.code == 2
 
+    def test_deploy_retries_next_subnet_on_capacity_failure(
+        self, tmp_path: Any, monkeypatch: Any
+    ) -> None:
+        """A capacity failure in one AZ retries the next candidate subnet."""
+        from ember_aws.deployment import Deployment
+        from ember_aws.lifecycle import Lifecycle
+        from ember_aws.stack import StackWaitError
+
+        clients = _make_clients()
+        ts = _make_tailscale()
+        mc = _make_model_cache()
+        pf = _make_preflight()
+
+        deployment = Deployment(name="default", model="flash")
+        lc = Lifecycle(clients=clients, tailscale=ts, model_cache=mc, preflight=pf)
+
+        with (
+            patch("ember_aws.lifecycle.Stack") as mock_stack_cls,
+            patch("ember_aws.lifecycle.wait_healthy") as mock_health,
+        ):
+            mock_stack = _make_mock_stack()
+            mock_stack.pick_subnets.return_value = [
+                ("subnet-2b", "vpc-bbb"),
+                ("subnet-2a", "vpc-bbb"),
+            ]
+            mock_stack.wait.side_effect = [
+                StackWaitError("ROLLBACK_COMPLETE"),
+                None,
+                None,
+            ]
+            mock_stack.first_failure_reason.return_value = (
+                "We currently do not have sufficient g6e.xlarge capacity in the"
+                " Availability Zone you requested (us-west-2b)"
+            )
+            mock_stack_cls.return_value = mock_stack
+            mock_health.return_value = {
+                "engine": {"device": "cuda"},
+                "version": "0.12.0",
+            }
+            lc.deploy(deployment)
+
+        subnets = [
+            c.kwargs["params"]["SubnetId"] for c in mock_stack.create.call_args_list
+        ]
+        assert subnets == ["subnet-2b", "subnet-2a"]
+        mock_stack.delete.assert_called_once()
+
     def test_deploy_tight_sizing_warns(
         self, tmp_path: Any, monkeypatch: Any, capsys: Any
     ) -> None:
@@ -915,8 +962,8 @@ class TestStack:
         ami = stack.resolve_image_id("us-east-1")
         assert ami == "ami-0abc1234"
 
-    def test_pick_subnet_returns_first_default_vpc_subnet(self) -> None:
-        """pick_subnet() returns the first subnet in the default VPC."""
+    def test_pick_subnets_returns_offering_az_candidates(self) -> None:
+        """pick_subnets() returns (subnet, vpc) pairs for offering AZs only."""
         from ember_aws.names import DeploymentName
         from ember_aws.stack import Stack
 
@@ -940,14 +987,18 @@ class TestStack:
                     "VpcId": "vpc-default",
                     "AvailabilityZone": "us-east-1a",
                 },
+                {
+                    "SubnetId": "subnet-bbb",
+                    "VpcId": "vpc-default",
+                    "AvailabilityZone": "us-east-1b",
+                },
             ]
         }
 
         names = DeploymentName(name="default")
         stack = Stack(clients=clients, names=names)
-        subnet_id, vpc_id = stack.pick_subnet("g6e.xlarge")
-        assert subnet_id == "subnet-aaa"
-        assert vpc_id == "vpc-default"
+        candidates = stack.pick_subnets("g6e.xlarge")
+        assert candidates == [("subnet-aaa", "vpc-default")]
 
 
 # ---------------------------------------------------------------------------

@@ -26,7 +26,7 @@ class Stack:
     """CloudFormation stack operations for a named ember deployment.
 
     Wraps create, wait, outputs, and failure-reason queries for the
-    ``ember-<name>`` stack.  ``resolve_image_id`` and ``pick_subnet`` are
+    ``ember-<name>`` stack.  ``resolve_image_id`` and ``pick_subnets`` are
     called only on create or replace.
 
     Parameters
@@ -190,8 +190,8 @@ class Stack:
     # Subnet selection
     # ------------------------------------------------------------------
 
-    def pick_subnet(self, instance_type: str) -> tuple[str, str]:
-        """Pick the first default-VPC subnet in an AZ that offers the instance type.
+    def pick_subnets(self, instance_type: str) -> list[tuple[str, str]]:
+        """Pick default-VPC subnets in AZs that offer the instance type.
 
         Parameters
         ----------
@@ -200,8 +200,9 @@ class Stack:
 
         Returns
         -------
-        tuple[str, str]
-            ``(subnet_id, vpc_id)`` of the chosen subnet.
+        list[tuple[str, str]]
+            ``(subnet_id, vpc_id)`` candidates in offering AZs, in API order;
+            deploy retries the next candidate when an AZ lacks capacity.
 
         Raises
         ------
@@ -226,17 +227,16 @@ class Stack:
             o["Location"] for o in offerings_resp.get("InstanceTypeOfferings", [])
         }
 
-        # Find a subnet in the default VPC in one of those AZs.
-        subnets_resp = self._clients.ec2.describe_subnets(
-            Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]
-        )
-        for subnet in subnets_resp.get("Subnets", []):
-            if subnet.get("AvailabilityZone") in az_set:
-                return str(subnet["SubnetId"]), vpc_id
-
-        raise ValueError(
-            f"no subnet in the default VPC offers instance type {instance_type!r}"
-        )
+        candidates = [
+            (str(subnet["SubnetId"]), vpc_id)
+            for subnet in self._clients.ec2.describe_subnets(
+                Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]
+            ).get("Subnets", [])
+            if subnet.get("AvailabilityZone") in az_set
+        ]
+        if not candidates:
+            raise ValueError(f"no subnet offers instance type {instance_type!r}")
+        return candidates
 
     # ------------------------------------------------------------------
     # Delete

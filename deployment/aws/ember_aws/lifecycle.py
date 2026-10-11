@@ -15,7 +15,7 @@ from .lifecycle_update import LifecycleUpdate
 from .names import DeploymentName
 from .sizing_status import SizingStatus
 from .sizing_table import SizingError, SizingTable
-from .stack import Stack, StackWaitError
+from .stack import Stack
 
 #: Path to sizing.json relative to this file.
 _SIZING_JSON = Path(__file__).parent.parent / "sizing.json"
@@ -77,7 +77,7 @@ class Lifecycle:
         4. Token only if absent (SecureString, 32 random bytes, urlsafe)
         5. delete tailnet devices
         6. mint and put the join key (SecureString)
-        7. create_stack with resolved ImageId and subnet parameters and tags
+        7. create_stack, retrying the next candidate AZ on capacity failure
         8. wait
         9. health poll
 
@@ -184,10 +184,10 @@ class Lifecycle:
             Overwrite=True,
         )
 
-        # 7. Create stack.
+        # 7. Create stack, retrying in the next candidate AZ on capacity failure.
         stack = Stack(clients=self._clients, names=names)
         ami_id = stack.resolve_image_id(deployment.region)
-        subnet_id, vpc_id = stack.pick_subnet(entry.instance_type)
+        candidates = stack.pick_subnets(entry.instance_type)
 
         from .user_data import UserData  # import-placement:allow
 
@@ -198,38 +198,44 @@ class Lifecycle:
             tailscale_tag=deployment.tailscale_tag,
         )
         template_body = UserData.template_body(rendered_ud)
-
-        params: dict[str, str] = {
-            "DeploymentName": deployment.name,
-            "InstanceType": entry.instance_type,
-            "Capacity": deployment.capacity.value,
-            "ImageId": ami_id,
-            "SubnetId": subnet_id,
-            "VpcId": vpc_id,
-            "CacheBucket": self._resolve_bucket(names),
-            "ModelPrefix": f"models/{deployment.model}/{revision}/",
-            "TailscaleTag": deployment.tailscale_tag,
-            # Internal: pass the rendered template body through the params dict
-            # so Stack.create can use it without a separate argument.
-            "_template_body": template_body,
-        }
         tags = [
             {"Key": "ember:deployment", "Value": deployment.name},
             {"Key": "ember:managed-by", "Value": "ember_aws"},
         ]
-        stack.create(params=params, tags=tags)
-
-        # 8. Wait.
-        try:
-            stack.wait("create")
-        except (StackWaitError, StackDeployError) as exc:
-            reason = stack.first_failure_reason() or str(exc)
-            print(f"error: stack creation failed: {reason}", file=sys.stderr)
-            sys.exit(2)
-        except Exception as exc:
-            reason = stack.first_failure_reason() or str(exc)
-            print(f"error: stack creation failed: {reason}", file=sys.stderr)
-            sys.exit(2)
+        for attempt, (subnet_id, vpc_id) in enumerate(candidates):
+            params: dict[str, str] = {
+                "DeploymentName": deployment.name,
+                "InstanceType": entry.instance_type,
+                "Capacity": deployment.capacity.value,
+                "ImageId": ami_id,
+                "SubnetId": subnet_id,
+                "VpcId": vpc_id,
+                "CacheBucket": self._resolve_bucket(names),
+                "ModelPrefix": f"models/{deployment.model}/{revision}/",
+                "TailscaleTag": deployment.tailscale_tag,
+                # Internal: pass the rendered template body through the params
+                # dict so Stack.create can use it without a separate argument.
+                "_template_body": template_body,
+            }
+            stack.create(params=params, tags=tags)
+            try:
+                stack.wait("create")
+                break
+            except Exception as exc:
+                reason = stack.first_failure_reason() or str(exc)
+                retry = (
+                    "do not have sufficient" in reason or "no Spot capacity" in reason
+                )
+                if retry and attempt < len(candidates) - 1:
+                    print(
+                        f"notice: no capacity in {subnet_id}; retrying next AZ",
+                        file=sys.stderr,
+                    )
+                    stack.delete()
+                    stack.wait("delete")
+                    continue
+                print(f"error: stack creation failed: {reason}", file=sys.stderr)
+                sys.exit(2)
 
         # 9. Health poll.
         dns_info = self._tailscale.tailnet_dns()

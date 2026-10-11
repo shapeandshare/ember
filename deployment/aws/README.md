@@ -337,6 +337,13 @@ Enable MagicDNS in the Tailscale admin console (DNS page) and re-run.
 Request "Running On-Demand G and VT instances" quota at the Service Quotas
 console. The preflight output includes the direct link.
 
+**Deploy fails and the stack rolls back**
+The failed stack stays in `ROLLBACK_COMPLETE`, which blocks changes and
+cannot be updated. Fix the cause, remove it with
+`make aws-down NAME=<name> CONFIRM=<name>`, then re-run `make aws-up`.
+Capacity failures are handled automatically: `aws-up` retries the next
+availability zone when the instance type has no capacity in one.
+
 **Deploy health check times out**
 The instance joined the tailnet but ember isn't healthy yet. Check:
 
