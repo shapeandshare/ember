@@ -234,3 +234,65 @@ class TestWaitHealthyExtra:
         resp = httpx.Response(200, text="not json")
         result = _safe_json(resp)
         assert result == {}
+
+
+class TestProbeHealth:
+    """probe_health() reads /health once and never raises."""
+
+    def test_returns_the_body_on_200(self) -> None:
+        """A 200 response yields the parsed body (including the pid)."""
+        from ember_aws.health import probe_health
+
+        transport = httpx.MockTransport(
+            lambda request: httpx.Response(200, json={"status": "ok", "pid": 7})
+        )
+
+        result = probe_health(
+            url="https://ember-default.example.ts.net", token="tok", transport=transport
+        )
+
+        assert result == {"status": "ok", "pid": 7}
+
+    def test_returns_none_when_not_200(self) -> None:
+        """A non-200 response yields None."""
+        from ember_aws.health import probe_health
+
+        transport = httpx.MockTransport(lambda request: httpx.Response(503))
+
+        result = probe_health(
+            url="https://ember-default.example.ts.net", token="tok", transport=transport
+        )
+
+        assert result is None
+
+
+class TestWaitHealthyPreviousPid:
+    """wait_healthy() ignores a healthy response from the pre-restart process."""
+
+    def test_keeps_polling_until_the_pid_changes(self) -> None:
+        """A cuda response from the previous pid cannot end the wait."""
+        from ember_aws.health import wait_healthy
+
+        call_count = 0
+
+        def _handler(request: httpx.Request) -> httpx.Response:
+            nonlocal call_count
+            call_count += 1
+            pid = 1 if call_count < 3 else 2
+            return httpx.Response(
+                200,
+                json={"status": "ok", "pid": pid, "engine": {"device": "cuda"}},
+            )
+
+        transport = httpx.MockTransport(_handler)
+        result = wait_healthy(
+            url="https://ember-default.example.ts.net",
+            token="tok",
+            timeout_s=60,
+            transport=transport,
+            poll_interval_s=0,
+            previous_pid=1,
+        )
+
+        assert result["pid"] == 2
+        assert call_count == 3

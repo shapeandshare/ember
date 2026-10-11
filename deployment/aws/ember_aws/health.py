@@ -43,12 +43,51 @@ class HealthTimeoutError(Exception):
 HealthTimeout = HealthTimeoutError
 
 
+def probe_health(
+    url: str,
+    token: str,
+    transport: httpx.BaseTransport | None = None,
+) -> dict[str, Any] | None:
+    """Read ``GET <url>/health`` once; return the body on HTTP 200, else None.
+
+    Parameters
+    ----------
+    url : str
+        Base URL of the ember server.
+    token : str
+        Bearer token for the ``Authorization`` header.
+    transport : httpx.BaseTransport | None
+        Optional custom transport (used in tests via ``httpx.MockTransport``).
+
+    Returns
+    -------
+    dict[str, Any] | None
+        The parsed body, or ``None`` when the server does not answer 200.
+    """
+    client_kwargs: dict[str, Any] = {}
+    if transport is not None:
+        client_kwargs["transport"] = transport
+    try:
+        with httpx.Client(**client_kwargs) as client:
+            resp = client.get(
+                f"{url}/health",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=30,
+            )
+    except Exception:
+        return None
+    if resp.status_code == 200:
+        return _safe_json(resp)
+    return None
+
+
 def wait_healthy(
     url: str,
     token: str,
     timeout_s: int | None = None,
     transport: httpx.BaseTransport | None = None,
     poll_interval_s: float = _DEFAULT_POLL_INTERVAL_S,
+    previous_pid: int | None = None,
 ) -> dict[str, Any]:
     """Poll ``GET <url>/health`` until the engine reports ``device == "cuda"``.
 
@@ -72,6 +111,10 @@ def wait_healthy(
         Optional custom transport (used in tests via ``httpx.MockTransport``).
     poll_interval_s : float
         Seconds to sleep between polls; defaults to 10.
+    previous_pid : int | None
+        The ``pid`` the server reported before a reboot or replacement.  When
+        set, a healthy response from that same process keeps the wait going,
+        so a pre-restart server cannot make an update look complete.
 
     Returns
     -------
@@ -123,12 +166,19 @@ def wait_healthy(
                 body = _safe_json(resp)
                 device = (body.get("engine") or {}).get("device", "")
                 if device == "cuda":
-                    return body
-                # Not cuda yet — keep polling (e.g. still on cpu during load)
-                status_text = f"device={device}"
-                if status_text != last_status:
-                    print(f"  waiting: {status_text}")
-                    last_status = status_text
+                    if previous_pid is not None and body.get("pid") == previous_pid:
+                        status_text = "restarting (the pre-restart server is up)"
+                        if status_text != last_status:
+                            print(f"  waiting: {status_text}")
+                            last_status = status_text
+                    else:
+                        return body
+                else:
+                    # Not cuda yet — keep polling (e.g. still on cpu during load)
+                    status_text = f"device={device}"
+                    if status_text != last_status:
+                        print(f"  waiting: {status_text}")
+                        last_status = status_text
             else:
                 last_response = f"HTTP {resp.status_code}: {resp.text}"
 

@@ -849,6 +849,90 @@ class TestUpdateReplacement:
 # ---------------------------------------------------------------------------
 
 
+class TestUpdateRestartHandling:
+    """Config-only updates restart correctly and cannot pass on a stale server."""
+
+    def test_config_change_starts_a_stopped_instance(self, capsys: Any) -> None:
+        """A config-only update starts a stopped instance instead of rebooting."""
+        existing_config = _make_existing_config(ember_version="0.11.0", generation=1)
+        clients = _make_clients(
+            ssm_params={
+                "/ember/default/config": existing_config,
+                "/ember/default/server-token": "tok",
+            },
+            instance_state="stopped",
+        )
+        ts = _make_tailscale()
+        lc = _make_lifecycle(clients, ts)
+
+        from ember_aws.deployment import Deployment
+
+        deployment = Deployment(name="default", model="flash")
+
+        with (
+            patch("ember_aws.lifecycle.Stack") as mock_stack_cls,
+            patch("ember_aws.lifecycle_update.Stack") as mock_update_stack_cls,
+            patch("ember_aws.lifecycle_update.probe_health", return_value=None),
+            patch("ember_aws.lifecycle_update.wait_healthy") as mock_health,
+        ):
+            mock_stack = MagicMock()
+            mock_stack.exists.return_value = True
+            mock_stack.update.return_value = False
+            mock_stack.update_has_replacement.return_value = False
+            mock_stack.outputs.return_value = {"InstanceId": "i-0001"}
+            mock_stack_cls.return_value = mock_stack
+            mock_update_stack_cls.return_value = mock_stack
+            mock_health.return_value = {
+                "engine": {"device": "cuda"},
+                "version": "0.11.0",
+            }
+
+            lc.deploy(deployment)
+
+        clients.ec2.start_instances.assert_called_once_with(InstanceIds=["i-0001"])
+        clients.ec2.reboot_instances.assert_not_called()
+        ts.mint_join_key.assert_called_once()
+
+    def test_wait_healthy_receives_the_pre_restart_pid(self, capsys: Any) -> None:
+        """The health wait knows the pid the running server had before."""
+        existing_config = _make_existing_config(ember_version="0.11.0", generation=1)
+        clients = _make_clients(
+            ssm_params={
+                "/ember/default/config": existing_config,
+                "/ember/default/server-token": "tok",
+            }
+        )
+        ts = _make_tailscale()
+        lc = _make_lifecycle(clients, ts)
+
+        from ember_aws.deployment import Deployment
+
+        deployment = Deployment(name="default", model="flash")
+
+        with (
+            patch("ember_aws.lifecycle.Stack") as mock_stack_cls,
+            patch("ember_aws.lifecycle_update.Stack") as mock_update_stack_cls,
+            patch("ember_aws.lifecycle_update.probe_health") as mock_probe,
+            patch("ember_aws.lifecycle_update.wait_healthy") as mock_health,
+        ):
+            mock_stack = MagicMock()
+            mock_stack.exists.return_value = True
+            mock_stack.update.return_value = False
+            mock_stack.update_has_replacement.return_value = False
+            mock_stack.outputs.return_value = {"InstanceId": "i-0001"}
+            mock_stack_cls.return_value = mock_stack
+            mock_update_stack_cls.return_value = mock_stack
+            mock_probe.return_value = {"pid": 4242}
+            mock_health.return_value = {
+                "engine": {"device": "cuda"},
+                "version": "0.11.0",
+            }
+
+            lc.deploy(deployment)
+
+        assert mock_health.call_args.kwargs["previous_pid"] == 4242
+
+
 class TestReplace:
     """replace(): new AMI, forced replacement, devices+key first, wait."""
 
@@ -937,6 +1021,45 @@ class TestReplace:
         assert written["model_s3_uri"] == _FLASH_S3_URI
         params = mock_stack.prepare_change_set.call_args.args[0]
         assert params["InstanceType"] == "g5.2xlarge"
+
+    def test_replace_no_op_when_ami_is_unchanged(self, capsys: Any) -> None:
+        """An empty replace change set leaves devices, key, and config alone."""
+        existing_config = _make_existing_config(generation=3)
+        clients = _make_clients(
+            ssm_params={
+                "/ember/default/config": existing_config,
+                "/ember/default/server-token": "tok",
+            },
+            stack_params={"InstanceType": "g6e.xlarge"},
+        )
+        ts = _make_tailscale()
+        lc = _make_lifecycle(clients, ts)
+
+        from ember_aws.deployment import Deployment
+
+        deployment = Deployment(name="default", model="flash")
+
+        with (
+            patch("ember_aws.lifecycle.Stack") as mock_stack_cls,
+            patch("ember_aws.lifecycle_update.Stack") as mock_update_stack_cls,
+            patch("ember_aws.lifecycle_update.wait_healthy") as mock_health,
+        ):
+            mock_stack = MagicMock()
+            mock_stack.resolve_image_id.return_value = "ami-same"
+            mock_stack.prepare_change_set.return_value = None
+            mock_stack_cls.return_value = mock_stack
+            mock_update_stack_cls.return_value = mock_stack
+
+            lc.replace(deployment)
+
+        ts.delete_devices.assert_not_called()
+        ts.mint_join_key.assert_not_called()
+        written = clients.ssm.get_parameter(Name="/ember/default/config")["Parameter"][
+            "Value"
+        ]
+        assert json.loads(written)["generation"] == 3
+        assert "nothing to replace" in capsys.readouterr().out
+        mock_health.assert_not_called()
 
     def test_replace_deletes_devices_before_update(self, capsys: Any) -> None:
         """replace() must delete tailnet devices before executing the change set."""
