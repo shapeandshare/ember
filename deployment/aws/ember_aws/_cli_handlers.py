@@ -165,7 +165,14 @@ def handle_cache_list(args: argparse.Namespace, factory: FactoryCallable) -> int
         for item in items:
             rev = item.get("revision", "?")
             status = item.get("status", "?")
-            print(f"{item['model']}@{rev} ({status})")
+            line = f"{item['model']}@{rev} ({status})"
+            total_bytes = item.get("total_bytes")
+            if total_bytes:
+                line += f" {total_bytes / 2**30:.1f} GiB"
+            deployments = item.get("deployments") or []
+            if deployments:
+                line += f" - used by: {', '.join(deployments)}"
+            print(line)
         return 0
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)

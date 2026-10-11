@@ -638,6 +638,78 @@ def test_cache_destroy_with_explicit_bucket_keeps_the_managed_stack() -> None:
 
 
 # ---------------------------------------------------------------------------
+# cache list — partial uploads, sizes, and deployments
+# ---------------------------------------------------------------------------
+
+
+def test_cache_list_shows_partial_prefixes_without_a_manifest() -> None:
+    """A prefix with objects but no manifest lists as partial, not absent."""
+    cfn = _make_cfn_client(cache_stack_exists=True)
+    s3 = _make_s3_client()
+    s3.list_objects_v2.return_value = {
+        "Contents": [{"Key": "models/flash/revX/model.safetensors"}],
+        "IsTruncated": False,
+    }
+    clients = _make_aws_clients(s3=s3, cfn=cfn)
+
+    cache = ModelCache(clients=clients)
+    results = cache.list(bucket=_BUCKET, prefix=_PREFIX)
+
+    assert len(results) == 1
+    assert results[0]["model"] == "flash"
+    assert results[0]["revision"] == "revX"
+    assert results[0]["status"] == "partial"
+
+
+def test_cache_list_includes_size_and_deployments() -> None:
+    """Each entry carries the manifest's total_bytes and the deployments using it."""
+    manifest = {
+        "model": "flash",
+        "revision": "revX",
+        "files": [],
+        "total_bytes": 18 * 2**30,
+    }
+    manifest_bytes = json.dumps(manifest).encode()
+    objects = {"models/flash/revX/manifest.json": manifest_bytes}
+    cfn = _make_cfn_client(
+        cache_stack_exists=True,
+        deployment_stacks=[
+            {"StackName": "ember-default", "StackStatus": "CREATE_COMPLETE"}
+        ],
+    )
+    s3 = _make_s3_client(objects=objects)
+    s3.list_objects_v2.return_value = {
+        "Contents": [
+            {"Key": "models/flash/revX/manifest.json"},
+            {"Key": "models/flash/revX/model.safetensors"},
+        ],
+        "IsTruncated": False,
+    }
+    ssm = MagicMock()
+    ssm.get_parameter.return_value = {
+        "Parameter": {
+            "Value": json.dumps(
+                {
+                    "ember_version": "0.12.0",
+                    "model_s3_uri": f"s3://{_BUCKET}/models/flash/revX",
+                    "max_request_length": 24576,
+                    "idle_minutes": 0,
+                    "generation": 1,
+                }
+            )
+        }
+    }
+    clients = _make_aws_clients(s3=s3, cfn=cfn)
+    clients.ssm = ssm
+
+    cache = ModelCache(clients=clients)
+    results = cache.list(bucket=_BUCKET, prefix=_PREFIX)
+
+    assert results[0]["total_bytes"] == 18 * 2**30
+    assert results[0]["deployments"] == ["default"]
+
+
+# ---------------------------------------------------------------------------
 # --bucket/--prefix skips stack creation
 # ---------------------------------------------------------------------------
 

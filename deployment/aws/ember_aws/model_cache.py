@@ -10,6 +10,7 @@ from typing import Any
 
 from .cache_guard import (
     _CACHE_STACK_NAME,
+    _LIVE_STACK_STATUSES,
     CacheInUseError,
     ConfirmationError,
     check_no_deployments,
@@ -208,7 +209,11 @@ class ModelCache:
         bucket: str | None = None,
         prefix: str = "models/",
     ) -> list[dict[str, Any]]:
-        """List cached models in the S3 bucket.
+        """List cached models with status, size, and using deployments.
+
+        Every ``<model>/<revision>/`` prefix that holds objects is listed —
+        including interrupted uploads, which have objects but no manifest and
+        report ``"partial"``.
 
         Parameters
         ----------
@@ -220,8 +225,9 @@ class ModelCache:
         Returns
         -------
         list[dict[str, Any]]
-            One entry per cached model with ``model``, ``revision``,
-            and ``status``.
+            One entry per cached model revision with ``model``,
+            ``revision``, ``status``, ``total_bytes`` (from the manifest, or
+            ``None``), and ``deployments`` (names of deployments using it).
         """
         if bucket is None:
             bucket = self._stack_bucket()
@@ -229,28 +235,79 @@ class ModelCache:
                 return []
 
         resp = self._clients.s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
-        contents = resp.get("Contents", [])
-        manifests = [
-            obj["Key"] for obj in contents if obj["Key"].endswith("/manifest.json")
-        ]
+        pairs: set[tuple[str, str]] = set()
+        for obj in resp.get("Contents", []):
+            parts = obj["Key"][len(prefix) :].split("/")
+            if len(parts) >= 3 and parts[0] and parts[1]:
+                pairs.add((parts[0], parts[1]))
 
+        deployments_by_uri = self._deployments_by_uri()
         results: list[dict[str, Any]] = []
-        for manifest_key in manifests:
-            parts = manifest_key[len(prefix) :].split("/")
-            if len(parts) >= 3:
-                model_name = parts[0]
-                rev = parts[1]
-                cache_status = self.status(
-                    model_name, rev, bucket=bucket, prefix=prefix
-                )
-                results.append(
-                    {
-                        "model": model_name,
-                        "revision": rev,
-                        "status": cache_status,
-                    }
-                )
+        for model_name, rev in sorted(pairs):
+            manifest_key = f"{prefix}{model_name}/{rev}/manifest.json"
+            cache_status = self.status(model_name, rev, bucket=bucket, prefix=prefix)
+            if cache_status == "absent":
+                cache_status = "partial"
+            uri = f"s3://{bucket}/{prefix}{model_name}/{rev}".rstrip("/")
+            results.append(
+                {
+                    "model": model_name,
+                    "revision": rev,
+                    "status": cache_status,
+                    "total_bytes": self._manifest_total_bytes(bucket, manifest_key),
+                    "deployments": deployments_by_uri.get(uri, []),
+                }
+            )
         return results
+
+    def _manifest_total_bytes(self, bucket: str, manifest_key: str) -> int | None:
+        """Return the manifest's ``total_bytes``, or ``None`` when unreadable.
+
+        Parameters
+        ----------
+        bucket : str
+            S3 bucket name.
+        manifest_key : str
+            Key of the manifest object.
+
+        Returns
+        -------
+        int | None
+            The recorded total size in bytes, or ``None``.
+        """
+        try:
+            body = self._clients.s3.get_object(Bucket=bucket, Key=manifest_key)
+            manifest = json.loads(body["Body"].read())
+            total = manifest.get("total_bytes")
+            return int(total) if total is not None else None
+        except Exception:
+            return None
+
+    def _deployments_by_uri(self) -> dict[str, list[str]]:
+        """Map each active deployment's model URI to its deployment names.
+
+        Returns
+        -------
+        dict[str, list[str]]
+            Normalized ``model_s3_uri`` → deployment names; unreadable
+            configs are skipped (this backs a listing, not a guard).
+        """
+        by_uri: dict[str, list[str]] = {}
+        stacks = self._clients.cfn.list_stacks(StackStatusFilter=_LIVE_STACK_STATUSES)
+        for stack_summary in stacks.get("StackSummaries", []):
+            stack_name = stack_summary.get("StackName", "")
+            if not stack_name.startswith("ember-") or stack_name == _CACHE_STACK_NAME:
+                continue
+            name = stack_name[len("ember-") :]
+            try:
+                resp = self._clients.ssm.get_parameter(Name=f"/ember/{name}/config")
+                config = json.loads(resp["Parameter"]["Value"])
+            except Exception:  # noqa: S112 - listing skips unreadable configs
+                continue
+            uri = str(config.get("model_s3_uri", "")).rstrip("/")
+            if uri:
+                by_uri.setdefault(uri, []).append(name)
+        return by_uri
 
     def remove(
         self,

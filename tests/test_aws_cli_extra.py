@@ -320,6 +320,32 @@ class TestHandleCacheList:
         assert "flash@rev123" in captured.out
         assert "complete" in captured.out
 
+    def test_prints_size_and_deployments_when_present(self, capsys: Any) -> None:
+        """handle_cache_list() renders the size and using deployments."""
+        from ember_aws._cli_handlers import handle_cache_list
+
+        mc = MagicMock()
+        mc.list.return_value = [
+            {
+                "model": "flash",
+                "revision": "rev123",
+                "status": "complete",
+                "total_bytes": 18 * 2**30,
+                "deployments": ["default"],
+            }
+        ]
+        factory = _make_factory(mc=mc)
+        args = _make_args()
+
+        with patch("ember_aws._cli_handlers._make_clients_and_tailscale") as mock_ct:
+            mock_ct.return_value = (MagicMock(), MagicMock())
+            result = handle_cache_list(args, factory)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "18.0 GiB" in captured.out
+        assert "used by: default" in captured.out
+
     def test_returns_2_on_exception(self) -> None:
         """handle_cache_list() returns 2 on unexpected exceptions."""
         from ember_aws._cli_handlers import handle_cache_list
