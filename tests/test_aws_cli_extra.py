@@ -386,6 +386,42 @@ class TestHandleCacheRm:
 
         assert result == 2
 
+    def test_resolves_the_registry_revision_when_omitted(self) -> None:
+        """handle_cache_rm() resolves --revision from the registry when omitted."""
+        import ember.models as ember_models
+
+        from ember_aws._cli_handlers import handle_cache_rm
+
+        mc = MagicMock()
+        mc.remove.return_value = None
+        factory = _make_factory(mc=mc)
+        args = _make_args(revision=None)
+
+        with patch("ember_aws._cli_handlers._make_clients_and_tailscale") as mock_ct:
+            mock_ct.return_value = (MagicMock(), MagicMock())
+            result = handle_cache_rm(args, factory)
+
+        assert result == 0
+        pinned = ember_models.REGISTRY["flash"].revision or "latest"
+        mc.remove.assert_called_once_with(
+            "flash", pinned, bucket=None, prefix="models/"
+        )
+
+    def test_unknown_model_without_revision_exits_1(self) -> None:
+        """An unpinned model without --revision is an actionable error."""
+        from ember_aws._cli_handlers import handle_cache_rm
+
+        mc = MagicMock()
+        factory = _make_factory(mc=mc)
+        args = _make_args(model="mystery", revision=None)
+
+        with patch("ember_aws._cli_handlers._make_clients_and_tailscale") as mock_ct:
+            mock_ct.return_value = (MagicMock(), MagicMock())
+            result = handle_cache_rm(args, factory)
+
+        assert result == 1
+        mc.remove.assert_not_called()
+
 
 # ---------------------------------------------------------------------------
 # handle_cache_destroy()

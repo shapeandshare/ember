@@ -190,10 +190,23 @@ def handle_cache_rm(args: argparse.Namespace, factory: FactoryCallable) -> int:
     clients, tailscale = _make_clients_and_tailscale(args.region)
     _lcc, _sr, _remote, _lc, mc = factory(clients, tailscale)
 
+    revision = getattr(args, "revision", None)
+    if revision is None:
+        import ember.models as ember_models  # import-placement:allow
+
+        spec = ember_models.REGISTRY.get(args.model)
+        revision = (spec.revision or "latest") if spec is not None else None
+        if revision is None:
+            print(
+                f"error: no pinned revision for model {args.model!r}; pass --revision",
+                file=sys.stderr,
+            )
+            return 1
+
     try:
         mc.remove(
             args.model,
-            args.revision,
+            revision,
             bucket=getattr(args, "bucket", None),
             prefix=getattr(args, "prefix", "models/"),
         )

@@ -101,7 +101,11 @@ def add_cache(sub: Any) -> None:
     rm_p = cache_sub.add_parser("rm", help="Remove a cached model")
     add_common(rm_p)
     rm_p.add_argument("--model", required=True, help="Model key")
-    rm_p.add_argument("--revision", required=True, help="Model revision")
+    rm_p.add_argument(
+        "--revision",
+        default=None,
+        help="Model revision; defaults to the registry's pinned revision",
+    )
     rm_p.add_argument("--bucket", default=None, help="S3 bucket")
     rm_p.add_argument("--prefix", default="models/", help="S3 key prefix")
     rm_p.set_defaults(handler=handle_cache_rm)
