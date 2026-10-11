@@ -2,10 +2,11 @@
 """Render every tracked benchmark bundle into the Jekyll site.
 
 Reads every ``benchmark/<run-id>/model.json``, groups them into a leaderboard
-(``evals.leaderboard.build``: one row per distinct model and deployment, the
-latest run when a pair has been re-run), and writes native site pages under
-``site/results/`` (generated, gitignored, rebuilt by the deploy workflow): a
-leaderboard index at ``/results/`` and, for every leaderboard row, the row's
+(``evals.leaderboard.build``: one table per dataset version, one row per
+model, deployment, and settings, each recipe column from the latest run that
+scored it), and writes native site pages under ``site/results/`` (generated,
+gitignored, rebuilt by the deploy workflow): a leaderboard index at
+``/results/`` and, for every run a row or recipe cell links to, that run's
 full detail report at ``/results/<run-id>/<anchor>/``. Also writes the report
 stylesheet as a site asset and a small data file the navigation and the
 landing page read. The HTML rendering lives here on the website side;
@@ -29,6 +30,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
 from evals import leaderboard  # noqa: E402
+from evals.dataset.recipes import RECIPES, headline_categories  # noqa: E402
 from evals.render import render_html  # noqa: E402
 
 SITE = REPO / "site"
@@ -47,6 +49,15 @@ def _load_models() -> list[dict[str, Any]]:
     return models
 
 
+def _hero_entries() -> list[dict[str, Any]]:
+    """Return the curated hero questions (``site/_data/hero_questions.json``)."""
+    path = SITE / "_data" / "hero_questions.json"
+    if not path.exists():
+        return []
+    entries: list[dict[str, Any]] = json.loads(path.read_text(encoding="utf-8"))
+    return entries
+
+
 def _page(layout: str, title: str, permalink: str, body: str, extra: str = "") -> str:
     return (
         "---\n"
@@ -63,8 +74,39 @@ def _pct(value: float) -> int:
     return round(value * 100)
 
 
+def _capability(panel: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not panel:
+        return None
+    return {
+        "items": panel["items"],
+        "questions": panel["questions"],
+        "accuracy_pct": _pct(panel["accuracy"]),
+        "accuracy_ci_pct": [_pct(bound) for bound in panel["accuracy_ci"]],
+    }
+
+
+def _complete(model: dict[str, Any]) -> bool:
+    """Whether a run scored every headline recipe itself (no per-recipe assembly)."""
+    categories = model["summary"].get("categories")
+    return categories is None or headline_categories() <= set(categories)
+
+
+def _headline_model(models: list[dict[str, Any]]) -> dict[str, Any]:
+    """Pick the run the landing page quotes: the newest complete one.
+
+    A partial re-run (one recipe) refreshes its leaderboard column but cannot
+    stand in for the whole headline, so the landing page skips it.
+    """
+    complete = [m for m in models if _complete(m)] or models
+    return max(complete, key=lambda m: str(m["meta"].get("run_at", "")))
+
+
 def headline(model: dict[str, Any]) -> dict[str, Any]:
-    """Pick the numbers the landing page shows, rounded for display."""
+    """Pick the numbers the landing page shows, rounded for display.
+
+    The headline is the coding scope (``scope``): the five agent-kit recipes.
+    Vision runs are reported separately as the ``capability`` panel.
+    """
     summary = model["summary"]
     confident = [summary[kind]["acting"] for kind in ("choice", "noul")]
     answered = sum(acting["n"] for acting in confident)
@@ -99,7 +141,43 @@ def headline(model: dict[str, Any]) -> dict[str, Any]:
             "p95_s": f"{model['latency']['p95'] / 1000:.2f}",
         },
         "host": model["meta"]["host"]["cpu"],
+        "scope": "coding",
+        "capability": _capability(summary.get("capability")),
     }
+
+
+def hero_questions(
+    model: dict[str, Any], entries: list[dict[str, Any]]
+) -> list[dict[str, str]]:
+    """Fill the landing page's hero questions with the run's own answers.
+
+    Each curated entry names a benchmark item, one of its questions, and the
+    answer its wording assumes (``expect``). An entry is kept only when the
+    run answered that question correctly and with that answer, so the hero
+    never shows a number the model did not produce. ``{p}`` in ``detail``
+    becomes the model's confidence in its answer, as a whole percentage.
+    """
+    items = {item["id"]: item for item in model["items"]}
+    shown = []
+    for entry in entries:
+        item = items.get(entry["id"])
+        answer = item["questions"].get(entry["question"]) if item else None
+        if (
+            not answer
+            or not answer["correct"]
+            or answer["predicted"] != entry["expect"]
+        ):
+            continue
+        shown.append(
+            {
+                "ask": entry["ask"],
+                "verdict": entry["verdict"],
+                "detail": entry["detail"].replace(
+                    "{p}", str(_pct(answer["confidence"]))
+                ),
+            }
+        )
+    return shown
 
 
 def _version_cell(row: dict[str, Any]) -> str:
@@ -111,34 +189,86 @@ def _version_cell(row: dict[str, Any]) -> str:
     return escape(version) if version else "not recorded"
 
 
+def _run_url(run_id: str) -> str:
+    return f"{{{{ '/results/{run_id}/summary/' | relative_url }}}}"
+
+
+def _headline_cell(row: dict[str, Any]) -> str:
+    recipes = row.get("recipes") or {}
+    if row.get("incomplete") or row.get("accuracy") is None:
+        missing = ", ".join(sorted(headline_categories() - set(recipes)))
+        return f'<td title="not yet scored: {escape(missing)}">—</td>'
+    text = f"{_pct(row['accuracy'])}%"
+    if row.get("accuracy_ci"):
+        lo, hi = row["accuracy_ci"]
+        text += f" [{_pct(lo)}, {_pct(hi)}]"
+    return f"<td>{text}</td>"
+
+
+def _recipe_cell(row: dict[str, Any], category: str) -> str:
+    column = (row.get("recipes") or {}).get(category)
+    if not column:
+        return "<td>—</td>"
+    link = f'<a href="{_run_url(column["run_id"])}">{_pct(column["accuracy"])}%</a>'
+    return f"<td>{link}</td>"
+
+
+def _risk_cell(row: dict[str, Any]) -> str:
+    blocks = [
+        block
+        for block in (row.get("risk") or {}).values()
+        if block.get("dangerous_recall_at_threshold") is not None
+    ]
+    if not blocks:
+        return "<td>—</td>"
+    worst = min(blocks, key=lambda block: block["dangerous_recall_at_threshold"])
+    text = f"{_pct(worst['dangerous_recall_at_threshold'])}%"
+    if any(block.get("met") is False for block in blocks):
+        text += " (not met)"
+    missed = sum(int(block.get("missed_dangers") or 0) for block in blocks)
+    return f'<td title="{missed} dangerous options missed">{text}</td>'
+
+
 def _leaderboard_table_html(rows: list[dict[str, Any]]) -> str:
+    categories = [
+        c for c in RECIPES if any(c in (r.get("recipes") or {}) for r in rows)
+    ]
+    recipe_headers = "".join(f"<th>{escape(RECIPES[c].title)}</th>" for c in categories)
     header = (
         "<tr><th>Model</th><th>Deployment</th><th>Device</th>"
-        "<th>Accuracy</th><th>Items correct</th><th>Latency p50</th>"
+        f"<th>Headline</th><th>Items correct</th>{recipe_headers}"
+        "<th>Capability</th><th>Dangerous recall</th><th>Latency p50</th>"
         "<th>ember version</th><th>Run at</th></tr>"
     )
     body_rows = []
     for row in rows:
         model_label = row["model_repo"] or row["model_name"]
         params = f" ({escape(row['params'])})" if row.get("params") else ""
-        deployment = escape(row["deployment_label"] or "?")
-        device = escape(row["device"] or "?")
-        accuracy_lo, accuracy_hi = row["accuracy_ci"]
-        accuracy = (
-            f"{_pct(row['accuracy'])}% [{_pct(accuracy_lo)}, {_pct(accuracy_hi)}]"
+        item_accuracy = (
+            f"{_pct(row['item_accuracy'])}%"
+            if row.get("item_accuracy") is not None
+            else "—"
         )
-        item_accuracy = f"{_pct(row['item_accuracy'])}%"
+        capability = row.get("capability")
+        capability_text = (
+            f"{_pct(capability['accuracy'])}% ({capability['questions']} q)"
+            if capability
+            else "—"
+        )
         latency = (
             f"{row['latency_p50']:.0f} ms" if row["latency_p50"] is not None else "—"
         )
-        run_url = f"{{{{ '/results/{row['run_id']}/summary/' | relative_url }}}}"
         body_rows.append(
             "<tr>"
-            f'<td><a href="{run_url}">{escape(str(model_label))}{params}</a></td>'
-            f"<td>{deployment}</td>"
-            f"<td>{device}</td>"
-            f"<td>{accuracy}</td>"
+            f'<td><a href="{_run_url(row["run_id"])}">'
+            f"{escape(str(model_label))}{params}</a></td>"
+            f"<td>{escape(row['deployment_label'] or '?')}</td>"
+            f"<td>{escape(row['device'] or '?')}</td>"
+            f"{_headline_cell(row)}"
             f"<td>{item_accuracy}</td>"
+            f"{''.join(_recipe_cell(row, c) for c in categories)}"
+            f"<td>{capability_text}</td>"
+            f"{_risk_cell(row)}"
             f"<td>{latency}</td>"
             f"<td>{_version_cell(row)}</td>"
             f"<td>{escape(row['run_at'])}</td>"
@@ -150,15 +280,32 @@ def _leaderboard_table_html(rows: list[dict[str, Any]]) -> str:
     )
 
 
-def _leaderboard_page_body(rows: list[dict[str, Any]]) -> str:
-    if not rows:
+def _version_heading(version: dict[str, Any]) -> str:
+    items = max((row.get("items") or 0 for row in version["rows"]), default=0)
+    count = f" · {items} coding items" if items else ""
+    badge = " <small>(current)</small>" if version.get("newest") else ""
+    digest = escape(str(version["dataset_content_sha256"])[:12])
+    return f"<h2>Dataset <code>{digest}</code>{count}{badge}</h2>"
+
+
+def _leaderboard_page_body(board: dict[str, Any]) -> str:
+    versions = board.get("versions") or []
+    if not any(version["rows"] for version in versions):
         return "<p>No benchmark runs are tracked yet.</p>"
     intro = (
-        "<p>One row per model and deployment combination; re-running the same "
-        "pair replaces its row with the latest result. Each model links to its "
-        "full benchmark report.</p>"
+        "<p>One table per dataset version, newest first; results on different "
+        "versions are not compared. One row per model, deployment, and engine "
+        "settings. The headline covers the five coding recipes and appears once "
+        "every one has been scored; each recipe cell links to the run that "
+        "produced it, and a dash marks a recipe not yet scored on this version. "
+        "Vision is reported separately as capability.</p>"
     )
-    return intro + _leaderboard_table_html(rows)
+    tables = "".join(
+        _version_heading(version) + _leaderboard_table_html(version["rows"])
+        for version in versions
+        if version["rows"]
+    )
+    return intro + tables
 
 
 def _write_run_pages(model: dict[str, Any], run_id: str) -> list[dict[str, Any]]:
@@ -192,6 +339,15 @@ def build() -> int:
     board = leaderboard.build(models)
     rows = board["rows"]
     models_by_run_id = {m["meta"]["run_id"]: m for m in models}
+    linked: list[str] = []
+    for version in board["versions"]:
+        for row in version["rows"]:
+            for run_id in (
+                row["run_id"],
+                *(c["run_id"] for c in row["recipes"].values()),
+            ):
+                if run_id not in linked and run_id in models_by_run_id:
+                    linked.append(run_id)
 
     shutil.rmtree(OUT, ignore_errors=True)
     OUT.mkdir(parents=True)
@@ -204,8 +360,7 @@ def build() -> int:
     )
 
     runs: dict[str, Any] = {}
-    for row in rows:
-        run_id = row["run_id"]
+    for run_id in linked:
         model = models_by_run_id[run_id]
         sections = _write_run_pages(model, run_id)
         runs[run_id] = {
@@ -215,17 +370,21 @@ def build() -> int:
         }
 
     (OUT / "index.md").write_text(
-        _page("leaderboard", "Leaderboard", "/results/", _leaderboard_page_body(rows)),
+        _page("leaderboard", "Leaderboard", "/results/", _leaderboard_page_body(board)),
         encoding="utf-8",
     )
 
-    top_model = models_by_run_id[rows[0]["run_id"]] if rows else None
+    # The landing page shows the newest complete run, not the most accurate
+    # one: a rerun on a grown benchmark must replace the old figures, never
+    # hide behind a smaller, easier run.
+    newest = _headline_model(models)
     (SITE / "_data" / "benchmark.json").write_text(
         json.dumps(
             {
-                "leaderboard": {"rows": rows},
+                "leaderboard": {"versions": board["versions"], "rows": rows},
                 "runs": runs,
-                "headline": headline(top_model) if top_model is not None else None,
+                "headline": headline(newest),
+                "hero": hero_questions(newest, _hero_entries()),
             },
             indent=2,
         )
@@ -233,7 +392,8 @@ def build() -> int:
         encoding="utf-8",
     )
     print(
-        f"benchmark site: {len(rows)} leaderboard rows, "
+        f"benchmark site: {len(board['versions'])} dataset versions, "
+        f"{sum(len(v['rows']) for v in board['versions'])} leaderboard rows, "
         f"{sum(len(r['sections']) for r in runs.values())} total sections "
         "-> site/results/"
     )
