@@ -615,6 +615,40 @@ def test_template_body_size_within_cfn_limit() -> None:
     )
 
 
+def test_rendered_user_data_parses_as_cloud_config() -> None:
+    """The rendered user data must be valid cloud-config YAML.
+
+    Cloud-init rejects an invalid blob entirely ("Failed at merging in cloud
+    config part: empty cloud config"), so no packages, runcmd, or units run —
+    this happened live when heredoc bodies in cloud-init.yaml were not
+    indented inside their block scalars.
+    """
+    import sys
+
+    sys.path.insert(0, str(_REPO / "deployment" / "aws"))
+    from ember_aws.instance_config import InstanceConfig
+    from ember_aws.names import DeploymentName
+    from ember_aws.user_data import UserData
+
+    names = DeploymentName(name=_TEST_NAME)
+    config = InstanceConfig(
+        ember_version=_TEST_VERSION,
+        model_s3_uri=_TEST_S3_URI,
+        max_request_length=int(_TEST_MAX_REQUEST_LENGTH),
+        idle_minutes=0,
+        generation=1,
+    )
+    rendered = UserData.render(
+        names=names,
+        region=_TEST_REGION,
+        config=config,
+        tailscale_tag=_TEST_TAG,
+    )
+    parsed = yaml.safe_load(rendered)
+    assert isinstance(parsed, dict), "user data must parse as a cloud-config map"
+    assert isinstance(parsed.get("runcmd"), list), "user data must keep its runcmd"
+
+
 def test_template_body_parses_as_yaml() -> None:
     """template_body() result must parse as valid YAML."""
     import sys
@@ -642,6 +676,8 @@ def test_template_body_parses_as_yaml() -> None:
     # Must parse without error
     parsed = yaml.load(body, Loader=_CfnLoader)  # type: ignore[arg-type]  # noqa: S506
     assert parsed is not None, "template_body() result must parse as YAML"
+    user_data = parsed["Resources"]["Instance"]["Properties"]["UserData"]
+    assert user_data["Fn::Base64"] == rendered, "UserData must round-trip unchanged"
 
 
 def test_template_body_no_placeholder_remaining() -> None:
