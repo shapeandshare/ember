@@ -101,9 +101,16 @@ def test_systemone_covers_all_supported_question_types(base_url: str) -> None:
     assert 0.0 <= severity["score"] <= 3.0
     assert set(severity["legend"]) == {"0", "1", "2", "3"}
 
-    # envelope
-    assert body["usage"]["output_tokens"] == 0
-    assert body["usage"]["input_tokens"] > 0
+    # envelope, including the token split (specs/004 FR-009)
+    usage = body["usage"]
+    assert usage["output_tokens"] == 0
+    assert usage["input_tokens"] > 0
+    assert usage["media_tokens"] == 0
+    assert usage["state_tokens"] > 0
+    assert (
+        usage["state_tokens"] + usage["fixed_tokens"] + usage["media_tokens"]
+        == (usage["input_tokens"])
+    )
     assert body["latency_ms"] > 0
 
 
