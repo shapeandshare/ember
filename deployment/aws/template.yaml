@@ -81,7 +81,7 @@ Resources:
   InstanceRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "ember-${DeploymentName}"
+      RoleName: !Sub "ember-${DeploymentName}-${AWS::Region}"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -137,7 +137,7 @@ Resources:
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
-      InstanceProfileName: !Sub "ember-${DeploymentName}"
+      InstanceProfileName: !Sub "ember-${DeploymentName}-${AWS::Region}"
       Roles:
         - !Ref InstanceRole
 

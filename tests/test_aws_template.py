@@ -207,6 +207,20 @@ def test_iam_resources_scoped() -> None:
                 )
 
 
+def test_iam_names_are_region_scoped() -> None:
+    """RoleName and InstanceProfileName embed the region (account-global names)."""
+    tmpl = _load(_TEMPLATE)
+    role_name = str(_props(tmpl, "InstanceRole").get("RoleName", ""))
+    profile_name = str(_props(tmpl, "InstanceProfile").get("InstanceProfileName", ""))
+
+    assert "AWS::Region" in role_name, (
+        "the IAM role name must include the region: IAM names are account-global"
+    )
+    assert "AWS::Region" in profile_name, (
+        "the instance profile name must include the region"
+    )
+
+
 def test_iam_list_bucket_scoped_to_model_prefix() -> None:
     """s3:ListBucket carries an s3:prefix condition; object reads stay separate."""
     tmpl = _load(_TEMPLATE)
