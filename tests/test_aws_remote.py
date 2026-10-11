@@ -288,8 +288,29 @@ def test_verify_on_instance_command_is_rerunnable() -> None:
     ]
     assert on_instance_calls
     combined = " ".join(on_instance_calls[0])
-    assert "rm -rf /opt/ember-src" in combined
-    assert combined.index("rm -rf /opt/ember-src") < combined.index("git clone")
+    assert "rm -rf /home/ember/ember-src" in combined
+    assert combined.index("rm -rf /home/ember/ember-src") < combined.index("git clone")
+
+
+def test_verify_on_instance_clones_into_the_ember_home() -> None:
+    """verify() clones into an ember-owned directory, not root-owned /opt."""
+    calls, runner = _capture_runner()
+    remote = Remote(_names("default"), runner=runner)
+
+    remote.verify(
+        ember_version=_EMBER_VERSION,
+        model_s3_uri=_MODEL_S3_URI,
+        server_url=_SERVER_URL,
+        token=_TOKEN,
+    )
+
+    on_instance_calls = [
+        argv for argv, _ in calls if "tailscale" in argv[0] and "ember@" in argv[2]
+    ]
+    assert on_instance_calls
+    combined = " ".join(on_instance_calls[0])
+    assert "/home/ember/ember-src" in combined
+    assert "/opt/ember-src" not in combined
 
 
 def test_verify_on_instance_links_hosted_cache_for_tests() -> None:
@@ -421,10 +442,52 @@ def test_verify_operator_eval_run_argv() -> None:
 
 
 def test_verify_operator_eval_report_compare(tmp_path: Path) -> None:
-    """verify() calls ember eval report --compare against the newest MPS bundle."""
+    """verify() compares the CUDA run against the newest MPS bundle."""
     bundle = tmp_path / "run-001"
     bundle.mkdir()
     (bundle / "results.json").write_text("{}")
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
+
+    calls: list[Any] = []
+
+    def runner(argv: list[str], **kwargs: Any) -> None:
+        calls.append((argv, kwargs))
+        if "eval" in argv and "run" in argv:
+            (results_dir / "cuda_results.json").write_text("{}")
+
+    remote = Remote(_names("default"), runner=runner)
+
+    remote.verify(
+        ember_version=_EMBER_VERSION,
+        model_s3_uri=_MODEL_S3_URI,
+        server_url=_SERVER_URL,
+        token=_TOKEN,
+        benchmark_dir=tmp_path,
+        results_dir=results_dir,
+    )
+
+    compare_calls = [
+        argv
+        for argv, _ in calls
+        if len(argv) >= 5
+        and "eval" in argv
+        and "report" in argv
+        and "--compare" in argv
+    ]
+    assert compare_calls, "expected ember eval report --compare call"
+    argv = compare_calls[0]
+    assert argv[-2] == str(bundle / "results.json")
+    assert argv[-1] == str(results_dir / "cuda_results.json")
+
+
+def test_verify_report_skipped_without_a_new_cuda_result(tmp_path: Path) -> None:
+    """verify() skips the comparison when the run wrote no new results file."""
+    bundle = tmp_path / "run-001"
+    bundle.mkdir()
+    (bundle / "results.json").write_text("{}")
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
 
     calls, runner = _capture_runner()
     remote = Remote(_names("default"), runner=runner)
@@ -435,18 +498,12 @@ def test_verify_operator_eval_report_compare(tmp_path: Path) -> None:
         server_url=_SERVER_URL,
         token=_TOKEN,
         benchmark_dir=tmp_path,
+        results_dir=results_dir,
     )
 
-    report_calls = [
-        argv
-        for argv, _ in calls
-        if len(argv) >= 3
-        and "ember" in argv[0]
-        and "eval" in argv
-        and "report" in argv
-        and "--compare" in argv
-    ]
-    assert report_calls, "expected ember eval report --compare call"
+    assert not [
+        argv for argv, _ in calls if "report" in argv and "--compare" in argv
+    ], "no comparison is possible without the CUDA run's results file"
 
 
 def test_verify_never_uses_shell() -> None:

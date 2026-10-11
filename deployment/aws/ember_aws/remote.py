@@ -27,8 +27,8 @@ _Runner = Callable[..., Any]
 #: ember GitHub repository URL.
 _EMBER_REPO = "https://github.com/shapeandshare/ember"
 
-#: Clone destination on the instance.
-_INSTANCE_CLONE_DIR = "/opt/ember-src"
+#: Clone destination on the instance (owned by the ember SSH user).
+_INSTANCE_CLONE_DIR = "/home/ember/ember-src"
 
 #: ember user home directory on the instance.
 _EMBER_HOME = "/home/ember"
@@ -52,6 +52,48 @@ def _model_cache_dir(model_s3_uri: str) -> str:
     """
     uri_hash = hashlib.sha256(model_s3_uri.encode()).hexdigest()[:16]
     return f"{_EMBER_HOME}/.cache/ember/hosted-models/{uri_hash}"
+
+
+def _result_names(results_dir: Path) -> set[str]:
+    """Return the names of the ``*_results.json`` files in ``results_dir``.
+
+    Parameters
+    ----------
+    results_dir : Path
+        The results directory to scan.
+
+    Returns
+    -------
+    set[str]
+        File names present, empty when the directory is absent.
+    """
+    if not results_dir.is_dir():
+        return set()
+    return {p.name for p in results_dir.glob("*_results.json")}
+
+
+def _newest_unseen_results(results_dir: Path, before: set[str]) -> Path | None:
+    """Return the newest results file not present before the run, or ``None``.
+
+    Parameters
+    ----------
+    results_dir : Path
+        The results directory to scan.
+    before : set[str]
+        Result file names that existed before ``ember eval run``.
+
+    Returns
+    -------
+    Path | None
+        The run's own results file, or ``None`` when none appeared.
+    """
+    if not results_dir.is_dir():
+        return None
+    candidates = sorted(
+        (p for p in results_dir.glob("*_results.json") if p.name not in before),
+        key=lambda p: p.stat().st_mtime,
+    )
+    return candidates[-1] if candidates else None
 
 
 def _newest_mps_bundle(benchmark_dir: Path) -> Path | None:
@@ -159,6 +201,7 @@ class Remote:
         server_url: str,
         token: str,
         benchmark_dir: Path | None = None,
+        results_dir: Path | None = None,
     ) -> None:
         """Run the CUDA verification gate (T041).
 
@@ -191,6 +234,9 @@ class Remote:
         benchmark_dir : Path | None, optional
             Directory containing tracked MPS benchmark bundles.  Defaults to
             ``<repo-root>/benchmark/``.
+        results_dir : Path | None, optional
+            Directory ``ember eval run`` writes ``*_results.json`` into.
+            Defaults to ``<repo-root>/results/``.
         """
         cache_dir = _model_cache_dir(model_s3_uri)
         on_instance_cmd = (
@@ -217,6 +263,9 @@ class Remote:
 
         ember_bin = shutil.which("ember") or sys.executable
         child_env = {"EMBER_SERVER_URL": server_url, "EMBER_AUTH_TOKEN": token}
+        if results_dir is None:
+            results_dir = Path(__file__).resolve().parents[3] / "results"
+        before = _result_names(results_dir)
         self._runner(
             [ember_bin, "eval", "run"],
             shell=False,
@@ -227,9 +276,22 @@ class Remote:
         if benchmark_dir is None:
             benchmark_dir = Path(__file__).resolve().parents[3] / "benchmark"
         newest = _newest_mps_bundle(benchmark_dir)
-        if newest is not None:
+        cuda_result = _newest_unseen_results(results_dir, before)
+        if newest is not None and cuda_result is not None:
             self._runner(
-                [ember_bin, "eval", "report", "--compare", str(newest)],
+                [
+                    ember_bin,
+                    "eval",
+                    "report",
+                    "--compare",
+                    str(newest),
+                    str(cuda_result),
+                ],
                 shell=False,
                 check=True,
+            )
+        else:
+            print(
+                "  verify: skipping the report comparison"
+                " (need the newest MPS bundle and the CUDA run's results)"
             )
