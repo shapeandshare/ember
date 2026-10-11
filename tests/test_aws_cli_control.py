@@ -103,7 +103,9 @@ def _make_control_factory(
     sr = status_reader or FakeStatusReader()
     rm = remote or FakeRemote()
 
-    def factory(clients: Any, tailscale: Any) -> tuple[Any, Any, Any, Any, Any]:
+    def factory(
+        clients: Any, tailscale: Any, name: Any = None
+    ) -> tuple[Any, Any, Any, Any, Any]:
         return lcc, sr, rm, MagicMock(), MagicMock()
 
     return factory, lcc, sr, rm
@@ -621,7 +623,7 @@ class TestDestroyCLI:
             lcc_inner.destroy = _guard_destroy  # type: ignore[method-assign]
 
             def _factory(
-                clients: Any, tailscale: Any
+                clients: Any, tailscale: Any, name: Any = None
             ) -> tuple[Any, Any, Any, Any, Any]:
                 return lcc_inner, MagicMock(), MagicMock(), MagicMock(), MagicMock()
 

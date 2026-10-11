@@ -46,9 +46,9 @@ from .tailscale_client import TailscaleClient, TailscaleError
 #: Path to sizing.json relative to this file.
 _SIZING_JSON_PATH: Path = Path(__file__).parent.parent / "sizing.json"
 
-#: A factory callable that returns
+#: A factory callable — ``(clients, tailscale, name=None)`` — that returns
 #: (LifecycleControl, StatusReader, Remote, Lifecycle, ModelCache).
-FactoryCallable = Callable[[Any, Any], tuple[Any, Any, Any, Any, Any]]
+FactoryCallable = Callable[..., tuple[Any, Any, Any, Any, Any]]
 
 
 def _make_clients(region: str) -> AwsClients:
@@ -81,7 +81,9 @@ def _make_tailscale() -> TailscaleClient | None:
         return None
 
 
-def _default_factory(clients: Any, tailscale: Any) -> tuple[Any, Any, Any, Any, Any]:
+def _default_factory(
+    clients: Any, tailscale: Any, name: str | None = None
+) -> tuple[Any, Any, Any, Any, Any]:
     """Build the real control objects for all subcommands.
 
     Parameters
@@ -90,6 +92,9 @@ def _default_factory(clients: Any, tailscale: Any) -> tuple[Any, Any, Any, Any, 
         An :class:`~ember_aws.aws_clients.AwsClients` instance.
     tailscale : Any
         A :class:`~ember_aws.tailscale_client.TailscaleClient` or ``None``.
+    name : str | None
+        Deployment name for the :class:`~ember_aws.remote.Remote`; ``None``
+        (commands that do not use it) falls back to ``"default"``.
 
     Returns
     -------
@@ -102,8 +107,7 @@ def _default_factory(clients: Any, tailscale: Any) -> tuple[Any, Any, Any, Any, 
     lcc = LifecycleControl(clients=clients, tailscale=tailscale)
     sizing = SizingTable.load(_SIZING_JSON_PATH)
     sr = StatusReader(clients=clients, tailscale=tailscale, sizing=sizing)
-    _placeholder = DeploymentName(name="default")
-    remote = Remote(names=_placeholder)
+    remote = Remote(names=DeploymentName(name=name or "default"))
     return lcc, sr, remote, lc, mc
 
 

@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -25,7 +27,9 @@ def _make_factory(
     _lc = lc or MagicMock()
     _mc = mc or MagicMock()
 
-    def factory(clients: Any, tailscale: Any) -> tuple[Any, Any, Any, Any, Any]:
+    def factory(
+        clients: Any, tailscale: Any, name: Any = None
+    ) -> tuple[Any, Any, Any, Any, Any]:
         return _lcc, _sr, _remote, _lc, _mc
 
     return factory
@@ -78,7 +82,7 @@ class TestMainBuild:
         from ember_aws.__main__ import build
 
         def fake_factory(
-            clients: Any, tailscale: Any
+            clients: Any, tailscale: Any, name: Any = None
         ) -> tuple[Any, Any, Any, Any, Any]:
             return MagicMock(), MagicMock(), MagicMock(), MagicMock(), MagicMock()
 
@@ -944,6 +948,44 @@ class TestHandleLogs:
             result = handle_logs(args, factory)
 
         assert result == 2
+
+
+@pytest.mark.parametrize("handler_name", ["handle_logs", "handle_ssh"])
+def test_remote_handlers_pass_the_parsed_deployment_name(
+    handler_name: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """handle_logs/handle_ssh give the factory the parsed deployment name."""
+    import argparse
+
+    from ember_aws import _cli_handlers_control
+
+    seen_names: list[Any] = []
+
+    def factory(clients: Any, tailscale: Any, name: Any = None) -> Any:
+        seen_names.append(name)
+        return MagicMock(), MagicMock(), MagicMock(), MagicMock(), MagicMock()
+
+    args = argparse.Namespace(name="team-a", unit="ember", follow=False)
+    monkeypatch.setattr(
+        _cli_handlers_control,
+        "_make_clients_and_tailscale",
+        lambda region: (MagicMock(), MagicMock()),
+    )
+
+    handler = getattr(_cli_handlers_control, handler_name)
+    result = handler(args, factory)
+
+    assert result == 0
+    assert seen_names == ["team-a"]
+
+
+def test_default_factory_binds_remote_to_the_deployment_name() -> None:
+    """The real factory builds the Remote for the named deployment."""
+    from ember_aws.__main__ import _default_factory
+
+    _, _, remote, _, _ = _default_factory(MagicMock(), MagicMock(), "team-a")
+
+    assert remote._names.name == "team-a"
 
 
 # ---------------------------------------------------------------------------

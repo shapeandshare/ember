@@ -113,7 +113,9 @@ def _make_factory(
     # Attach preflight to lifecycle so handle_preflight can find it.
     lc._preflight = pf  # type: ignore[attr-defined]
 
-    def factory(clients: Any, tailscale: Any) -> tuple[Any, Any, Any, Any, Any]:
+    def factory(
+        clients: Any, tailscale: Any, name: Any = None
+    ) -> tuple[Any, Any, Any, Any, Any]:
         return MagicMock(), MagicMock(), MagicMock(), lc, mc
 
     return factory, lc, mc, pf

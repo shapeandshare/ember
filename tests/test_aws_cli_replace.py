@@ -9,7 +9,9 @@ from ember_aws.__main__ import build
 
 
 def _factory(lc: MagicMock) -> Any:
-    def factory(clients: Any, tailscale: Any) -> tuple[Any, Any, Any, Any, Any]:
+    def factory(
+        clients: Any, tailscale: Any, name: Any = None
+    ) -> tuple[Any, Any, Any, Any, Any]:
         return MagicMock(), MagicMock(), MagicMock(), lc, MagicMock()
 
     return factory

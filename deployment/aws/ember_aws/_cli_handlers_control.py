@@ -202,7 +202,7 @@ def handle_logs(args: argparse.Namespace, factory: FactoryCallable) -> int:
         Exit code.
     """
     clients, tailscale = _make_clients_and_tailscale(DEFAULT_REGION)
-    _lcc, _sr, remote, _lc, _mc = factory(clients, tailscale)
+    _lcc, _sr, remote, _lc, _mc = factory(clients, tailscale, args.name)
 
     unit = getattr(args, "unit", "ember")
     follow = getattr(args, "follow", False)
@@ -234,7 +234,7 @@ def handle_ssh(args: argparse.Namespace, factory: FactoryCallable) -> int:
         Exit code.
     """
     clients, tailscale = _make_clients_and_tailscale(DEFAULT_REGION)
-    _lcc, _sr, remote, _lc, _mc = factory(clients, tailscale)
+    _lcc, _sr, remote, _lc, _mc = factory(clients, tailscale, args.name)
 
     try:
         remote.ssh()
