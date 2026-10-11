@@ -30,7 +30,8 @@ def cmd_eval_run(args: argparse.Namespace) -> int:
         Exit code from ``run_evals``.
     """
     try:
-        from evals.eval.run_evals import DEFAULT_SERVER, run_evals
+        from evals.eval.client import DEFAULT_SERVER
+        from evals.eval.run_evals import run_evals
     except ImportError as exc:
         raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
 
@@ -40,6 +41,7 @@ def cmd_eval_run(args: argparse.Namespace) -> int:
         category=args.category,
         dry_run=args.dry_run,
         dataset_path=Path(args.dataset),
+        resume=getattr(args, "resume", None),
     )
 
 
@@ -118,6 +120,8 @@ def cmd_eval_snapshot(args: argparse.Namespace) -> int:
         from evals.eval.snapshot_evals import main as snapshot_main
     except ImportError as exc:
         raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
+    if getattr(args, "rebuild", None):
+        return snapshot_main(["--rebuild", str(args.rebuild)])
     argv = [str(args.results_file)] if args.results_file else []
     return snapshot_main(argv)
 
@@ -162,3 +166,42 @@ def cmd_eval_context(args: argparse.Namespace) -> int:
     except ImportError as exc:
         raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
     return context_main(list(args.context_args))
+
+
+def cmd_eval_dataset(args: argparse.Namespace) -> int:
+    """Run a dataset tooling command (``ember eval dataset <subcommand>``).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; ``args.dataset_command`` selects the module and the
+        remaining flags are forwarded to its ``main``.
+
+    Returns
+    -------
+    int
+        Exit code from the module's ``main``.
+    """
+    try:
+        from evals.dataset import card, check, hashes, lint, tiers
+    except ImportError as exc:
+        raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
+    modules = {
+        "lint": lint.main,
+        "card": card.main,
+        "hash": hashes.main,
+        "check": check.main,
+        "tier": tiers.main,
+    }
+    argv: list[str] = []
+    if getattr(args, "benchmark_dir", None):
+        argv += ["--from", str(args.benchmark_dir)]
+    if getattr(args, "dataset", None):
+        argv += ["--dataset", str(args.dataset)]
+    if getattr(args, "enforce_all", False):
+        argv.append("--enforce-all")
+    if getattr(args, "as_json", False):
+        argv.append("--json")
+    if getattr(args, "check", False):
+        argv.append("--check")
+    return modules[args.dataset_command](argv)
