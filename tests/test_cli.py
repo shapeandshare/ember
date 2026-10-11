@@ -761,3 +761,69 @@ def test_uninstall_names_the_uv_tool_to_remove(sandbox, capsys):
     )["project"]["name"]
     assert cli.main(["uninstall"]) == 0
     assert f"uv tool uninstall {name}" in capsys.readouterr().out
+
+
+# ember init: local or remote, chosen explicitly when a person is at the terminal
+
+
+def _answer(monkeypatch, *replies: str) -> None:
+    from ember.commands import agents
+
+    answers = iter(replies)
+    monkeypatch.setattr(agents, "_interactive", lambda: True)
+    monkeypatch.setattr("builtins.input", lambda _prompt="": next(answers))
+
+
+def _opencode_env(sandbox: Path) -> dict[str, str]:
+    config = json.loads((sandbox / "opencode.json").read_text())
+    return config["mcp"]["ember"]["environment"]
+
+
+def test_init_without_a_terminal_defaults_to_local(sandbox):
+    assert cli.main(["init"]) == 0
+    assert _opencode_env(sandbox)["EMBER_AUTOSTART"] == "1"
+
+
+def test_init_asks_and_an_empty_answer_keeps_local(sandbox, monkeypatch):
+    _answer(monkeypatch, "")
+    assert cli.main(["init"]) == 0
+    assert _opencode_env(sandbox)["EMBER_AUTOSTART"] == "1"
+
+
+def test_init_asks_and_remote_records_the_server_url(sandbox, monkeypatch):
+    _answer(monkeypatch, "remote", "https://decisions.example.com")
+    assert cli.main(["init"]) == 0
+    env = _opencode_env(sandbox)
+    assert env["EMBER_SERVER_URL"] == "https://decisions.example.com"
+    assert env["EMBER_AUTOSTART"] == "0"
+
+
+def test_init_local_flag_skips_the_question(sandbox, monkeypatch):
+    _answer(monkeypatch)  # any input() call would raise StopIteration
+    assert cli.main(["init", "--local"]) == 0
+    assert _opencode_env(sandbox)["EMBER_AUTOSTART"] == "1"
+
+
+def test_init_server_url_flag_skips_the_question(sandbox, monkeypatch):
+    _answer(monkeypatch)
+    assert cli.main(["init", "--server-url", "https://decisions.example.com"]) == 0
+    assert _opencode_env(sandbox)["EMBER_SERVER_URL"] == "https://decisions.example.com"
+
+
+def test_init_rejects_local_with_a_server_url(sandbox, capsys):
+    argv = ["init", "--local", "--server-url", "https://decisions.example.com"]
+    assert cli.main(argv) == 1
+    assert "--local or --server-url" in capsys.readouterr().err
+    assert not (sandbox / "opencode.json").exists()
+
+
+def test_init_treats_end_of_input_as_local(sandbox, monkeypatch):
+    from ember.commands import agents
+
+    def _eof(_prompt: str = "") -> str:
+        raise EOFError
+
+    monkeypatch.setattr(agents, "_interactive", lambda: True)
+    monkeypatch.setattr("builtins.input", _eof)
+    assert cli.main(["init"]) == 0
+    assert _opencode_env(sandbox)["EMBER_AUTOSTART"] == "1"

@@ -52,6 +52,54 @@ def cmd_init(args: argparse.Namespace) -> int:
         raise RuntimeError(str(exc)) from exc
 
 
+def _interactive() -> bool:
+    """Return whether a person is at the terminal to answer a question."""
+    return sys.stdin.isatty() and sys.stdout.isatty()
+
+
+def _choose_server_url(args: argparse.Namespace) -> str | None:
+    """Resolve where the agent's advise calls go: this machine or a server.
+
+    Local and remote are equal choices, so ``ember init`` asks when a person
+    is at the terminal and neither ``--local`` nor ``--server-url`` decided
+    it. Without a terminal (scripts, CI) the answer is local, so an
+    unconfigured install stays local-only (constitution Article I).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed ``ember init`` arguments.
+
+    Returns
+    -------
+    str | None
+        The remote server URL, or ``None`` to run the model on this machine.
+
+    Raises
+    ------
+    ValueError
+        If both ``--local`` and ``--server-url`` were given.
+    """
+    server_url: str | None = getattr(args, "server_url", None)
+    if server_url and getattr(args, "local", False):
+        raise ValueError("choose --local or --server-url, not both")
+    if server_url or getattr(args, "local", False) or not _interactive():
+        return server_url
+    print("Where should ember run?")
+    print("  local   on this machine (an Apple Silicon Mac with 32 GB or more)")
+    print("  remote  on a server you or your team runs")
+    try:
+        choice = input("local or remote? [local]: ").strip().lower()
+        if choice not in ("remote", "r"):
+            return None
+        url = input("server URL (for example https://ember.example.com): ").strip()
+    except EOFError:
+        # Closed input (Ctrl-D) is no answer, and no answer means local.
+        print()
+        return None
+    return url or None
+
+
 def _register(args: argparse.Namespace) -> int:
     """Write every registration ``cmd_init`` was asked for.
 
@@ -66,7 +114,7 @@ def _register(args: argparse.Namespace) -> int:
         Always ``0``.
     """
     host, port = host_port(args)
-    server_url = getattr(args, "server_url", None)
+    server_url = _choose_server_url(args)
     auth_header = getattr(args, "auth_header", None)
     autostart = "0" if (args.no_autostart or server_url) else "1"
     scope = "global" if args.global_ else "project"
