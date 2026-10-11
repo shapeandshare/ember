@@ -1,4 +1,4 @@
-## Gut feeling: a local advisor
+## Gut feeling: a decision advisor
 
 This project has an advisor, ember, available as the `ember_advise` MCP
 tool (Claude Code: `mcp__ember__advise`). Consult it at bounded decision points
