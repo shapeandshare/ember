@@ -22,37 +22,11 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
+from evals.eval.report_compare import render_compare  # noqa: E402
+from evals.eval.report_markdown import DASH, ci, num, pct, table  # noqa: E402
 from evals.export import export  # noqa: E402
 
 RESULTS_DIR = REPO_ROOT / "results"
-DASH = "—"
-
-
-def _pct(value: float | None) -> str:
-    return DASH if value is None else f"{value * 100:.1f}%"
-
-
-def _num(value: float | None) -> str:
-    return DASH if value is None else f"{value:.3f}"
-
-
-def _ci(interval: list[float] | None) -> str:
-    if not interval:
-        return DASH
-    return f"[{interval[0] * 100:.1f}, {interval[1] * 100:.1f}]"
-
-
-def _table(headers: list[str], rows: list[list[str]]) -> list[str]:
-    widths = [
-        max([len(h), *(len(row[i]) for row in rows)]) for i, h in enumerate(headers)
-    ]
-
-    def line(cells: list[str]) -> str:
-        padded = (cell.ljust(width) for cell, width in zip(cells, widths, strict=True))
-        return "| " + " | ".join(padded) + " |"
-
-    rule = "| " + " | ".join("-" * width for width in widths) + " |"
-    return [line(headers), rule, *(line(row) for row in rows), ""]
 
 
 def render(data: dict[str, Any]) -> str:
@@ -63,18 +37,24 @@ def render(data: dict[str, Any]) -> str:
     choice, noul, score = summary["choice"], summary["noul"], summary["score"]
 
     out = [f"## ember benchmark: {cfg['run_id']}", ""]
+    # The dataset version is its content hash; pre-Phase-0 runs recorded only
+    # the file hash.
+    version = cfg.get("dataset_content_sha256")
+    dataset_ref = (
+        f"version `{version[:12]}`" if version else f"`{cfg['dataset_sha256'][:12]}`"
+    )
     meta = (
         f"model `{cfg['model']}` · git `{cfg['git_hash']}` · dataset "
-        f"`{cfg['dataset']}` (`{cfg['dataset_sha256'][:12]}`) · split "
+        f"`{cfg['dataset']}` ({dataset_ref}) · split "
         f"{cfg['split'] or 'all'} · {cfg['n_items']} items"
     )
     if cfg["n_errors"]:
         meta += f" · {cfg['n_errors']} errors"
     out += [meta, ""]
     out += [
-        f"**Question accuracy {_pct(overall['accuracy'])}** "
-        f"{_ci(overall['accuracy_ci'])} over {overall['questions']} questions · "
-        f"items fully correct {_pct(overall['item_accuracy'])} of {overall['items']}",
+        f"**Question accuracy {pct(overall['accuracy'])}** "
+        f"{ci(overall['accuracy_ci'])} over {overall['questions']} questions · "
+        f"items fully correct {pct(overall['item_accuracy'])} of {overall['items']}",
         "",
     ]
 
@@ -84,11 +64,11 @@ def render(data: dict[str, Any]) -> str:
             [
                 "choice",
                 str(choice["n"]),
-                _pct(choice["accuracy"]),
-                _ci(choice["accuracy_ci"]),
-                _num(choice["macro_f1"]),
-                _num(choice["ece"]),
-                _num(choice["brier"]),
+                pct(choice["accuracy"]),
+                ci(choice["accuracy_ci"]),
+                num(choice["macro_f1"]),
+                num(choice["ece"]),
+                num(choice["brier"]),
                 DASH,
                 DASH,
             ]
@@ -98,11 +78,11 @@ def render(data: dict[str, Any]) -> str:
             [
                 "noul",
                 str(noul["n"]),
-                _pct(noul["accuracy"]),
-                _ci(noul["accuracy_ci"]),
+                pct(noul["accuracy"]),
+                ci(noul["accuracy_ci"]),
                 DASH,
-                _num(noul["ece"]),
-                _num(noul["brier"]),
+                num(noul["ece"]),
+                num(noul["brier"]),
                 DASH,
                 DASH,
             ]
@@ -112,17 +92,17 @@ def render(data: dict[str, Any]) -> str:
             [
                 "score",
                 str(score["n"]),
-                _pct(score["accuracy"]),
-                _ci(score["accuracy_ci"]),
+                pct(score["accuracy"]),
+                ci(score["accuracy_ci"]),
                 DASH,
                 DASH,
                 DASH,
-                _num(score["rps"]),
-                _num(score["mae"]),
+                num(score["rps"]),
+                num(score["mae"]),
             ]
         )
     out += ["### By question type", ""]
-    out += _table(
+    out += table(
         [
             "Type",
             "N",
@@ -139,7 +119,7 @@ def render(data: dict[str, Any]) -> str:
     if score:
         out += [
             "A score answer counts as correct when its expected score rounds to the "
-            f"gold level; {_pct(score['within_one'])} are within one level.",
+            f"gold level; {pct(score['within_one'])} are within one level.",
             "",
         ]
 
@@ -150,8 +130,8 @@ def render(data: dict[str, Any]) -> str:
             [
                 "choice",
                 "confidence ≥ 0.85",
-                _pct(acting["coverage"]),
-                _pct(acting["accuracy"]),
+                pct(acting["coverage"]),
+                pct(acting["accuracy"]),
             ]
         )
     if noul:
@@ -160,13 +140,13 @@ def render(data: dict[str, Any]) -> str:
             [
                 "noul",
                 "P ≥ 0.80 or P ≤ 0.20",
-                _pct(acting["coverage"]),
-                _pct(acting["accuracy"]),
+                pct(acting["coverage"]),
+                pct(acting["accuracy"]),
             ]
         )
     if rows:
         out += ["### At the agent-kit thresholds", ""]
-        out += _table(
+        out += table(
             ["Answer", "Agent acts when", "Coverage", "Accuracy when acting"], rows
         )
 
@@ -176,24 +156,24 @@ def render(data: dict[str, Any]) -> str:
             q["category"],
             q["type"],
             str(q["n"]),
-            _pct(q["accuracy"]),
-            _num(q.get("brier", q.get("rps"))),
-            _num(q.get("mae")),
+            pct(q["accuracy"]),
+            num(q.get("brier", q.get("rps"))),
+            num(q.get("mae")),
         ]
         for qid, q in summary["questions"].items()
     ]
     out += ["### By question", ""]
-    out += _table(
+    out += table(
         ["Question", "Recipe", "Type", "N", "Accuracy ↑", "Brier / RPS ↓", "MAE ↓"],
         rows,
     )
 
     rows = [
-        [category, str(c["items"]), _pct(c["item_accuracy"]), _pct(c["accuracy"])]
+        [category, str(c["items"]), pct(c["item_accuracy"]), pct(c["accuracy"])]
         for category, c in summary["categories"].items()
     ]
     out += ["### By recipe", ""]
-    out += _table(
+    out += table(
         ["Recipe", "Items", "Items fully correct ↑", "Question accuracy ↑"], rows
     )
 
@@ -204,13 +184,13 @@ def render(data: dict[str, Any]) -> str:
                 [
                     f"{b['low']:.1f}-{b['high']:.1f}",
                     str(b["n"]),
-                    _num(b["confidence"]),
-                    _pct(b["accuracy"]),
+                    num(b["confidence"]),
+                    pct(b["accuracy"]),
                 ]
                 for b in part["reliability"]
             ]
             out += [f"{name}:", ""]
-            out += _table(["Bin", "N", "Mean confidence", "Accuracy"], rows)
+            out += table(["Bin", "N", "Mean confidence", "Accuracy"], rows)
 
     misses = summary["misses"]
     out += [f"### Misses ({len(misses)})", ""]
@@ -221,11 +201,11 @@ def render(data: dict[str, Any]) -> str:
                 m["question"],
                 str(m["gold"]),
                 str(m["predicted"]),
-                _num(m["signal"]),
+                num(m["signal"]),
             ]
             for m in misses
         ]
-        out += _table(
+        out += table(
             ["Item", "Question", "Gold", "Predicted", "Confidence / P / score"], rows
         )
 
@@ -236,74 +216,6 @@ def render(data: dict[str, Any]) -> str:
             f"{latency['p50']:.0f} ms · p95 {latency['p95']:.0f} ms · max "
             f"{latency['max']:.0f} ms*"
         )
-    return "\n".join(out)
-
-
-def _delta(a: float | None, b: float | None, *, percent: bool) -> str:
-    if a is None or b is None:
-        return DASH
-    return f"{(b - a) * 100:+.1f} pts" if percent else f"{b - a:+.3f}"
-
-
-COMPARED = (
-    ("Question accuracy ↑", "overall", "accuracy", True),
-    ("Items fully correct ↑", "overall", "item_accuracy", True),
-    ("choice accuracy ↑", "choice", "accuracy", True),
-    ("choice ECE ↓", "choice", "ece", False),
-    ("choice Brier ↓", "choice", "brier", False),
-    ("noul accuracy ↑", "noul", "accuracy", True),
-    ("noul ECE ↓", "noul", "ece", False),
-    ("noul Brier ↓", "noul", "brier", False),
-    ("score accuracy ↑", "score", "accuracy", True),
-    ("score MAE ↓", "score", "mae", False),
-    ("score RPS ↓", "score", "rps", False),
-)
-
-
-def render_compare(a: dict[str, Any], b: dict[str, Any]) -> str:
-    """Two runs side by side, B minus A."""
-    cfg_a, cfg_b = a["config"], b["config"]
-    sum_a, sum_b = a["summary"], b["summary"]
-    out = [
-        "## ember benchmark: comparison",
-        "",
-        f"A `{cfg_a['run_id']}` (git `{cfg_a['git_hash']}`) · "
-        f"B `{cfg_b['run_id']}` (git `{cfg_b['git_hash']}`)",
-        "",
-    ]
-    if any(
-        cfg_a.get(k) != cfg_b.get(k) for k in ("dataset_sha256", "split", "category")
-    ):
-        out += [
-            "**Warning:** the runs scored different item sets (dataset, split, or "
-            "category differs), so these deltas are not comparable.",
-            "",
-        ]
-    rows = []
-    for label, section, key, percent in COMPARED:
-        value_a = (sum_a.get(section) or {}).get(key)
-        value_b = (sum_b.get(section) or {}).get(key)
-        fmt = _pct if percent else _num
-        rows.append(
-            [
-                label,
-                fmt(value_a),
-                fmt(value_b),
-                _delta(value_a, value_b, percent=percent),
-            ]
-        )
-    for qid in dict.fromkeys([*sum_a["questions"], *sum_b["questions"]]):
-        value_a = sum_a["questions"].get(qid, {}).get("accuracy")
-        value_b = sum_b["questions"].get(qid, {}).get("accuracy")
-        rows.append(
-            [
-                f"{qid} accuracy ↑",
-                _pct(value_a),
-                _pct(value_b),
-                _delta(value_a, value_b, percent=True),
-            ]
-        )
-    out += _table(["Metric", "A", "B", "Δ (B-A)"], rows)
     return "\n".join(out)
 
 
@@ -374,6 +286,7 @@ def _latest() -> Path | None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Render the most recent run, a named run, or a two-run comparison."""
     args = _build_parser().parse_args(argv)
     if args.compare:
         runs = [_read(path) for path in args.compare]

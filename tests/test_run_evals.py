@@ -237,7 +237,13 @@ def test_run_evals_scrubs_the_s3_uri_from_every_trace_line(
                     "probabilities": {"a": 0.9, "b": 0.1},
                 }
             },
-            "usage": {"input_tokens": 10, "output_tokens": 0},
+            "usage": {
+                "input_tokens": 10,
+                "output_tokens": 0,
+                "state_tokens": 2,
+                "fixed_tokens": 8,
+                "media_tokens": 0,
+            },
         }
 
     monkeypatch.setattr(run_evals_module, "_health", fake_health)

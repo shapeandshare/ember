@@ -107,3 +107,106 @@ def test_snapshot_keeps_the_deployment_label_in_committed_results_json(
     out = snapshot_evals.snapshot(real_results)
     committed = json.loads((out / "results.json").read_text(encoding="utf-8"))
     assert committed["config"]["deployment_label"] == "Remote hosted (GPU, CUDA)"
+
+
+# ###########################################################################
+# specs/004 Phase 0: snapshot --rebuild
+# ###########################################################################
+
+
+def _legacy_bundle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, str]:
+    """A pre-Phase-0 bundle: string sources in dataset.jsonl, no tokens, no hashes."""
+    run_id = "clef-flash_20261001T000000Z"
+    bundle = tmp_path / "benchmark" / run_id
+    bundle.mkdir(parents=True)
+    items = [dict(item) for item in ITEMS[:6] + [i for i in ITEMS if "images" in i][:2]]
+    legacy = []
+    for item in items:
+        raw = dict(item)
+        raw["source"] = "skill_md" if raw["id"] == "intent_001" else "curated"
+        legacy.append(raw)
+    (bundle / "dataset.jsonl").write_text(
+        "".join(json.dumps(r) + "\n" for r in legacy), encoding="utf-8"
+    )
+    scored = []
+    for index, item in enumerate(items):
+        result = score_item(item, _answers(item, right=index % 2 == 0))
+        result.update(latency_ms=900.0, model="clef-flash", usage={}, answers={})
+        scored.append(result)
+    (bundle / "trace.jsonl").write_text(
+        "".join(json.dumps(r) + "\n" for r in scored), encoding="utf-8"
+    )
+    old_summary = aggregate(scored)
+    config = {
+        "run_id": run_id,
+        "timestamp": "20261001T000000Z",
+        "git_hash": "abc1234",
+        "model": "clef-flash",
+        "model_spec": {"name": "flash"},
+        "engine": {"device": "mps", "dtype": "float16", "max_length": 262144},
+        "deployment_label": "Local (Apple Silicon, MPS)",
+        "host": {"platform": "macOS", "cpu": "M4", "python": "3.12", "packages": {}},
+        "dataset": "clef-flash.jsonl",
+        "dataset_file": "dataset.jsonl",
+        "dataset_sha256": hashlib.sha256(
+            (bundle / "dataset.jsonl").read_bytes()
+        ).hexdigest(),
+        "trace": "trace.jsonl",
+        "split": None,
+        "category": None,
+        "n_items": len(items),
+        "n_errors": 0,
+        "latency_ms": {"mean": 900.0, "p50": 900.0, "p95": 900.0, "max": 900.0},
+    }
+    (bundle / "results.json").write_text(
+        json.dumps({"config": config, "summary": old_summary}, indent=2),
+        encoding="utf-8",
+    )
+    (bundle / "model.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(snapshot_evals, "BENCHMARK_DIR", tmp_path / "benchmark")
+    return bundle, run_id
+
+
+def test_rebuild_recomputes_the_summary_and_adds_the_phase_0_meta(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from evals.dataset import hashes, io
+
+    bundle, run_id = _legacy_bundle(tmp_path, monkeypatch)
+    before = json.loads((bundle / "results.json").read_text())["summary"]
+    assert snapshot_evals.main(["--rebuild", run_id]) == 0
+    after = json.loads((bundle / "results.json").read_text())
+    assert after["summary"]["categories"] == before["categories"]
+    assert after["summary"]["questions"] == before["questions"]
+    assert after["summary"]["overall"]["items"] == 6
+    assert set(after["summary"]["capability"]["categories"]) <= {"vision_noul"}
+    config = after["config"]
+    items = io.read_items(bundle / "dataset.jsonl", legacy_dataset_version="0" * 64)
+    assert config["dataset_content_sha256"] == hashes.dataset_content_sha256(items)
+    assert config["recipe_sha256"] == hashes.recipe_hashes(items)
+    assert config["register_sha256"] is None
+    assert "server" not in config
+    model = json.loads((bundle / "model.json").read_text())
+    meta = model["meta"]
+    assert meta["dataset_content_sha256"] == config["dataset_content_sha256"]
+    assert meta["recipe_sha256"] == config["recipe_sha256"]
+    assert meta["register_sha256"] is None
+    assert meta["settings"] == {
+        "dtype": "float16",
+        "max_length": 262144,
+        "max_request_length": None,
+    }
+    assert meta["tokens_available"] is False
+    rows = [
+        json.loads(line) for line in (bundle / "trace.jsonl").read_text().splitlines()
+    ]
+    assert all(row["source_kind"] == "authored" for row in rows)
+    assert all("kind" in row and "tier" in row for row in rows)
+
+
+def test_rebuild_requires_the_bundle_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle, run_id = _legacy_bundle(tmp_path, monkeypatch)
+    (bundle / "trace.jsonl").unlink()
+    assert snapshot_evals.main(["--rebuild", run_id]) == 1
