@@ -87,6 +87,21 @@ deployments there. Destroying a deployment never touches this bucket.
   The secret never leaves your machine. The instance only ever sees a
   short-lived, single-use join key that expires in one hour.
 
+- **A Tailscale SSH rule** permitting your user (or `autogroup:admin`) to
+  reach `tag:ember` nodes as root — `make aws-logs`, `make aws-ssh`, and
+  `make aws-verify` all connect over Tailscale SSH. Example policy fragment:
+
+  ```json
+  "ssh": [
+    {
+      "action": "accept",
+      "src": ["autogroup:admin"],
+      "dst": ["tag:ember"],
+      "users": ["root"]
+    }
+  ]
+  ```
+
 - Your machine is on the same tailnet (`tailscale status` shows it connected).
 
 ### Local tooling
@@ -336,6 +351,12 @@ Enable MagicDNS in the Tailscale admin console (DNS page) and re-run.
 **Preflight fails with `✗ gpu-quota`**
 Request "Running On-Demand G and VT instances" quota at the Service Quotas
 console. The preflight output includes the direct link.
+
+**`make aws-logs` says "tailnet policy does not permit you to SSH to this node"**
+Add an `ssh` rule to your tailnet policy accepting your user (or
+`autogroup:admin`) to `tag:ember` with `users: ["root"]` — see the Tailscale
+prerequisites above. The node joined and serves traffic without it; only
+SSH-based commands are denied.
 
 **Deploy fails and the stack rolls back**
 The failed stack stays in `ROLLBACK_COMPLETE`, which blocks changes and
