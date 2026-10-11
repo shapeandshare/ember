@@ -104,6 +104,28 @@ def test_logs_unit_mapping(unit_key: str, expected_unit: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+def test_logs_requests_checked_execution() -> None:
+    """logs() asks the runner to raise when journalctl fails."""
+    calls, runner = _capture_runner()
+    remote = Remote(_names("default"), runner=runner)
+
+    remote.logs(unit="ember", follow=False)
+
+    _, kwargs = calls[0]
+    assert kwargs.get("check") is True
+
+
+def test_ssh_requests_checked_execution() -> None:
+    """ssh() asks the runner to raise when the session fails."""
+    calls, runner = _capture_runner()
+    remote = Remote(_names("default"), runner=runner)
+
+    remote.ssh()
+
+    _, kwargs = calls[0]
+    assert kwargs.get("check") is True
+
+
 def test_logs_follow_builds_full_argv() -> None:
     """logs(unit='ember', follow=True) → exact argv from the contract."""
     calls, runner = _capture_runner()
@@ -441,3 +463,19 @@ def test_verify_never_uses_shell() -> None:
 
     for _, kwargs in calls:
         assert kwargs.get("shell") is not True
+
+
+def test_verify_requests_checked_execution() -> None:
+    """verify() runs every step checked, so failures reach the CLI."""
+    calls, runner = _capture_runner()
+    remote = Remote(_names("default"), runner=runner)
+
+    remote.verify(
+        ember_version=_EMBER_VERSION,
+        model_s3_uri=_MODEL_S3_URI,
+        server_url=_SERVER_URL,
+        token=_TOKEN,
+    )
+
+    assert calls
+    assert all(kwargs.get("check") is True for _, kwargs in calls)

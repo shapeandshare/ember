@@ -137,7 +137,7 @@ class Remote:
         if follow:
             argv.append("-f")
 
-        self._runner(argv, shell=False)
+        self._runner(argv, shell=False, check=True)
 
     def ssh(self) -> None:
         """Open an interactive SSH session on the instance.
@@ -149,7 +149,7 @@ class Remote:
             "ssh",
             f"root@{self._names.hostname}",
         ]
-        self._runner(argv, shell=False)
+        self._runner(argv, shell=False, check=True)
 
     def verify(
         self,
@@ -212,6 +212,7 @@ class Remote:
                 on_instance_cmd,
             ],
             shell=False,
+            check=True,
         )
 
         ember_bin = shutil.which("ember") or sys.executable
@@ -219,6 +220,7 @@ class Remote:
         self._runner(
             [ember_bin, "eval", "run"],
             shell=False,
+            check=True,
             env=child_env,
         )
 
@@ -229,4 +231,5 @@ class Remote:
             self._runner(
                 [ember_bin, "eval", "report", "--compare", str(newest)],
                 shell=False,
+                check=True,
             )
