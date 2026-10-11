@@ -13,6 +13,15 @@ _DLAMI_SSM_PATH = (
 )
 
 
+def _cfn_params(params: dict[str, str]) -> list[dict[str, str]]:
+    """Convert parameter pairs to CloudFormation format, skipping internal keys."""
+    return [
+        {"ParameterKey": k, "ParameterValue": v}
+        for k, v in params.items()
+        if not k.startswith("_")
+    ]
+
+
 class Stack:
     """CloudFormation stack operations for a named ember deployment.
 
@@ -69,9 +78,7 @@ class Stack:
         tags : list[dict[str, str]]
             List of ``{"Key": ..., "Value": ...}`` tag dicts.
         """
-        cfn_params = [
-            {"ParameterKey": k, "ParameterValue": v} for k, v in params.items()
-        ]
+        cfn_params = _cfn_params(params)
         self._clients.cfn.create_stack(
             StackName=self._names.stack_name,
             TemplateBody=self._template_body(params),
@@ -259,9 +266,7 @@ class Stack:
         import uuid  # import-placement:allow
 
         change_set_name = f"ember-update-{uuid.uuid4().hex[:8]}"
-        cfn_params = [
-            {"ParameterKey": k, "ParameterValue": v} for k, v in params.items()
-        ]
+        cfn_params = _cfn_params(params)
         try:
             self._clients.cfn.create_change_set(
                 StackName=self._names.stack_name,
@@ -302,9 +307,7 @@ class Stack:
         import uuid  # import-placement:allow
 
         change_set_name = f"ember-update-{uuid.uuid4().hex[:8]}"
-        cfn_params = [
-            {"ParameterKey": k, "ParameterValue": v} for k, v in params.items()
-        ]
+        cfn_params = _cfn_params(params)
         try:
             self._clients.cfn.create_change_set(
                 StackName=self._names.stack_name,

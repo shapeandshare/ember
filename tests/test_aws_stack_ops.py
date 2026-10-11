@@ -107,6 +107,22 @@ class TestStackCreate:
         param_map = {p["ParameterKey"]: p["ParameterValue"] for p in cfn_params}
         assert param_map["InstanceType"] == "g6e.xlarge"
 
+    def test_create_excludes_internal_keys_from_cfn_parameters(self) -> None:
+        """create() must not send internal _-prefixed keys as CFN parameters.
+
+        The live API rejects unknown parameters with "Parameters:
+        [_template_body] do not exist in the template".
+        """
+        clients = _make_clients()
+        stack = _make_stack(clients)
+        stack.create(
+            params={"InstanceType": "g6e.xlarge", "_template_body": "<template>"},
+            tags=[],
+        )
+        call_kwargs = clients.cfn.create_stack.call_args.kwargs
+        keys = [p["ParameterKey"] for p in call_kwargs["Parameters"]]
+        assert "_template_body" not in keys
+
     def test_create_uses_template_body_from_params(self) -> None:
         """create() uses _template_body from params as the TemplateBody."""
         clients = _make_clients()
@@ -240,6 +256,18 @@ class TestStackUpdate:
         stack = _make_stack(clients)
         with pytest.raises(Exception, match="InsufficientCapabilities"):
             stack.update(params={"InstanceType": "g6e.xlarge"})
+
+    def test_update_excludes_internal_keys_from_cfn_parameters(self) -> None:
+        """update() must not send internal _-prefixed keys as CFN parameters."""
+        clients = _make_clients()
+        mock_waiter = MagicMock()
+        clients.cfn.get_waiter.return_value = mock_waiter
+
+        stack = _make_stack(clients)
+        stack.update(params={"InstanceType": "g6e.xlarge", "_template_body": "<t>"})
+        call_kwargs = clients.cfn.create_change_set.call_args.kwargs
+        keys = [p["ParameterKey"] for p in call_kwargs["Parameters"]]
+        assert "_template_body" not in keys
 
     def test_update_calls_execute_change_set(self) -> None:
         """update() calls execute_change_set when changes are present."""
