@@ -32,7 +32,7 @@
     "dataset": "clef-flash.jsonl",
     "dataset_file": "Cloudflare__clef-flash_20261010T192756Z_dataset.jsonl",
     "dataset_sha256": "fbb98c3516153987634b11d1ac4c9307e56c43a7131e7de598de557e1c48a050",
-    "trace": "Cloudflare__clef-flash_20261010T192756Z_trace.jsonl",
+    "trace": "trace.jsonl",
     "split": null,
     "category": null,
     "n_items": 475,
@@ -43,18 +43,88 @@
       "p95": 630.1,
       "max": 1307.9
     },
-    "deployment_label": "Remote hosted (GPU, CUDA)"
+    "deployment_label": "Remote hosted (GPU, CUDA)",
+    "dataset_content_sha256": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367",
+    "recipe_sha256": {
+      "change_risk": "b823fd45c6fb677212369cb1a653b0715e6cc83858242e85bf469f33a91817aa",
+      "effort_approach": "7ed261fdb23ffb06f06945d5dab9e4b1d3ee265ee3ee51656087ed7bd9827f03",
+      "failure_triage": "a7a2e5338e16eecacafcc43243a7f1f8fd385a198952413e8187e09d2999bb92",
+      "intent_readiness": "a2dd9b315aac79eb50507cdabb376cef9e4d9eded2018952ec62916cf734f881",
+      "routing": "2780852796c906a723fa054952e4f66d74fc4a3bb3b28a36d0971cf5f306680a",
+      "vision_choice": "8b24fdbeb93f1795d571ca9b46352fbc5373daf0b375a2fb0937b4a8eb224643",
+      "vision_noul": "56e355b9dcb50a60702f6d95ba5bb9febebfe0f03f0125e2d46d23cf4c3ccb40",
+      "vision_score": "08569eb7b6bf02afcf3c5b70e1a08d09a2f9f0cc84bbe54bc103ef352f6d1592",
+      "vision_video": "97526cc5e35f62d09d52e3cf645399f01ab969db217356041440df64114c2531"
+    },
+    "register_sha256": null,
+    "settings": {
+      "dtype": "float16",
+      "max_length": 262144,
+      "max_request_length": 24576
+    }
   },
   "summary": {
     "overall": {
-      "items": 475,
-      "questions": 843,
-      "accuracy": 0.8268,
+      "items": 443,
+      "questions": 811,
+      "accuracy": 0.82,
       "accuracy_ci": [
-        0.8019,
-        0.8529
+        0.7928,
+        0.8459
       ],
-      "item_accuracy": 0.7432
+      "item_accuracy": 0.7246
+    },
+    "capability": {
+      "items": 32,
+      "questions": 32,
+      "accuracy": 1.0,
+      "accuracy_ci": [
+        1.0,
+        1.0
+      ],
+      "item_accuracy": 1.0,
+      "categories": {
+        "vision_choice": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        },
+        "vision_noul": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        },
+        "vision_score": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        },
+        "vision_video": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        }
+      }
     },
     "choice": {
       "n": 359,
@@ -341,6 +411,11 @@
         "accuracy": 1.0
       }
     },
+    "risk": {},
+    "tokens": null,
+    "consistency": {},
+    "by_source_kind": {},
+    "tiers": null,
     "misses": [
       {
         "id": "intent_001",
