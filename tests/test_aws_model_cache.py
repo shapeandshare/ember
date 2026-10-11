@@ -709,6 +709,30 @@ def test_cache_list_includes_size_and_deployments() -> None:
     assert results[0]["deployments"] == ["default"]
 
 
+def test_cache_list_tolerates_unreadable_deployment_configs() -> None:
+    """An unreadable deployment config does not break the listing."""
+    cfn = _make_cfn_client(
+        cache_stack_exists=True,
+        deployment_stacks=[
+            {"StackName": "ember-default", "StackStatus": "CREATE_COMPLETE"}
+        ],
+    )
+    s3 = _make_s3_client()
+    s3.list_objects_v2.return_value = {
+        "Contents": [{"Key": "models/flash/revX/model.safetensors"}],
+        "IsTruncated": False,
+    }
+    ssm = MagicMock()
+    ssm.get_parameter.side_effect = RuntimeError("no access")
+    clients = _make_aws_clients(s3=s3, cfn=cfn)
+    clients.ssm = ssm
+
+    cache = ModelCache(clients=clients)
+    results = cache.list(bucket=_BUCKET, prefix=_PREFIX)
+
+    assert results[0]["deployments"] == []
+
+
 # ---------------------------------------------------------------------------
 # --bucket/--prefix skips stack creation
 # ---------------------------------------------------------------------------

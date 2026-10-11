@@ -303,15 +303,30 @@ class ModelCache:
             if not stack_name.startswith("ember-") or stack_name == _CACHE_STACK_NAME:
                 continue
             name = stack_name[len("ember-") :]
-            try:
-                resp = self._clients.ssm.get_parameter(Name=f"/ember/{name}/config")
-                config = json.loads(resp["Parameter"]["Value"])
-            except Exception:  # noqa: S112 - listing skips unreadable configs
-                continue
-            uri = str(config.get("model_s3_uri", "")).rstrip("/")
+            uri = self._deployment_model_uri(name)
             if uri:
                 by_uri.setdefault(uri, []).append(name)
         return by_uri
+
+    def _deployment_model_uri(self, name: str) -> str:
+        """Return a deployment's configured model URI, or ``""`` when unreadable.
+
+        Parameters
+        ----------
+        name : str
+            Deployment name.
+
+        Returns
+        -------
+        str
+            Normalized ``model_s3_uri``, or an empty string.
+        """
+        try:
+            resp = self._clients.ssm.get_parameter(Name=f"/ember/{name}/config")
+            config = json.loads(resp["Parameter"]["Value"])
+        except Exception:
+            return ""
+        return str(config.get("model_s3_uri", "")).rstrip("/")
 
     def remove(
         self,
