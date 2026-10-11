@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from typing import Any
 
+from . import stack_parameters
 from .health import wait_healthy
 from .instance_config import InstanceConfig
 from .names import DeploymentName
@@ -179,7 +180,9 @@ class LifecycleUpdate:
 
         Re-resolves the DLAMI ID, forces replacement via a change set with a
         new ``ImageId``, deletes tailnet devices and mints a new join key
-        *before* executing the change set, then waits for health.
+        *before* executing the change set, then waits for health.  The
+        deployed state (model, instance type, version, idle stop) is read
+        from SSM and the stack and preserved; only the AMI changes.
 
         Parameters
         ----------
@@ -189,6 +192,11 @@ class LifecycleUpdate:
             A :class:`~ember_aws.model_cache.ModelCache` instance.
         """
         names = DeploymentName(name=deployment.name)
+
+        stored = self._read_stored_config(names)
+        params = stack_parameters.read(self._clients, names.stack_name)
+        if stored is not None:
+            deployment = self._with_deployed_state(deployment, stored, params)
 
         sizing = SizingTable.load(self._sizing_path)
         entry = sizing.resolve(deployment.model, deployment.instance_type)
@@ -257,6 +265,43 @@ class LifecycleUpdate:
             f" {entry.instance_type} ({device}, ember {version})"
         )
         print(f"  url:   {url}")
+
+    def _with_deployed_state(
+        self,
+        deployment: Any,
+        stored: InstanceConfig,
+        params: dict[str, str],
+    ) -> Any:
+        """Return the deployment carrying the deployed state's fields.
+
+        ``replace`` changes only the AMI: the model, instance type, version,
+        and idle stop must come from the stored SSM config and the stack's
+        parameters, never from CLI defaults.
+
+        Parameters
+        ----------
+        deployment : Any
+            The requested deployment (its name is authoritative).
+        stored : InstanceConfig
+            The SSM config the running instance belongs to.
+        params : dict[str, str]
+            The stack's current parameter values.
+
+        Returns
+        -------
+        Any
+            A copy of ``deployment`` with the deployed state preserved.
+        """
+        parts = stored.model_s3_uri.rstrip("/").split("/")
+        updates: dict[str, Any] = {
+            "ember_version": stored.ember_version,
+            "idle_minutes": stored.idle_minutes,
+        }
+        if len(parts) >= 2:
+            updates["model"] = parts[-2]
+        if params.get("InstanceType"):
+            updates["instance_type"] = params["InstanceType"]
+        return deployment.model_copy(update=updates)
 
     def _configs_equal(self, a: InstanceConfig, b: InstanceConfig) -> bool:
         """Return True when two configs are identical ignoring generation.

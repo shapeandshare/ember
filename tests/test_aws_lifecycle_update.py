@@ -37,6 +37,7 @@ def _make_clients(
     stack_exists: bool = True,
     stack_status: str = "UPDATE_COMPLETE",
     stack_outputs: list[dict[str, Any]] | None = None,
+    stack_params: dict[str, str] | None = None,
     ssm_params: dict[str, str] | None = None,
     ami_id: str = "ami-0abc1234",
     subnet_id: str = "subnet-aaa",
@@ -53,6 +54,10 @@ def _make_clients(
                 {
                     "StackName": "ember-default",
                     "StackStatus": stack_status,
+                    "Parameters": [
+                        {"ParameterKey": k, "ParameterValue": v}
+                        for k, v in (stack_params or {}).items()
+                    ],
                     "Outputs": stack_outputs
                     or [
                         {"OutputKey": "InstanceId", "OutputValue": "i-0001"},
@@ -885,6 +890,53 @@ class TestReplace:
             lc.replace(deployment)
 
         mock_stack.resolve_image_id.assert_called()
+
+    def test_replace_preserves_the_deployed_state(self, capsys: Any) -> None:
+        """replace() keeps the deployed instance type, version, idle, and model."""
+        existing_config = _make_existing_config(
+            ember_version="0.11.0", idle_minutes=30, generation=3
+        )
+        clients = _make_clients(
+            ssm_params={
+                "/ember/default/config": existing_config,
+                "/ember/default/server-token": "tok",
+            },
+            stack_params={"InstanceType": "g5.2xlarge", "Capacity": "spot"},
+        )
+        ts = _make_tailscale()
+        lc = _make_lifecycle(clients, ts)
+
+        from ember_aws.deployment import Deployment
+
+        deployment = Deployment(name="default", model="flash")
+
+        with (
+            patch("ember_aws.lifecycle.Stack") as mock_stack_cls,
+            patch("ember_aws.lifecycle_update.Stack") as mock_update_stack_cls,
+            patch("ember_aws.lifecycle_update.wait_healthy") as mock_health,
+        ):
+            mock_stack = MagicMock()
+            mock_stack.resolve_image_id.return_value = "ami-new-1234"
+            mock_stack.prepare_change_set.return_value = "cs-1"
+            mock_stack_cls.return_value = mock_stack
+            mock_update_stack_cls.return_value = mock_stack
+            mock_health.return_value = {
+                "engine": {"device": "cuda"},
+                "version": "0.11.0",
+            }
+
+            lc.replace(deployment)
+
+        written = json.loads(
+            clients.ssm.get_parameter(Name="/ember/default/config")["Parameter"][
+                "Value"
+            ]
+        )
+        assert written["ember_version"] == "0.11.0"
+        assert written["idle_minutes"] == 30
+        assert written["model_s3_uri"] == _FLASH_S3_URI
+        params = mock_stack.prepare_change_set.call_args.args[0]
+        assert params["InstanceType"] == "g5.2xlarge"
 
     def test_replace_deletes_devices_before_update(self, capsys: Any) -> None:
         """replace() must delete tailnet devices before executing the change set."""
