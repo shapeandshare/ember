@@ -854,6 +854,77 @@ def test_converge_sh_model_uri_file_path() -> None:
 
 
 # ---------------------------------------------------------------------------
+# converge.sh / cloud-init: service-user install, cache dir, completion marker
+# ---------------------------------------------------------------------------
+
+
+def test_converge_sh_installs_ember_as_the_service_user() -> None:
+    """converge.sh must install ember-advise as ember, under the ember HOME."""
+    script = _read_instance("converge.sh")
+    assert "runuser -u ember" in script, (
+        "converge.sh must run the install as the ember user"
+    )
+    assert "HOME=/home/ember" in script, (
+        "converge.sh must install with HOME=/home/ember"
+    )
+
+
+def test_converge_sh_uses_the_ember_users_cache() -> None:
+    """converge.sh must sync into /home/ember/.cache, where ember looks."""
+    script = _read_instance("converge.sh")
+    assert "/home/ember/.cache/ember/hosted-models" in script, (
+        "converge.sh must use the ember user's cache directory"
+    )
+
+
+def test_converge_sh_has_one_verification_block() -> None:
+    """converge.sh must verify once, with the cache env already exported."""
+    script = _read_instance("converge.sh")
+    assert 'os.environ.get("_EMBER_CACHE_DIR"' not in script, (
+        "no verification block may run before the cache env is exported"
+    )
+    assert script.count("PYEOF") == 2, (
+        "converge.sh must have exactly one verification block"
+    )
+
+
+def test_converge_sh_marks_the_cache_complete() -> None:
+    """converge.sh must write _download_complete after verification."""
+    script = _read_instance("converge.sh")
+    assert "_download_complete" in script, (
+        "converge.sh must mark the verified cache complete"
+    )
+
+
+def test_cloud_init_starts_all_units_on_first_boot() -> None:
+    """cloud-init must start tailscale, converge, and ember, not only enable."""
+    text = _read_instance("cloud-init.yaml")
+    assert "systemctl start ember-tailscale ember-converge ember" in text, (
+        "cloud-init must start all three units on first boot"
+    )
+
+
+def test_cloud_init_inline_converge_installs_as_ember() -> None:
+    """The inlined converge must install as ember, into the ember cache."""
+    text = _read_instance("cloud-init.yaml")
+    assert "runuser -u ember" in text, (
+        "the inlined converge must install ember-advise as the ember user"
+    )
+    assert "/home/ember/.cache/ember/hosted-models" in text, (
+        "the inlined converge must use the ember user's cache directory"
+    )
+
+
+def test_cloud_init_marks_the_cache_complete() -> None:
+    """The inlined verify step must write _download_complete atomically."""
+    text = _read_instance("cloud-init.yaml")
+    assert "_download_complete" in text, (
+        "cloud-init must mark the verified cache complete"
+    )
+    assert "os.replace" in text, "the marker must be written atomically"
+
+
+# ---------------------------------------------------------------------------
 # T047: idle.sh invariants
 # ---------------------------------------------------------------------------
 

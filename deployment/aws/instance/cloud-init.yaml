@@ -156,10 +156,11 @@ else
     echo "converge: generation changed (${LAST_GENERATION} -> ${GENERATION}), converging"
 
     echo "converge: installing ember-advise==${EMBER_VERSION}"
-    uv tool install --python 3.12 "ember-advise==${EMBER_VERSION}"
+    runuser -u ember -- env HOME=/home/ember XDG_CACHE_HOME=/home/ember/.cache \
+        uv tool install --python 3.12 "ember-advise==${EMBER_VERSION}"
 
     URI_HASH="$(echo -n "${MODEL_S3_URI}" | python3 -c "import sys,hashlib; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest()[:16])")"
-    MODEL_CACHE_DIR="${XDG_CACHE_HOME:-/root/.cache}/ember/hosted-models/${URI_HASH}"
+    MODEL_CACHE_DIR="/home/ember/.cache/ember/hosted-models/${URI_HASH}"
     mkdir -p "${MODEL_CACHE_DIR}"
 
     S3_BUCKET="$(echo "${MODEL_S3_URI}" | python3 -c "import sys; u=sys.stdin.read().strip(); print(u.split('/')[2])")"
@@ -211,6 +212,11 @@ for entry in manifest["files"]:
         if h.hexdigest() != expected_sha256:
             print(f"converge: ERROR: SHA-256 still mismatches for {rel_path}", flush=True)
             sys.exit(1)
+marker = os.path.join(cache_dir, "_download_complete")
+tmp_marker = marker + ".tmp"
+with open(tmp_marker, "w") as f:
+    f.write("ok")
+os.replace(tmp_marker, marker)
 print("converge: all model files verified", flush=True)
 PYEOF
 
@@ -222,7 +228,7 @@ PYEOF
 fi
 
 URI_HASH="$(echo -n "${MODEL_S3_URI}" | python3 -c "import sys,hashlib; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest()[:16])")"
-MODEL_CACHE_DIR="${XDG_CACHE_HOME:-/root/.cache}/ember/hosted-models/${URI_HASH}"
+MODEL_CACHE_DIR="/home/ember/.cache/ember/hosted-models/${URI_HASH}"
 
 mkdir -p /etc/ember
 umask 077
@@ -318,4 +324,4 @@ UNIT_EOF
   # Reload systemd and enable units
   - systemctl daemon-reload
   - systemctl enable ember-tailscale ember-converge ember
-  - systemctl start ember-tailscale
+  - systemctl start ember-tailscale ember-converge ember

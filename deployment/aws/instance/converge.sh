@@ -69,7 +69,8 @@ else
     # -----------------------------------------------------------------------
 
     echo "converge: installing ember-advise==${EMBER_VERSION}"
-    uv tool install --python 3.12 "ember-advise==${EMBER_VERSION}"
+    runuser -u ember -- env HOME=/home/ember XDG_CACHE_HOME=/home/ember/.cache \
+        uv tool install --python 3.12 "ember-advise==${EMBER_VERSION}"
 
     # -----------------------------------------------------------------------
     # Step 3b: Determine the local model cache directory
@@ -77,7 +78,7 @@ else
     # -----------------------------------------------------------------------
 
     URI_HASH="$(echo -n "${MODEL_S3_URI}" | python3 -c "import sys,hashlib; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest()[:16])")"
-    MODEL_CACHE_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/ember/hosted-models/${URI_HASH}"
+    MODEL_CACHE_DIR="/home/ember/.cache/ember/hosted-models/${URI_HASH}"
     mkdir -p "${MODEL_CACHE_DIR}"
 
     # -----------------------------------------------------------------------
@@ -97,67 +98,12 @@ else
         "s3://${S3_BUCKET}/${S3_PREFIX}manifest.json" \
         "${MODEL_CACHE_DIR}/manifest.json"
 
-    echo "converge: verifying and syncing model files against manifest.json"
-    python3 - <<'PYEOF'
-import json
-import hashlib
-import subprocess
-import sys
-import os
-
-cache_dir = os.environ.get("_EMBER_CACHE_DIR", "")
-s3_bucket = os.environ.get("_EMBER_S3_BUCKET", "")
-s3_prefix = os.environ.get("_EMBER_S3_PREFIX", "")
-region = os.environ.get("_EMBER_REGION", "")
-
-manifest_path = os.path.join(cache_dir, "manifest.json")
-with open(manifest_path) as f:
-    manifest = json.load(f)
-
-for entry in manifest["files"]:
-    rel_path = entry["path"]
-    expected_sha256 = entry["sha256"]
-    local_path = os.path.join(cache_dir, rel_path)
-
-    needs_download = True
-    if os.path.exists(local_path):
-        # Verify SHA-256
-        h = hashlib.sha256()
-        with open(local_path, "rb") as f:
-            for chunk in iter(lambda: f.read(65536), b""):
-                h.update(chunk)
-        if h.hexdigest() == expected_sha256:
-            needs_download = False
-        else:
-            print(f"converge: SHA-256 mismatch for {rel_path}, re-downloading", flush=True)
-            os.remove(local_path)
-
-    if needs_download:
-        os.makedirs(os.path.dirname(local_path), exist_ok=True)
-        s3_key = s3_prefix + rel_path
-        print(f"converge: downloading {rel_path}", flush=True)
-        subprocess.run(
-            ["aws", "s3", "cp", "--region", region,
-             f"s3://{s3_bucket}/{s3_key}", local_path],
-            check=True,
-        )
-        # Verify after download
-        h = hashlib.sha256()
-        with open(local_path, "rb") as f:
-            for chunk in iter(lambda: f.read(65536), b""):
-                h.update(chunk)
-        if h.hexdigest() != expected_sha256:
-            print(f"converge: ERROR: SHA-256 still mismatches for {rel_path} after download", flush=True)
-            sys.exit(1)
-
-print("converge: all model files verified", flush=True)
-PYEOF
     export _EMBER_CACHE_DIR="${MODEL_CACHE_DIR}"
     export _EMBER_S3_BUCKET="${S3_BUCKET}"
     export _EMBER_S3_PREFIX="${S3_PREFIX}"
     export _EMBER_REGION="${REGION}"
 
-    # Re-run the python block with the env vars set
+    echo "converge: verifying and syncing model files against manifest.json"
     python3 - <<'PYEOF'
 import json
 import hashlib
@@ -208,6 +154,11 @@ for entry in manifest["files"]:
             print(f"converge: ERROR: SHA-256 still mismatches for {rel_path} after download", flush=True)
             sys.exit(1)
 
+marker = os.path.join(cache_dir, "_download_complete")
+tmp_marker = marker + ".tmp"
+with open(tmp_marker, "w") as f:
+    f.write("ok")
+os.replace(tmp_marker, marker)
 print("converge: all model files verified", flush=True)
 PYEOF
 
@@ -235,7 +186,7 @@ mkdir -p /etc/ember
 
 # Determine model cache dir (needed even when generation unchanged)
 URI_HASH="$(echo -n "${MODEL_S3_URI}" | python3 -c "import sys,hashlib; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest()[:16])")"
-MODEL_CACHE_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/ember/hosted-models/${URI_HASH}"
+MODEL_CACHE_DIR="/home/ember/.cache/ember/hosted-models/${URI_HASH}"
 
 umask 077
 cat > "${ENV_FILE}" <<EOF
