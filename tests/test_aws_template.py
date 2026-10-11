@@ -207,6 +207,39 @@ def test_iam_resources_scoped() -> None:
                 )
 
 
+def test_iam_list_bucket_scoped_to_model_prefix() -> None:
+    """s3:ListBucket carries an s3:prefix condition; object reads stay separate."""
+    tmpl = _load(_TEMPLATE)
+    role_props = _props(tmpl, "InstanceRole")
+    statements = [
+        stmt
+        for policy in role_props.get("Policies", [])
+        for stmt in policy.get("PolicyDocument", {}).get("Statement", [])
+    ]
+
+    list_statements = [
+        stmt
+        for stmt in statements
+        if "s3:ListBucket" in _flatten(stmt.get("Action", []))
+    ]
+    assert len(list_statements) == 1, "expected exactly one s3:ListBucket statement"
+    condition = _flatten(list_statements[0].get("Condition", {}))
+    assert any("ModelPrefix" in str(v) for v in condition), (
+        "s3:ListBucket must be conditioned on the model prefix"
+    )
+
+    get_statements = [
+        stmt
+        for stmt in statements
+        if "s3:GetObject" in _flatten(stmt.get("Action", []))
+    ]
+    assert get_statements, "expected an s3:GetObject statement"
+    for stmt in get_statements:
+        assert "s3:ListBucket" not in _flatten(stmt.get("Action", [])), (
+            "s3:GetObject must be its own statement"
+        )
+
+
 # ---------------------------------------------------------------------------
 # template.yaml — Instance metadata and storage
 # ---------------------------------------------------------------------------
