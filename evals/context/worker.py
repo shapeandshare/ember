@@ -157,6 +157,7 @@ class _Prober:
             rss_start_bytes=sampler.rss_start_bytes,
             driver_peak_bytes=sampler.driver_peak_bytes,
             peak_bytes=sampler.peak_bytes,
+            device=self._device,
             status=status,
             exploratory=exploratory,
             error=error,

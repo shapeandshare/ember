@@ -368,6 +368,15 @@ def test_a_rows_peak_is_its_rss_start_plus_its_driver_peak():
         ProbeRow(**{**row.model_dump(), "peak_bytes": 2999})
 
 
+def test_a_cuda_rows_peak_is_its_driver_peak_alone():
+    """A cuda row's peak is the driver peak; RSS stays as telemetry."""
+    cuda_kwargs = {**_row().model_dump(), "device": "cuda", "peak_bytes": 2000}
+    row = ProbeRow(**cuda_kwargs)
+    assert row.peak_bytes == row.driver_peak_bytes
+    with pytest.raises(ValidationError):
+        ProbeRow(**{**cuda_kwargs, "peak_bytes": 3000})
+
+
 def test_a_row_key_identifies_model_item_length_and_depth():
     assert _row("b2", 4096, Depth.END).key == ("flash", "b2", 4096, Depth.END)
 
@@ -1104,6 +1113,7 @@ def test_memory_sampler_for_cuda_uses_max_memory_allocated(monkeypatch):
     from evals.context import memory_sampler
 
     synced: list[bool] = []
+    reset: list[bool] = []
     peak_values = [100, 500, 200]
     call_count = [0]
 
@@ -1120,13 +1130,81 @@ def test_memory_sampler_for_cuda_uses_max_memory_allocated(monkeypatch):
         read_driver=fake_max_memory_allocated,
         read_rss=lambda: 1000,
         synchronize=fake_synchronize,
+        reset_peak=lambda: reset.append(True),
         interval=0.001,
     )
     with sampler:
         pass
     # synchronize must have been called (at least on enter and exit)
     assert len(synced) >= 2
+    assert len(reset) == 1
     assert sampler.driver_peak_bytes == 500
+
+
+def test_memory_sampler_for_cuda_resets_peak_stats_before_reading():
+    """The CUDA sampler resets peak stats after syncing, before its first read."""
+    from evals.context import memory_sampler
+
+    events: list[str] = []
+
+    def read_driver() -> int:
+        events.append("read")
+        return 100
+
+    sampler = memory_sampler.MemorySampler(
+        device="cuda",
+        read_driver=read_driver,
+        read_rss=lambda: 1000,
+        synchronize=lambda: events.append("sync"),
+        reset_peak=lambda: events.append("reset"),
+        interval=0.001,
+    )
+    with sampler:
+        pass
+
+    assert events.index("sync") < events.index("reset") < events.index("read")
+
+
+def test_memory_sampler_cuda_default_resets_via_torch(monkeypatch):
+    """The CUDA default reset calls torch.cuda.reset_peak_memory_stats."""
+    from evals.context import memory_sampler
+
+    resets: list[bool] = []
+    monkeypatch.setattr(
+        memory_sampler.torch.cuda,
+        "reset_peak_memory_stats",
+        lambda: resets.append(True),
+    )
+    sampler = memory_sampler.MemorySampler(
+        device="cuda",
+        read_driver=lambda: 100,
+        read_rss=lambda: 1000,
+        synchronize=lambda: None,
+        interval=0.001,
+    )
+    with sampler:
+        pass
+    assert len(resets) == 1
+
+
+def test_the_cuda_peak_is_the_driver_peak_alone():
+    """For CUDA, peak_bytes is the driver peak; RSS stays as telemetry."""
+    from evals.context import memory_sampler
+
+    sampler = memory_sampler.MemorySampler(
+        device="cuda",
+        read_driver=lambda: 500,
+        read_rss=lambda: 1000,
+        synchronize=lambda: None,
+        reset_peak=lambda: None,
+        interval=0.001,
+    )
+    with sampler:
+        time.sleep(0.01)
+
+    assert sampler.rss_start_bytes == 1000
+    assert sampler.driver_peak_bytes == 500
+    assert sampler.peak_bytes == 500
 
 
 def test_memory_sampler_for_mps_uses_mps_synchronize(monkeypatch):

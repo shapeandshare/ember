@@ -41,15 +41,19 @@ def _cuda_max_memory_allocated() -> int:
     return torch.cuda.max_memory_allocated()
 
 
+def _cuda_reset_peak_stats() -> None:
+    torch.cuda.reset_peak_memory_stats()
+
+
 class MemorySampler:
     """Context manager that polls driver memory on a thread during a block.
 
-    ``peak_bytes`` is the process RSS when the block starts plus the highest
-    driver-allocated value sampled during it.
-
-    For MPS, the driver metric is ``torch.mps.driver_allocated_memory``.
-    For CUDA, the driver metric is ``torch.cuda.max_memory_allocated`` read
-    after ``torch.cuda.synchronize``.
+    On MPS, ``peak_bytes`` is the process RSS when the block starts plus the
+    highest ``torch.mps.driver_allocated_memory`` sampled during it.  On CUDA,
+    CUDA peak stats are reset at block entry (so a later block cannot inherit
+    an earlier block's peak) and ``peak_bytes`` is the CUDA maximum allocated
+    bytes alone; host RSS is kept as telemetry because the CUDA budget is
+    device memory.
 
     Parameters
     ----------
@@ -63,6 +67,10 @@ class MemorySampler:
         Process RSS in bytes; defaults to ``ps -o rss= -p <pid>``.
     synchronize : Callable[[], None] | None, optional
         Device synchronize function; defaults to the device-appropriate one.
+    reset_peak : Callable[[], None] | None, optional
+        Resets the driver's peak-stat counter; run after synchronize and
+        before the first reading.  Defaults to
+        ``torch.cuda.reset_peak_memory_stats`` on CUDA and a no-op on MPS.
     interval : float, optional
         Seconds between samples.
     """
@@ -73,6 +81,7 @@ class MemorySampler:
         read_driver: Callable[[], int] | None = None,
         read_rss: Callable[[], int] | None = None,
         synchronize: Callable[[], None] | None = None,
+        reset_peak: Callable[[], None] | None = None,
         interval: float = 0.02,
     ) -> None:
         self._device = device
@@ -89,6 +98,12 @@ class MemorySampler:
             self._synchronize = _cuda_synchronize
         else:
             self._synchronize = _mps_synchronize
+        if reset_peak is not None:
+            self._reset_peak = reset_peak
+        elif device == "cuda":
+            self._reset_peak = _cuda_reset_peak_stats
+        else:
+            self._reset_peak = None
         self._interval = interval
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -97,7 +112,9 @@ class MemorySampler:
 
     @property
     def peak_bytes(self) -> int:
-        """RSS at the start plus the driver peak."""
+        """The device-memory peak: RSS plus driver on MPS, driver alone on CUDA."""
+        if self._device == "cuda":
+            return self.driver_peak_bytes
         return self.rss_start_bytes + self.driver_peak_bytes
 
     @property
@@ -106,8 +123,10 @@ class MemorySampler:
         return self._thread is not None and self._thread.is_alive()
 
     def __enter__(self) -> MemorySampler:
-        """Synchronize, record the starting RSS, and start sampling."""
+        """Synchronize, reset peak stats, record the starting RSS, and sample."""
         self._synchronize()
+        if self._reset_peak is not None:
+            self._reset_peak()
         self.rss_start_bytes = self._read_rss()
         self.driver_peak_bytes = self._read_driver()
         self._stop.clear()
