@@ -6,7 +6,7 @@
 # sums over all status labels, and calls shutdown -h now once the count has
 # not changed for IDLE_MINUTES consecutive minutes.
 #
-# State files in /var/lib/ember/:
+# State files (dir defaults to /var/lib/ember; EMBER_IDLE_STATE_DIR overrides):
 #   idle-count   — last observed request count
 #   idle-since   — epoch seconds when the count last changed (or first check)
 #
@@ -16,8 +16,9 @@ set -euo pipefail
 
 IDLE_MINUTES="{{IDLE_MINUTES}}"
 METRICS_URL="http://127.0.0.1:8765/metrics"
-COUNT_FILE="/var/lib/ember/idle-count"
-SINCE_FILE="/var/lib/ember/idle-since"
+STATE_DIR="${EMBER_IDLE_STATE_DIR:-/var/lib/ember}"
+COUNT_FILE="${STATE_DIR}/idle-count"
+SINCE_FILE="${STATE_DIR}/idle-since"
 SHUTDOWN_CMD="${IDLE_SHUTDOWN_CMD:-shutdown -h now}"
 
 # Guard: do nothing when idle auto-stop is disabled.
@@ -25,7 +26,7 @@ if [[ "${IDLE_MINUTES}" -eq 0 ]]; then
     exit 0
 fi
 
-mkdir -p /var/lib/ember
+mkdir -p "${STATE_DIR}"
 
 # Fetch metrics and sum ember_advise_requests_total over all status labels.
 CURRENT_COUNT="$(
@@ -49,10 +50,11 @@ if [[ "${CURRENT_COUNT}" != "${LAST_COUNT}" ]]; then
 fi
 
 # Count unchanged — check how long we have been idle.
-IDLE_SINCE="${NOW}"
-if [[ -f "${SINCE_FILE}" ]]; then
-    IDLE_SINCE="$(cat "${SINCE_FILE}")"
+if [[ ! -f "${SINCE_FILE}" ]]; then
+    echo "${NOW}" > "${SINCE_FILE}"
+    exit 0
 fi
+IDLE_SINCE="$(cat "${SINCE_FILE}")"
 
 IDLE_SECONDS=$(( NOW - IDLE_SINCE ))
 THRESHOLD_SECONDS=$(( IDLE_MINUTES * 60 ))

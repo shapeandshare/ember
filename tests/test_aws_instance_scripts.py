@@ -9,7 +9,10 @@ T026: Rendered user data ≤ 16,384 bytes; full template body ≤ 51,200 bytes;
 
 from __future__ import annotations
 
+import os
 import re
+import subprocess
+import time
 from pathlib import Path
 from typing import Any
 
@@ -929,6 +932,66 @@ def test_idle_sh_does_nothing_when_idle_minutes_zero() -> None:
     ), "idle.sh must exit early when IDLE_MINUTES is 0"
 
 
+def _idle_harness(tmp_path: Path) -> tuple[Path, dict[str, str], Path, Path]:
+    """Render idle.sh and build an environment that stubs curl and shutdown."""
+    script = _read_instance("idle.sh").replace("{{IDLE_MINUTES}}", "1")
+    script_path = tmp_path / "idle.sh"
+    script_path.write_text(script)
+
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    curl = bin_dir / "curl"
+    curl.write_text(
+        "#!/bin/bash\necho 'ember_advise_requests_total{status=\"200\"} 0'\n"
+    )
+    curl.chmod(0o755)
+
+    state_dir = tmp_path / "state"
+    marker = tmp_path / "shutdown-ran"
+    env = {
+        **os.environ,
+        "PATH": f"{bin_dir}:{os.environ['PATH']}",
+        "EMBER_IDLE_STATE_DIR": str(state_dir),
+        "IDLE_SHUTDOWN_CMD": f"touch {marker}",
+    }
+    return script_path, env, state_dir, marker
+
+
+def test_idle_sh_starts_the_idle_clock_on_a_fresh_run(tmp_path: Path) -> None:
+    """A first zero-request run persists idle-since, so idle-out is reachable."""
+    script_path, env, state_dir, _marker = _idle_harness(tmp_path)
+
+    result = subprocess.run(  # noqa: S603 - fixed argv runs a rendered repo script
+        ["bash", str(script_path)],  # noqa: S607 - system bash, rendered script path
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=60,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert (state_dir / "idle-since").exists()
+
+
+def test_idle_sh_shuts_down_after_the_idle_threshold(tmp_path: Path) -> None:
+    """An old idle-since with an unchanged count triggers the shutdown command."""
+    script_path, env, state_dir, marker = _idle_harness(tmp_path)
+    state_dir.mkdir()
+    (state_dir / "idle-count").write_text("0\n")
+    (state_dir / "idle-since").write_text(f"{int(time.time()) - 120}\n")
+
+    result = subprocess.run(  # noqa: S603 - fixed argv runs a rendered repo script
+        ["bash", str(script_path)],  # noqa: S607 - system bash, rendered script path
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=60,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert marker.exists()
+
+
 def test_idle_sh_no_set_x() -> None:
     """idle.sh must not use set -x (would echo secrets)."""
     script = _read_instance("idle.sh")
@@ -950,10 +1013,13 @@ def test_idle_sh_reads_metrics_from_loopback() -> None:
 
 
 def test_idle_sh_uses_state_file_in_var_lib_ember() -> None:
-    """idle.sh must store state in /var/lib/ember/."""
+    """idle.sh defaults its state dir to /var/lib/ember/ (override allowed)."""
     script = _read_instance("idle.sh")
-    assert "/var/lib/ember/" in script, (
-        "idle.sh must store state files in /var/lib/ember/"
+    assert "/var/lib/ember" in script, (
+        "idle.sh must default its state files to /var/lib/ember/"
+    )
+    assert "EMBER_IDLE_STATE_DIR" in script, (
+        "idle.sh must allow the state dir to be overridden"
     )
 
 
