@@ -20,6 +20,10 @@ from .cache_uploader import CacheUploader
 
 __all__ = ["CacheInUseError", "ConfirmationError", "ModelCache"]
 
+#: Deployment names per normalized model URI (a module-level alias: inside the
+#: class, ``list`` names the method, shadowing the builtin in signatures).
+_DeploymentsByUri = dict[str, list[str]]
+
 
 class ModelCache:
     """S3-backed model cache for AWS GPU deployments.
@@ -283,7 +287,7 @@ class ModelCache:
         except Exception:
             return None
 
-    def _deployments_by_uri(self) -> dict[str, list[str]]:
+    def _deployments_by_uri(self) -> _DeploymentsByUri:
         """Map each active deployment's model URI to its deployment names.
 
         Returns
