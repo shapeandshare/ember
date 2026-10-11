@@ -97,6 +97,7 @@ class LifecycleUpdate:
         stack = Stack(clients=self._clients, names=names)
         stack_params: dict[str, str] = {
             "InstanceType": entry.instance_type,
+            "ModelPrefix": f"models/{deployment.model}/{revision}/",
         }
 
         config_changed = stored_config is None or not self._configs_equal(

@@ -528,6 +528,51 @@ class TestUpdateInstanceType:
 
         mock_stack.update.assert_called_once()
 
+    def test_change_set_includes_the_model_prefix(self, capsys: Any) -> None:
+        """The stack params carry ModelPrefix, so the IAM policy follows the model."""
+        existing_config = _make_existing_config(generation=1)
+        clients = _make_clients(
+            ssm_params={
+                "/ember/default/config": existing_config,
+                "/ember/default/server-token": "tok",
+            }
+        )
+        ts = _make_tailscale()
+        lc = _make_lifecycle(clients, ts)
+
+        import ember.models as ember_models
+
+        from ember_aws.deployment import Deployment
+
+        deployment = Deployment(
+            name="default", model="flash", instance_type="g5.2xlarge"
+        )
+        revision = ember_models.REGISTRY["flash"].revision or "latest"
+
+        with (
+            patch("ember_aws.lifecycle.Stack") as mock_stack_cls,
+            patch("ember_aws.lifecycle_update.Stack") as mock_update_stack_cls,
+            patch("ember_aws.lifecycle_update.wait_healthy") as mock_health,
+        ):
+            mock_stack = MagicMock()
+            mock_stack.exists.return_value = True
+            mock_stack.update.return_value = True
+            mock_stack.update_has_replacement.return_value = False
+            mock_stack.outputs.return_value = {"InstanceId": "i-0001"}
+            mock_stack.pick_subnet.return_value = ("subnet-aaa", "vpc-bbb")
+            mock_stack.resolve_image_id.return_value = "ami-0abc1234"
+            mock_stack_cls.return_value = mock_stack
+            mock_update_stack_cls.return_value = mock_stack
+            mock_health.return_value = {
+                "engine": {"device": "cuda"},
+                "version": "0.12.0",
+            }
+
+            lc.deploy(deployment)
+
+        params = mock_stack.update.call_args.args[0]
+        assert params["ModelPrefix"] == f"models/flash/{revision}/"
+
     def test_instance_type_change_no_device_deletion(self, capsys: Any) -> None:
         """An instance_type change must NOT delete tailnet devices."""
         existing_config = _make_existing_config(generation=1)
