@@ -70,16 +70,19 @@ def devices_response() -> httpx.Response:
                 {
                     "id": "dev-1",
                     "hostname": "ember-default",
+                    "name": "ember-default.tail5be351.ts.net.",
                     "tags": ["tag:ember"],
                 },
                 {
                     "id": "dev-2",
                     "hostname": "ember-other",
+                    "name": "ember-other.tail5be351.ts.net.",
                     "tags": ["tag:ember"],
                 },
                 {
                     "id": "dev-3",
                     "hostname": "ember-default",
+                    "name": "ember-default.tail5be351.ts.net.",
                     "tags": ["tag:other"],
                 },
             ]
@@ -89,13 +92,8 @@ def devices_response() -> httpx.Response:
 
 @pytest.fixture
 def dns_response() -> httpx.Response:
-    return httpx.Response(
-        200,
-        json={
-            "magicDNS": True,
-            "domains": [{"suffix": "example.ts.net"}],
-        },
-    )
+    # Real response shape: dns/preferences carries only the magicDNS flag.
+    return httpx.Response(200, json={"magicDNS": True})
 
 
 # ---------------------------------------------------------------------------
@@ -123,6 +121,7 @@ def test_token_exchange_posts_correct_fields(
     assert body["grant_type"] == "client_credentials"
     assert "auth_keys" in body["scope"]
     assert "devices%3Acore" in body["scope"] or "devices:core" in body["scope"]
+    assert "dns%3Aread" in body["scope"] or "dns:read" in body["scope"]
 
 
 def test_token_secret_not_in_str() -> None:
@@ -242,12 +241,18 @@ def test_delete_devices_filters_by_hostname_and_tag(
 def test_tailnet_dns_returns_magicdns_and_suffix(
     token_response: httpx.Response,
     dns_response: httpx.Response,
+    devices_response: httpx.Response,
 ) -> None:
-    """tailnet_dns() returns the MagicDNS flag and the .ts.net suffix."""
+    """tailnet_dns() returns the MagicDNS flag and the device-derived suffix.
+
+    No DNS endpoint exposes the ``<tailnet>.ts.net`` suffix, so it must come
+    from a device's MagicDNS name.
+    """
     transport = _make_transport(
         {
             "POST /api/v2/oauth/token": token_response,
             "GET /api/v2/tailnet/-/dns/preferences": dns_response,
+            "GET /api/v2/tailnet/-/devices": devices_response,
         }
     )
     client = TailscaleClient(
@@ -257,7 +262,7 @@ def test_tailnet_dns_returns_magicdns_and_suffix(
     )
     result = client.tailnet_dns()
     assert result["magic_dns"] is True
-    assert result["suffix"] == "example.ts.net"
+    assert result["suffix"] == "tail5be351.ts.net"
 
 
 # ---------------------------------------------------------------------------

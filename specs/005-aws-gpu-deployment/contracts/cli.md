@@ -50,5 +50,5 @@ config file).
 | Variable | Needed by |
 | --- | --- |
 | AWS credentials (standard chain: `AWS_PROFILE`, env, SSO) | all commands |
-| `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_CLIENT_SECRET` (scopes `auth_keys devices:core`, tag `tag:ember`) | preflight, deploy, start-after-replace, replace, destroy, status (URL) |
+| `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_CLIENT_SECRET` (scopes `auth_keys devices:core dns:read`, tag `tag:ember`) | preflight, deploy, start-after-replace, replace, destroy, status (URL) |
 | `tailscale` CLI, logged in to the same tailnet | logs, ssh, verify, and reaching the URL |

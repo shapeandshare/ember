@@ -116,7 +116,7 @@ class TailscaleClient:
         """Exchange the OAuth client credential for a bearer token.
 
         Posts to ``/api/v2/oauth/token`` with ``grant_type=client_credentials``
-        and scopes ``auth_keys devices:core``.
+        and scopes ``auth_keys devices:core dns:read``.
 
         Returns
         -------
@@ -135,7 +135,7 @@ class TailscaleClient:
                     "client_id": self.client_id,
                     "client_secret": self._client_secret.get_secret_value(),
                     "grant_type": "client_credentials",
-                    "scope": "auth_keys devices:core",
+                    "scope": "auth_keys devices:core dns:read",
                 },
             )
         self._raise_for_error(response)
@@ -274,9 +274,12 @@ class TailscaleClient:
                 self._raise_for_error(response)
 
     def tailnet_dns(self) -> dict[str, Any]:
-        """Return MagicDNS status and the tailnet suffix.
+        """Return MagicDNS status and the tailnet's DNS suffix.
 
-        Queries ``GET /api/v2/tailnet/-/dns/preferences``.
+        Queries ``GET /api/v2/tailnet/-/dns/preferences`` for the MagicDNS
+        flag. The ``<tailnet>.ts.net`` suffix is not exposed by any DNS
+        endpoint, so it is derived from a device's MagicDNS name (see
+        :meth:`_tailnet_suffix`).
 
         Returns
         -------
@@ -287,7 +290,7 @@ class TailscaleClient:
         Raises
         ------
         TailscaleError
-            If the API returns an error.
+            If either API call returns an error.
         """
         bearer = self._bearer_token()
         with self._http_client() as client:
@@ -298,6 +301,21 @@ class TailscaleClient:
         self._raise_for_error(response)
         body = response.json()
         magic_dns: bool = body.get("magicDNS", False)
-        domains: list[dict[str, Any]] = body.get("domains", [])
-        suffix = domains[0]["suffix"] if domains else ""
-        return {"magic_dns": magic_dns, "suffix": suffix}
+        return {"magic_dns": magic_dns, "suffix": self._tailnet_suffix()}
+
+    def _tailnet_suffix(self) -> str:
+        """Derive the ``<tailnet>.ts.net`` suffix from a device's DNS name.
+
+        Every device's MagicDNS ``name`` is ``<host>.<tailnet>.ts.net``.
+
+        Returns
+        -------
+        str
+            The suffix (e.g. ``"tail5be351.ts.net"``), or an empty string
+            when no device carries one.
+        """
+        for device in self.devices():
+            name = str(device.get("name", "")).rstrip(".")
+            if "." in name:
+                return name.split(".", 1)[1]
+        return ""

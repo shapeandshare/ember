@@ -13,8 +13,8 @@ invariants: [contracts/infrastructure.md](contracts/infrastructure.md).
   - MagicDNS and HTTPS certificates enabled.
   - In the tailnet policy, `tag:ember` defined, owned by the OAuth client's tag (see
     research R5).
-  - An OAuth client with scopes `auth_keys` and `devices:core` and tag `tag:ember`. Export
-    `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_CLIENT_SECRET`.
+  - An OAuth client with scopes `auth_keys`, `devices:core`, and `dns:read`, tag `tag:ember`.
+    Export `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_CLIENT_SECRET`.
 - This machine is on the same tailnet (`tailscale status`).
 - A checkout of this repository at the release tag you mean to deploy, after `make setup`.
 

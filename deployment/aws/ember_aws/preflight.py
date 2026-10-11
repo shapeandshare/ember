@@ -250,10 +250,15 @@ class Preflight:
                 ok=False,
                 problem="TS_OAUTH_CLIENT_ID and/or TS_OAUTH_CLIENT_SECRET are not set",
                 fix=(
-                    "set TS_OAUTH_CLIENT_ID and TS_OAUTH_CLIENT_SECRET "
-                    "(create an OAuth client at "
+                    "set TS_OAUTH_CLIENT_ID and TS_OAUTH_CLIENT_SECRET. "
+                    "Create an OAuth client at "
                     "https://login.tailscale.com/admin/settings/oauth "
-                    "with scopes auth_keys and devices:core)"
+                    "with scopes: Auth Keys (write), Devices > Core (write), "
+                    "DNS (read). In the Tags field enter 'tag:ember' "
+                    "(create that tag first at "
+                    "https://login.tailscale.com/admin/acls/file under Tags, "
+                    "or via Admin console -> Access Controls -> Tags -> Create tag, "
+                    "name 'ember', owner = your admin user or group)"
                 ),
                 blocking=True,
             )
