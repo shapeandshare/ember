@@ -286,6 +286,20 @@ def test_root_volume_gp3() -> None:
     )
 
 
+def test_root_volume_targets_dlami_root_device() -> None:
+    """BlockDeviceMappings must resize the DLAMI root device, not add a volume.
+
+    This DLAMI's RootDeviceName is /dev/sda1. A mapping for /dev/xvda created a
+    second, unused volume while the 75 GiB root stayed put — the first live
+    boot then hit AWS_ERROR_NO_SPACE partway through the model download.
+    """
+    tmpl = _load(_TEMPLATE)
+    mappings = _props(tmpl, "Instance").get("BlockDeviceMappings", [])
+    devices = {m.get("DeviceName") for m in mappings}
+    assert "/dev/sda1" in devices, "must resize the DLAMI root device /dev/sda1"
+    assert "/dev/xvda" not in devices, "must not add a second, unused /dev/xvda volume"
+
+
 def test_instance_initiated_shutdown_behavior_stop() -> None:
     tmpl = _load(_TEMPLATE)
     instance_props = _props(tmpl, "Instance")
