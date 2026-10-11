@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  ember GPU deployment over Tailscale — provisions a single EC2 GPU instance
+  ember GPU deployment over Tailscale - provisions a single EC2 GPU instance
   that joins the operator's tailnet and serves ember at
   https://ember-<name>.<tailnet>.ts.net. Stack name: ember-<DeploymentName>.
 
@@ -64,7 +64,7 @@ Resources:
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: !Sub "ember deployment ${DeploymentName} — no inbound rules"
+      GroupDescription: !Sub "ember deployment ${DeploymentName} - no inbound rules"
       VpcId: !Ref VpcId
       # No SecurityGroupIngress: all inbound traffic is blocked (SC-004).
       # Tailscale provides the only reachable listener on the tailnet.

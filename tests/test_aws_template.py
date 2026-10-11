@@ -494,3 +494,14 @@ def test_cache_template_output_bucket_name() -> None:
     tmpl = _load(_CACHE_TEMPLATE)
     outputs = tmpl.get("Outputs", {})
     assert "BucketName" in outputs, "cache-template.yaml must output BucketName"
+
+
+def test_template_strings_are_ascii() -> None:
+    """Every template string value must be ASCII.
+
+    EC2 rejects non-ASCII in properties like ``GroupDescription`` ("Character
+    sets beyond ASCII are not supported"), which fails a live CreateStack.
+    """
+    tmpl = _load(_TEMPLATE)
+    offenders = [s for s in _all_strings(tmpl) if not s.isascii()]
+    assert offenders == []
