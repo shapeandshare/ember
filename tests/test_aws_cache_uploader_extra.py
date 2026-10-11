@@ -119,10 +119,7 @@ class TestCacheUploaderUpload:
         )
 
         # Only the manifest should be uploaded (the file was skipped)
-        put_keys = [
-            call.kwargs.get("Key", "")
-            for call in s3.put_object.call_args_list
-        ]
+        put_keys = [call.kwargs.get("Key", "") for call in s3.put_object.call_args_list]
         assert all("manifest.json" in k or k == "" for k in put_keys if k)
         # config.json should NOT be in the put calls
         assert not any("config.json" in k for k in put_keys)
@@ -149,10 +146,7 @@ class TestCacheUploaderUpload:
         )
 
         # config.json should be re-uploaded
-        put_keys = [
-            call.kwargs.get("Key", "")
-            for call in s3.put_object.call_args_list
-        ]
+        put_keys = [call.kwargs.get("Key", "") for call in s3.put_object.call_args_list]
         assert any("config.json" in k for k in put_keys)
 
     def test_manifest_contains_uploaded_files(self, tmp_path: Path) -> None:

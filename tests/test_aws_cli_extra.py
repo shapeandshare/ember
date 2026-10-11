@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -78,9 +77,9 @@ class TestMainBuild:
         """build() calls the handler attached to the parsed args."""
         from ember_aws.__main__ import build
 
-        called: list[str] = []
-
-        def fake_factory(clients: Any, tailscale: Any) -> tuple[Any, Any, Any, Any, Any]:
+        def fake_factory(
+            clients: Any, tailscale: Any
+        ) -> tuple[Any, Any, Any, Any, Any]:
             return MagicMock(), MagicMock(), MagicMock(), MagicMock(), MagicMock()
 
         with (
@@ -98,7 +97,15 @@ class TestMainBuild:
             factory = _make_factory(lc=lc)
 
             result = build(
-                ["token", "--name", "default", "--model", "flash", "--region", "us-east-1"],
+                [
+                    "token",
+                    "--name",
+                    "default",
+                    "--model",
+                    "flash",
+                    "--region",
+                    "us-east-1",
+                ],
                 factory=factory,
             )
         # token handler should succeed
@@ -551,7 +558,9 @@ class TestHandleDeploy:
 
         assert result == 0
         call_args = lc.deploy.call_args
-        deployment = call_args.args[0] if call_args.args else call_args.kwargs.get("deployment")
+        deployment = (
+            call_args.args[0] if call_args.args else call_args.kwargs.get("deployment")
+        )
         assert deployment.instance_type == "g5.2xlarge"
 
     def test_passes_ember_version_when_set(self) -> None:
@@ -569,7 +578,9 @@ class TestHandleDeploy:
 
         assert result == 0
         call_args = lc.deploy.call_args
-        deployment = call_args.args[0] if call_args.args else call_args.kwargs.get("deployment")
+        deployment = (
+            call_args.args[0] if call_args.args else call_args.kwargs.get("deployment")
+        )
         assert deployment.ember_version == "0.12.0"
 
 
@@ -1114,7 +1125,8 @@ class TestHandleVerify:
     """handle_verify() reads SSM config and calls remote.verify."""
 
     def test_returns_2_when_parameter_not_found(self) -> None:
-        """handle_verify() returns 2 with actionable message when SSM param is missing."""
+        """handle_verify() returns 2 with actionable message when SSM param is
+        missing."""
         from botocore.exceptions import ClientError
 
         from ember_aws._cli_handlers_control import handle_verify

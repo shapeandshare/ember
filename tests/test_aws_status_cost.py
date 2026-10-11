@@ -1,4 +1,5 @@
-"""Tests for status_cost.py: compute_cost, get_hourly_rate, get_spot_price, hourly_from_sizing."""
+"""Tests for status_cost.py: compute_cost, get_hourly_rate, get_spot_price,
+hourly_from_sizing."""
 
 from __future__ import annotations
 
@@ -115,13 +116,13 @@ class TestComputeCost:
         clients = _make_clients()
         sizing = _make_sizing(hourly_usd={"us-east-1": 1.0})
         # Naive datetime (no tzinfo)
-        naive_launch = datetime.utcnow() - timedelta(hours=1)
+        naive_launch = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=1)
         data = {
             "InstanceType": "g6e.xlarge",
             "LaunchTime": naive_launch,
             "Placement": {"AvailabilityZone": "us-east-1a"},
         }
-        uptime_s, hourly, cost = compute_cost(data, clients, sizing)
+        uptime_s, hourly, _cost = compute_cost(data, clients, sizing)
         assert uptime_s is not None
         assert hourly == 1.0
 
@@ -132,7 +133,8 @@ class TestComputeCost:
 
 
 class TestGetHourlyRate:
-    """get_hourly_rate() returns spot price for spot instances, sizing table otherwise."""
+    """get_hourly_rate() returns spot price for spot instances, sizing table
+    otherwise."""
 
     def test_returns_spot_price_for_spot_lifecycle(self) -> None:
         """get_hourly_rate() returns the spot price when InstanceLifecycle='spot'."""
@@ -142,7 +144,9 @@ class TestGetHourlyRate:
         sizing = _make_sizing()
         data = _instance_data(lifecycle="spot")
 
-        rate = get_hourly_rate(data, "g6e.xlarge", "us-east-1a", "us-east-1", clients, sizing)
+        rate = get_hourly_rate(
+            data, "g6e.xlarge", "us-east-1a", "us-east-1", clients, sizing
+        )
         assert rate == 0.50
 
     def test_returns_spot_price_for_spot_market_type(self) -> None:
@@ -153,18 +157,23 @@ class TestGetHourlyRate:
         sizing = _make_sizing()
         data = _instance_data(market_type="spot")
 
-        rate = get_hourly_rate(data, "g6e.xlarge", "us-east-1a", "us-east-1", clients, sizing)
+        rate = get_hourly_rate(
+            data, "g6e.xlarge", "us-east-1a", "us-east-1", clients, sizing
+        )
         assert rate == 0.75
 
     def test_falls_back_to_sizing_when_spot_price_unavailable(self) -> None:
-        """get_hourly_rate() falls back to sizing table when spot price is unavailable."""
+        """get_hourly_rate() falls back to sizing table when spot price is
+        unavailable."""
         from ember_aws.status_cost import get_hourly_rate
 
         clients = _make_clients(spot_price=None)
         sizing = _make_sizing(hourly_usd={"us-east-1": 1.861})
         data = _instance_data(lifecycle="spot")
 
-        rate = get_hourly_rate(data, "g6e.xlarge", "us-east-1a", "us-east-1", clients, sizing)
+        rate = get_hourly_rate(
+            data, "g6e.xlarge", "us-east-1a", "us-east-1", clients, sizing
+        )
         assert rate == 1.861
 
     def test_returns_sizing_rate_for_on_demand(self) -> None:
@@ -175,7 +184,9 @@ class TestGetHourlyRate:
         sizing = _make_sizing(hourly_usd={"us-east-1": 1.861})
         data = _instance_data()
 
-        rate = get_hourly_rate(data, "g6e.xlarge", "us-east-1a", "us-east-1", clients, sizing)
+        rate = get_hourly_rate(
+            data, "g6e.xlarge", "us-east-1a", "us-east-1", clients, sizing
+        )
         assert rate == 1.861
 
 
@@ -225,15 +236,20 @@ class TestHourlyFromSizing:
         """hourly_from_sizing() returns the rate for a known instance type."""
         from ember_aws.status_cost import hourly_from_sizing
 
-        sizing = _make_sizing(instance_type="g6e.xlarge", hourly_usd={"us-east-1": 1.861})
+        sizing = _make_sizing(
+            instance_type="g6e.xlarge", hourly_usd={"us-east-1": 1.861}
+        )
         result = hourly_from_sizing("g6e.xlarge", "us-east-1", sizing)
         assert result == 1.861
 
     def test_returns_first_rate_when_region_not_in_map(self) -> None:
-        """hourly_from_sizing() returns the first rate when the region is not in the map."""
+        """hourly_from_sizing() returns the first rate when the region is not
+        in the map."""
         from ember_aws.status_cost import hourly_from_sizing
 
-        sizing = _make_sizing(instance_type="g6e.xlarge", hourly_usd={"us-east-1": 1.861})
+        sizing = _make_sizing(
+            instance_type="g6e.xlarge", hourly_usd={"us-east-1": 1.861}
+        )
         result = hourly_from_sizing("g6e.xlarge", "eu-west-1", sizing)
         assert result == 1.861  # falls back to first value
 

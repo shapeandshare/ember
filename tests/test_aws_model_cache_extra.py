@@ -45,7 +45,9 @@ def _make_clients(
                     {
                         "StackName": _CACHE_STACK_NAME,
                         "StackStatus": "CREATE_COMPLETE",
-                        "Outputs": [{"OutputKey": "BucketName", "OutputValue": _BUCKET}],
+                        "Outputs": [
+                            {"OutputKey": "BucketName", "OutputValue": _BUCKET}
+                        ],
                     }
                 ]
             }
@@ -55,7 +57,9 @@ def _make_clients(
         )
 
     clients.cfn.describe_stacks.side_effect = describe_stacks
-    clients.cfn.create_stack.return_value = {"StackId": "arn:aws:cfn:us-east-1:123:stack/x"}
+    clients.cfn.create_stack.return_value = {
+        "StackId": "arn:aws:cfn:us-east-1:123:stack/x"
+    }
     clients.cfn.get_waiter.return_value = MagicMock()
 
     # list_stacks for destroy guard
@@ -168,7 +172,9 @@ class TestEnsureBucket:
         assert bucket == _BUCKET
         clients.cfn.create_stack.assert_called_once()
 
-    def test_raises_when_bucket_not_in_outputs_after_create(self, tmp_path: Any) -> None:
+    def test_raises_when_bucket_not_in_outputs_after_create(
+        self, tmp_path: Any
+    ) -> None:
         """ensure_bucket() raises RuntimeError when BucketName output is missing."""
         from botocore.exceptions import ClientError
 
@@ -245,9 +251,7 @@ class TestModelCacheStatus:
         """status() returns 'partial' when a file's size does not match the manifest."""
         manifest_key = f"{_PREFIX}flash/{_REVISION}/manifest.json"
         manifest = {
-            "files": [
-                {"path": "model.safetensors", "size": 9999, "sha256": "abc"}
-            ]
+            "files": [{"path": "model.safetensors", "size": 9999, "sha256": "abc"}]
         }
         # The actual object has a different size
         file_key = f"{_PREFIX}flash/{_REVISION}/model.safetensors"
@@ -266,9 +270,7 @@ class TestModelCacheStatus:
         """status() returns 'partial' when a manifest file is missing from S3."""
         manifest_key = f"{_PREFIX}flash/{_REVISION}/manifest.json"
         manifest = {
-            "files": [
-                {"path": "model.safetensors", "size": 100, "sha256": "abc"}
-            ]
+            "files": [{"path": "model.safetensors", "size": 100, "sha256": "abc"}]
         }
         # File is NOT in s3_objects
         clients = _make_clients(
@@ -286,7 +288,11 @@ class TestModelCacheStatus:
         file_key = f"{_PREFIX}flash/{_REVISION}/model.safetensors"
         manifest = {
             "files": [
-                {"path": "model.safetensors", "size": len(file_data), "sha256": _sha256(file_data)}
+                {
+                    "path": "model.safetensors",
+                    "size": len(file_data),
+                    "sha256": _sha256(file_data),
+                }
             ]
         }
         clients = _make_clients(
@@ -323,7 +329,11 @@ class TestModelCacheAdd:
         file_key = f"{_PREFIX}flash/{_REVISION}/model.safetensors"
         manifest = {
             "files": [
-                {"path": "model.safetensors", "size": len(file_data), "sha256": _sha256(file_data)}
+                {
+                    "path": "model.safetensors",
+                    "size": len(file_data),
+                    "sha256": _sha256(file_data),
+                }
             ]
         }
         clients = _make_clients(
@@ -395,7 +405,7 @@ class TestModelCacheList:
         """list() uses the cache stack bucket when bucket=None."""
         clients = _make_clients(cache_stack_exists=True, s3_objects={})
         mc = _make_cache(clients)
-        result = mc.list()
+        mc.list()
         # Should have called list_objects_v2 on the stack bucket
         clients.s3.list_objects_v2.assert_called()
 

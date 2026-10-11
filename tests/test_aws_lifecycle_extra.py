@@ -314,9 +314,7 @@ class TestLifecycleReadCurrentGeneration:
         from ember_aws.names import DeploymentName
 
         names_obj = DeploymentName(name="default")
-        clients = _make_clients(
-            ssm_params={names_obj.config_param: "not-json"}
-        )
+        clients = _make_clients(ssm_params={names_obj.config_param: "not-json"})
         ts = _make_tailscale()
         mc = _make_model_cache()
         pf = _make_preflight()

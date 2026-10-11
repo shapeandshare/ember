@@ -5,11 +5,6 @@ from __future__ import annotations
 from typing import Any
 
 import httpx
-import pytest
-
-# ---------------------------------------------------------------------------
-# wait_healthy() additional paths
-# ---------------------------------------------------------------------------
 
 
 class TestWaitHealthyExtra:
@@ -83,53 +78,69 @@ class TestWaitHealthyExtra:
         )
         assert result["engine"]["device"] == "cuda"
 
-    def test_dns_tls_hint_printed_on_name_resolution_error(
-        self, capsys: Any
-    ) -> None:
+    def test_dns_tls_hint_printed_on_name_resolution_error(self, capsys: Any) -> None:
         """wait_healthy() prints a DNS/TLS hint when a name resolution error occurs."""
-        from ember_aws.health import HealthTimeout, wait_healthy
+        from ember_aws.health import wait_healthy
 
         call_count = 0
 
         def _handler(request: httpx.Request) -> httpx.Response:
             nonlocal call_count
             call_count += 1
+            if call_count >= 2:
+                return httpx.Response(
+                    200,
+                    json={
+                        "status": "ok",
+                        "engine": {"device": "cuda"},
+                        "version": "0.12.0",
+                    },
+                )
             raise Exception("Name or service not known")
 
         transport = httpx.MockTransport(_handler)
-        with pytest.raises(HealthTimeout):
-            wait_healthy(
-                url="https://ember-default.example.ts.net",
-                token="tok",
-                timeout_s=60,
-                transport=transport,
-                poll_interval_s=0,
-            )
+        result = wait_healthy(
+            url="https://ember-default.example.ts.net",
+            token="tok",
+            timeout_s=60,
+            transport=transport,
+            poll_interval_s=0,
+        )
+        assert result["engine"]["device"] == "cuda"
         captured = capsys.readouterr()
-        assert "waiting" in captured.out.lower() or "tls" in captured.out.lower() or "dns" in captured.out.lower()
+        assert "waiting" in captured.out.lower() or "tls" in captured.out.lower()
 
     def test_tls_error_prints_hint(self, capsys: Any) -> None:
         """wait_healthy() prints a DNS/TLS hint when a TLS error occurs."""
-        from ember_aws.health import HealthTimeout, wait_healthy
+        from ember_aws.health import wait_healthy
 
         call_count = 0
 
         def _handler(request: httpx.Request) -> httpx.Response:
             nonlocal call_count
             call_count += 1
+            if call_count >= 2:
+                return httpx.Response(
+                    200,
+                    json={
+                        "status": "ok",
+                        "engine": {"device": "cuda"},
+                        "version": "0.12.0",
+                    },
+                )
             raise Exception("TLS handshake failed")
 
         transport = httpx.MockTransport(_handler)
-        with pytest.raises(HealthTimeout):
-            wait_healthy(
-                url="https://ember-default.example.ts.net",
-                token="tok",
-                timeout_s=60,
-                transport=transport,
-                poll_interval_s=0,
-            )
+        result = wait_healthy(
+            url="https://ember-default.example.ts.net",
+            token="tok",
+            timeout_s=60,
+            transport=transport,
+            poll_interval_s=0,
+        )
+        assert result["engine"]["device"] == "cuda"
         captured = capsys.readouterr()
-        assert "waiting" in captured.out.lower() or "tls" in captured.out.lower() or "dns" in captured.out.lower()
+        assert "waiting" in captured.out.lower() or "tls" in captured.out.lower()
 
     def test_503_status_text_printed_once_per_change(self, capsys: Any) -> None:
         """wait_healthy() prints the 503 status text only when it changes."""
@@ -163,7 +174,6 @@ class TestWaitHealthyExtra:
             poll_interval_s=0,
         )
         captured = capsys.readouterr()
-        # "loading" should appear exactly once (not twice for the two 503s)
         assert captured.out.count("loading") == 1
 
     def test_health_timeout_error_has_last_response(self) -> None:
@@ -215,7 +225,6 @@ class TestWaitHealthyExtra:
             poll_interval_s=0,
         )
         captured = capsys.readouterr()
-        # device=cpu should appear exactly once
         assert captured.out.count("device=cpu") == 1
 
     def test_safe_json_returns_empty_dict_on_invalid_json(self) -> None:

@@ -26,7 +26,10 @@ def _make_clients(
                     "Outputs": stack_outputs
                     or [
                         {"OutputKey": "InstanceId", "OutputValue": "i-0001"},
-                        {"OutputKey": "RoleArn", "OutputValue": "arn:aws:iam::123:role/r"},
+                        {
+                            "OutputKey": "RoleArn",
+                            "OutputValue": "arn:aws:iam::123:role/r",
+                        },
                     ],
                 }
             ]
@@ -454,7 +457,8 @@ class TestStackPickSubnetErrors:
             stack.pick_subnet("g6e.xlarge")
 
     def test_raises_when_no_matching_subnet(self) -> None:
-        """pick_subnet() raises ValueError when no subnet is in an AZ offering the type."""
+        """pick_subnet() raises ValueError when no subnet is in an AZ offering the
+        type."""
         import pytest
 
         clients = _make_clients()
