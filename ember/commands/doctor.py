@@ -215,6 +215,58 @@ def _doctor_limits(
         info("limits", "unknown; remote endpoint unreachable")
 
 
+def _endpoint_detail(status: dict[str, Any]) -> str:
+    """Build the endpoint detail line from an endpoint status.
+
+    Parameters
+    ----------
+    status : dict[str, Any]
+        ``endpoint_status`` output for the configured endpoint.
+
+    Returns
+    -------
+    str
+        The ``"<kind> <url> (<state>)"`` line, with the server's advertised
+        version and device appended when it is reachable.
+    """
+    state = "reachable" if status["reachable"] else "unreachable"
+    detail = f"{status['kind']} {status['url']} ({state})"
+    if status["reachable"]:
+        version = status.get("contract_version")
+        engine = status.get("engine") or {}
+        device = engine.get("device") if isinstance(engine, dict) else None
+        if version:
+            detail += f"; version {version}"
+        if device:
+            detail += f"; device {device}"
+    return detail
+
+
+def _doctor_report_endpoint(
+    args: argparse.Namespace,
+    info: collections.abc.Callable[[str, str], None],
+) -> None:
+    """Emit the endpoint and limits lines, or the invalid-endpoint line.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; uses ``--server-url`` for endpoint reporting.
+    info : Callable[[str, str], None]
+        Emit an informational line.
+    """
+    try:
+        status = endpoint_status(resolve_endpoint(args))
+    except (
+        endpoint_mod.InvalidEndpointError,
+        endpoint_mod.InsecureEndpointError,
+    ) as exc:
+        info("endpoint", f"invalid: {exc}")
+    else:
+        info("endpoint", _endpoint_detail(status))
+        _doctor_limits(info, status, *_doctor_model_location())
+
+
 def cmd_doctor(args: argparse.Namespace) -> int:
     """Check platform, dependencies, model, and server (``ember doctor``).
 
@@ -262,26 +314,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         "server auth",
         "required" if config.resolve("server_auth_token") else "disabled",
     )
-    try:
-        status = endpoint_status(resolve_endpoint(args))
-    except (
-        endpoint_mod.InvalidEndpointError,
-        endpoint_mod.InsecureEndpointError,
-    ) as exc:
-        info("endpoint", f"invalid: {exc}")
-    else:
-        state = "reachable" if status["reachable"] else "unreachable"
-        endpoint_detail = f"{status['kind']} {status['url']} ({state})"
-        if status["reachable"]:
-            version = status.get("contract_version")
-            engine = status.get("engine") or {}
-            device = engine.get("device") if isinstance(engine, dict) else None
-            if version:
-                endpoint_detail += f"; version {version}"
-            if device:
-                endpoint_detail += f"; device {device}"
-        info("endpoint", endpoint_detail)
-        _doctor_limits(info, status, *_doctor_model_location())
+    _doctor_report_endpoint(args, info)
     for label, detail in registration_lines(Path.cwd()):
         info(label, detail)
     return 0 if ok else 1
