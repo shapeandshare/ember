@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import sys
 from typing import Any
 
 #: The CloudFormation stack name for the shared model cache.
@@ -35,8 +34,15 @@ def check_not_in_use(
     bucket: str,
     model: str,
     revision: str,
+    prefix: str = "models/",
 ) -> None:
-    """Raise CacheInUseError if any deployment uses this model.
+    """Raise CacheInUseError if any deployment uses this model revision.
+
+    Matches the exact, normalized ``s3://<bucket>/<prefix><model>/<revision>``
+    URI against each active deployment's configured ``model_s3_uri``, so
+    removing an unused revision is allowed while any deployment exists.
+    Unreadable deployment configs fail closed: the cache may be in use, so
+    removal is refused rather than risked.
 
     Parameters
     ----------
@@ -48,13 +54,16 @@ def check_not_in_use(
         Registry key.
     revision : str
         Model revision.
+    prefix : str
+        S3 key prefix; defaults to ``"models/"``.
 
     Raises
     ------
     CacheInUseError
-        If a deployment stack's config references this bucket and model.
+        If a deployment stack's config references this exact model revision,
+        or if an active deployment's config cannot be read.
     """
-    s3_uri_prefix = f"s3://{bucket}"
+    expected_uri = f"s3://{bucket}/{prefix}{model}/{revision}".rstrip("/")
     _active = ["CREATE_COMPLETE", "UPDATE_COMPLETE", "UPDATE_ROLLBACK_COMPLETE"]
     stacks = clients.cfn.list_stacks(StackStatusFilter=_active)
     for stack_summary in stacks.get("StackSummaries", []):
@@ -65,15 +74,15 @@ def check_not_in_use(
         param_name = f"/ember/{deployment_name}/config"
         try:
             resp = clients.ssm.get_parameter(Name=param_name)
-            config_json = resp["Parameter"]["Value"]
-            config = json.loads(config_json)
-            model_s3_uri: str = config.get("model_s3_uri", "")
-            if model_s3_uri.startswith(s3_uri_prefix):
-                raise CacheInUseError(
-                    f"deployment {stack_name!r} uses this cache "
-                    f"({model_s3_uri!r}); destroy the deployment first"
-                )
-        except CacheInUseError:
-            raise
-        except Exception as exc:  # unreadable config must not block the guard
-            print(f"warning: cannot read {param_name}: {exc}", file=sys.stderr)
+            config = json.loads(resp["Parameter"]["Value"])
+        except Exception as exc:
+            raise CacheInUseError(
+                f"cannot read {stack_name!r} config ({param_name}): {exc}; "
+                "refusing to remove a cache that may be in use"
+            ) from exc
+        model_s3_uri = str(config.get("model_s3_uri", "")).rstrip("/")
+        if model_s3_uri == expected_uri:
+            raise CacheInUseError(
+                f"deployment {stack_name!r} uses this cache "
+                f"({model_s3_uri!r}); destroy the deployment first"
+            )

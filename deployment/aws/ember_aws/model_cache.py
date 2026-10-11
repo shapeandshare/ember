@@ -274,14 +274,15 @@ class ModelCache:
         Raises
         ------
         CacheInUseError
-            If any ``ember-*`` deployment stack's config points at this cache.
+            If any ``ember-*`` deployment stack's config points at this exact
+            model revision.
         """
         if bucket is None:
             bucket = self._stack_bucket()
             if not bucket:
                 return
 
-        check_not_in_use(self._clients, bucket, model, revision)
+        check_not_in_use(self._clients, bucket, model, revision, prefix)
 
         model_prefix = f"{prefix}{model}/{revision}/"
         resp = self._clients.s3.list_objects_v2(Bucket=bucket, Prefix=model_prefix)

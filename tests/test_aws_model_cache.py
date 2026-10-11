@@ -459,6 +459,74 @@ def test_cache_rm_refused_while_deployment_uses_it() -> None:
         cache.remove("flash", _REVISION, bucket=_BUCKET, prefix=_PREFIX)
 
 
+def test_cache_rm_allowed_when_deployment_uses_other_revision() -> None:
+    """cache rm succeeds when the deployment's config points at another revision."""
+    deployment_stacks = [
+        {
+            "StackName": "ember-default",
+            "StackStatus": "CREATE_COMPLETE",
+        }
+    ]
+    cfn = _make_cfn_client(cache_stack_exists=True, deployment_stacks=deployment_stacks)
+
+    ssm = MagicMock()
+    ssm.get_parameter.return_value = {
+        "Parameter": {
+            "Value": json.dumps(
+                {
+                    "ember_version": "0.12.0",
+                    "model_s3_uri": f"s3://{_BUCKET}/models/flash/other-revision",
+                    "max_request_length": 24576,
+                    "idle_minutes": 0,
+                    "generation": 1,
+                }
+            )
+        }
+    }
+
+    s3 = _make_s3_client()
+    s3.list_objects_v2.return_value = {
+        "Contents": [{"Key": f"models/flash/{_REVISION}/config.json"}],
+        "IsTruncated": False,
+    }
+    clients = _make_aws_clients(s3=s3, cfn=cfn)
+    clients.ssm = ssm
+
+    cache = ModelCache(clients=clients)
+    cache.remove("flash", _REVISION, bucket=_BUCKET, prefix=_PREFIX)
+
+    assert s3.delete_object.called
+
+
+def test_cache_rm_refused_when_config_unreadable() -> None:
+    """cache rm fails closed when an active deployment's config cannot be read."""
+    from botocore.exceptions import ClientError
+
+    from ember_aws.model_cache import CacheInUseError
+
+    deployment_stacks = [
+        {
+            "StackName": "ember-default",
+            "StackStatus": "CREATE_COMPLETE",
+        }
+    ]
+    cfn = _make_cfn_client(cache_stack_exists=True, deployment_stacks=deployment_stacks)
+
+    ssm = MagicMock()
+    ssm.get_parameter.side_effect = ClientError(
+        {"Error": {"Code": "ThrottlingException", "Message": "throttled"}},
+        "GetParameter",
+    )
+
+    s3 = _make_s3_client()
+    clients = _make_aws_clients(s3=s3, cfn=cfn)
+    clients.ssm = ssm
+
+    cache = ModelCache(clients=clients)
+    with pytest.raises(CacheInUseError):
+        cache.remove("flash", _REVISION, bucket=_BUCKET, prefix=_PREFIX)
+
+
 # ---------------------------------------------------------------------------
 # cache destroy — requires --confirm and no deployments
 # ---------------------------------------------------------------------------
