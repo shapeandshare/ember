@@ -32,6 +32,7 @@ from ember import models  # noqa: E402
 from ember.cfg import config  # noqa: E402
 from ember.serving import process, request_size, runtime  # noqa: E402
 
+from evals.atomic import copy_atomic, write_atomic  # noqa: E402
 from evals.context import items as probe_items  # noqa: E402
 from evals.context import reproduce, summarize, worker  # noqa: E402
 from evals.context.records.depth import Depth  # noqa: E402
@@ -51,7 +52,6 @@ from evals.context.scoring import (  # noqa: E402
     paired_deltas,
     projected_half_width,
 )
-from evals.export import copy_atomic, write_atomic  # noqa: E402
 
 RESULTS_DIR = REPO_ROOT / "results" / "context"
 RUNS_DIR = REPO_ROOT / "evals" / "context" / "runs"

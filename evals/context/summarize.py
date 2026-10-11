@@ -9,8 +9,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+from ..atomic import write_atomic
 from ..eval.provenance import REPO_ROOT
-from ..export import write_atomic
 from .records.cell_result import CellResult
 from .records.depth import Depth
 from .records.probe_manifest import ProbeManifest
