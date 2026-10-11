@@ -165,9 +165,13 @@ class Remote:
         Two phases:
 
         1. **On the instance** (via ``tailscale ssh ember@<hostname>``):
-           clone the pinned ember release, run ``make test-strict`` with
-           ``EMBER_DEVICE=cuda`` and the local model cache, then run
-           ``ember eval context --device cuda``.
+           recreate the checkout of the pinned ember release (so the gate is
+           rerunnable), link the hosted model cache into the checkout's
+           ``.models/clef-flash`` (where the model-backed tests and the
+           context probe look for it), run ``make test-strict`` with
+           ``EMBER_DEVICE=cuda``, then run
+           ``ember eval context --device cuda --models flash`` (flash is the
+           only AWS-supported model).
 
         2. **On the operator side**: run ``ember eval run`` with
            ``EMBER_SERVER_URL`` and ``EMBER_AUTH_TOKEN`` set only in the
@@ -190,12 +194,15 @@ class Remote:
         """
         cache_dir = _model_cache_dir(model_s3_uri)
         on_instance_cmd = (
+            f"rm -rf {_INSTANCE_CLONE_DIR} && "
             f"git clone --depth 1 --branch v{ember_version} {_EMBER_REPO} "
             f"{_INSTANCE_CLONE_DIR} && "
             f"cd {_INSTANCE_CLONE_DIR} && "
             f"uv sync --locked && "
+            f"mkdir -p .models && "
+            f"ln -sfn {cache_dir} .models/clef-flash && "
             f"EMBER_MODEL_DIR={cache_dir} EMBER_DEVICE=cuda make test-strict && "
-            f".venv/bin/ember eval context --device cuda"
+            f".venv/bin/ember eval context --device cuda --models flash"
         )
         self._runner(
             [

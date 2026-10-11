@@ -249,6 +249,48 @@ def test_verify_on_instance_argv_git_clone() -> None:
     assert "https://github.com/shapeandshare/ember" in combined
 
 
+def test_verify_on_instance_command_is_rerunnable() -> None:
+    """verify() recreates the checkout, so a second run cannot fail on clone."""
+    calls, runner = _capture_runner()
+    remote = Remote(_names("default"), runner=runner)
+
+    remote.verify(
+        ember_version=_EMBER_VERSION,
+        model_s3_uri=_MODEL_S3_URI,
+        server_url=_SERVER_URL,
+        token=_TOKEN,
+    )
+
+    on_instance_calls = [
+        argv for argv, _ in calls if "tailscale" in argv[0] and "ember@" in argv[2]
+    ]
+    assert on_instance_calls
+    combined = " ".join(on_instance_calls[0])
+    assert "rm -rf /opt/ember-src" in combined
+    assert combined.index("rm -rf /opt/ember-src") < combined.index("git clone")
+
+
+def test_verify_on_instance_links_hosted_cache_for_tests() -> None:
+    """verify() links the hosted cache where the checkout's tests look for it."""
+    calls, runner = _capture_runner()
+    remote = Remote(_names("default"), runner=runner)
+
+    remote.verify(
+        ember_version=_EMBER_VERSION,
+        model_s3_uri=_MODEL_S3_URI,
+        server_url=_SERVER_URL,
+        token=_TOKEN,
+    )
+
+    on_instance_calls = [
+        argv for argv, _ in calls if "tailscale" in argv[0] and "ember@" in argv[2]
+    ]
+    assert on_instance_calls
+    combined = " ".join(on_instance_calls[0])
+    cache_dir = _model_cache_dir(_MODEL_S3_URI)
+    assert f"ln -sfn {cache_dir} .models/clef-flash" in combined
+
+
 def test_verify_on_instance_argv_make_test_strict() -> None:
     """verify() includes make test-strict with EMBER_DEVICE=cuda."""
     calls, runner = _capture_runner()
@@ -290,6 +332,7 @@ def test_verify_on_instance_argv_eval_context_cuda() -> None:
     assert on_instance_calls
     combined = " ".join(on_instance_calls[0])
     assert "ember eval context --device cuda" in combined
+    assert "--models flash" in combined
 
 
 def test_verify_on_instance_uses_ember_user() -> None:
