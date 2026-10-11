@@ -70,3 +70,40 @@ def test_landing_decisions_quote_observed_skill_output() -> None:
         assert answers, decision
         for question, value in answers:
             assert f"`{question}` {value}" in row
+
+
+_LIQUID = re.compile(r"\{\{.*?\}\}|\{%.*?%\}", re.DOTALL)
+_MARKUP = re.compile(r"<[^>]*>")
+_NUMBER = re.compile(r"\b\d[\d,.]*\b")
+
+
+def _prose_numbers() -> list[str]:
+    """Numbers typed into the landing page's visible prose.
+
+    Generated values (Liquid), the checked decision cards, the quick start, and
+    markup attributes are excluded; anything left would go stale by hand.
+    """
+    text = _DECISION.sub("", LANDING.split("---", 2)[2])
+    text = text.split('id="get-started"', 1)[0]
+    text = _MARKUP.sub(" ", _LIQUID.sub(" ", text))
+    return _NUMBER.findall(text)
+
+
+# Install requirements, illustrative examples, and the weights' license:
+# none of them come from a benchmark run.
+_ALLOWED_NUMBERS = {"32", "18", "0.96", "96", "93", "0", "3", "2.0"}
+
+
+def test_landing_prose_has_no_hand_typed_benchmark_numbers() -> None:
+    stray = [n for n in _prose_numbers() if n not in _ALLOWED_NUMBERS]
+    assert stray == []
+
+
+def test_hero_questions_come_from_the_generated_pool() -> None:
+    assert "site.data.benchmark.hero" in LANDING
+    assert 'id="hero-pool"' in LANDING
+
+
+def test_hero_has_a_pause_control_for_its_motion() -> None:
+    # WCAG 2.2.2: motion that starts by itself and lasts over 5 s needs a pause.
+    assert 'class="hero-pause"' in LANDING

@@ -23,4 +23,248 @@ layout: default
     );
     items.forEach((item) => observer.observe(item));
   })();
+
+  // Hero questions: a small cloud of conversations around Ember.
+  //
+  // Up to five slots sit on an arc over the mascot. Questions arrive one at a
+  // time into random spots, more of them the more the visitor moves around
+  // the page; as things go quiet, the oldest drift off again. Asking a
+  // question (resting the pointer on it, focus, a click, or a tap) makes ember think
+  // and answer; the conversation then fades and a fresh question takes its
+  // place. With nobody interacting, ember asks itself, clockwise. Reduced
+  // motion keeps only the asking; without the script, hover shows a reply.
+  (() => {
+    const list = document.querySelector(".hero-facts[data-swap]");
+    const data = document.getElementById("hero-pool");
+    if (!list || !data) return;
+    const pool = JSON.parse(data.textContent)
+      .map((q) => [Math.random(), q])
+      .sort((a, b) => a[0] - b[0])
+      .map((pair) => pair[1]);
+    const slots = [...list.children]; // clockwise, low left to low right
+    let next = 0;
+    // The next question in the shuffled pool that no other bubble is showing.
+    const fill = (li) => {
+      const showing = new Set(
+        slots.filter((other) => other !== li).map((other) => other.querySelector(".ask").textContent),
+      );
+      let q = pool[next % pool.length];
+      for (let tries = 0; showing.has(q.ask) && tries < pool.length; tries += 1) {
+        next += 1;
+        q = pool[next % pool.length];
+      }
+      next += 1;
+      li.dataset.born = String(Date.now()); // age of the question now showing
+      li.querySelector(".ask").textContent = q.ask;
+      li.querySelector(".reply b").textContent = q.verdict;
+      li.querySelector(".reply span").textContent = q.detail;
+    };
+    slots.forEach(fill);
+    // A new path for a bubble's idle drift: three random waypoints up to
+    // 14 px across and 18 px up or down, at a random speed.
+    const wander = (li) => {
+      const span = (max) => `${Math.round((Math.random() * 2 - 1) * max)}px`;
+      for (const point of ["a", "b", "c"]) {
+        li.style.setProperty(`--${point}x`, span(14));
+        li.style.setProperty(`--${point}y`, span(18));
+      }
+      li.style.setProperty("--drift", `${(5 + Math.random() * 5).toFixed(1)}s`);
+      li.style.setProperty("--drift-delay", `${(-Math.random() * 5).toFixed(1)}s`);
+      // Land a little off the spot's centre each time, so the cloud never
+      // settles into the same shape.
+      li.style.setProperty("--jx", span(36));
+      li.style.setProperty("--jy", span(24));
+    };
+    slots.forEach(wander);
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    list.classList.add("is-live"); // from here the script drives the replies
+
+    // A visitor can stop all of this (WCAG 2.2.2): the cloud stops changing
+    // and ember stops asking itself; asking by hand still works.
+    const hero = list.closest(".splash-hero");
+    const pause = document.querySelector(".hero-pause");
+    let paused = false;
+    if (pause && !still) {
+      pause.hidden = false;
+      pause.addEventListener("click", () => {
+        paused = !paused;
+        hero.classList.toggle("is-paused", paused);
+        pause.setAttribute("aria-pressed", String(paused));
+        pause.textContent = paused ? "Play motion" : "Pause motion";
+      });
+    }
+
+    const MIN = 1;
+    const MAX = 5;
+    // With reduced motion every question is already showing and stays put:
+    // asking one still answers it, and the swap that follows is instant.
+    const shown = 2600; // thinking, then the reply, then a moment to read it
+    const fade = still ? 0 : 1000; // a finished or departing conversation fades out
+    const appear = still ? 0 : 2200; // a replacement question fades in
+    const dwell = 450; // pointer rest before a hover counts as asking
+    const firstArrival = 1500;
+    const arrivalGap = 3000;
+    const idleWait = 4000; // quiet time before ember asks itself
+    const between = 3000; // gap between two self-asked conversations
+
+    const usable = () => slots.filter((li) => getComputedStyle(li).display !== "none");
+    const present = () => usable().filter((li) => !li.classList.contains("is-waiting"));
+    const empty = () => usable().filter((li) => li.classList.contains("is-waiting"));
+    const busy = (li) => li.dataset.asked || li.classList.contains("is-leaving");
+
+    const arrive = (li) => {
+      wander(li);
+      li.classList.remove("is-waiting");
+      li.classList.add("is-arriving");
+      const landed = (event) => {
+        if (event.target !== li) return; // not the bubbles' own animations
+        li.classList.remove("is-arriving");
+        li.removeEventListener("animationend", landed);
+      };
+      li.addEventListener("animationend", landed);
+    };
+    const fadeOut = (li, then) => {
+      li.style.setProperty("--fade", `${fade}ms`);
+      li.classList.add("is-leaving");
+      setTimeout(() => {
+        li.classList.add("is-fresh"); // the next question arrives unanswered
+        fill(li);
+        then();
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            li.classList.remove("is-fresh");
+            li.dataset.asked = "";
+            if (li.matches(":hover, :focus-visible")) ask(li);
+          }),
+        );
+      }, fade);
+    };
+    // A finished conversation hands its slot to a new question.
+    const replace = (li) =>
+      fadeOut(li, () => {
+        const dots = li.querySelector(".thinking");
+        dots.replaceWith(dots.cloneNode(true)); // replay the thinking dots
+        li.style.setProperty("--fade", `${appear}ms`);
+        li.classList.remove("is-leaving");
+      });
+    // A quiet question drifts off, leaving its slot empty for a while.
+    const depart = (li) =>
+      fadeOut(li, () => {
+        li.classList.remove("is-leaving");
+        li.classList.add("is-waiting");
+      });
+    const ask = (li) => {
+      if (busy(li) || li.classList.contains("is-waiting")) return;
+      li.dataset.asked = "1";
+      setTimeout(() => replace(li), shown);
+    };
+
+    // Asking by hand.
+    slots.forEach((li) => {
+      let timer = 0;
+      li.addEventListener("mouseenter", () => {
+        timer = setTimeout(() => ask(li), dwell);
+      });
+      li.addEventListener("mouseleave", () => clearTimeout(timer));
+      for (const event of ["focusin", "click"]) li.addEventListener(event, () => ask(li));
+    });
+    if (still) return; // no arrivals, departures, or self-asking
+
+    // Start with a few questions in random spots, arriving one at a time in
+    // random order.
+    slots.forEach((li) => li.classList.add("is-waiting"));
+    const start = 1; // more arrive as the visitor moves
+    const chosen = usable()
+      .map((li) => [Math.random(), li])
+      .sort((a, b) => a[0] - b[0])
+      .slice(0, start)
+      .map((pair) => pair[1]);
+    const opening = chosen;
+    // A paused cloud holds an arrival back until motion resumes.
+    const arriveWhenMoving = (li) => (paused ? setTimeout(() => arriveWhenMoving(li), 1000) : arrive(li));
+    opening.forEach((li, n) => setTimeout(() => arriveWhenMoving(li), firstArrival + n * arrivalGap));
+    const settled = firstArrival + opening.length * arrivalGap;
+
+    // How many questions show follows how much the visitor is moving: pointer
+    // travel and scrolling add energy, which drains away within seconds. A
+    // still page settles to one question; a busy one fills every spot that
+    // fits. New questions land in a random empty spot, and the oldest quiet
+    // one leaves first. When the cloud is full, it still turns over now and
+    // then, oldest first.
+    let energy = 0;
+    let lastX = null;
+    let lastY = null;
+    window.addEventListener(
+      "pointermove",
+      (event) => {
+        if (lastX !== null) energy += Math.hypot(event.clientX - lastX, event.clientY - lastY);
+        lastX = event.clientX;
+        lastY = event.clientY;
+      },
+      { passive: true },
+    );
+    let lastScroll = window.scrollY;
+    window.addEventListener(
+      "scroll",
+      () => {
+        energy += Math.abs(window.scrollY - lastScroll);
+        lastScroll = window.scrollY;
+      },
+      { passive: true },
+    );
+    setInterval(() => (energy *= 0.92), 250); // drains by half in about 2 s
+    const fullAt = 2500; // pixels of recent movement that fill the cloud
+    const target = () => {
+      const most = usable().length;
+      return Math.max(MIN, Math.min(most, 1 + Math.round((most - 1) * Math.min(energy / fullAt, 1))));
+    };
+    const pick = (items) => items[Math.floor(Math.random() * items.length)];
+    const randomBetween = (low, high) => low + Math.random() * (high - low);
+    const spawnLoop = () => {
+      const free = empty();
+      if (!paused && present().length < target() && free.length) {
+        const li = pick(free);
+        fill(li);
+        arrive(li);
+      }
+      setTimeout(spawnLoop, randomBetween(1200, 3000));
+    };
+    const departLoop = () => {
+      const here = present();
+      const full = here.length === usable().length;
+      const quiet = here
+        .filter((li) => !busy(li) && !li.matches(":hover, :focus-within"))
+        .sort((a, b) => Number(a.dataset.born) - Number(b.dataset.born));
+      const shrink = here.length > target();
+      const turnOver = full && Math.random() < 0.25;
+      if (!paused && here.length > MIN && quiet.length && (shrink || turnOver)) depart(quiet[0]);
+      setTimeout(departLoop, randomBetween(2500, 5000));
+    };
+    setTimeout(spawnLoop, settled);
+    setTimeout(departLoop, settled);
+
+    // Asking itself: the next present question clockwise, one at a time.
+    const cycle = shown + fade + appear;
+    let last = -1;
+    let idle = 0;
+    const autoAsk = () => {
+      const here = present();
+      if (!paused && here.length) {
+        const after = here.find((li) => slots.indexOf(li) > last) || here[0];
+        last = slots.indexOf(after);
+        ask(after);
+      }
+      idle = setTimeout(autoAsk, cycle + between);
+    };
+    const wait = () => {
+      clearTimeout(idle);
+      idle = setTimeout(autoAsk, idleWait);
+    };
+    for (const event of ["mouseenter", "focusin", "click", "touchstart"]) {
+      list.addEventListener(event, wait, { capture: true, passive: true });
+    }
+    // The first answer comes soon after the first question lands, so even a
+    // visitor who scrolls straight on sees ember answer something.
+    idle = setTimeout(autoAsk, firstArrival + 1600 + 2000);
+  })();
 </script>
