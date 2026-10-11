@@ -14,6 +14,7 @@
 #     shared/release.mk  — download, init, opencode, setup, bootstrap, check, ci, clean, clean-model, deployment-requirements, deploy, undeploy
 #     shared/vault.mk    — vault-audit
 #     shared/site.mk     — site, site-serve (Jekyll GitHub Pages)
+#     shared/aws.mk      — aws-preflight, aws-cache, aws-up, aws-status, aws-stop, aws-start, aws-replace, aws-logs, aws-ssh, aws-token, aws-rotate-token, aws-down, aws-verify, aws-tools, aws-tools-rm
 SHELL := /bin/bash
 
 REPO_ROOT := $(CURDIR)
@@ -41,6 +42,7 @@ include shared/server.mk
 include shared/release.mk
 include shared/vault.mk
 include shared/site.mk
+include shared/aws.mk
 
 .PHONY: setup-hooks
 setup-hooks: ## Install git hooks from .githooks/ (sets core.hooksPath)

@@ -1095,6 +1095,81 @@ def test_pinned_filler_reads_and_verifies_the_manifest_copy(tmp_path):
 
 
 # ###########################################################################
+# T039: CUDA device support in MemorySampler
+# ###########################################################################
+
+
+def test_memory_sampler_for_cuda_uses_max_memory_allocated(monkeypatch):
+    """MemorySampler with device='cuda' calls torch.cuda.max_memory_allocated."""
+    from evals.context import memory_sampler
+
+    synced: list[bool] = []
+    peak_values = [100, 500, 200]
+    call_count = [0]
+
+    def fake_synchronize() -> None:
+        synced.append(True)
+
+    def fake_max_memory_allocated() -> int:
+        val = peak_values[min(call_count[0], len(peak_values) - 1)]
+        call_count[0] += 1
+        return val
+
+    sampler = memory_sampler.MemorySampler(
+        device="cuda",
+        read_driver=fake_max_memory_allocated,
+        read_rss=lambda: 1000,
+        synchronize=fake_synchronize,
+        interval=0.001,
+    )
+    with sampler:
+        pass
+    # synchronize must have been called (at least on enter and exit)
+    assert len(synced) >= 2
+    assert sampler.driver_peak_bytes == 500
+
+
+def test_memory_sampler_for_mps_uses_mps_synchronize(monkeypatch):
+    """MemorySampler with device='mps' calls the MPS synchronize path."""
+    from evals.context import memory_sampler
+
+    synced: list[bool] = []
+
+    def fake_mps_sync() -> None:
+        synced.append(True)
+
+    sampler = memory_sampler.MemorySampler(
+        device="mps",
+        read_driver=lambda: 100,
+        read_rss=lambda: 1000,
+        synchronize=fake_mps_sync,
+        interval=0.001,
+    )
+    with sampler:
+        pass
+    assert len(synced) >= 2
+
+
+def test_memory_sampler_default_device_is_mps():
+    """MemorySampler() without device= defaults to MPS behaviour."""
+    from evals.context import memory_sampler
+
+    # The default constructor must not raise even without a real MPS device.
+    sampler = memory_sampler.MemorySampler(
+        read_driver=lambda: 0,
+        read_rss=lambda: 0,
+        interval=0.001,
+    )
+    assert sampler is not None
+
+
+def test_probe_accepts_cuda_device_in_manifest():
+    """A ProbeManifest with device='cuda' is valid."""
+    manifest = _manifest(device="cuda")
+    assert manifest.device == "cuda"
+
+
+# ###########################################################################
 # run_context: snapshots, the pilot's pairs, and resumed reproductions
 # ###########################################################################
 def test_a_snapshot_refuses_a_run_that_is_not_finished_and_canonical(

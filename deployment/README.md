@@ -1,3 +1,7 @@
+# Deploying ember
+
+Deployments: [AWS GPU over Tailscale](aws/README.md) · Outerbounds (this file)
+
 # Deploying ember to Outerbounds
 
 Deploy ember's model server itself (not a client) to Outerbounds, so an agent

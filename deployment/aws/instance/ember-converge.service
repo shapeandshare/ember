@@ -1,0 +1,16 @@
+[Unit]
+Description=ember converge — install and sync on every boot
+After=ember-tailscale.service network-online.target
+Wants=network-online.target
+Before=ember.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/converge.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ember-converge
+
+[Install]
+WantedBy=multi-user.target

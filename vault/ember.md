@@ -5,7 +5,7 @@ tags:
   - type/moc
   - domain/governance
 created: 2026-10-02
-updated: 2026-10-10
+updated: 2026-10-11
 ---
 
 # ember vault
@@ -59,6 +59,7 @@ Session-level decisions with their context and consequences.
 - [[2026-10-10-generic-deployment-labels]]
 - [[2026-10-10-split-outerbounds-deployment-per-model]]
 - [[2026-10-10-benchmark-foundations-token-split-and-registries]]
+- [[2026-10-11-aws-gpu-deployment-over-tailscale]]
 
 ### Discoveries
 
@@ -82,6 +83,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-10-memory-checks-bound-each-models-cap]]
 - [[2026-10-10-remote-health-probe-sent-no-auth-header]]
 - [[2026-10-10-eval-harness-health-probe-also-sent-no-auth-header]]
+- [[2026-10-11-hosted-cache-treats-partial-dir-as-complete]]
 
 ### Sessions
 

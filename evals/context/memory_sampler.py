@@ -1,4 +1,9 @@
-"""Sample peak MPS memory while one inference runs (research R11)."""
+"""Sample peak GPU memory while one inference runs (research R11).
+
+Supports MPS (Apple Silicon) and CUDA (NVIDIA) devices.  The device is
+selected at construction time; the default is ``"mps"`` to preserve the
+existing behaviour for the local long-context probe.
+"""
 
 from __future__ import annotations
 
@@ -19,9 +24,21 @@ def _rss_bytes() -> int:
     return int(out.strip()) * 1024
 
 
-def _synchronize() -> None:
+def _mps_synchronize() -> None:
     if torch.backends.mps.is_available():
         torch.mps.synchronize()
+
+
+def _cuda_synchronize() -> None:
+    torch.cuda.synchronize()
+
+
+def _mps_driver_allocated() -> int:
+    return torch.mps.driver_allocated_memory()
+
+
+def _cuda_max_memory_allocated() -> int:
+    return torch.cuda.max_memory_allocated()
 
 
 class MemorySampler:
@@ -30,24 +47,48 @@ class MemorySampler:
     ``peak_bytes`` is the process RSS when the block starts plus the highest
     driver-allocated value sampled during it.
 
+    For MPS, the driver metric is ``torch.mps.driver_allocated_memory``.
+    For CUDA, the driver metric is ``torch.cuda.max_memory_allocated`` read
+    after ``torch.cuda.synchronize``.
+
     Parameters
     ----------
+    device : str, optional
+        ``"mps"`` (default) or ``"cuda"``.  Selects the synchronize and
+        driver-read functions when ``synchronize`` and ``read_driver`` are
+        not supplied explicitly.
     read_driver : Callable[[], int] | None, optional
-        Driver-allocated bytes; defaults to ``torch.mps.driver_allocated_memory``.
+        Driver-allocated bytes; defaults to the device-appropriate function.
     read_rss : Callable[[], int] | None, optional
         Process RSS in bytes; defaults to ``ps -o rss= -p <pid>``.
+    synchronize : Callable[[], None] | None, optional
+        Device synchronize function; defaults to the device-appropriate one.
     interval : float, optional
         Seconds between samples.
     """
 
     def __init__(
         self,
+        device: str = "mps",
         read_driver: Callable[[], int] | None = None,
         read_rss: Callable[[], int] | None = None,
+        synchronize: Callable[[], None] | None = None,
         interval: float = 0.02,
     ) -> None:
-        self._read_driver = read_driver or torch.mps.driver_allocated_memory
+        self._device = device
+        if read_driver is not None:
+            self._read_driver = read_driver
+        elif device == "cuda":
+            self._read_driver = _cuda_max_memory_allocated
+        else:
+            self._read_driver = _mps_driver_allocated
         self._read_rss = read_rss or _rss_bytes
+        if synchronize is not None:
+            self._synchronize = synchronize
+        elif device == "cuda":
+            self._synchronize = _cuda_synchronize
+        else:
+            self._synchronize = _mps_synchronize
         self._interval = interval
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -66,7 +107,7 @@ class MemorySampler:
 
     def __enter__(self) -> MemorySampler:
         """Synchronize, record the starting RSS, and start sampling."""
-        _synchronize()
+        self._synchronize()
         self.rss_start_bytes = self._read_rss()
         self.driver_peak_bytes = self._read_driver()
         self._stop.clear()
@@ -82,7 +123,7 @@ class MemorySampler:
     ) -> None:
         """Synchronize, stop sampling, and take a last reading; never swallow."""
         try:
-            _synchronize()
+            self._synchronize()
         finally:
             self._stop.set()
             if self._thread is not None:

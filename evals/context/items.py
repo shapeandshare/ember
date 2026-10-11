@@ -99,15 +99,33 @@ def _ember_version() -> str:
         return "unknown"
 
 
-def probe_model(name: str, recommended_max_memory: int | None = None) -> ProbeModel:
-    """Describe a registered model with its pre-declared memory budget."""
+def probe_model(
+    name: str,
+    recommended_max_memory: int | None = None,
+    memory_budget_bytes: int | None = None,
+) -> ProbeModel:
+    """Describe a registered model with its pre-declared memory budget.
+
+    Parameters
+    ----------
+    name : str
+        Registry key.
+    recommended_max_memory : int | None, optional
+        ``torch.mps.recommended_max_memory()`` or equivalent, recorded for
+        context only.
+    memory_budget_bytes : int | None, optional
+        Override the registry's ``memory_budget_bytes``.  Used when the device
+        is CUDA and the budget comes from the sizing row's ``gpu_memory_gib``.
+    """
     spec = models.get(name)
     return ProbeModel(
         name=spec.name,
         repo=spec.repo,
         revision=spec.revision,
         params=spec.params,
-        memory_budget_bytes=spec.memory_budget_bytes,
+        memory_budget_bytes=memory_budget_bytes
+        if memory_budget_bytes is not None
+        else spec.memory_budget_bytes,
         recommended_max_memory_bytes=recommended_max_memory,
     )
 
@@ -131,8 +149,10 @@ def build_manifest(
     kept: Sequence[dict[str, Any]],
     excluded: dict[str, str],
     lengths: Sequence[int],
+    device: str = "mps",
     dataset_path: Path = DATASET_PATH,
     recommended_max_memory: int | None = None,
+    memory_budget_bytes: int | None = None,
 ) -> ProbeManifest:
     """Assemble a manifest; a dirty tree is never canonical."""
     fields = provenance_fields()
@@ -140,10 +160,11 @@ def build_manifest(
     return ProbeManifest(
         run_id=run_id,
         canonical=canonical and not fields["git_dirty"],
-        device="mps",
+        device=device,
         dtype="float16",
         models={
-            name: probe_model(name, recommended_max_memory) for name in model_names
+            name: probe_model(name, recommended_max_memory, memory_budget_bytes)
+            for name in model_names
         },
         dataset_path=_relative(dataset_path),
         dataset_sha256=hashlib.sha256(dataset_path.read_bytes()).hexdigest(),

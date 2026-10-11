@@ -45,6 +45,22 @@ def test_eval_dataset_without_a_subcommand_is_an_error(
         cli.main(["eval", "dataset"])
 
 
+def test_eval_context_device_flag_is_passed_through(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from evals.context import run_context
+
+    received: list[list[str]] = []
+
+    def fake_main(argv: list[str]) -> int:
+        received.append(list(argv))
+        return 0
+
+    monkeypatch.setattr(run_context, "main", fake_main)
+    assert cli.main(["eval", "context", "--device", "cuda"]) == 0
+    assert received == [["--device", "cuda"]]
+
+
 def test_eval_run_resume_and_snapshot_rebuild_dispatch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

@@ -271,7 +271,16 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         info("endpoint", f"invalid: {exc}")
     else:
         state = "reachable" if status["reachable"] else "unreachable"
-        info("endpoint", f"{status['kind']} {status['url']} ({state})")
+        endpoint_detail = f"{status['kind']} {status['url']} ({state})"
+        if status["reachable"]:
+            version = status.get("contract_version")
+            engine = status.get("engine") or {}
+            device = engine.get("device") if isinstance(engine, dict) else None
+            if version:
+                endpoint_detail += f"; version {version}"
+            if device:
+                endpoint_detail += f"; device {device}"
+        info("endpoint", endpoint_detail)
         _doctor_limits(info, status, *_doctor_model_location())
     for label, detail in registration_lines(Path.cwd()):
         info(label, detail)

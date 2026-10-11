@@ -1,0 +1,9 @@
+[Unit]
+Description=ember idle auto-stop check
+After=ember.service
+
+[Service]
+Type=oneshot
+ExecStart=/etc/ember/idle.sh
+StandardOutput=journal
+StandardError=journal
