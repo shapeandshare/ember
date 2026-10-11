@@ -84,6 +84,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-10-remote-health-probe-sent-no-auth-header]]
 - [[2026-10-10-eval-harness-health-probe-also-sent-no-auth-header]]
 - [[2026-10-11-hosted-cache-treats-partial-dir-as-complete]]
+- [[2026-10-11-tailscale-oauth-scope-and-suffix]]
 
 ### Sessions
 
