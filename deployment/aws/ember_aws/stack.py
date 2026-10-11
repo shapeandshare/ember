@@ -83,7 +83,7 @@ class Stack:
             StackName=self._names.stack_name,
             TemplateBody=self._template_body(params),
             Parameters=cfn_params,
-            Capabilities=["CAPABILITY_IAM"],
+            Capabilities=["CAPABILITY_NAMED_IAM"],
             Tags=tags,
         )
 
@@ -272,7 +272,7 @@ class Stack:
                 StackName=self._names.stack_name,
                 ChangeSetName=change_set_name,
                 Parameters=cfn_params,
-                Capabilities=["CAPABILITY_IAM"],
+                Capabilities=["CAPABILITY_NAMED_IAM"],
             )
             waiter = self._clients.cfn.get_waiter("change_set_create_complete")
             waiter.wait(
@@ -313,7 +313,7 @@ class Stack:
                 StackName=self._names.stack_name,
                 ChangeSetName=change_set_name,
                 Parameters=cfn_params,
-                Capabilities=["CAPABILITY_IAM"],
+                Capabilities=["CAPABILITY_NAMED_IAM"],
             )
             waiter = self._clients.cfn.get_waiter("change_set_create_complete")
             waiter.wait(

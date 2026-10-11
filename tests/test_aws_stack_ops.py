@@ -77,13 +77,18 @@ class TestStackCreate:
         call_kwargs = clients.cfn.create_stack.call_args.kwargs
         assert call_kwargs["StackName"] == "ember-default"
 
-    def test_create_passes_capability_iam(self) -> None:
-        """create() always passes CAPABILITY_IAM."""
+    def test_create_passes_capability_named_iam(self) -> None:
+        """create() acknowledges the template's named IAM resources.
+
+        The template sets RoleName and InstanceProfileName, which requires
+        CAPABILITY_NAMED_IAM — plain CAPABILITY_IAM fails the live API with
+        InsufficientCapabilitiesException.
+        """
         clients = _make_clients()
         stack = _make_stack(clients)
         stack.create(params={"_template_body": "<template>"}, tags=[])
         call_kwargs = clients.cfn.create_stack.call_args.kwargs
-        assert "CAPABILITY_IAM" in call_kwargs["Capabilities"]
+        assert "CAPABILITY_NAMED_IAM" in call_kwargs["Capabilities"]
 
     def test_create_passes_tags(self) -> None:
         """create() forwards the tags list to cfn.create_stack."""
@@ -279,6 +284,17 @@ class TestStackUpdate:
         stack.update(params={"InstanceType": "g6e.xlarge"})
         clients.cfn.execute_change_set.assert_called_once()
 
+    def test_update_passes_capability_named_iam(self) -> None:
+        """update() acknowledges the template's named IAM resources."""
+        clients = _make_clients()
+        mock_waiter = MagicMock()
+        clients.cfn.get_waiter.return_value = mock_waiter
+
+        stack = _make_stack(clients)
+        stack.update(params={"InstanceType": "g6e.xlarge"})
+        call_kwargs = clients.cfn.create_change_set.call_args.kwargs
+        assert "CAPABILITY_NAMED_IAM" in call_kwargs["Capabilities"]
+
 
 # ---------------------------------------------------------------------------
 # prepare_change_set()
@@ -298,6 +314,17 @@ class TestStackPrepareChangeSet:
         result = stack.prepare_change_set(params={"InstanceType": "g6e.xlarge"})
         assert result is not None
         assert result.startswith("ember-update-")
+
+    def test_prepare_change_set_passes_capability_named_iam(self) -> None:
+        """prepare_change_set() acknowledges the template's named IAM resources."""
+        clients = _make_clients()
+        mock_waiter = MagicMock()
+        clients.cfn.get_waiter.return_value = mock_waiter
+
+        stack = _make_stack(clients)
+        stack.prepare_change_set(params={"InstanceType": "g6e.xlarge"})
+        call_kwargs = clients.cfn.create_change_set.call_args.kwargs
+        assert "CAPABILITY_NAMED_IAM" in call_kwargs["Capabilities"]
 
     def test_prepare_change_set_returns_none_when_empty(self) -> None:
         """prepare_change_set() returns None when the change set is empty."""
