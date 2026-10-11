@@ -51,12 +51,14 @@ Session-level decisions with their context and consequences.
 - [[2026-10-09-publish-releases-to-pypi-and-the-mcp-registry]]
 - [[2026-10-10-remove-t004-non-loopback-auth-check]]
 - [[2026-10-10-per-model-request-caps]]
+- [[2026-10-10-local-and-remote-as-equal-modes]]
 - [[2026-10-10-regression-tests-for-outerbounds-deploy-contract]]
 - [[2026-10-10-disable-torch-native-jit-for-cuda-compiler-gap]]
 - [[2026-10-10-automate-deployment-requirements-in-release]]
 - [[2026-10-10-leaderboard-style-benchmark-reporting]]
 - [[2026-10-10-generic-deployment-labels]]
 - [[2026-10-10-split-outerbounds-deployment-per-model]]
+- [[2026-10-10-benchmark-foundations-token-split-and-registries]]
 
 ### Discoveries
 
@@ -88,6 +90,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-08-client-registration-hygiene]] — `ember init` registers only ember; doctor reports per-harness registration
 - [[2026-10-09-context-window-audit-implementation]] — full-request counting, refusals, limit reporting, and the long-context probe
 - [[2026-10-10-pilot-gate-and-per-model-caps]] — the pilot's sizing gate, memory checks, per-model fallback caps, and a larger benchmark
+- [[2026-10-10-benchmark-foundations]] — Phase 0 of the benchmark categories programme: dataset tooling, the register, the token split, resumable runs, versioned leaderboard
 
 Append-only session logs, never pruned.
 
