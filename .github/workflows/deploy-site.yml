@@ -51,8 +51,12 @@ jobs:
       - name: Assemble docs and brand assets from the repository
         run: python3 scripts/build_site_docs.py
 
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      # The renderer imports evals.dataset, which needs pydantic. Install only
+      # that (version from uv.lock), not the whole torch stack.
       - name: Render the benchmark report
-        run: python3 scripts/build_site_benchmark.py
+        run: uv run --no-project --python 3.12 --with pydantic==2.13.5 python scripts/build_site_benchmark.py
 
       - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
