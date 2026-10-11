@@ -423,6 +423,26 @@ class TestDestroy:
         assert "wait" in call_order
         assert call_order.index("delete_stack") < call_order.index("wait")
 
+    def test_destroy_waiter_failure_propagates_and_keeps_ssm(self) -> None:
+        """destroy() propagates a stack-delete waiter failure; SSM stays put."""
+        from ember_aws.deployment import Deployment
+        from ember_aws.stack import StackWaitError
+
+        ssm_params = {
+            "/ember/default/server-token": "tok",
+            "/ember/default/config": "{}",
+        }
+        lc, clients, _ts = _make_lifecycle_control(ssm_params=ssm_params)
+        deployment = Deployment(name="default", model="flash")
+
+        waiter = clients.cfn.get_waiter.return_value
+        waiter.wait.side_effect = RuntimeError("waiter timed out")
+
+        with pytest.raises(StackWaitError):
+            lc.destroy(deployment, confirm="default")
+
+        clients.ssm.delete_parameters.assert_not_called()
+
     def test_destroy_deletes_ssm_params_after_stack(self) -> None:
         """destroy() must delete all /ember/<name>/* SSM params after stack deletion."""
         from ember_aws.deployment import Deployment

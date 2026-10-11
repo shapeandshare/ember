@@ -9,7 +9,7 @@ from typing import Any
 
 from .health import wait_healthy
 from .names import DeploymentName
-from .stack import Stack, StackWaitError
+from .stack import Stack
 
 
 class LifecycleControl:
@@ -149,12 +149,9 @@ class LifecycleControl:
         # 2. Delete the stack.
         self._clients.cfn.delete_stack(StackName=names.stack_name)
 
-        # 3. Wait for stack deletion.
-        try:
-            waiter = self._clients.cfn.get_waiter("stack_delete_complete")
-            waiter.wait(StackName=names.stack_name)
-        except (StackWaitError, Exception):  # noqa: S110 — tolerate waiter failures; stack may already be gone
-            pass
+        # 3. Wait for stack deletion. Failures propagate (the CLI exits 2) so
+        #    step 4 is skipped and a still-live instance keeps its SSM config.
+        stack.wait("delete")
 
         # 4. Delete every /ember/<name>/* SSM parameter.
         self._delete_ssm_params(names)
