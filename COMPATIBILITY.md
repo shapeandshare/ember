@@ -117,6 +117,12 @@ about 0.9 to 1.3 seconds for 220 to 360 input tokens. Counting the full request 
 inference adds about 0.4 ms to a warm 153-token request (about 0.65 seconds end to end),
 under 0.1%.
 
+Since ember 0.12.0 every `POST /v1/systemone` response splits `usage.input_tokens` into
+`state_tokens`, `fixed_tokens`, and `media_tokens` (the same measurement the request-size
+check makes). The benchmark harness (`ember eval run`) requires the split and refuses to
+score a server that does not return it, so a hosted deployment must run 0.12.0 or later
+before it is benchmarked. Older clients ignore the extra fields.
+
 ## Known issues
 
 - **Gated DeltaNet fallback.** Qwen3.5's hybrid linear attention has no optimized kernels

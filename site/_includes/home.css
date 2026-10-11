@@ -74,12 +74,245 @@
   line-height: 1.55;
   color: var(--ember-muted);
 }
-.splash-hero .eyebrow,
+.hero-facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem 2.75rem;
+  margin: 1.4rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ember-text);
+}
+/* The questions an assistant asks itself, drawn as chat bubbles. Hover,
+   focus, or tap one and ember "thinks" (three dots), then its reply bubble
+   lands below it. Replies sit in a reserved band under the row, so nothing
+   on the page moves. */
+.hero-facts {
+  position: relative;
+  align-items: flex-start;
+  margin-bottom: 6.5rem;
+}
+.hero-facts li {
+  position: relative;
+  max-width: 15rem;
+  display: flex;
+  outline: none;
+  cursor: pointer;
+}
+.hero-facts .ask {
+  padding: 0.55rem 1rem;
+  border-radius: 1.1rem 1.1rem 1.1rem 0.3rem;
+  /* Raised off the page colour, so a bubble stays solid over Ember's glow. */
+  background: color-mix(in srgb, var(--ember-text) 6%, var(--ember-surface));
+  border: 1px solid color-mix(in srgb, var(--ember-text) 22%, transparent);
+  font-weight: 500;
+  box-shadow: 0 6px 18px -12px color-mix(in srgb, var(--ember-ink) 60%, transparent);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.hero-facts li[data-asked="1"] .ask {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--ember-accent) 45%, transparent);
+  box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--ember-accent) 70%, transparent);
+}
+.hero-facts li:focus-visible .ask { outline: 2px solid var(--ember-accent); outline-offset: 2px; }
+.hero-facts .thinking,
+.hero-facts .reply {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  border-radius: 1.1rem 1.1rem 0.3rem 1.1rem;
+  opacity: 0;
+  pointer-events: none;
+}
+.hero-facts .thinking {
+  display: inline-flex;
+  gap: 4px;
+  padding: 0.85rem 1rem;
+  background: color-mix(in srgb, var(--ember-coral) 12%, var(--ember-surface));
+}
+.hero-facts .thinking i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ember-coral);
+}
+/* Without the script (no JavaScript), hovering or focusing a question
+   simply shows its reply. */
+.hero-facts:not(.is-live) li:is(:hover, :focus) .reply { opacity: 1; transform: none; }
+/* A reply is always a little narrower than the question it answers. */
+.hero-facts .reply {
+  width: max-content;
+  max-width: calc(100% - 1.5rem);
+  padding: 0.55rem 1rem;
+  /* Coral, not the accent: the buttons below own the accent fill. */
+  background: color-mix(in srgb, var(--ember-coral) 22%, var(--ember-surface));
+  border: 1px solid color-mix(in srgb, var(--ember-coral) 55%, transparent);
+  color: var(--ember-text);
+  font-weight: 400;
+  transform: translateY(8px) scale(0.92);
+  transform-origin: top right;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.hero-facts .reply b { font-weight: 700; }
+.hero-facts li[data-asked="1"] .thinking { animation: think-show 0.8s steps(1, end) forwards; }
+.hero-facts li[data-asked="1"] .thinking i { animation: think-dot 0.6s ease-in-out infinite; }
+.hero-facts li .thinking i:nth-child(2) { animation-delay: 0.15s; }
+.hero-facts li .thinking i:nth-child(3) { animation-delay: 0.3s; }
+.hero-facts li[data-asked="1"] .reply {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.3s ease 0.8s, transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1.2) 0.8s;
+}
+@keyframes think-show {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes think-dot {
+  0%, 100% { transform: translateY(0); opacity: 0.35; }
+  50% { transform: translateY(-4px); opacity: 1; }
+}
+/* A swapped-out question fades away before the next one takes its slot. */
+.hero-facts li {
+  transition: opacity var(--fade, 0.8s) ease, transform var(--fade, 0.8s) ease;
+}
+.hero-facts li.is-leaving { opacity: 0; transform: translateY(6px); }
+.hero-facts li.is-fresh .reply { opacity: 0; transform: translateY(8px) scale(0.92); transition: none; }
+/* Idle questions drift gently, each on its own rhythm, so the row feels
+   alive. The one being asked lights up and pulses gold instead, until its
+   conversation fades away. */
+/* Each bubble wanders its own path: the script gives every one random
+   waypoints and a random speed (the --a*, --b*, --c* and --drift values). */
+.hero-facts li .ask {
+  animation: ask-drift var(--drift, 6s) ease-in-out var(--drift-delay, 0s) infinite;
+}
+@keyframes ask-drift {
+  /* Translation only: rotating text blurs it, which reads as half-faded. */
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(var(--ax, 4px), var(--ay, -7px)); }
+  50% { transform: translate(var(--bx, -1px), var(--by, -10px)); }
+  75% { transform: translate(var(--cx, -4px), var(--cy, -3px)); }
+}
+.hero-facts li[data-asked="1"] .ask { animation: ask-pulse 1.4s ease-in-out infinite; }
+@keyframes ask-pulse {
+  0%, 100% {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px -12px color-mix(in srgb, var(--ember-ink) 60%, transparent),
+      0 0 0 0 color-mix(in srgb, var(--ember-gold) 0%, transparent);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 6px 18px -12px color-mix(in srgb, var(--ember-ink) 60%, transparent),
+      0 0 0 6px color-mix(in srgb, var(--ember-gold) 40%, transparent),
+      0 0 22px 2px color-mix(in srgb, var(--ember-gold) 35%, transparent);
+  }
+}
+/* The intro, the buttons, then Ember and its questions. */
+.hero-note {
+  margin: 1rem 0 0;
+  font-size: 0.95rem;
+  color: var(--ember-muted);
+}
+/* Stops and restarts the hero's motion (WCAG 2.2.2). The script shows it. */
+.hero-pause {
+  margin: 0.5rem auto 0;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--ember-text) 18%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ember-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.hero-pause:hover { color: var(--ember-text); border-color: var(--ember-accent); }
+.hero-pause:focus-visible { outline: 2px solid var(--ember-accent); outline-offset: 2px; }
+/* Paused: the hero holds still. Asking by hand still works; the answer
+   simply appears without the thinking dots. */
+.splash-hero.is-paused *,
+.splash-hero.is-paused *::before,
+.splash-hero.is-paused *::after { animation: none !important; }
+.splash-hero .hero-stage { margin: clamp(2.5rem, 6vw, 4rem) auto clamp(3rem, 7vw, 4.5rem); }
+/* Under the mascot on a narrow screen, two questions are plenty. */
+@media (max-width: 63.99rem) {
+  .hero-facts li:nth-child(n + 3) { display: none; }
+}
+
+/* Wide screens: the questions burst out of Ember and settle on both sides
+   of it, two left and two right, each tail pointing back at the mascot. The
+   list overlays the mascot's own box, so the hero keeps its height. */
+@media (min-width: 64rem) {
+  /* Room between the intro and the mascot for the upper half of the arc. */
+  .splash-hero .hero-stage { margin: 16rem auto 4.5rem; }
+  .splash-hero > .hero-facts {
+    display: block;
+    width: 100%;
+    height: 260px;
+    margin: calc(-260px - 4.5rem) 0 4.5rem;
+    pointer-events: none;
+  }
+  .hero-facts li {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max-content;
+    pointer-events: auto;
+    translate: calc(-50% + var(--x) + var(--jx, 0px)) calc(-50% + var(--y) + var(--jy, 0px));
+  }
+  /* Five slots on an arc over Ember, clockwise: low left, high left, top,
+     high right, low right. Tails and replies lean toward the mascot. */
+  .hero-facts li:nth-child(1) { --x: -400px; --y: 40px; }
+  .hero-facts li:nth-child(2) { --x: -330px; --y: -150px; }
+  .hero-facts li:nth-child(3) { --x: 0px; --y: -235px; }
+  .hero-facts li:nth-child(4) { --x: 330px; --y: -150px; }
+  .hero-facts li:nth-child(5) { --x: 400px; --y: 55px; }
+  .hero-facts li:nth-child(-n + 2) .ask { border-radius: 1.1rem 1.1rem 0.3rem 1.1rem; }
+  .hero-facts li:nth-child(3) .ask { border-radius: 1.1rem; }
+  .hero-facts li:nth-child(3) .reply,
+  .hero-facts li:nth-child(3) .thinking {
+    right: auto;
+    left: 50%;
+    translate: -50% 0;
+    border-radius: 1.1rem;
+    transform-origin: top center;
+  }
+  .hero-facts li:nth-child(n + 4) .reply,
+  .hero-facts li:nth-child(n + 4) .thinking {
+    right: auto;
+    left: 0;
+    border-radius: 1.1rem 1.1rem 1.1rem 0.3rem;
+    transform-origin: top left;
+  }
+}
+/* The script brings the questions in one at a time: each waits hidden,
+   then arrives (bursting out of Ember on wide screens, rising in elsewhere).
+   Without the script they are simply there. */
+.hero-facts li.is-waiting { visibility: hidden; opacity: 0; }
+.hero-facts li.is-arriving { animation: hero-rise 1.4s cubic-bezier(0.2, 0.9, 0.25, 1.2) backwards; }
+@media (min-width: 64rem) {
+  .hero-facts li.is-arriving { animation: hero-burst 1.6s cubic-bezier(0.2, 0.9, 0.25, 1.2) backwards; }
+}
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(10px) scale(0.9); }
+}
+@keyframes hero-burst {
+  from { translate: -50% -50%; scale: 0.15; opacity: 0; }
+  55% { opacity: 1; }
+}
+/* On a narrow screen the bubbles stack; give each reply its own line. */
+@media (max-width: 40rem) {
+  .hero-facts { margin-bottom: 1.5rem; }
+  .hero-facts li { margin-bottom: 2.9rem; }
+}
 .splash-hero h1,
 .splash-hero .lede,
+.splash-hero .hero-facts,
 .splash-hero .hero-actions { animation: rise-in 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 .splash-hero h1 { animation-delay: 0.1s; }
 .splash-hero .lede { animation-delay: 0.2s; }
+.splash-hero .hero-facts { animation-delay: 0.26s; }
 .splash-hero .hero-actions { animation-delay: 0.32s; margin-bottom: 0; }
 
 /* --- sections ---------------------------------------------------------- */
@@ -277,7 +510,7 @@
 .calibration-bars {
   display: grid;
   grid-template-columns: repeat(var(--bands, 7), minmax(0, 1fr));
-  gap: 0.6rem;
+  gap: 0.75rem;
   height: 200px;
   margin-bottom: 2rem;
   border-bottom: 1px solid color-mix(in srgb, var(--ember-border) 80%, transparent);

@@ -19,163 +19,36 @@ Render the summary with ``evals/eval/report_evals.py`` or ``ember eval report``.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import shutil
 import sys
 import time
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
 
 import httpx
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-from ember.cfg.endpoint import (  # noqa: E402
-    Endpoint,
-    InsecureEndpointError,
-    InvalidEndpointError,
-    build_auth_headers,
-    is_loopback_host,
-)
-
+from evals.atomic import write_atomic  # noqa: E402
+from evals.dataset import hashes  # noqa: E402
+from evals.dataset import io as dataset_io  # noqa: E402
+from evals.dataset.register import REGISTER_PATH  # noqa: E402
+from evals.eval import resume as resume_module  # noqa: E402
+from evals.eval.client import advise as _advise  # noqa: E402
+from evals.eval.client import deployment_label as _deployment_label  # noqa: E402
+from evals.eval.client import health as _health  # noqa: E402
+from evals.eval.client import model_name as _model_name  # noqa: E402
+from evals.eval.client import resolve_server as _resolve_server  # noqa: E402
 from evals.eval.provenance import git_hash, host_info, model_spec_info  # noqa: E402
-from evals.export import write_atomic  # noqa: E402
 from evals.metrics import aggregate, score_item  # noqa: E402
 
 DATASET_PATH = REPO_ROOT / "evals" / "clef-flash.jsonl"
 RESULTS_DIR = REPO_ROOT / "results"
-DEFAULT_SERVER = "http://127.0.0.1:8765"
-TIMEOUT = 120.0
-
-
-def _resolve_server(flag: str | None) -> str:
-    """Resolve the server URL: an explicit flag, else the configured endpoint.
-
-    Parameters
-    ----------
-    flag : str | None
-        The ``--server`` value, or ``None`` when unset.
-
-    Returns
-    -------
-    str
-        The flag when given; otherwise the endpoint resolved through
-        ``Endpoint.resolve`` (env > config file > default), falling back to the
-        loopback default when the configured endpoint is invalid or insecure.
-    """
-    if flag:
-        return flag
-    try:
-        return Endpoint.resolve().url
-    except (InvalidEndpointError, InsecureEndpointError):
-        return DEFAULT_SERVER
-
-
-_DEVICE_LABELS = {
-    "mps": "Apple Silicon, MPS",
-    "cuda": "GPU, CUDA",
-    "cpu": "CPU",
-}
-
-
-def _deployment_label(explicit: str | None, server: str, device: str | None) -> str:
-    """Return a generic deployment description, never the raw server URL.
-
-    Parameters
-    ----------
-    explicit : str | None
-        An operator-supplied label (``--deployment-label`` /
-        ``EMBER_DEPLOYMENT_LABEL``), e.g. ``"Remote hosted — NVIDIA A10G,
-        24 GB VRAM, g5.4xlarge"``. ember has no way to query the specific
-        GPU model or instance size from ``/health`` — only an operator
-        running the benchmark knows that, so this is the only path to
-        reporting it.
-    server : str
-        The model server's base URL. Used only to classify local vs. remote
-        (``ember.cfg.endpoint.is_loopback_host``); the URL itself is never
-        returned, so it never appears in published run provenance.
-    device : str | None
-        The engine's reported device (``"mps"``, ``"cuda"``, ``"cpu"``), or
-        ``None``/unknown.
-
-    Returns
-    -------
-    str
-        ``explicit`` when given. Otherwise ``"Local (...)"`` or
-        ``"Remote hosted (...)"`` plus a human label for ``device``
-        (``_DEVICE_LABELS``), or no parenthetical when the device is
-        unrecognised.
-    """
-    if explicit:
-        return explicit
-    location = (
-        "Local" if is_loopback_host(urlparse(server).hostname) else "Remote hosted"
-    )
-    device_label = _DEVICE_LABELS.get(device or "")
-    return f"{location} ({device_label})" if device_label else location
-
-
-def _model_name(engine: dict[str, Any]) -> str:
-    """Return a short, filesystem-safe model identifier from an engine dict.
-
-    Parameters
-    ----------
-    engine : dict[str, Any]
-        The ``engine`` object from ``GET /health`` (``Engine.describe()``).
-
-    Returns
-    -------
-    str
-        For a local server, ``engine["model"]`` is already the registry's
-        short name (``Engine.model_name`` defaults to ``model_dir.name``) and
-        is returned as-is. For a hosted/S3 deployment, ``engine["model"]`` is
-        the full ``s3://bucket/.../<model>/artifacts/<file>`` URI
-        (``model_name=hosted_source.uri`` in ``ember/serving/server.py``);
-        this returns the path segment just before ``artifacts``, the
-        meaningful model identifier, rather than the trailing filename.
-        ``"unknown"`` when ``model`` is missing.
-    """
-    raw = str(engine.get("model", "unknown"))
-    if raw.startswith("s3://"):
-        parts = [p for p in raw.split("/") if p]
-        if "artifacts" in parts:
-            return parts[parts.index("artifacts") - 1]
-        return parts[-1] if parts else "unknown"
-    return Path(raw).name
-
-
-def _health(server: str) -> dict[str, Any]:
-    """Return ``GET /health``'s body, authenticated, or ``{}`` on failure.
-
-    Parameters
-    ----------
-    server : str
-        The model server's base URL.
-
-    Returns
-    -------
-    dict[str, Any]
-        The parsed ``/health`` body (``status``, ``pid``, ``engine``,
-        ``version``, ``auth_required``), or ``{}`` if the request fails or
-        the response is not valid JSON. Sends ``build_auth_headers()`` so a
-        gateway-authenticated hosted deployment (one that gates ``/health``
-        behind the same credential as ``/v1/systemone``) is actually reached;
-        without it, a non-2xx response carries no ``engine``/``version`` keys
-        and this degrades to ``{}`` silently.
-    """
-    try:
-        response = httpx.get(
-            f"{server}/health", timeout=5.0, headers=build_auth_headers()
-        )
-        body = response.json()
-    except (httpx.HTTPError, ValueError):
-        return {}
-    return body if isinstance(body, dict) else {}
 
 
 def _load(
@@ -194,26 +67,6 @@ def _load(
     return items
 
 
-def _advise(server: str, item: dict[str, Any]) -> dict[str, Any]:
-    payload: dict[str, Any] = {
-        "model": "clef-flash",
-        "state": item["state"],
-        "questions": item["questions"],
-    }
-    for key in ("images", "videos", "media_kwargs"):
-        if item.get(key) is not None:
-            payload[key] = item[key]
-    response = httpx.post(
-        f"{server}/v1/systemone",
-        json=payload,
-        timeout=TIMEOUT,
-        headers=build_auth_headers(),
-    )
-    response.raise_for_status()
-    body: dict[str, Any] = response.json()
-    return body
-
-
 def _latency(samples: list[float]) -> dict[str, float]:
     ordered = sorted(samples)
     return {
@@ -224,6 +77,92 @@ def _latency(samples: list[float]) -> dict[str, float]:
     }
 
 
+SPLIT_KEYS = ("state_tokens", "fixed_tokens", "media_tokens")
+MIN_SERVER_VERSION = "0.12.0"
+
+
+def _annotations(item: Mapping[str, Any]) -> dict[str, Any]:
+    """Return the item annotations a trace row carries (specs/004 R23)."""
+    source = item.get("source")
+    source = source if isinstance(source, Mapping) else {}
+    return {
+        "kind": item.get("kind"),
+        "tier": item.get("tier"),
+        "source_kind": source.get("kind", "authored"),
+        "parent_id": source.get("parent_id") or item.get("parent_id"),
+        "perturbation": source.get("perturbation"),
+    }
+
+
+def _token_split(usage: Mapping[str, Any]) -> dict[str, int] | None:
+    """Return ``{total, state, fixed, media}`` from ``usage``, or ``None`` if absent."""
+    if not all(key in usage for key in SPLIT_KEYS):
+        return None
+    return {
+        "total": int(usage["input_tokens"]),
+        "state": int(usage["state_tokens"]),
+        "fixed": int(usage["fixed_tokens"]),
+        "media": int(usage["media_tokens"]),
+    }
+
+
+def _hashes(dataset_path: Path) -> dict[str, Any]:
+    items = dataset_io.read_raw(dataset_path)
+    return {
+        "dataset_sha256": hashes.dataset_sha256(dataset_path),
+        "dataset_content_sha256": hashes.dataset_content_sha256(items),
+        "recipe_sha256": hashes.recipe_hashes(items),
+        "register_sha256": (
+            hashes.register_sha256(REGISTER_PATH) if REGISTER_PATH.exists() else None
+        ),
+    }
+
+
+def _start(
+    *,
+    resume_id: str | None,
+    model: str,
+    engine: Mapping[str, Any],
+    label: str,
+    dataset_path: Path,
+    digests: Mapping[str, Any],
+    split: str | None,
+    category: str | None,
+) -> tuple[str, bool] | None:
+    """Create or validate the run manifest; return ``(run_id, resumed)`` or ``None``."""
+    RESULTS_DIR.mkdir(exist_ok=True)
+    if resume_id is None:
+        run_id = f"{model}_{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}"
+        manifest = resume_module.RunManifest(
+            run_id=run_id,
+            model=model,
+            deployment_label=label,
+            settings=resume_module.settings_from(engine),
+            split=split,
+            category=category,
+            started_at=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            **digests,
+        )
+        resume_module.write(resume_module.manifest_path(RESULTS_DIR, run_id), manifest)
+        shutil.copyfile(dataset_path, RESULTS_DIR / f"{run_id}_dataset.jsonl")
+        return run_id, False
+    manifest = resume_module.read(resume_module.manifest_path(RESULTS_DIR, resume_id))
+    problems = resume_module.mismatches(
+        manifest,
+        model=model,
+        engine=engine,
+        dataset_content_sha256=str(digests["dataset_content_sha256"]),
+        split=split,
+        category=category,
+    )
+    if problems:
+        print(f"error: cannot resume {resume_id}:", file=sys.stderr)
+        for problem in problems:
+            print(f"  {problem}", file=sys.stderr)
+        return None
+    return resume_id, True
+
+
 def run_evals(
     server: str,
     *,
@@ -232,6 +171,7 @@ def run_evals(
     dry_run: bool = False,
     dataset_path: Path = DATASET_PATH,
     deployment_label: str | None = None,
+    resume: str | None = None,
 ) -> int:
     """Score the dataset against ``server``; return a process exit code.
 
@@ -243,11 +183,22 @@ def run_evals(
         leaderboard instead of ``server`` (which is kept only in this run's
         private, gitignored ``results/`` trace, never published). Falls back
         to a label derived from whether ``server`` is loopback and the
-        reported device when not given — see ``_deployment_label``.
+        reported device when not given — see ``client.deployment_label``.
+    resume : str | None, optional
+        A run id whose manifest, trace, and settings this call continues.
     """
     if not dataset_path.exists():
         print(f"error: dataset not found at {dataset_path}", file=sys.stderr)
         return 1
+    if resume is not None:
+        # A bare `--resume RUN_ID` continues the run as it was started; an
+        # explicit filter still has to match the manifest (checked in _start).
+        path = resume_module.manifest_path(RESULTS_DIR, resume)
+        if not path.exists():
+            print(f"error: no manifest at {path}; cannot resume", file=sys.stderr)
+            return 1
+        manifest = resume_module.read(path)
+        split, category = split or manifest.split, category or manifest.category
     items = _load(dataset_path, split, category)
     if not items:
         print(
@@ -273,21 +224,36 @@ def run_evals(
     server_version = health.get("version")
     model = _model_name(engine)
     label = _deployment_label(deployment_label, server, engine.get("device"))
-    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    run_id = f"{model}_{timestamp}"
-    RESULTS_DIR.mkdir(exist_ok=True)
+    digests = _hashes(dataset_path)
+    started = _start(
+        resume_id=resume,
+        model=model,
+        engine=engine,
+        label=label,
+        dataset_path=dataset_path,
+        digests=digests,
+        split=split,
+        category=category,
+    )
+    if started is None:
+        return 1
+    run_id, resumed = started
     trace_path = RESULTS_DIR / f"{run_id}_trace.jsonl"
     results_path = RESULTS_DIR / f"{run_id}_results.json"
-    dataset_snapshot = RESULTS_DIR / f"{run_id}_dataset.jsonl"
-    shutil.copyfile(dataset_path, dataset_snapshot)
-
-    results: list[dict[str, Any]] = []
+    results: list[dict[str, Any]] = (
+        resume_module.read_rows(trace_path) if resumed else []
+    )
+    if resumed:
+        resume_module.repair(trace_path, results)
+    done = {str(r["id"]) for r in results}
     latencies: list[float] = []
     errors = 0
-    with trace_path.open("w", encoding="utf-8") as trace:
+    with trace_path.open("a", encoding="utf-8") as trace:
         for index, item in enumerate(items, 1):
+            if item["id"] in done:
+                continue
             prefix = f"  [{index:>3}/{len(items)}] {item['id']:<12}"
-            started = time.monotonic()
+            started_at = time.monotonic()
             try:
                 body = _advise(server, item)
                 scored = score_item(item, body.get("answers", {}))
@@ -295,24 +261,32 @@ def run_evals(
                 errors += 1
                 print(f"{prefix} ERROR {exc}", file=sys.stderr)
                 continue
-            elapsed = (time.monotonic() - started) * 1000
+            tokens = _token_split(body.get("usage") or {})
+            if tokens is None:
+                version = server_version or "unknown"
+                print(
+                    f"error: the server at {label} (ember {version}) does not return "
+                    f"the token split in usage; ember >= {MIN_SERVER_VERSION} is "
+                    "required for the benchmark.",
+                    file=sys.stderr,
+                )
+                return 1
+            elapsed = (time.monotonic() - started_at) * 1000
             latencies.append(elapsed)
             scored.update(
                 latency_ms=round(elapsed, 1),
-                # The server echoes its own loaded model identity in every
-                # response (Engine.advise -> systemone(request={"model":
-                # self.model_name, ...})), not the request's hardcoded
-                # "clef-flash" — for a hosted/S3 deployment that identity is
-                # the full s3://bucket/.../artifacts/<file> URI. _model_name
-                # derives the same short, published-safe identifier used for
-                # the run-level model field, so the per-item trace never
-                # carries the raw S3 location either.
+                # The server echoes its own loaded model identity (for a hosted
+                # deployment, a full S3 URI); model_name derives the short,
+                # published-safe identifier so the trace never carries the location.
                 model=_model_name({"model": body.get("model")}),
                 usage=body.get("usage", {}),
                 answers=body.get("answers", {}),
+                tokens=tokens,
+                **_annotations(item),
             )
             results.append(scored)
             trace.write(json.dumps(scored) + "\n")
+            trace.flush()
             misses = [
                 f"{qid} {q['gold']}->{q['predicted']}"
                 for qid, q in scored["questions"].items()
@@ -328,11 +302,12 @@ def run_evals(
     summary = aggregate(results)
     config = {
         "run_id": run_id,
-        "timestamp": timestamp,
+        "timestamp": run_id.rsplit("_", 1)[-1],
         "git_hash": git_hash(),
         "model": model,
         "model_spec": model_spec_info(model),
         "engine": engine,
+        "settings": resume_module.settings_from(engine),
         "server_version": server_version,
         "host": host_info(),
         # server is kept only for this run's own debugging — it lives in the
@@ -342,14 +317,16 @@ def run_evals(
         "server": server,
         "deployment_label": label,
         "dataset": dataset_path.name,
-        "dataset_file": dataset_snapshot.name,
-        "dataset_sha256": hashlib.sha256(dataset_path.read_bytes()).hexdigest(),
+        "dataset_file": f"{run_id}_dataset.jsonl",
+        **digests,
         "trace": trace_path.name,
         "split": split,
         "category": category,
+        "policy": {},
+        "resumed": resumed,
         "n_items": len(items),
         "n_errors": errors,
-        "latency_ms": _latency(latencies),
+        "latency_ms": _latency(latencies) if latencies else {},
     }
     write_atomic(
         results_path,
@@ -386,6 +363,9 @@ def _build_parser() -> argparse.ArgumentParser:
         "--dry-run", action="store_true", help="list items without sending requests"
     )
     parser.add_argument(
+        "--resume", default=None, metavar="RUN_ID", help="continue an interrupted run"
+    )
+    parser.add_argument(
         "--deployment-label",
         default=None,
         help=(
@@ -400,6 +380,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Parse arguments and run the benchmark."""
     args = _build_parser().parse_args(argv)
     return run_evals(
         _resolve_server(args.server),
@@ -409,6 +390,7 @@ def main(argv: list[str] | None = None) -> int:
         dataset_path=args.dataset,
         deployment_label=args.deployment_label
         or os.environ.get("EMBER_DEPLOYMENT_LABEL"),
+        resume=args.resume,
     )
 
 

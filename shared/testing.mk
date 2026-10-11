@@ -1,7 +1,7 @@
 # shared/testing.mk — test suite and protocol check targets
 # Assumes PY, EMBER, and EMBER_* vars are defined in the root Makefile.
 
-.PHONY: test test-fast test-strict test-cov test-evals eval-run eval-report eval-export eval-snapshot eval-context eval-context-smoke eval-agent eval-agent-smoke mcp-check smoke
+.PHONY: test test-fast test-strict test-cov test-evals eval-run eval-report eval-export eval-snapshot eval-context eval-context-smoke eval-agent eval-agent-smoke dataset-lint dataset-card audit-sources mcp-check smoke
 
 test: $(EMBER) ## Full test suite (loads model once, ~30s)
 	$(PY) -m pytest
@@ -41,6 +41,15 @@ eval-agent: $(EMBER) ## Agent-in-the-loop eval through opencode (opt-in; uses AP
 
 eval-agent-smoke: $(EMBER) ## Agent eval smoke: 6 scenarios, 1 trial
 	$(PY) evals/eval/run_agent_evals.py --smoke
+
+dataset-lint: $(EMBER) ## Lint the benchmark dataset (report mode; enforced rules exit 1)
+	$(PY) -m evals.dataset.lint
+
+dataset-card: $(EMBER) ## Regenerate the dataset card (evals/dataset/card.json + CARD.md)
+	$(PY) -m evals.dataset.card
+
+audit-sources: ## Re-check every data-source register row online (before a dataset publication)
+	python3 scripts/audit_data_sources.py
 
 mcp-check: $(EMBER) ## MCP protocol end-to-end check
 	$(PY) -u scripts/test_mcp_client.py

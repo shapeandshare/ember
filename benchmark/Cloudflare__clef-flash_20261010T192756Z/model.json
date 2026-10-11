@@ -2,7 +2,7 @@
   "meta": {
     "run_id": "Cloudflare__clef-flash_20261010T192756Z",
     "run_at": "2026-10-10 19:27 UTC",
-    "generated_at": "2026-10-10 21:08 UTC",
+    "generated_at": "2026-10-11 02:20 UTC",
     "git_hash": "6ff5120",
     "model": "Cloudflare__clef-flash",
     "model_spec": {
@@ -34,17 +34,38 @@
     "deployment_label": "Remote hosted (GPU, CUDA)",
     "dataset": {
       "name": "clef-flash.jsonl",
-      "file": "Cloudflare__clef-flash_20261010T192756Z_dataset.jsonl",
+      "file": "dataset.jsonl",
       "sha256": "fbb98c3516153987634b11d1ac4c9307e56c43a7131e7de598de557e1c48a050",
       "current_sha256": "fbb98c3516153987634b11d1ac4c9307e56c43a7131e7de598de557e1c48a050",
-      "matches": true
+      "matches": true,
+      "content_sha256": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
     },
+    "dataset_content_sha256": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367",
+    "recipe_sha256": {
+      "change_risk": "b823fd45c6fb677212369cb1a653b0715e6cc83858242e85bf469f33a91817aa",
+      "effort_approach": "7ed261fdb23ffb06f06945d5dab9e4b1d3ee265ee3ee51656087ed7bd9827f03",
+      "failure_triage": "a7a2e5338e16eecacafcc43243a7f1f8fd385a198952413e8187e09d2999bb92",
+      "intent_readiness": "a2dd9b315aac79eb50507cdabb376cef9e4d9eded2018952ec62916cf734f881",
+      "routing": "2780852796c906a723fa054952e4f66d74fc4a3bb3b28a36d0971cf5f306680a",
+      "vision_choice": "8b24fdbeb93f1795d571ca9b46352fbc5373daf0b375a2fb0937b4a8eb224643",
+      "vision_noul": "56e355b9dcb50a60702f6d95ba5bb9febebfe0f03f0125e2d46d23cf4c3ccb40",
+      "vision_score": "08569eb7b6bf02afcf3c5b70e1a08d09a2f9f0cc84bbe54bc103ef352f6d1592",
+      "vision_video": "97526cc5e35f62d09d52e3cf645399f01ab969db217356041440df64114c2531"
+    },
+    "register_sha256": null,
+    "settings": {
+      "dtype": "float16",
+      "max_length": 262144,
+      "max_request_length": 24576
+    },
+    "policy": {},
+    "tokens_available": false,
     "split": null,
     "category": null,
     "n_items": 475,
     "n_errors": 0,
-    "results_file": "Cloudflare__clef-flash_20261010T192756Z_results.json",
-    "trace_file": "Cloudflare__clef-flash_20261010T192756Z_trace.jsonl"
+    "results_file": "results.json",
+    "trace_file": "trace.jsonl"
   },
   "text": {
     "title": "ember benchmark report",
@@ -144,14 +165,16 @@
     },
     "architecture_text": "agent eval runner (evals/eval/run_agent_evals.py)\n   \u2502 opencode run --pure, one sandbox per session\n   \u25bc\ncoding agent \u2500\u2500tools/call advise\u2500\u2500\u25ba ember-mcp (stdio, ember/mcp/mcp_server.py)\n                                       \u2502 HTTP POST /v1/systemone\n                                       \u25bc\nmodel benchmark runner \u2500\u2500HTTP\u2500\u2500\u25ba model server (ember/serving/server.py)\n(evals/eval/run_evals.py)              \u2502 Engine.advise\n                                       \u25bc\n                                Clef-Flash, fp16 on MPS",
     "dataset": [
-      "The dataset has 475 items and 843 scored questions: 359 `choice`, 308 `noul`, and 176 `score`. Each line is self-contained: the `state`, the recipe's fixed question set, a gold label for every question, its source, and a one-line rationale. Other implementations can score it without this harness.",
+      "The dataset has 475 items and 811 scored questions: 359 `choice`, 308 `noul`, and 176 `score`. Each line is self-contained: the `state`, the recipe's fixed question set, a gold label for every question, its source, and a one-line rationale. Other implementations can score it without this harness.",
       "9 items reproduce the worked examples in the agent kit's playbook and sit in `dev`; the other 466 were written for this benchmark. Items are split into `dev` (236 items, for tuning) and `test` (239 items, for reporting), stratified so that every label of every question appears in both. The dataset card below answers the datasheet questions of [@gebru2021]."
     ],
     "protocol": [
-      "Labels were judged from `state` and the option descriptions alone, and were fixed before any model run.",
-      "`needs_review` is true exactly when `risk` is Medium or High, and `retry` is true only for `flaky` failures.",
-      "Drafts whose evidence fit two options were rewritten or dropped while authoring, before any run.",
-      "A label changes only when a reviewer finds it wrong on its merits, never because the model disagreed. Every change alters the dataset's SHA-256, which each run records, so runs on different label sets cannot be compared by accident."
+      "Labels were judged from `state` and the option descriptions alone, and were fixed before any model run. *(since dataset version `1e1bb88d47f0`)*",
+      "`needs_review` is true exactly when `risk` is Medium or High, and `retry` is true only for `flaky` failures. *(since dataset version `1e1bb88d47f0`)*",
+      "Drafts whose evidence fit two options were rewritten or dropped while authoring, before any run. *(since dataset version `1e1bb88d47f0`)*",
+      "A label changes only when a reviewer finds it wrong on its merits, never because the model disagreed. A change to any item's state, media, questions, gold, or split alters the dataset's content hash, which each run records, so runs on different label sets cannot be compared by accident; annotations (kind, tier, source, rationale) do not. *(since dataset version `1e1bb88d47f0`)*",
+      "Every `score` scale runs from least to most of the quantity its instruction names; index 0 is always the least. The expected score is read in those units. A scale is never reversed to make a label read naturally. *(since dataset version `1e1bb88d47f0`)*",
+      "For a `noul` question, P(true) is the probability of the condition the instruction names; the condition is phrased so that `true` is the pole that calls for caution. *(since dataset version `1e1bb88d47f0`)*"
     ],
     "datasheet": [
       [
@@ -160,7 +183,7 @@
       ],
       [
         "What does it contain?",
-        "475 items across five recipes, 843 scored questions, a gold label per question, a rationale per item."
+        "475 items across five recipes, 811 scored questions, a gold label per question, a rationale per item."
       ],
       [
         "How was it collected?",
@@ -237,8 +260,8 @@
       "A reliability diagram plots each confidence bin's accuracy against its mean confidence; a perfectly calibrated advisor sits on the diagonal [@degroot1983]. Bars above the diagonal mean ember was more often right than its confidence claimed (under-confidence); bars below it mean over-confidence, the dangerous direction for threshold-driven agents."
     ],
     "limitations": [
-      "**Sample size.** 843 questions give a 95% interval about 5 points wide overall; per-question samples of 20 to 28 are wider still, and calibration bins hold a few items each.",
-      "**One annotation team.** The labels come from the authors of the agent kit, with no inter-annotator agreement yet. Shared assumptions could make items easier or harder for ember than real traffic.",
+      "**Sample size.** 811 questions give a 95% interval about 5 points wide overall; per-question samples of 20 to 28 are wider still, and calibration bins hold a few items each.",
+      "**Single rater.** One maintainer labels every item from `state` and the option descriptions; no inter-rater figure exists and none is shown. The blinded re-labelling that publishes label stability (an optimistic bound on the human ceiling) is pending (Phase 1). Shared assumptions could make items easier or harder for ember than real traffic.",
       "**Curated, not sampled.** Items are short, English, and written for the benchmark rather than drawn from real agent sessions.",
       "**Ordinal judgments.** Risk and effort levels are judgments; neighbouring levels are often defensible, which is why MAE, RPS, and within-one are reported alongside exact accuracy.",
       "**One model, one machine.** One pinned model revision in fp16 on MPS; numerics on CPU or CUDA can differ slightly. Repeat runs on the same server are deterministic for identical requests.",
@@ -347,18 +370,91 @@
         "text": "Gebru, T., et al. Datasheets for datasets. Communications of the ACM 64(12), 2021.",
         "url": "https://arxiv.org/abs/1803.09010"
       }
-    ]
+    ],
+    "scales": [
+      {
+        "question": "risk",
+        "category": "change_risk",
+        "legend": "0 Negligible \u2192 3 High",
+        "dangerous_end": "high"
+      },
+      {
+        "question": "effort",
+        "category": "effort_approach",
+        "legend": "0 Trivial (minutes) \u2192 3 Large (a day or more)",
+        "dangerous_end": "none"
+      },
+      {
+        "question": "alert_level",
+        "category": "vision_score",
+        "legend": "0 No alert (calm green) \u2192 3 High (red)",
+        "dangerous_end": "high"
+      }
+    ],
+    "headline_scope": "Headline over coding recipes; vision recipes in the capability panel (they counted toward the headline before the 2026-10-10 benchmark foundations, so earlier published headlines are not comparable)."
   },
   "summary": {
     "overall": {
-      "items": 475,
-      "questions": 843,
-      "accuracy": 0.8268,
+      "items": 443,
+      "questions": 811,
+      "accuracy": 0.82,
       "accuracy_ci": [
-        0.8019,
-        0.8529
+        0.7928,
+        0.8459
       ],
-      "item_accuracy": 0.7432
+      "item_accuracy": 0.7246
+    },
+    "capability": {
+      "items": 32,
+      "questions": 32,
+      "accuracy": 1.0,
+      "accuracy_ci": [
+        1.0,
+        1.0
+      ],
+      "item_accuracy": 1.0,
+      "categories": {
+        "vision_choice": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        },
+        "vision_noul": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        },
+        "vision_score": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        },
+        "vision_video": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        }
+      }
     },
     "choice": {
       "n": 359,
@@ -645,6 +741,11 @@
         "accuracy": 1.0
       }
     },
+    "risk": {},
+    "tokens": null,
+    "consistency": {},
+    "by_source_kind": {},
+    "tiers": null,
     "misses": [
       {
         "id": "intent_001",
@@ -1670,11 +1771,492 @@
       }
     ]
   },
+  "card": {
+    "generated_from": "dataset.jsonl",
+    "dataset_content_sha256": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367",
+    "register_sha256": null,
+    "items": 475,
+    "protocol": [
+      {
+        "text": "Labels were judged from `state` and the option descriptions alone, and were fixed before any model run.",
+        "since": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+      },
+      {
+        "text": "`needs_review` is true exactly when `risk` is Medium or High, and `retry` is true only for `flaky` failures.",
+        "since": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+      },
+      {
+        "text": "Drafts whose evidence fit two options were rewritten or dropped while authoring, before any run.",
+        "since": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+      },
+      {
+        "text": "A label changes only when a reviewer finds it wrong on its merits, never because the model disagreed. A change to any item's state, media, questions, gold, or split alters the dataset's content hash, which each run records, so runs on different label sets cannot be compared by accident; annotations (kind, tier, source, rationale) do not.",
+        "since": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+      },
+      {
+        "text": "Every `score` scale runs from least to most of the quantity its instruction names; index 0 is always the least. The expected score is read in those units. A scale is never reversed to make a label read naturally.",
+        "since": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+      },
+      {
+        "text": "For a `noul` question, P(true) is the probability of the condition the instruction names; the condition is phrased so that `true` is the pole that calls for caution.",
+        "since": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+      }
+    ],
+    "recipes": {
+      "change_risk": {
+        "items": 92,
+        "dev": 46,
+        "test": 46,
+        "per_label_per_split": {
+          "needs_review": {
+            "false": {
+              "dev": 23,
+              "test": 23
+            },
+            "true": {
+              "dev": 23,
+              "test": 23
+            }
+          },
+          "risk": {
+            "0": {
+              "dev": 12,
+              "test": 11
+            },
+            "1": {
+              "dev": 11,
+              "test": 12
+            },
+            "2": {
+              "dev": 12,
+              "test": 11
+            },
+            "3": {
+              "dev": 11,
+              "test": 12
+            }
+          }
+        },
+        "kind_shares": {
+          "untagged": 92
+        },
+        "source_shares": {
+          "authored": 92
+        },
+        "easy_items": 0,
+        "external_sources": [],
+        "label_stability": null,
+        "inter_source_agreement": null,
+        "rater_count": 1,
+        "second_review_pending": 0,
+        "acted_differs_share": null,
+        "recipe_sha256": "b823fd45c6fb677212369cb1a653b0715e6cc83858242e85bf469f33a91817aa",
+        "gaps": [],
+        "exemptions": {},
+        "lint": "report",
+        "family": "coding",
+        "risk": false,
+        "rubric_since": {
+          "risk": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+        }
+      },
+      "effort_approach": {
+        "items": 76,
+        "dev": 36,
+        "test": 40,
+        "per_label_per_split": {
+          "approach": {
+            "\"minimal_patch\"": {
+              "dev": 9,
+              "test": 10
+            },
+            "\"refactor\"": {
+              "dev": 8,
+              "test": 11
+            },
+            "\"new_component\"": {
+              "dev": 10,
+              "test": 9
+            },
+            "\"ask_user\"": {
+              "dev": 9,
+              "test": 10
+            }
+          },
+          "effort": {
+            "0": {
+              "dev": 7,
+              "test": 11
+            },
+            "1": {
+              "dev": 15,
+              "test": 15
+            },
+            "2": {
+              "dev": 10,
+              "test": 8
+            },
+            "3": {
+              "dev": 4,
+              "test": 6
+            }
+          }
+        },
+        "kind_shares": {
+          "untagged": 76
+        },
+        "source_shares": {
+          "authored": 76
+        },
+        "easy_items": 0,
+        "external_sources": [],
+        "label_stability": null,
+        "inter_source_agreement": null,
+        "rater_count": 1,
+        "second_review_pending": 0,
+        "acted_differs_share": null,
+        "recipe_sha256": "7ed261fdb23ffb06f06945d5dab9e4b1d3ee265ee3ee51656087ed7bd9827f03",
+        "gaps": [],
+        "exemptions": {},
+        "lint": "report",
+        "family": "coding",
+        "risk": false,
+        "rubric_since": {
+          "effort": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+        }
+      },
+      "failure_triage": {
+        "items": 92,
+        "dev": 46,
+        "test": 46,
+        "per_label_per_split": {
+          "failure_kind": {
+            "\"logic_bug\"": {
+              "dev": 12,
+              "test": 11
+            },
+            "\"environment\"": {
+              "dev": 11,
+              "test": 12
+            },
+            "\"flaky\"": {
+              "dev": 12,
+              "test": 11
+            },
+            "\"test_bug\"": {
+              "dev": 11,
+              "test": 12
+            }
+          },
+          "retry": {
+            "false": {
+              "dev": 34,
+              "test": 35
+            },
+            "true": {
+              "dev": 12,
+              "test": 11
+            }
+          }
+        },
+        "kind_shares": {
+          "untagged": 92
+        },
+        "source_shares": {
+          "authored": 92
+        },
+        "easy_items": 0,
+        "external_sources": [],
+        "label_stability": null,
+        "inter_source_agreement": null,
+        "rater_count": 1,
+        "second_review_pending": 0,
+        "acted_differs_share": null,
+        "recipe_sha256": "a7a2e5338e16eecacafcc43243a7f1f8fd385a198952413e8187e09d2999bb92",
+        "gaps": [],
+        "exemptions": {},
+        "lint": "report",
+        "family": "coding",
+        "risk": false,
+        "rubric_since": {}
+      },
+      "intent_readiness": {
+        "items": 108,
+        "dev": 54,
+        "test": 54,
+        "per_label_per_split": {
+          "intent": {
+            "\"question\"": {
+              "dev": 14,
+              "test": 13
+            },
+            "\"implement\"": {
+              "dev": 13,
+              "test": 14
+            },
+            "\"investigate\"": {
+              "dev": 14,
+              "test": 13
+            },
+            "\"fix\"": {
+              "dev": 13,
+              "test": 14
+            }
+          },
+          "specific_enough": {
+            "true": {
+              "dev": 32,
+              "test": 35
+            },
+            "false": {
+              "dev": 22,
+              "test": 19
+            }
+          }
+        },
+        "kind_shares": {
+          "untagged": 108
+        },
+        "source_shares": {
+          "authored": 108
+        },
+        "easy_items": 0,
+        "external_sources": [],
+        "label_stability": null,
+        "inter_source_agreement": null,
+        "rater_count": 1,
+        "second_review_pending": 0,
+        "acted_differs_share": null,
+        "recipe_sha256": "a2dd9b315aac79eb50507cdabb376cef9e4d9eded2018952ec62916cf734f881",
+        "gaps": [],
+        "exemptions": {},
+        "lint": "report",
+        "family": "coding",
+        "risk": false,
+        "rubric_since": {}
+      },
+      "routing": {
+        "items": 75,
+        "dev": 38,
+        "test": 37,
+        "per_label_per_split": {
+          "owner": {
+            "\"api\"": {
+              "dev": 8,
+              "test": 7
+            },
+            "\"storage\"": {
+              "dev": 7,
+              "test": 8
+            },
+            "\"ui\"": {
+              "dev": 8,
+              "test": 7
+            },
+            "\"infra\"": {
+              "dev": 7,
+              "test": 8
+            },
+            "\"unclear\"": {
+              "dev": 8,
+              "test": 7
+            }
+          }
+        },
+        "kind_shares": {
+          "untagged": 75
+        },
+        "source_shares": {
+          "authored": 75
+        },
+        "easy_items": 0,
+        "external_sources": [],
+        "label_stability": null,
+        "inter_source_agreement": null,
+        "rater_count": 1,
+        "second_review_pending": 0,
+        "acted_differs_share": null,
+        "recipe_sha256": "2780852796c906a723fa054952e4f66d74fc4a3bb3b28a36d0971cf5f306680a",
+        "gaps": [],
+        "exemptions": {},
+        "lint": "report",
+        "family": "coding",
+        "risk": false,
+        "rubric_since": {}
+      },
+      "vision_choice": {
+        "items": 8,
+        "dev": 4,
+        "test": 4,
+        "per_label_per_split": {
+          "dominant_colour": {
+            "\"red\"": {
+              "dev": 1,
+              "test": 1
+            },
+            "\"green\"": {
+              "dev": 1,
+              "test": 1
+            },
+            "\"blue\"": {
+              "dev": 1,
+              "test": 1
+            },
+            "\"mixed\"": {
+              "dev": 1,
+              "test": 1
+            }
+          }
+        },
+        "kind_shares": {
+          "untagged": 8
+        },
+        "source_shares": {
+          "authored": 8
+        },
+        "easy_items": 0,
+        "external_sources": [],
+        "label_stability": null,
+        "inter_source_agreement": null,
+        "rater_count": 1,
+        "second_review_pending": 0,
+        "acted_differs_share": null,
+        "recipe_sha256": "8b24fdbeb93f1795d571ca9b46352fbc5373daf0b375a2fb0937b4a8eb224643",
+        "gaps": [],
+        "exemptions": {},
+        "lint": "report",
+        "family": "vision",
+        "risk": false,
+        "rubric_since": {}
+      },
+      "vision_noul": {
+        "items": 8,
+        "dev": 4,
+        "test": 4,
+        "per_label_per_split": {
+          "dominant_red": {
+            "true": {
+              "dev": 2,
+              "test": 2
+            },
+            "false": {
+              "dev": 2,
+              "test": 2
+            }
+          }
+        },
+        "kind_shares": {
+          "untagged": 8
+        },
+        "source_shares": {
+          "authored": 8
+        },
+        "easy_items": 0,
+        "external_sources": [],
+        "label_stability": null,
+        "inter_source_agreement": null,
+        "rater_count": 1,
+        "second_review_pending": 0,
+        "acted_differs_share": null,
+        "recipe_sha256": "56e355b9dcb50a60702f6d95ba5bb9febebfe0f03f0125e2d46d23cf4c3ccb40",
+        "gaps": [],
+        "exemptions": {},
+        "lint": "report",
+        "family": "vision",
+        "risk": false,
+        "rubric_since": {}
+      },
+      "vision_score": {
+        "items": 8,
+        "dev": 4,
+        "test": 4,
+        "per_label_per_split": {
+          "alert_level": {
+            "0": {
+              "dev": 1,
+              "test": 1
+            },
+            "1": {
+              "dev": 1,
+              "test": 1
+            },
+            "2": {
+              "dev": 1,
+              "test": 1
+            },
+            "3": {
+              "dev": 1,
+              "test": 1
+            }
+          }
+        },
+        "kind_shares": {
+          "untagged": 8
+        },
+        "source_shares": {
+          "authored": 8
+        },
+        "easy_items": 0,
+        "external_sources": [],
+        "label_stability": null,
+        "inter_source_agreement": null,
+        "rater_count": 1,
+        "second_review_pending": 0,
+        "acted_differs_share": null,
+        "recipe_sha256": "08569eb7b6bf02afcf3c5b70e1a08d09a2f9f0cc84bbe54bc103ef352f6d1592",
+        "gaps": [],
+        "exemptions": {},
+        "lint": "report",
+        "family": "vision",
+        "risk": false,
+        "rubric_since": {
+          "alert_level": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+        }
+      },
+      "vision_video": {
+        "items": 8,
+        "dev": 4,
+        "test": 4,
+        "per_label_per_split": {
+          "colour_changed": {
+            "true": {
+              "dev": 2,
+              "test": 2
+            },
+            "false": {
+              "dev": 2,
+              "test": 2
+            }
+          }
+        },
+        "kind_shares": {
+          "untagged": 8
+        },
+        "source_shares": {
+          "authored": 8
+        },
+        "easy_items": 0,
+        "external_sources": [],
+        "label_stability": null,
+        "inter_source_agreement": null,
+        "rater_count": 1,
+        "second_review_pending": 0,
+        "acted_differs_share": null,
+        "recipe_sha256": "97526cc5e35f62d09d52e3cf645399f01ab969db217356041440df64114c2531",
+        "gaps": [],
+        "exemptions": {},
+        "lint": "report",
+        "family": "vision",
+        "risk": false,
+        "rubric_since": {}
+      }
+    }
+  },
   "findings": [
     {
       "tone": "info",
       "title": "Overall accuracy",
-      "text": "82.7% of 843 questions were answered correctly (95% CI 80.2% to 85.3%), and 74.3% of 475 items had every question right."
+      "text": "82.0% of 811 questions were answered correctly (95% CI 79.3% to 84.6%), and 72.5% of 443 items had every question right."
     },
     {
       "tone": "warn",
@@ -1724,7 +2306,7 @@
     {
       "tone": "info",
       "title": "dev and test agree",
-      "text": "dev scored 83.2% and test 82.1%; their 95% intervals overlap."
+      "text": "dev scored 82.6% and test 81.4%; their 95% intervals overlap."
     }
   ],
   "composition": {
@@ -1785,7 +2367,7 @@
       },
       {
         "category": "vision_noul",
-        "title": "vision_noul",
+        "title": "Vision: dominant colour, yes/no",
         "items": 8,
         "dev": 4,
         "test": 4,
@@ -1795,7 +2377,7 @@
       },
       {
         "category": "vision_choice",
-        "title": "vision_choice",
+        "title": "Vision: dominant colour, choice",
         "items": 8,
         "dev": 4,
         "test": 4,
@@ -1805,7 +2387,7 @@
       },
       {
         "category": "vision_score",
-        "title": "vision_score",
+        "title": "Vision: alert level, score",
         "items": 8,
         "dev": 4,
         "test": 4,
@@ -1815,7 +2397,7 @@
       },
       {
         "category": "vision_video",
-        "title": "vision_video",
+        "title": "Vision: colour change across frames",
         "items": 8,
         "dev": 4,
         "test": 4,
@@ -2151,7 +2733,10 @@
     },
     "sources": {
       "skill_md": 9,
-      "curated": 466
+      "curated": 466,
+      "by_kind": {
+        "authored": 475
+      }
     }
   },
   "recipes": [
@@ -2161,6 +2746,10 @@
       "when": "Before changing files in response to a conversational request.",
       "state": "The user's latest message, verbatim.",
       "decides": "What the user is asking for, and whether it is specific enough to act on without a clarifying question.",
+      "family": "coding",
+      "risk": false,
+      "phase": 0,
+      "compliance": [],
       "questions": [
         {
           "id": "intent",
@@ -2208,6 +2797,10 @@
       "when": "Before retrying or fixing a failing test or command.",
       "state": "The test or command, and the relevant error lines.",
       "decides": "The most likely cause, and whether a plain re-run would pass.",
+      "family": "coding",
+      "risk": false,
+      "phase": 0,
+      "compliance": [],
       "questions": [
         {
           "id": "failure_kind",
@@ -2246,6 +2839,10 @@
       "when": "Before committing, pushing, or merging.",
       "state": "A diff summary, the files touched, and the lines changed.",
       "decides": "How risky the change is to ship unreviewed, and whether a person should review it.",
+      "family": "coding",
+      "risk": false,
+      "phase": 0,
+      "compliance": [],
       "questions": [
         {
           "id": "risk",
@@ -2268,7 +2865,9 @@
               "label": 3,
               "text": "High"
             }
-          ]
+          ],
+          "legend": "0 Negligible \u2192 3 High",
+          "dangerous_end": "high"
         },
         {
           "id": "needs_review",
@@ -2284,6 +2883,10 @@
       "when": "When an error needs an owner.",
       "state": "The error message and the file or module it came from.",
       "decides": "Which part of the system should handle it. The option set is a template that projects replace with their own.",
+      "family": "coding",
+      "risk": false,
+      "phase": 0,
+      "compliance": [],
       "questions": [
         {
           "id": "owner",
@@ -2320,6 +2923,10 @@
       "when": "When planning a task.",
       "state": "The task and its constraints.",
       "decides": "How much work the task is, and which approach fits. The option sets are templates.",
+      "family": "coding",
+      "risk": false,
+      "phase": 0,
+      "compliance": [],
       "questions": [
         {
           "id": "effort",
@@ -2342,7 +2949,9 @@
               "label": 3,
               "text": "Large (a day or more)"
             }
-          ]
+          ],
+          "legend": "0 Trivial (minutes) \u2192 3 Large (a day or more)",
+          "dangerous_end": "none"
         },
         {
           "id": "approach",
@@ -2371,6 +2980,14 @@
     },
     {
       "category": "vision_noul",
+      "title": "Vision: dominant colour, yes/no",
+      "when": "Smoke check of the vision path.",
+      "state": "One synthetic colour swatch.",
+      "decides": "Whether one colour dominates the image.",
+      "family": "vision",
+      "risk": false,
+      "phase": 0,
+      "compliance": [],
       "questions": [
         {
           "id": "dominant_red",
@@ -2391,6 +3008,14 @@
     },
     {
       "category": "vision_choice",
+      "title": "Vision: dominant colour, choice",
+      "when": "Smoke check of the vision path.",
+      "state": "One synthetic colour swatch.",
+      "decides": "Which colour dominates the image.",
+      "family": "vision",
+      "risk": false,
+      "phase": 0,
+      "compliance": [],
       "questions": [
         {
           "id": "dominant_colour",
@@ -2419,6 +3044,14 @@
     },
     {
       "category": "vision_score",
+      "title": "Vision: alert level, score",
+      "when": "Smoke check of the vision path.",
+      "state": "One synthetic status indicator.",
+      "decides": "How severe the alert the indicator signals is.",
+      "family": "vision",
+      "risk": false,
+      "phase": 0,
+      "compliance": [],
       "questions": [
         {
           "id": "alert_level",
@@ -2441,12 +3074,22 @@
               "label": 3,
               "text": "High (red)"
             }
-          ]
+          ],
+          "legend": "0 No alert (calm green) \u2192 3 High (red)",
+          "dangerous_end": "high"
         }
       ]
     },
     {
       "category": "vision_video",
+      "title": "Vision: colour change across frames",
+      "when": "Smoke check of the video path.",
+      "state": "Two synthetic frames.",
+      "decides": "Whether the dominant colour changed between the frames.",
+      "family": "vision",
+      "risk": false,
+      "phase": 0,
+      "compliance": [],
       "questions": [
         {
           "id": "colour_changed",
@@ -5234,7 +5877,8 @@
           "n": 23,
           "mean_expected": 1.9805
         }
-      ]
+      ],
+      "legend": "0 Negligible \u2192 3 High"
     },
     "effort": {
       "levels": [
@@ -5802,7 +6446,8 @@
           "n": 10,
           "mean_expected": 1.8216
         }
-      ]
+      ],
+      "legend": "0 Trivial (minutes) \u2192 3 Large (a day or more)"
     },
     "alert_level": {
       "levels": [
@@ -5894,19 +6539,20 @@
           "n": 2,
           "mean_expected": 2.8262
         }
-      ]
+      ],
+      "legend": "0 No alert (calm green) \u2192 3 High (red)"
     }
   },
   "splits": {
     "dev": {
-      "items": 236,
-      "questions": 418,
-      "accuracy": 0.8325,
+      "items": 220,
+      "questions": 402,
+      "accuracy": 0.8259,
       "accuracy_ci": [
-        0.7967,
-        0.866
+        0.7886,
+        0.8607
       ],
-      "item_accuracy": 0.7542,
+      "item_accuracy": 0.7364,
       "by_type": {
         "choice": 0.9326,
         "noul": 0.8896,
@@ -5915,14 +6561,14 @@
       "score_mae": 0.4932
     },
     "test": {
-      "items": 239,
-      "questions": 425,
-      "accuracy": 0.8212,
+      "items": 223,
+      "questions": 409,
+      "accuracy": 0.8142,
       "accuracy_ci": [
-        0.7859,
-        0.8565
+        0.7775,
+        0.8509
       ],
-      "item_accuracy": 0.7322,
+      "item_accuracy": 0.713,
       "by_type": {
         "choice": 0.9116,
         "noul": 0.9156,

@@ -1,0 +1,3096 @@
+{
+  "schema_version": 1,
+  "recorded_on": "2026-10-10",
+  "rows": [
+    {
+      "id": "typesafe-evalsafe-security-incidents",
+      "name": "TypeSafe evalsafe-security-incidents",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/typesafe/evalsafe-security-incidents",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://github.com/typesafe-ai/WorkflowEvals",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache License 2.0 (dataset card)",
+        "spdx": "Apache-2.0",
+        "read_at": "https://huggingface.co/datasets/typesafe/evalsafe-security-incidents",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "conditional",
+      "reason": "Permissive and downloadable, but labels are a consensus of assistant models, so items are drafts the maintainer adjudicates (FR-016).",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "human_handoff",
+        "failure_triage"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "240 cases; labelsets openai/anthropic/consensus; not human gold"
+    },
+    {
+      "id": "typesafe-evalsafe-agent-trace-observability",
+      "name": "TypeSafe evalsafe-agent-trace-observability",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/typesafe/evalsafe-agent-trace-observability",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://github.com/typesafe-ai/WorkflowEvals",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache License 2.0 (dataset card)",
+        "spdx": "Apache-2.0",
+        "read_at": "https://huggingface.co/datasets/typesafe/evalsafe-agent-trace-observability",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "conditional",
+      "reason": "Permissive and downloadable, but labels are a consensus of assistant models, so items are drafts the maintainer adjudicates (FR-016).",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "tool_result_trust",
+        "done_check",
+        "stuck_escalation"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "111 cases; labelsets openai/anthropic/consensus; not human gold"
+    },
+    {
+      "id": "typesafe-evalsafe-invoice-processing",
+      "name": "TypeSafe evalsafe-invoice-processing",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/typesafe/evalsafe-invoice-processing",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://github.com/typesafe-ai/WorkflowEvals",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache License 2.0 (dataset card)",
+        "spdx": "Apache-2.0",
+        "read_at": "https://huggingface.co/datasets/typesafe/evalsafe-invoice-processing",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "conditional",
+      "reason": "Permissive and downloadable, but labels are a consensus of assistant models, so items are drafts the maintainer adjudicates (FR-016).",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "routing",
+        "human_handoff"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "150 cases; labelsets openai/anthropic/consensus; not human gold"
+    },
+    {
+      "id": "typesafe-evalsafe-customer-service",
+      "name": "TypeSafe evalsafe-customer-service",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/typesafe/evalsafe-customer-service",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://github.com/typesafe-ai/WorkflowEvals",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache License 2.0 (dataset card)",
+        "spdx": "Apache-2.0",
+        "read_at": "https://huggingface.co/datasets/typesafe/evalsafe-customer-service",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "conditional",
+      "reason": "Permissive and downloadable, but labels are a consensus of assistant models, so items are drafts the maintainer adjudicates (FR-016).",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "routing",
+        "human_handoff"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "204 cases; labelsets openai/anthropic/consensus; not human gold"
+    },
+    {
+      "id": "bfcl",
+      "name": "Berkeley Function-Calling Leaderboard",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/gorilla-llm/Berkeley-Function-Calling-Leaderboard",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://github.com/ShishirPatil/gorilla",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache-2.0",
+        "spdx": "Apache-2.0",
+        "read_at": "https://huggingface.co/datasets/gorilla-llm/Berkeley-Function-Calling-Leaderboard",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive; read the repository JSON files directly (the HF loader is not compatible).",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "tool_result_trust"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "api-bank",
+      "name": "API-Bank",
+      "urls": [
+        {
+          "url": "https://github.com/AlibabaResearch/DAMO-ConvAI/tree/main/api-bank",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache-2.0 (repository LICENSE)",
+        "spdx": "Apache-2.0",
+        "read_at": "https://github.com/AlibabaResearch/DAMO-ConvAI/tree/main/api-bank",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive; use the GitHub source, the HF mirror's viewer is broken.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "tool_result_trust"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "toolret",
+      "name": "ToolRet",
+      "urls": [
+        {
+          "url": "https://github.com/mangopy/tool-retrieval-benchmark",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://huggingface.co/datasets/mangopy/ToolRet-Queries",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "composite: each sub-dataset keeps its own licence (paper ethics statement); code Apache-2.0",
+        "spdx": null,
+        "read_at": "https://github.com/mangopy/tool-retrieval-benchmark",
+        "read_on": "2026-10-10",
+        "class": "composite"
+      },
+      "verdict": "conditional",
+      "reason": "Composite licence; usable only sub-source by sub-source after auditing each.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "tool_result_trust"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "clinc150-oos",
+      "name": "CLINC150 with out-of-scope class",
+      "urls": [
+        {
+          "url": "https://github.com/clinc/oos-eval",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://huggingface.co/datasets/clinc/clinc_oos",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY 3.0",
+        "spdx": "CC-BY-3.0",
+        "read_at": "https://github.com/clinc/oos-eval",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive; the explicit out-of-scope class seeds abstain / insufficient-context items.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "intent_readiness"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "ragtruth",
+      "name": "RAGTruth",
+      "urls": [
+        {
+          "url": "https://github.com/ParticleMedia/RAGTruth",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://huggingface.co/datasets/wandb/RAGTruth-processed",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT (annotations and compilation)",
+        "spdx": "MIT",
+        "read_at": "https://github.com/ParticleMedia/RAGTruth",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "conditional",
+      "reason": "MIT covers RAGTruth's annotations; the retrieved passages come from other corpora, so import annotations and short spans only after checking passage terms.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "claim_grounding",
+        "fabrication_check"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "hover",
+      "name": "HoVer",
+      "urls": [
+        {
+          "url": "https://hover-nlp.github.io/",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://github.com/hover-nlp/hover",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY-SA 4.0 (authors' site; a third-party mirror claims MIT)",
+        "spdx": "CC-BY-SA-4.0",
+        "read_at": "https://hover-nlp.github.io/",
+        "read_on": "2026-10-10",
+        "class": "share_alike"
+      },
+      "verdict": "conditional",
+      "reason": "Share-alike: derived items ship in the separately licensed file with attribution (FR-045).",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "claim_grounding"
+      ],
+      "items_imported": 0,
+      "attribution": "HoVer, CC BY-SA 4.0",
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "cruxeval",
+      "name": "CRUXEval",
+      "urls": [
+        {
+          "url": "https://github.com/facebookresearch/cruxeval",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://huggingface.co/datasets/cruxeval-org/cruxeval",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT",
+        "spdx": "MIT",
+        "read_at": "https://github.com/facebookresearch/cruxeval",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "fabrication_check"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "cladder",
+      "name": "CLadder",
+      "urls": [
+        {
+          "url": "https://github.com/causalNLP/cladder",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://huggingface.co/datasets/causal-nlp/CLadder",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT",
+        "spdx": "MIT",
+        "read_at": "https://github.com/causalNLP/cladder",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive; yes/no causal questions as reasoning controls.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "intent_readiness"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "forecastbench",
+      "name": "ForecastBench",
+      "urls": [
+        {
+          "url": "https://github.com/forecastingresearch/forecastbench-datasets",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://huggingface.co/datasets/forecastingresearch/forecastbench-datasets",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY-SA 4.0 (data); some upstream sources redistributed by permission",
+        "spdx": "CC-BY-SA-4.0",
+        "read_at": "https://github.com/forecastingresearch/forecastbench-datasets",
+        "read_on": "2026-10-10",
+        "class": "share_alike"
+      },
+      "verdict": "conditional",
+      "reason": "Share-alike file; confirm the upstream permissions before mirroring.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "change_risk"
+      ],
+      "items_imported": 0,
+      "attribution": "ForecastBench, CC BY-SA 4.0",
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "phishnchips",
+      "name": "PhishNChips",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/AreLit/PhishNChips",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://github.com/R-Lit/PhishNChips",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT core and synthetic content; third-party URL indicators under their own terms",
+        "spdx": "MIT",
+        "read_at": "https://huggingface.co/datasets/AreLit/PhishNChips",
+        "read_on": "2026-10-10",
+        "class": "composite"
+      },
+      "verdict": "conditional",
+      "reason": "Core (MIT) only; the third-party indicator subset keeps its own terms.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "injection_suspicion",
+        "secret_exposure"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "anli",
+      "name": "Adversarial NLI",
+      "urls": [
+        {
+          "url": "https://github.com/facebookresearch/anli",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://huggingface.co/datasets/facebook/anli",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY-NC 4.0",
+        "spdx": "CC-BY-NC-4.0",
+        "read_at": "https://github.com/facebookresearch/anli",
+        "read_on": "2026-10-10",
+        "class": "non_commercial"
+      },
+      "verdict": "excluded",
+      "reason": "Non-commercial licence.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "gpqa",
+      "name": "GPQA",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/Idavidrein/gpqa",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY 4.0, gated behind a no-reproduction agreement",
+        "spdx": "CC-BY-4.0",
+        "read_at": "https://huggingface.co/datasets/Idavidrein/gpqa",
+        "read_on": "2026-10-10",
+        "class": "gated"
+      },
+      "verdict": "excluded",
+      "reason": "Gated; the access terms forbid reproducing examples.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "arc",
+      "name": "AI2 ARC (Easy, Challenge)",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/allenai/ai2_arc",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY-SA 4.0",
+        "spdx": "CC-BY-SA-4.0",
+        "read_at": "https://huggingface.co/datasets/allenai/ai2_arc",
+        "read_on": "2026-10-10",
+        "class": "share_alike"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member"
+    },
+    {
+      "id": "sgd",
+      "name": "Schema-Guided Dialogue / SGD-X",
+      "urls": [
+        {
+          "url": "https://github.com/google-research-datasets/dstc8-schema-guided-dialogue",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY-SA 4.0",
+        "spdx": "CC-BY-SA-4.0",
+        "read_at": "https://github.com/google-research-datasets/dstc8-schema-guided-dialogue",
+        "read_on": "2026-10-10",
+        "class": "share_alike"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member"
+    },
+    {
+      "id": "mmlu",
+      "name": "MMLU",
+      "urls": [
+        {
+          "url": "https://github.com/hendrycks/test",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT",
+        "spdx": "MIT",
+        "read_at": "https://github.com/hendrycks/test",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member"
+    },
+    {
+      "id": "mmlu-pro",
+      "name": "MMLU-Pro",
+      "urls": [
+        {
+          "url": "https://github.com/TIGER-AI-Lab/MMLU-Pro",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache-2.0 (repository) vs MIT (HF card): inconsistent",
+        "spdx": null,
+        "read_at": "https://github.com/TIGER-AI-Lab/MMLU-Pro",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member"
+    },
+    {
+      "id": "gsm8k",
+      "name": "GSM8K",
+      "urls": [
+        {
+          "url": "https://github.com/openai/grade-school-math",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT",
+        "spdx": "MIT",
+        "read_at": "https://github.com/openai/grade-school-math",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member"
+    },
+    {
+      "id": "bbh",
+      "name": "BIG-Bench Hard",
+      "urls": [
+        {
+          "url": "https://github.com/suzgunmirac/BIG-Bench-Hard",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache-2.0 (repository) vs MIT (HF mirror): inconsistent",
+        "spdx": null,
+        "read_at": "https://github.com/suzgunmirac/BIG-Bench-Hard",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member"
+    },
+    {
+      "id": "hellaswag",
+      "name": "HellaSwag",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/Rowan/hellaswag",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "no licence declared on the dataset card",
+        "spdx": null,
+        "read_at": "https://huggingface.co/datasets/Rowan/hellaswag",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member"
+    },
+    {
+      "id": "winogrande",
+      "name": "WinoGrande",
+      "urls": [
+        {
+          "url": "https://github.com/allenai/winogrande",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY (dataset); Apache-2.0 (code)",
+        "spdx": "CC-BY-4.0",
+        "read_at": "https://github.com/allenai/winogrande",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member"
+    },
+    {
+      "id": "musr",
+      "name": "MuSR",
+      "urls": [
+        {
+          "url": "https://github.com/Zayne-sprague/MuSR",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT (repository) vs CC BY 4.0 (HF card): inconsistent",
+        "spdx": null,
+        "read_at": "https://github.com/Zayne-sprague/MuSR",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member"
+    },
+    {
+      "id": "contractnli",
+      "name": "ContractNLI",
+      "urls": [
+        {
+          "url": "https://stanfordnlp.github.io/contract-nli/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY 4.0",
+        "spdx": "CC-BY-4.0",
+        "read_at": "https://stanfordnlp.github.io/contract-nli/",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member"
+    },
+    {
+      "id": "amazon-esci",
+      "name": "Amazon Shopping Queries (ESCI)",
+      "urls": [
+        {
+          "url": "https://github.com/amazon-science/esci-data",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache-2.0",
+        "spdx": "Apache-2.0",
+        "read_at": "https://github.com/amazon-science/esci-data",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member"
+    },
+    {
+      "id": "bright",
+      "name": "BRIGHT",
+      "urls": [
+        {
+          "url": "https://github.com/xlang-ai/BRIGHT",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY 4.0",
+        "spdx": "CC-BY-4.0",
+        "read_at": "https://github.com/xlang-ai/BRIGHT",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member"
+    },
+    {
+      "id": "banking77",
+      "name": "BANKING77",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/PolyAI/banking77",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY 4.0",
+        "spdx": "CC-BY-4.0",
+        "read_at": "https://huggingface.co/datasets/PolyAI/banking77",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member"
+    },
+    {
+      "id": "routerbench",
+      "name": "RouterBench",
+      "urls": [
+        {
+          "url": "https://blog.cloudflare.com/clef-decision-models/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence not independently read",
+        "spdx": null,
+        "read_at": "https://blog.cloudflare.com/clef-decision-models/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate; licence unconfirmed",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member; named in the blog post only"
+    },
+    {
+      "id": "home-appliance-simulator",
+      "name": "Home appliance simulator",
+      "urls": [
+        {
+          "url": "https://blog.cloudflare.com/clef-decision-models/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence not independently read",
+        "spdx": null,
+        "read_at": "https://blog.cloudflare.com/clef-decision-models/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate; licence unconfirmed",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member; named in the blog post only"
+    },
+    {
+      "id": "when2call",
+      "name": "When2Call (MCQ)",
+      "urls": [
+        {
+          "url": "https://blog.cloudflare.com/clef-decision-models/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence not independently read",
+        "spdx": null,
+        "read_at": "https://blog.cloudflare.com/clef-decision-models/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate; licence unconfirmed",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member; named in the blog post only"
+    },
+    {
+      "id": "bpomp",
+      "name": "BPoMP",
+      "urls": [
+        {
+          "url": "https://blog.cloudflare.com/clef-decision-models/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence not independently read",
+        "spdx": null,
+        "read_at": "https://blog.cloudflare.com/clef-decision-models/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate; licence unconfirmed",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member; named in the blog post only"
+    },
+    {
+      "id": "humicroedit",
+      "name": "Humicroedit",
+      "urls": [
+        {
+          "url": "https://blog.cloudflare.com/clef-decision-models/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence not independently read",
+        "spdx": null,
+        "read_at": "https://blog.cloudflare.com/clef-decision-models/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate; licence unconfirmed",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member; named in the blog post only"
+    },
+    {
+      "id": "pop909-cl",
+      "name": "POP909-CL",
+      "urls": [
+        {
+          "url": "https://blog.cloudflare.com/clef-decision-models/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence not independently read",
+        "spdx": null,
+        "read_at": "https://blog.cloudflare.com/clef-decision-models/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate; licence unconfirmed",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member; named in the blog post only"
+    },
+    {
+      "id": "cfcolor",
+      "name": "cfcolor",
+      "urls": [
+        {
+          "url": "https://blog.cloudflare.com/clef-decision-models/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence not independently read",
+        "spdx": null,
+        "read_at": "https://blog.cloudflare.com/clef-decision-models/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate; licence unconfirmed",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member; named in the blog post only"
+    },
+    {
+      "id": "sata-bench",
+      "name": "SATA-Bench",
+      "urls": [
+        {
+          "url": "https://blog.cloudflare.com/clef-decision-models/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence not independently read",
+        "spdx": null,
+        "read_at": "https://blog.cloudflare.com/clef-decision-models/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate; licence unconfirmed",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member; named in the blog post only"
+    },
+    {
+      "id": "acos",
+      "name": "ACOS",
+      "urls": [
+        {
+          "url": "https://blog.cloudflare.com/clef-decision-models/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence not independently read",
+        "spdx": null,
+        "read_at": "https://blog.cloudflare.com/clef-decision-models/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate; licence unconfirmed",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member; named in the blog post only"
+    },
+    {
+      "id": "finentity",
+      "name": "FinEntity",
+      "urls": [
+        {
+          "url": "https://blog.cloudflare.com/clef-decision-models/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence not independently read",
+        "spdx": null,
+        "read_at": "https://blog.cloudflare.com/clef-decision-models/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate; licence unconfirmed",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member; named in the blog post only"
+    },
+    {
+      "id": "vast",
+      "name": "VAST",
+      "urls": [
+        {
+          "url": "https://blog.cloudflare.com/clef-decision-models/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence not independently read",
+        "spdx": null,
+        "read_at": "https://blog.cloudflare.com/clef-decision-models/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate; licence unconfirmed",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member; named in the blog post only"
+    },
+    {
+      "id": "nli4ct",
+      "name": "NLI4CT",
+      "urls": [
+        {
+          "url": "https://blog.cloudflare.com/clef-decision-models/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence not independently read",
+        "spdx": null,
+        "read_at": "https://blog.cloudflare.com/clef-decision-models/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate; licence unconfirmed",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member; named in the blog post only"
+    },
+    {
+      "id": "chessbench",
+      "name": "ChessBench",
+      "urls": [
+        {
+          "url": "https://blog.cloudflare.com/clef-decision-models/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence not independently read",
+        "spdx": null,
+        "read_at": "https://blog.cloudflare.com/clef-decision-models/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate; licence unconfirmed",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member; named in the blog post only"
+    },
+    {
+      "id": "habermas-machine",
+      "name": "Habermas Machine",
+      "urls": [
+        {
+          "url": "https://blog.cloudflare.com/clef-decision-models/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence not independently read",
+        "spdx": null,
+        "read_at": "https://blog.cloudflare.com/clef-decision-models/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate; licence unconfirmed",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member; named in the blog post only"
+    },
+    {
+      "id": "new-yorker-captions",
+      "name": "New Yorker caption contest",
+      "urls": [
+        {
+          "url": "https://blog.cloudflare.com/clef-decision-models/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence not independently read",
+        "spdx": null,
+        "read_at": "https://blog.cloudflare.com/clef-decision-models/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "excluded",
+      "reason": "out of scope (FR-042): a general-knowledge benchmark, not a decision at a coding-agent gate; licence unconfirmed",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Cloudflare Decision Index member; named in the blog post only"
+    },
+    {
+      "id": "agentdojo",
+      "name": "AgentDojo",
+      "urls": [
+        {
+          "url": "https://github.com/ethz-spylab/agentdojo",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT",
+        "spdx": "MIT",
+        "read_at": "https://github.com/ethz-spylab/agentdojo",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive; a dynamic harness to flatten into static items.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "action_safety",
+        "injection_suspicion"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "injecagent",
+      "name": "InjecAgent",
+      "urls": [
+        {
+          "url": "https://github.com/uiuc-kang-lab/InjecAgent",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT (file named LICENCE)",
+        "spdx": "MIT",
+        "read_at": "https://github.com/uiuc-kang-lab/InjecAgent",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "tool_result_trust",
+        "injection_suspicion"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "toolemu",
+      "name": "ToolEmu",
+      "urls": [
+        {
+          "url": "https://github.com/ryoungj/ToolEmu",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache-2.0",
+        "spdx": "Apache-2.0",
+        "read_at": "https://github.com/ryoungj/ToolEmu",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive; emulated executions.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "action_safety"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "os-harm",
+      "name": "OS-Harm",
+      "urls": [
+        {
+          "url": "https://github.com/tml-epfl/os-harm",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache-2.0",
+        "spdx": "Apache-2.0",
+        "read_at": "https://github.com/tml-epfl/os-harm",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive; traces hosted externally.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "action_safety",
+        "human_handoff"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "agent-safetybench",
+      "name": "Agent-SafetyBench",
+      "urls": [
+        {
+          "url": "https://github.com/thu-coai/Agent-SafetyBench",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT",
+        "spdx": "MIT",
+        "read_at": "https://github.com/thu-coai/Agent-SafetyBench",
+        "read_on": "2026-10-10",
+        "class": "composite"
+      },
+      "verdict": "conditional",
+      "reason": "MIT, but it aggregates R-Judge samples (CC BY-NC-SA): exclude that subset.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "action_safety",
+        "harm_potential"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "toolsword",
+      "name": "ToolSword",
+      "urls": [
+        {
+          "url": "https://github.com/Junjie-Ye/ToolSword",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache-2.0",
+        "spdx": "Apache-2.0",
+        "read_at": "https://github.com/Junjie-Ye/ToolSword",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "action_safety"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "r-judge",
+      "name": "R-Judge",
+      "urls": [
+        {
+          "url": "https://github.com/Lordog/R-Judge",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://rjudgebench.github.io/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY-NC-SA (project site)",
+        "spdx": "CC-BY-NC-SA-4.0",
+        "read_at": "https://github.com/Lordog/R-Judge",
+        "read_on": "2026-10-10",
+        "class": "non_commercial"
+      },
+      "verdict": "excluded",
+      "reason": "Non-commercial licence.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "agentharm",
+      "name": "AgentHarm",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/ai-safety-institute/AgentHarm",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT with an additional clause restricting use to AI safety research",
+        "spdx": null,
+        "read_at": "https://huggingface.co/datasets/ai-safety-institute/AgentHarm",
+        "read_on": "2026-10-10",
+        "class": "research_only"
+      },
+      "verdict": "excluded",
+      "reason": "Use restriction (safety research only) is not freely redistributable.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "deepset-prompt-injections",
+      "name": "deepset/prompt-injections",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/deepset/prompt-injections",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache-2.0",
+        "spdx": "Apache-2.0",
+        "read_at": "https://huggingface.co/datasets/deepset/prompt-injections",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive; small seed (662 rows).",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "injection_suspicion"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "jackhhao-jailbreak-classification",
+      "name": "jackhhao/jailbreak-classification",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/jackhhao/jailbreak-classification",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache-2.0",
+        "spdx": "Apache-2.0",
+        "read_at": "https://huggingface.co/datasets/jackhhao/jailbreak-classification",
+        "read_on": "2026-10-10",
+        "class": "composite"
+      },
+      "verdict": "conditional",
+      "reason": "Benign half derives from other corpora; check them before reusing raw text.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "injection_suspicion"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "hackaprompt",
+      "name": "HackAPrompt dataset",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/hackaprompt/hackaprompt-dataset",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT",
+        "spdx": "MIT",
+        "read_at": "https://huggingface.co/datasets/hackaprompt/hackaprompt-dataset",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "conditional",
+      "reason": "Uncurated and may contain offensive material; filter before use.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "injection_suspicion"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "open-prompt-injection",
+      "name": "Open-Prompt-Injection",
+      "urls": [
+        {
+          "url": "https://github.com/liu00222/Open-Prompt-Injection",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT (harness) over seven task datasets with their own licences",
+        "spdx": "MIT",
+        "read_at": "https://github.com/liu00222/Open-Prompt-Injection",
+        "read_on": "2026-10-10",
+        "class": "composite"
+      },
+      "verdict": "conditional",
+      "reason": "Sub-source audit required.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "injection_suspicion"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "bipia",
+      "name": "BIPIA",
+      "urls": [
+        {
+          "url": "https://github.com/microsoft/BIPIA",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "mixed ('Other'); several context files must be regenerated by the user",
+        "spdx": null,
+        "read_at": "https://github.com/microsoft/BIPIA",
+        "read_on": "2026-10-10",
+        "class": "composite"
+      },
+      "verdict": "excluded",
+      "reason": "Not redistributable as a whole.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "vendor-example-keys",
+      "name": "Vendor-published example credential values",
+      "urls": [
+        {
+          "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "vendor documentation",
+        "spdx": null,
+        "read_at": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html",
+        "read_on": "2026-10-10",
+        "class": "custom_permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Reference strings, not a dataset; each value cited with its URL in example_secrets.json.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "secret_exposure"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "presidio-research",
+      "name": "Microsoft presidio-research generator",
+      "urls": [
+        {
+          "url": "https://github.com/microsoft/presidio-research",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT (code); generated names from Fake Name Generator, CC BY-SA 3.0 US",
+        "spdx": "MIT",
+        "read_at": "https://github.com/microsoft/presidio-research",
+        "read_on": "2026-10-10",
+        "class": "share_alike"
+      },
+      "verdict": "conditional",
+      "reason": "Attribution and share-alike apply to generated name values.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "secret_exposure"
+      ],
+      "items_imported": 0,
+      "attribution": "Fake Name Generator names, CC BY-SA 3.0 US",
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "ai4privacy-pii-masking-200k",
+      "name": "ai4privacy pii-masking-200k",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/ai4privacy/pii-masking-200k",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence tag not confirmed",
+        "spdx": null,
+        "read_at": "https://huggingface.co/datasets/ai4privacy/pii-masking-200k",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Synthetic PII; confirm the licence tag on the dataset page before import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "secret_exposure"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "synthetic-sensitive-data-in-source-code",
+      "name": "nisaefendioglu synthetic-sensitive-data-in-source-code-n300",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/nisaefendioglu/synthetic-sensitive-data-in-source-code-n300",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "licence tag not confirmed",
+        "spdx": null,
+        "read_at": "https://huggingface.co/datasets/nisaefendioglu/synthetic-sensitive-data-in-source-code-n300",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Fully synthetic; confirm the licence tag before import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "secret_exposure"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "secretbench",
+      "name": "SecretBench",
+      "urls": [
+        {
+          "url": "https://github.com/setu1421/SecretBench",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT",
+        "spdx": "MIT",
+        "read_at": "https://github.com/setu1421/SecretBench",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "excluded",
+      "reason": "Contains real secret values mined from public repositories (FR-044).",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "detect-secrets-trufflehog-fixtures",
+      "name": "detect-secrets and TruffleHog test fixtures",
+      "urls": [
+        {
+          "url": "https://github.com/Yelp/detect-secrets",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://github.com/trufflesecurity/trufflehog",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache-2.0 (detect-secrets); AGPL-3.0 (TruffleHog)",
+        "spdx": null,
+        "read_at": "https://github.com/Yelp/detect-secrets",
+        "read_on": "2026-10-10",
+        "class": "composite"
+      },
+      "verdict": "conditional",
+      "reason": "Cite individual documented fixture values with attribution; import no code (AGPL).",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "secret_exposure"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "nist-juliet",
+      "name": "NIST Juliet Test Suite (SARD)",
+      "urls": [
+        {
+          "url": "https://samate.nist.gov/SARD/test-suites/112",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://zenodo.org/records/4701387",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Public domain (17 USC 105); CC0 1.0 for foreign rights",
+        "spdx": "CC0-1.0",
+        "read_at": "https://zenodo.org/records/4701387",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive; downloadable without an application; no real secrets or PII.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "insecure_pattern"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": "Primary source for CWE-labelled code"
+    },
+    {
+      "id": "cvefixes",
+      "name": "CVEfixes",
+      "urls": [
+        {
+          "url": "https://github.com/secureIT-project/CVEfixes",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://zenodo.org/doi/10.5281/zenodo.4476563",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT (code); CC BY 4.0 (data)",
+        "spdx": "CC-BY-4.0",
+        "read_at": "https://github.com/secureIT-project/CVEfixes",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive with attribution.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "insecure_pattern",
+        "change_risk"
+      ],
+      "items_imported": 0,
+      "attribution": "CVEfixes, CC BY 4.0",
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "primevul",
+      "name": "PrimeVul",
+      "urls": [
+        {
+          "url": "https://github.com/DLVulDet/PrimeVul",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT",
+        "spdx": "MIT",
+        "read_at": "https://github.com/DLVulDet/PrimeVul",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "insecure_pattern"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "mitre-cwe",
+      "name": "MITRE CWE catalogue (definitions)",
+      "urls": [
+        {
+          "url": "https://cwe.mitre.org/about/termsofuse.html",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MITRE CWE Terms of Use: royalty-free incl. commercial use, with notice",
+        "spdx": null,
+        "read_at": "https://cwe.mitre.org/about/termsofuse.html",
+        "read_on": "2026-10-10",
+        "class": "custom_permissive"
+      },
+      "verdict": "conditional",
+      "reason": "Carry MITRE's copyright notice.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "insecure_pattern"
+      ],
+      "items_imported": 0,
+      "attribution": "CWE is sponsored by the U.S. Department of Homeland Security (DHS) Cybersecurity and Infrastructure Security Agency (CISA) and managed by the Homeland Security Systems Engineering and Development Institute (HSSEDI) which is operated by The MITRE Corporation (MITRE). Copyright © 2006–2026, The MITRE Corporation. CWE, CWSS, CWRAF, and the CWE logo are trademarks of The MITRE Corporation.",
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "cyberseceval",
+      "name": "Meta CyberSecEval (Purple Llama)",
+      "urls": [
+        {
+          "url": "https://github.com/meta-llama/PurpleLlama/tree/main/CybersecurityBenchmarks",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT (harness); sub-datasets individually tagged on HF",
+        "spdx": "MIT",
+        "read_at": "https://github.com/meta-llama/PurpleLlama/tree/main/CybersecurityBenchmarks",
+        "read_on": "2026-10-10",
+        "class": "composite"
+      },
+      "verdict": "conditional",
+      "reason": "Per sub-dataset verdicts.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "insecure_pattern",
+        "injection_suspicion"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "big-vul",
+      "name": "Big-Vul (canonical MSR'20 release)",
+      "urls": [
+        {
+          "url": "https://github.com/ZeoVan/MSR_20_Code_vulnerability_CSV_Dataset",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "no citable licence statement found",
+        "spdx": null,
+        "read_at": "https://github.com/ZeoVan/MSR_20_Code_vulnerability_CSV_Dataset",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Verify the licence directly before any import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "insecure_pattern"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "devign",
+      "name": "Devign",
+      "urls": [
+        {
+          "url": "https://sites.google.com/view/devign",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "no citable licence statement found",
+        "spdx": null,
+        "read_at": "https://sites.google.com/view/devign",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Verify the licence directly before any import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "insecure_pattern"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "diversevul",
+      "name": "DiverseVul",
+      "urls": [
+        {
+          "url": "https://github.com/wagner-group/diversevul",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "no citable licence statement found",
+        "spdx": null,
+        "read_at": "https://github.com/wagner-group/diversevul",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Verify the licence directly before any import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "insecure_pattern"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "securityeval",
+      "name": "SecurityEval",
+      "urls": [
+        {
+          "url": "https://github.com/s2e-lab/SecurityEval",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "no citable licence statement found",
+        "spdx": null,
+        "read_at": "https://github.com/s2e-lab/SecurityEval",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Verify the licence directly before any import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "insecure_pattern"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "swe-bench",
+      "name": "SWE-bench",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/princeton-nlp/SWE-bench",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://github.com/SWE-bench/SWE-bench",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT",
+        "spdx": "MIT",
+        "read_at": "https://huggingface.co/datasets/princeton-nlp/SWE-bench",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "conditional",
+      "reason": "Spot-check each source repository's licence before publishing verbatim issue text.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "failure_triage",
+        "routing",
+        "spec_completeness"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "loghub",
+      "name": "Loghub (Zenodo distribution)",
+      "urls": [
+        {
+          "url": "https://zenodo.org/records/3227177",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://github.com/logpai/loghub",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY 4.0 on Zenodo; narrower research wording on the repository",
+        "spdx": "CC-BY-4.0",
+        "read_at": "https://zenodo.org/records/3227177",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "conditional",
+      "reason": "Use the Zenodo copy only and record the discrepancy.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "failure_triage"
+      ],
+      "items_imported": 0,
+      "attribution": "Loghub, CC BY 4.0",
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "defects4j",
+      "name": "Defects4J",
+      "urls": [
+        {
+          "url": "https://github.com/rjust/defects4j",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "not independently read",
+        "spdx": null,
+        "read_at": "https://github.com/rjust/defects4j",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Verify the licence directly before any import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "failure_triage"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "bugsinpy",
+      "name": "BugsInPy",
+      "urls": [
+        {
+          "url": "https://github.com/soarsmu/BugsInPy",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "not independently read",
+        "spdx": null,
+        "read_at": "https://github.com/soarsmu/BugsInPy",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Verify the licence directly before any import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "failure_triage"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "flakeflagger",
+      "name": "FlakeFlagger",
+      "urls": [
+        {
+          "url": "https://github.com/AlshammariA/FlakeFlagger",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "not independently read",
+        "spdx": null,
+        "read_at": "https://github.com/AlshammariA/FlakeFlagger",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Verify the licence directly before any import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "failure_triage"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "idflakies",
+      "name": "iDFlakies",
+      "urls": [
+        {
+          "url": "https://github.com/TestingResearchIllinois/idflakies",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "not independently read",
+        "spdx": null,
+        "read_at": "https://github.com/TestingResearchIllinois/idflakies",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Verify the licence directly before any import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "failure_triage"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "travistorrent",
+      "name": "TravisTorrent",
+      "urls": [
+        {
+          "url": "https://travistorrent.testroots.org/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "not independently read",
+        "spdx": null,
+        "read_at": "https://travistorrent.testroots.org/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Verify the licence directly before any import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "failure_triage"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "apachejit",
+      "name": "ApacheJIT",
+      "urls": [
+        {
+          "url": "https://zenodo.org/records/5907847",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://github.com/hosseinkshvrz/apachejit",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY 4.0",
+        "spdx": "CC-BY-4.0",
+        "read_at": "https://zenodo.org/records/5907847",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive with attribution; primary source for change risk.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "change_risk"
+      ],
+      "items_imported": 0,
+      "attribution": "ApacheJIT, CC BY 4.0",
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "commitchronicle",
+      "name": "CommitChronicle",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/JetBrains-Research/commit-chronicle",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://zenodo.org/records/8189044",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY 4.0 compilation; per-row upstream licence field",
+        "spdx": "CC-BY-4.0",
+        "read_at": "https://huggingface.co/datasets/JetBrains-Research/commit-chronicle",
+        "read_on": "2026-10-10",
+        "class": "composite"
+      },
+      "verdict": "conditional",
+      "reason": "Honour each row's upstream licence.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "change_risk"
+      ],
+      "items_imported": 0,
+      "attribution": "CommitChronicle, CC BY 4.0",
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "manysstubs4j",
+      "name": "ManySStuBs4J",
+      "urls": [
+        {
+          "url": "https://zenodo.org/records/3653444",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://github.com/mast-group/mineSStuBs",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache-2.0 (code); CC BY 4.0 (data)",
+        "spdx": "CC-BY-4.0",
+        "read_at": "https://zenodo.org/records/3653444",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive with attribution.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "change_risk"
+      ],
+      "items_imported": 0,
+      "attribution": "ManySStuBs4J, CC BY 4.0",
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "commitbench",
+      "name": "CommitBench",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/Maxscha/commitbench",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY-NC 4.0 (data); MIT (code)",
+        "spdx": "CC-BY-NC-4.0",
+        "read_at": "https://huggingface.co/datasets/Maxscha/commitbench",
+        "read_on": "2026-10-10",
+        "class": "non_commercial"
+      },
+      "verdict": "excluded",
+      "reason": "Non-commercial licence.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "codereviewer-data",
+      "name": "CodeReviewer data release",
+      "urls": [
+        {
+          "url": "https://github.com/microsoft/CodeBERT/tree/master/CodeReviewer",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "data release licence not confirmed",
+        "spdx": null,
+        "read_at": "https://github.com/microsoft/CodeBERT/tree/master/CodeReviewer",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Verify the Zenodo release licence before import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "change_risk"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "halueval",
+      "name": "HaluEval",
+      "urls": [
+        {
+          "url": "https://github.com/RUCAIBox/HaluEval",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT",
+        "spdx": "MIT",
+        "read_at": "https://github.com/RUCAIBox/HaluEval",
+        "read_on": "2026-10-10",
+        "class": "composite"
+      },
+      "verdict": "conditional",
+      "reason": "Underlying QA/summary sources carry their own terms.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "claim_grounding",
+        "fabrication_check"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "vitaminc",
+      "name": "VitaminC",
+      "urls": [
+        {
+          "url": "https://github.com/TalSchuster/VitaminC",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT (harness); Wikipedia text CC BY-SA",
+        "spdx": "MIT",
+        "read_at": "https://github.com/TalSchuster/VitaminC",
+        "read_on": "2026-10-10",
+        "class": "share_alike"
+      },
+      "verdict": "conditional",
+      "reason": "Share-alike file for the Wikipedia-derived text.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "claim_grounding"
+      ],
+      "items_imported": 0,
+      "attribution": "Wikipedia contributors, CC BY-SA 3.0",
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "fever",
+      "name": "FEVER",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/fever/fever",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY-SA (via Wikipedia)",
+        "spdx": "CC-BY-SA-3.0",
+        "read_at": "https://huggingface.co/datasets/fever/fever",
+        "read_on": "2026-10-10",
+        "class": "share_alike"
+      },
+      "verdict": "conditional",
+      "reason": "Share-alike file.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "claim_grounding"
+      ],
+      "items_imported": 0,
+      "attribution": "FEVER / Wikipedia contributors, CC BY-SA 3.0",
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "truthfulqa",
+      "name": "TruthfulQA",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/truthfulqa/truthful_qa",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache-2.0",
+        "spdx": "Apache-2.0",
+        "read_at": "https://huggingface.co/datasets/truthfulqa/truthful_qa",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive; controls.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "claim_grounding"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "summac-frank",
+      "name": "SummaC harness and FRANK",
+      "urls": [
+        {
+          "url": "https://github.com/tingofurro/summac",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://github.com/artidoro/frank",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "Apache-2.0 (harness); FRANK data unconfirmed",
+        "spdx": null,
+        "read_at": "https://github.com/tingofurro/summac",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Confirm FRANK's LICENSE text before import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "claim_grounding"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "nvidia-aegis-2",
+      "name": "NVIDIA Aegis AI Content Safety Dataset 2.0",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/nvidia/Aegis-AI-Content-Safety-Dataset-2.0",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY 4.0",
+        "spdx": "CC-BY-4.0",
+        "read_at": "https://huggingface.co/datasets/nvidia/Aegis-AI-Content-Safety-Dataset-2.0",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive with attribution; drafting seeds for the human gate only.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "harm_potential"
+      ],
+      "items_imported": 0,
+      "attribution": "NVIDIA Aegis AI Content Safety Dataset 2.0, CC BY 4.0",
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "harmbench",
+      "name": "HarmBench",
+      "urls": [
+        {
+          "url": "https://github.com/centerforaisafety/HarmBench",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT (harness); verify the prompt-set terms",
+        "spdx": "MIT",
+        "read_at": "https://github.com/centerforaisafety/HarmBench",
+        "read_on": "2026-10-10",
+        "class": "composite"
+      },
+      "verdict": "conditional",
+      "reason": "Harness MIT; confirm the behaviour-prompt subset before reproducing prompts.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "harm_potential"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "beavertails",
+      "name": "BeaverTails",
+      "urls": [
+        {
+          "url": "https://github.com/PKU-Alignment/beavertails",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY-NC 4.0 (data); Apache-2.0 (code)",
+        "spdx": "CC-BY-NC-4.0",
+        "read_at": "https://github.com/PKU-Alignment/beavertails",
+        "read_on": "2026-10-10",
+        "class": "non_commercial"
+      },
+      "verdict": "excluded",
+      "reason": "Non-commercial licence on the data.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "wildguardmix",
+      "name": "WildGuardMix",
+      "urls": [
+        {
+          "url": "https://huggingface.co/datasets/allenai/wildguardmix",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "ODC-By, gated behind an access agreement",
+        "spdx": "ODC-By-1.0",
+        "read_at": "https://huggingface.co/datasets/allenai/wildguardmix",
+        "read_on": "2026-10-10",
+        "class": "gated"
+      },
+      "verdict": "excluded",
+      "reason": "Gated by an access agreement.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "toxigen",
+      "name": "ToxiGen",
+      "urls": [
+        {
+          "url": "https://github.com/microsoft/TOXIGEN",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://huggingface.co/datasets/toxigen/toxigen-data",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "inconsistent (loader declares none; third parties claim MIT); gated",
+        "spdx": null,
+        "read_at": "https://github.com/microsoft/TOXIGEN",
+        "read_on": "2026-10-10",
+        "class": "gated"
+      },
+      "verdict": "excluded",
+      "reason": "Gated and the licence is unconfirmed.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "safetybench",
+      "name": "SafetyBench",
+      "urls": [
+        {
+          "url": "https://github.com/thu-coai/SafetyBench",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "no citable licence statement found",
+        "spdx": null,
+        "read_at": "https://github.com/thu-coai/SafetyBench",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Confirm the licence before import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "harm_potential"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "scancode-licensedb",
+      "name": "ScanCode LicenseDB",
+      "urls": [
+        {
+          "url": "https://github.com/aboutcode-org/scancode-licensedb",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY 4.0 (data) and Apache-2.0",
+        "spdx": "CC-BY-4.0",
+        "read_at": "https://github.com/aboutcode-org/scancode-licensedb",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive with attribution; primary source for licence texts.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "license_compat"
+      ],
+      "items_imported": 0,
+      "attribution": "ScanCode LicenseDB, CC BY 4.0",
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "spdx-license-list-data",
+      "name": "SPDX license-list-data",
+      "urls": [
+        {
+          "url": "https://github.com/spdx/license-list-data",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "published for free reuse in SBOMs and tooling",
+        "spdx": null,
+        "read_at": "https://github.com/spdx/license-list-data",
+        "read_on": "2026-10-10",
+        "class": "custom_permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Public reference data.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "license_compat"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "clearlydefined",
+      "name": "ClearlyDefined definitions",
+      "urls": [
+        {
+          "url": "https://clearlydefined.io/",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "definitions-API terms not confirmed",
+        "spdx": null,
+        "read_at": "https://clearlydefined.io/",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Confirm the definitions' terms before import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "license_compat"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "uci-adult",
+      "name": "UCI Adult (Census Income)",
+      "urls": [
+        {
+          "url": "https://archive.ics.uci.edu/dataset/2/adult",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY 4.0",
+        "spdx": "CC-BY-4.0",
+        "read_at": "https://archive.ics.uci.edu/dataset/2/adult",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive with attribution; realistic feature names and contexts.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "fairness_sensitive"
+      ],
+      "items_imported": 0,
+      "attribution": "UCI Machine Learning Repository, Adult, CC BY 4.0",
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "folktables",
+      "name": "folktables (ACS/PUMS tasks)",
+      "urls": [
+        {
+          "url": "https://github.com/socialfoundations/folktables",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT (code); US Census terms for ACS data; IPUMS subsample non-redistributable",
+        "spdx": "MIT",
+        "read_at": "https://github.com/socialfoundations/folktables",
+        "read_on": "2026-10-10",
+        "class": "composite"
+      },
+      "verdict": "conditional",
+      "reason": "Exclude the IPUMS-derived Adult-reconstruction subsample.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "fairness_sensitive"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "propublica-compas",
+      "name": "ProPublica COMPAS analysis data",
+      "urls": [
+        {
+          "url": "https://github.com/propublica/compas-analysis",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "no explicit LICENSE file found",
+        "spdx": null,
+        "read_at": "https://github.com/propublica/compas-analysis",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Confirm the licence; also holds real individuals' justice records.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "fairness_sensitive"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "uci-german-credit",
+      "name": "UCI German Credit (Statlog)",
+      "urls": [
+        {
+          "url": "https://archive.ics.uci.edu/dataset/144/statlog+german+credit+data",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "not independently re-read",
+        "spdx": null,
+        "read_at": "https://archive.ics.uci.edu/dataset/144/statlog+german+credit+data",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Confirm the dataset page's licence tag before import.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "fairness_sensitive"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "qulac",
+      "name": "Qulac",
+      "urls": [
+        {
+          "url": "https://github.com/aliannejadi/qulac",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "MIT",
+        "spdx": "MIT",
+        "read_at": "https://github.com/aliannejadi/qulac",
+        "read_on": "2026-10-10",
+        "class": "permissive"
+      },
+      "verdict": "candidate",
+      "reason": "Permissive.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "spec_completeness",
+        "clarification_worth"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "ambigqa",
+      "name": "AmbigQA / AmbigNQ",
+      "urls": [
+        {
+          "url": "https://github.com/shmsw25/AmbigQA",
+          "read_on": "2026-10-10"
+        },
+        {
+          "url": "https://huggingface.co/datasets/sewon/ambig_qa",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "CC BY-SA 3.0",
+        "spdx": "CC-BY-SA-3.0",
+        "read_at": "https://github.com/shmsw25/AmbigQA",
+        "read_on": "2026-10-10",
+        "class": "share_alike"
+      },
+      "verdict": "conditional",
+      "reason": "Share-alike file.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "clarification_worth"
+      ],
+      "items_imported": 0,
+      "attribution": "AmbigQA, CC BY-SA 3.0",
+      "upstream_available": true,
+      "notes": null
+    },
+    {
+      "id": "clariq",
+      "name": "ClariQ",
+      "urls": [
+        {
+          "url": "https://github.com/aliannejadi/ClariQ",
+          "read_on": "2026-10-10"
+        }
+      ],
+      "licence": {
+        "reading": "repository licence not confirmed",
+        "spdx": null,
+        "read_at": "https://github.com/aliannejadi/ClariQ",
+        "read_on": "2026-10-10",
+        "class": "unconfirmed"
+      },
+      "verdict": "unconfirmed",
+      "reason": "Confirm before import; do not conflate with ClarQ.",
+      "snapshot": null,
+      "mirror": null,
+      "transformation": null,
+      "feeds": [
+        "spec_completeness"
+      ],
+      "items_imported": 0,
+      "attribution": null,
+      "upstream_available": true,
+      "notes": null
+    }
+  ]
+}

@@ -8,6 +8,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import sys
+from collections import Counter
 from pathlib import Path
 from types import ModuleType
 
@@ -113,8 +114,7 @@ def test_leaderboard_table_run_link_uses_relative_url_for_baseurl() -> None:
     row = _leaderboard_row(run_id="clef-flash_20261010T000000Z")
     html = bench._leaderboard_table_html([row])
     assert (
-        "href=\"{{ '/results/clef-flash_20261010T000000Z/summary/' "
-        '| relative_url }}">'
+        "href=\"{{ '/results/clef-flash_20261010T000000Z/summary/' | relative_url }}\">"
     ) in html
     assert 'href="/results/' not in html
 
@@ -147,6 +147,8 @@ def test_headline_reports_the_numbers_the_landing_page_shows() -> None:
         "conservative": True,
         "latency": {"p50_s": "0.92", "p95_s": "1.09"},
         "host": "Apple M4 Max",
+        "scope": "coding",
+        "capability": None,
     }
 
 
@@ -213,22 +215,17 @@ def test_leaderboard_index_uses_the_full_width_layout_not_the_sidebar_one(
     assert "layout: leaderboard" in text
 
 
-def test_build_writes_the_headline_from_the_top_leaderboard_row(
-    sandbox: Path,
-) -> None:
+def test_build_writes_the_headline_from_the_newest_run(sandbox: Path) -> None:
     assert bench.build() == 0
     data = json.loads(
         (sandbox / "_data" / "benchmark.json").read_text(encoding="utf-8")
     )
-    rows = data["leaderboard"]["rows"]
-    assert rows, "expected at least one leaderboard row"
-    top_run_id = rows[0]["run_id"]
-    model = json.loads(
-        (sandbox.parent / "benchmark" / top_run_id / "model.json").read_text(
-            encoding="utf-8"
-        )
-    )
-    assert data["headline"] == bench.headline(model)
+    models = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in (sandbox.parent / "benchmark").glob("*/model.json")
+    ]
+    newest = max(models, key=lambda m: m["meta"]["run_at"])
+    assert data["headline"] == bench.headline(newest)
 
 
 def test_build_with_no_tracked_runs_fails_cleanly(
@@ -242,3 +239,115 @@ def test_build_with_no_tracked_runs_fails_cleanly(
     monkeypatch.setattr(bench, "SITE", sandbox_site)
     monkeypatch.setattr(bench, "OUT", sandbox_site / "results")
     assert bench.build() == 1
+
+
+# Hero questions: a curated pool whose numbers come from the newest run
+
+HERO_ITEM = {
+    "id": "risk_020",
+    "questions": {
+        "needs_review": {
+            "type": "noul",
+            "predicted": True,
+            "correct": True,
+            "confidence": 0.9213,
+        }
+    },
+}
+HERO_ENTRY = {
+    "id": "risk_020",
+    "question": "needs_review",
+    "expect": True,
+    "ask": "Removing auth to cut latency. Push?",
+    "verdict": "Stop.",
+    "detail": "{p}% needs review.",
+}
+
+
+def test_hero_questions_fill_the_percentage_from_the_run() -> None:
+    model = {"items": [HERO_ITEM]}
+    assert bench.hero_questions(model, [HERO_ENTRY]) == [
+        {
+            "ask": "Removing auth to cut latency. Push?",
+            "verdict": "Stop.",
+            "detail": "92% needs review.",
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"correct": False},
+        {"predicted": False},
+    ],
+)
+def test_hero_questions_drop_answers_the_model_did_not_give(
+    change: dict[str, object],
+) -> None:
+    item = {
+        **HERO_ITEM,
+        "questions": {
+            "needs_review": {**HERO_ITEM["questions"]["needs_review"], **change}
+        },
+    }
+    assert bench.hero_questions({"items": [item]}, [HERO_ENTRY]) == []
+
+
+def test_hero_questions_drop_an_item_missing_from_the_run() -> None:
+    assert bench.hero_questions({"items": []}, [HERO_ENTRY]) == []
+
+
+def test_every_curated_hero_question_holds_in_the_newest_run() -> None:
+    models = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in REAL_BENCHMARK.glob("*/model.json")
+    ]
+    newest = max(models, key=lambda m: m["meta"]["run_at"])
+    entries = json.loads(
+        (REAL_BENCHMARK.parent / "site" / "_data" / "hero_questions.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert len(bench.hero_questions(newest, entries)) == len(entries)
+
+
+def test_every_hero_reply_is_shorter_than_its_question() -> None:
+    models = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in REAL_BENCHMARK.glob("*/model.json")
+    ]
+    newest = max(models, key=lambda m: m["meta"]["run_at"])
+    entries = json.loads(
+        (REAL_BENCHMARK.parent / "site" / "_data" / "hero_questions.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    long_replies = [
+        q["ask"]
+        for q in bench.hero_questions(newest, entries)
+        if len(f"{q['verdict']} {q['detail']}") >= len(q["ask"])
+    ]
+    assert long_replies == []
+
+
+def test_build_writes_leaderboard_versions_newest_first(sandbox: Path) -> None:
+    assert bench.build() == 0
+    data = json.loads(
+        (sandbox / "_data" / "benchmark.json").read_text(encoding="utf-8")
+    )
+    versions = data["leaderboard"]["versions"]
+    assert versions[0]["newest"] is True
+    assert [v["run_at"] for v in versions] == sorted(
+        (v["run_at"] for v in versions), reverse=True
+    )
+
+
+def test_hero_questions_cover_every_recipe_equally() -> None:
+    entries = json.loads(
+        (REAL_BENCHMARK.parent / "site" / "_data" / "hero_questions.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    per_recipe = Counter(entry["id"].rsplit("_", 1)[0] for entry in entries)
+    assert len(set(per_recipe.values())) == 1, per_recipe

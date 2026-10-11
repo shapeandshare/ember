@@ -5,13 +5,36 @@
 
 <!-- mcp-name: io.github.shapeandshare/ember -->
 
-**A local gut feeling for coding agents.** ember runs a decision model — Cloudflare's
-Clef-Flash, from its [public Hugging Face repo](https://huggingface.co/Cloudflare/clef-flash)
-— on your Apple Silicon Mac and gives agents one MCP tool, `advise`: describe a situation,
-ask typed questions, and get back a calibrated feeling about every option. It's a little
-buddy for judgment calls — it advises; the agent decides.
+**A gut feeling for coding agents.** AI coding assistants like Claude Code, Codex,
+opencode, and Kilo Code constantly have to decide: start now or ask a question first? Is
+this test failure real? Is this change safe to push? ember is a small add-on that gives
+them a quick second opinion at those moments, as a number ("93% likely this needs
+review"), so they stop interrupting you needlessly and stop making risky changes without
+asking. You don't call it yourself; your assistant does. It's free and open source, and you
+choose where the model runs: on your Apple Silicon Mac (32 GB of memory or more, a one-time
+~18 GB download), on a server you host, or on one your team already runs. ember advises; the
+agent decides.
+
+Under the hood, ember runs Cloudflare's Clef-Flash decision model, from its
+[public Hugging Face repo](https://huggingface.co/Cloudflare/clef-flash), and exposes it
+as one MCP tool, `advise`, that returns a calibrated probability for every option.
 
 **Website:** [shapeandshare.github.io/ember](https://shapeandshare.github.io/ember/)
+
+## Ways to run ember
+
+All three are supported equally; `ember init` asks which one you want.
+
+| | On your Mac | On a server you host | On a server someone else runs |
+| --- | --- | --- | --- |
+| Where the model runs | your Apple Silicon Mac | a Mac or an NVIDIA GPU machine you run | wherever its operator runs it |
+| Where your requests go | nowhere: they stay on your Mac | your server | that server |
+| What you need | 32 GB of memory, ~18 GB of disk | the server: as for local, or a CUDA GPU; clients: only its address | its address, and a token if it asks for one |
+| Set up with | `ember model pull`, then `ember init` | [Remote inference](#remote-inference) or [Hosted deployment](#hosted-deployment-a-model-location-supplied-at-start-time) | `ember init --server-url URL` |
+
+Nothing is ever sent to a server you didn't configure. Without a terminal to ask (a script,
+CI), `ember init` sets up local inference; `--local` or `--server-url` answer the question up
+front.
 
 ## How it works
 
@@ -51,17 +74,16 @@ a model location supplied at start time" below.
 
 ## Verified
 
-On a MacBook Pro **M4 Max / 128 GB**, torch 2.14.1, transformers 5.18.0, mcp 2.3:
-
-| Step | Result |
-| --- | --- |
-| Model load | ~5 s |
-| Warm request | **~0.9–1.3 s** for ~220–360 input tokens |
-| opencode end to end | ✅ the agent reads the instructions, lists the skill, and calls the tool unprompted |
+Tested versions and hardware are in [COMPATIBILITY.md](COMPATIBILITY.md). Current accuracy
+and latency, from the latest tracked benchmark run, are on the
+[benchmark report](https://shapeandshare.github.io/ember/results/).
 
 ## Install (Apple Silicon)
 
 ### Requirements
+
+To use a server someone else runs, you need only Python 3.12 (managed by uv) and the
+server's address; skip `ember model pull`. To run the model yourself:
 
 - **Apple Silicon Mac** (M-series) on macOS for local use (MPS). Intel Macs remain out of
   scope. For a hosted deployment on NVIDIA/CUDA compute (e.g. Outerbounds), see "Hosted
@@ -232,7 +254,7 @@ ember model pull [flash|full]      # flash = 9B (default)
 ember model list | path [name] | rm [name]
 
 # opencode, Kilo Code, Codex CLI, and agents
-ember init [--opencode] [--kilocode] [--codex] [--global] [--server-url URL] [--auth-header NAME]
+ember init [--opencode] [--kilocode] [--codex] [--global] [--local | --server-url URL] [--auth-header NAME]
 ember agents install [--agent opencode|claude|codex|kilocode] [--global]
 ember agents show instructions|skill|snippet
 ember mcp                         # the MCP stdio server agents launch
@@ -255,13 +277,19 @@ it?" — and it calls `ember_advise` with a state and typed questions:
       "probabilities": { "db": 0.9782, "frontend": 0.0218 }
     }
   },
-  "usage": { "input_tokens": 220, "output_tokens": 0 },
+  "usage": {
+    "input_tokens": 220, "output_tokens": 0,
+    "state_tokens": 34, "fixed_tokens": 186, "media_tokens": 0
+  },
   "latency_ms": 930.9
 }
 ```
 
 Question types: `noul` (yes/no → P(true)), `choice` (named options), `score` (ordered options →
-expected score plus legend). The `model` field echoes the upstream model label.
+expected score plus legend). The `model` field echoes the upstream model label. `usage`
+splits `input_tokens` into the state, the fixed overhead (questions, schema, prompt wrapper),
+and any media, so a caller can see what each part of a request cost; the benchmark harness
+requires this split.
 
 When the evidence is visual, attach images or video frames inline: `images` is a list of
 `data:image/png;base64,...` URIs (or `{"content_type": "image/png", "base64": "..."}`
@@ -329,8 +357,8 @@ they need different compute), a generated `requirements.txt`, and a
 
 ### Remote inference
 
-Local inference is the default. To serve another machine — for example, a second Mac that
-lacks the memory for the model — run the server on the host and point the client at it.
+Run one server and share it: with your team, with CI, or with a second Mac that lacks the
+memory for the model. Start the server on the host and point each client at it.
 
 #### On the host machine (the one with the model)
 
@@ -371,12 +399,19 @@ ember init --opencode --kilocode \
   --auth-header X-API-KEY        # omit for the default Authorization: Bearer header
 ```
 
+Run `ember init` at a terminal without `--server-url` and it asks for the address instead.
+Claude Code is registered with its own CLI, so pass the same settings there:
+
+```bash
+claude mcp add --scope user ember -e EMBER_SERVER_URL=https://ember.example.com -e EMBER_AUTOSTART=0 -- ember-mcp
+```
+
 This writes `EMBER_SERVER_URL` (and `EMBER_AUTH_HEADER`, if given) into the config file and
 forces `EMBER_AUTOSTART=0` — there is nothing local to autostart. **The credential itself is
 never written to the file**: export `EMBER_AUTH_TOKEN` in the shell that launches the agent
 (or your GUI app's environment) instead, so a secret never lands in a config file that might
-be project-committed. Without `--server-url`, `ember init` behaves exactly as before (a local
-loopback entry). Restart the harness afterward to pick up the new MCP registration.
+be project-committed. Without `--server-url`, `ember init` asks at a terminal and writes a local loopback entry
+when there is none to ask (or with `--local`). Restart the harness afterward to pick up the new MCP registration.
 
 This only updates the generated harness config — `ember status`/`ember doctor` run directly
 from your shell still check the **local** default unless you also export the same
@@ -473,6 +508,8 @@ committed: it registers the `vault` MCP server that agents use to read and write
 | `make eval-context` | Long-context probe: measure each model's request cap on MPS (hours) |
 | `make eval-context-smoke` | Long-context probe smoke: flash, 2K and 4K, 3 items (minutes) |
 | `make eval-report` | Render the most recent run as a Markdown table |
+| `make dataset-lint` / `dataset-card` | Lint the benchmark dataset (report mode; `no-live-secret` enforced) / regenerate `evals/dataset/card.json` + `CARD.md` |
+| `make audit-sources` | Re-check every data-source register row online (before a dataset publication) |
 | `make mcp-check` / `make smoke` | MCP end-to-end check / direct MPS inference |
 | `make compile` / `make check` | Byte-compile / compile + unit tests |
 | `make ci` | `bootstrap` + `check` + `test-strict` |
@@ -518,26 +555,60 @@ org's 8 GiB self-hosted VMs), so run `make test` locally for model-affecting cha
 
 **Coverage is tracked and gated** (constitution Article XI). Run `make test-cov` to see the
 full report. The enforced floor (`fail_under` in `pyproject.toml`) is the current measured
-level and may only increase — currently **81 %**. Lowering it requires explicit, recorded
+level and may only increase — currently **94 %**. Lowering it requires explicit, recorded
 approval per Article XI §11.2.
 
 ### Benchmark
 
-`evals/clef-flash.jsonl` is a 475-item benchmark covering the five agent-kit recipes (intent
+`evals/clef-flash.jsonl` is the benchmark. It covers the five agent-kit recipes (intent
 and readiness, failure triage, change risk, routing, effort and approach) plus four vision
-recipes (`vision_noul`, `vision_choice`, `vision_score`, `vision_video`): 843 scored questions
-(351 `choice`, 292 `noul`, 168 `score`, 32 across the four vision recipes), split into
-`dev` (236 items) and `test` (239). Vision items carry an `images` or `videos` field
+recipes (`vision_noul`, `vision_choice`, `vision_score`, `vision_video`), with every item in
+a `dev` or `test` split; the [benchmark report](https://shapeandshare.github.io/ember/results/)
+gives the current item and question counts. Vision items carry an `images` or `videos` field
 (base64 `data:` URIs) alongside `state` and `questions`. Each line is
-self-contained (`state`, the recipe's fixed question set, a gold label for every question, and
-a `rationale`), so other implementations can score it without this harness.
+self-contained (`state`, the recipe's fixed question set, a gold label for every question, a
+`rationale`, and a structured `source`), so other implementations can score it without this
+harness.
+
+Every item says where it came from: `source.kind` is one of `authored` (written for the
+benchmark), `mined` (a public record, named by its register row), `captured` (a real session,
+with consent), `perturbed` (a controlled variant of a `parent_id`), `templated`, `drafted`
+(model-drafted, then reviewed), or `imported` (an external dataset under its licence). Public
+sources are tracked in the data-source register (`evals/dataset/register.json`: licence
+reading, snapshot, mirror, verdict); `make audit-sources` re-checks every row online before a
+dataset publication, and nothing is imported without a register row that allows it.
 
 ```bash
-make eval-run       # or: ember eval run [--split dev|test] [--category <recipe>]
-make eval-report    # Markdown report of the most recent run
-make eval-export    # or: ember eval export; the reviewer bundle described below
+make eval-run              # or: ember eval run [--split dev|test] [--category <recipe>] [--resume]
+make eval-report           # Markdown report of the most recent run
+make eval-export           # or: ember eval export; the reviewer bundle described below
+make eval-snapshot         # or: ember eval snapshot [--rebuild]; copy a run into benchmark/
+make dataset-lint          # or: ember eval dataset lint [--dataset PATH]
+make dataset-card          # or: ember eval dataset card [--check]; the data card
+ember eval dataset hash    # content, file, per-recipe, and register hashes
+ember eval dataset check   # provenance check: every item's source and register row
 ember eval report --compare results/<a>_results.json results/<b>_results.json
 ```
+
+The dataset has two hashes. The **content hash** covers what is scored (id, category,
+split, state, media, questions, gold labels) and is the dataset's version: annotations such
+as the item kind, tier, source, or rationale never change it, while a gold label, a state, a
+question, or a split does. The file hash covers the bytes, for provenance. Every run records
+both, plus a hash per recipe, and the leaderboard shows one table per content hash, newest
+first; results on different versions are never compared. Within a table, one row per model,
+deployment, and engine settings, with one column per recipe: a re-run of a single recipe
+(`--category`) refreshes just that column, and the headline appears once every coding recipe
+has been scored on that version. Vision recipes are reported separately as a **capability**
+panel, never in the headline. `splits.lock` pins every item's split for good, `versions.lock`
+records every dataset version ever published (and each protocol rule and scale names the
+version it first applies to), and each release's changelog carries a
+`Benchmark dataset: <content hash>` line naming the version it was measured on.
+
+A run can be interrupted and resumed (`ember eval run --resume`) as long as the dataset
+version, recipes, model, and settings match its manifest; `ember eval snapshot --rebuild`
+re-renders an existing bundle from its stored trace after the report code changes, without
+re-running the model. The harness needs a server that reports the token split in `usage`
+(ember 0.12.0 or later) and records it per item.
 
 `ember eval export` writes `results/<run_id>_report/` for external reviewers:
 `report.html` (one self-contained file with inline charts, light and dark themes, a print
@@ -548,15 +619,21 @@ references, results, calibration, the agent kit's decision rules replayed on eve
 review card for every miss, limitations, and reproduction pins.
 
 The report gives accuracy with a 95% bootstrap interval, macro-F1, top-label ECE, and Brier
-score (`choice`, `noul`); ranked probability score and MAE (`score`); and coverage and accuracy
-at the agent kit's act-on-it thresholds. Each run records the git hash, the engine, and the
-dataset's SHA-256, and `--compare` warns when two runs scored different item sets.
+score (`choice`, `noul`); ranked probability score and MAE (`score`); coverage and accuracy
+at the agent kit's act-on-it thresholds; dangerous-option recall for the risk recipe; accuracy
+by source kind and by item tier; consistency across perturbed variants of the same parent;
+and the token split (state, fixed, media) per request. Each run records the git hash, the
+engine and its settings, and the dataset's hashes, and `--compare` warns when two runs scored
+different item sets.
 
 Gold labels are judged from `state` alone against the recipe's option descriptions, and they
 are fixed before any run: `needs_review` is true exactly when `risk` is Medium or High, and
 `retry` only for `flaky` failures. A person reviews disagreements; labels are never changed to
-match the model. `make check` validates the dataset (`tests/test_eval_benchmark.py`).
-`ember eval` reads `evals/` and `scripts/` from the checkout, so it works only in a clone.
+match the model. `make check` validates the dataset (`tests/test_eval_benchmark.py`), and the
+dataset lint reports gaps against each recipe's design (option balance, leakage between
+splits, near-duplicates); its one enforced rule, `no-live-secret`, fails on anything that
+looks like a real credential. `ember eval` reads `evals/` and `scripts/` from the checkout, so
+it works only in a clone.
 
 ### Long-context probe
 

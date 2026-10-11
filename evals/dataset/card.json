@@ -1,0 +1,610 @@
+{
+  "generated_from": "clef-flash.jsonl",
+  "dataset_content_sha256": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367",
+  "register_sha256": "4779906a64bd211e2d4c9a39edc14567446db0fd297c460a79ffdb1d75ea1ec5",
+  "items": 475,
+  "protocol": [
+    {
+      "text": "Labels were judged from `state` and the option descriptions alone, and were fixed before any model run.",
+      "since": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+    },
+    {
+      "text": "`needs_review` is true exactly when `risk` is Medium or High, and `retry` is true only for `flaky` failures.",
+      "since": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+    },
+    {
+      "text": "Drafts whose evidence fit two options were rewritten or dropped while authoring, before any run.",
+      "since": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+    },
+    {
+      "text": "A label changes only when a reviewer finds it wrong on its merits, never because the model disagreed. A change to any item's state, media, questions, gold, or split alters the dataset's content hash, which each run records, so runs on different label sets cannot be compared by accident; annotations (kind, tier, source, rationale) do not.",
+      "since": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+    },
+    {
+      "text": "Every `score` scale runs from least to most of the quantity its instruction names; index 0 is always the least. The expected score is read in those units. A scale is never reversed to make a label read naturally.",
+      "since": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+    },
+    {
+      "text": "For a `noul` question, P(true) is the probability of the condition the instruction names; the condition is phrased so that `true` is the pole that calls for caution.",
+      "since": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+    }
+  ],
+  "recipes": {
+    "change_risk": {
+      "items": 92,
+      "dev": 46,
+      "test": 46,
+      "per_label_per_split": {
+        "needs_review": {
+          "false": {
+            "dev": 23,
+            "test": 23
+          },
+          "true": {
+            "dev": 23,
+            "test": 23
+          }
+        },
+        "risk": {
+          "0": {
+            "dev": 12,
+            "test": 11
+          },
+          "1": {
+            "dev": 11,
+            "test": 12
+          },
+          "2": {
+            "dev": 12,
+            "test": 11
+          },
+          "3": {
+            "dev": 11,
+            "test": 12
+          }
+        }
+      },
+      "kind_shares": {
+        "untagged": 92
+      },
+      "source_shares": {
+        "authored": 92
+      },
+      "easy_items": 0,
+      "external_sources": [],
+      "label_stability": null,
+      "inter_source_agreement": null,
+      "rater_count": 1,
+      "second_review_pending": 0,
+      "acted_differs_share": null,
+      "recipe_sha256": "b823fd45c6fb677212369cb1a653b0715e6cc83858242e85bf469f33a91817aa",
+      "gaps": [
+        "change_risk: 92 items, target 300",
+        "change_risk: needs_review=false has 23 test items, minimum 40",
+        "change_risk: needs_review=true has 23 test items, minimum 40",
+        "change_risk: risk=0 has 11 test items, minimum 40",
+        "change_risk: risk=1 has 12 test items, minimum 40",
+        "change_risk: risk=2 has 11 test items, minimum 40",
+        "change_risk: risk=3 has 12 test items, minimum 40",
+        "change_risk: 92 of 92 items have no kind",
+        "change_risk: negative is 0% of 92, minimum 20%",
+        "change_risk: control is 0% of 92, minimum 10%",
+        "change_risk: hard_negative is 0% of 92, minimum 15%",
+        "change_risk: near_miss is 0% of 92, minimum 10%",
+        "change_risk: adversarial is 0% of 92, minimum 5%",
+        "change_risk: insufficient_context is 0% of 92, minimum 5%",
+        "change_risk: variant is 0% of 92, minimum 10%",
+        "change_risk: long_tier is 0% of 92, minimum 10%"
+      ],
+      "exemptions": {},
+      "lint": "report",
+      "family": "coding",
+      "risk": false,
+      "rubric_since": {
+        "risk": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+      }
+    },
+    "effort_approach": {
+      "items": 76,
+      "dev": 36,
+      "test": 40,
+      "per_label_per_split": {
+        "approach": {
+          "\"minimal_patch\"": {
+            "dev": 9,
+            "test": 10
+          },
+          "\"refactor\"": {
+            "dev": 8,
+            "test": 11
+          },
+          "\"new_component\"": {
+            "dev": 10,
+            "test": 9
+          },
+          "\"ask_user\"": {
+            "dev": 9,
+            "test": 10
+          }
+        },
+        "effort": {
+          "0": {
+            "dev": 7,
+            "test": 11
+          },
+          "1": {
+            "dev": 15,
+            "test": 15
+          },
+          "2": {
+            "dev": 10,
+            "test": 8
+          },
+          "3": {
+            "dev": 4,
+            "test": 6
+          }
+        }
+      },
+      "kind_shares": {
+        "untagged": 76
+      },
+      "source_shares": {
+        "authored": 76
+      },
+      "easy_items": 0,
+      "external_sources": [],
+      "label_stability": null,
+      "inter_source_agreement": null,
+      "rater_count": 1,
+      "second_review_pending": 0,
+      "acted_differs_share": null,
+      "recipe_sha256": "7ed261fdb23ffb06f06945d5dab9e4b1d3ee265ee3ee51656087ed7bd9827f03",
+      "gaps": [
+        "effort_approach: 76 items, target 300",
+        "effort_approach: approach=\"ask_user\" has 10 test items, minimum 40",
+        "effort_approach: approach=\"minimal_patch\" has 10 test items, minimum 40",
+        "effort_approach: approach=\"new_component\" has 9 test items, minimum 40",
+        "effort_approach: approach=\"refactor\" has 11 test items, minimum 40",
+        "effort_approach: effort=0 has 11 test items, minimum 40",
+        "effort_approach: effort=1 has 15 test items, minimum 40",
+        "effort_approach: effort=2 has 8 test items, minimum 40",
+        "effort_approach: effort=3 has 6 test items, minimum 40",
+        "effort_approach: 76 of 76 items have no kind",
+        "effort_approach: negative is 0% of 76, minimum 20%",
+        "effort_approach: control is 0% of 76, minimum 10%",
+        "effort_approach: hard_negative is 0% of 76, minimum 15%",
+        "effort_approach: near_miss is 0% of 76, minimum 10%",
+        "effort_approach: adversarial is 0% of 76, minimum 5%",
+        "effort_approach: insufficient_context is 0% of 76, minimum 5%",
+        "effort_approach: variant is 0% of 76, minimum 10%"
+      ],
+      "exemptions": {},
+      "lint": "report",
+      "family": "coding",
+      "risk": false,
+      "rubric_since": {
+        "effort": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+      }
+    },
+    "failure_triage": {
+      "items": 92,
+      "dev": 46,
+      "test": 46,
+      "per_label_per_split": {
+        "failure_kind": {
+          "\"logic_bug\"": {
+            "dev": 12,
+            "test": 11
+          },
+          "\"environment\"": {
+            "dev": 11,
+            "test": 12
+          },
+          "\"flaky\"": {
+            "dev": 12,
+            "test": 11
+          },
+          "\"test_bug\"": {
+            "dev": 11,
+            "test": 12
+          }
+        },
+        "retry": {
+          "false": {
+            "dev": 34,
+            "test": 35
+          },
+          "true": {
+            "dev": 12,
+            "test": 11
+          }
+        }
+      },
+      "kind_shares": {
+        "untagged": 92
+      },
+      "source_shares": {
+        "authored": 92
+      },
+      "easy_items": 0,
+      "external_sources": [],
+      "label_stability": null,
+      "inter_source_agreement": null,
+      "rater_count": 1,
+      "second_review_pending": 0,
+      "acted_differs_share": null,
+      "recipe_sha256": "a7a2e5338e16eecacafcc43243a7f1f8fd385a198952413e8187e09d2999bb92",
+      "gaps": [
+        "failure_triage: 92 items, target 300",
+        "failure_triage: failure_kind=\"environment\" has 12 test items, minimum 40",
+        "failure_triage: failure_kind=\"flaky\" has 11 test items, minimum 40",
+        "failure_triage: failure_kind=\"logic_bug\" has 11 test items, minimum 40",
+        "failure_triage: failure_kind=\"test_bug\" has 12 test items, minimum 40",
+        "failure_triage: retry=false has 35 test items, minimum 40",
+        "failure_triage: retry=true has 11 test items, minimum 40",
+        "failure_triage: 92 of 92 items have no kind",
+        "failure_triage: negative is 0% of 92, minimum 20%",
+        "failure_triage: control is 0% of 92, minimum 10%",
+        "failure_triage: hard_negative is 0% of 92, minimum 15%",
+        "failure_triage: adversarial is 0% of 92, minimum 5%",
+        "failure_triage: insufficient_context is 0% of 92, minimum 5%",
+        "failure_triage: variant is 0% of 92, minimum 10%",
+        "failure_triage: long_tier is 0% of 92, minimum 10%"
+      ],
+      "exemptions": {},
+      "lint": "report",
+      "family": "coding",
+      "risk": false,
+      "rubric_since": {}
+    },
+    "intent_readiness": {
+      "items": 108,
+      "dev": 54,
+      "test": 54,
+      "per_label_per_split": {
+        "intent": {
+          "\"question\"": {
+            "dev": 14,
+            "test": 13
+          },
+          "\"implement\"": {
+            "dev": 13,
+            "test": 14
+          },
+          "\"investigate\"": {
+            "dev": 14,
+            "test": 13
+          },
+          "\"fix\"": {
+            "dev": 13,
+            "test": 14
+          }
+        },
+        "specific_enough": {
+          "true": {
+            "dev": 32,
+            "test": 35
+          },
+          "false": {
+            "dev": 22,
+            "test": 19
+          }
+        }
+      },
+      "kind_shares": {
+        "untagged": 108
+      },
+      "source_shares": {
+        "authored": 108
+      },
+      "easy_items": 0,
+      "external_sources": [],
+      "label_stability": null,
+      "inter_source_agreement": null,
+      "rater_count": 1,
+      "second_review_pending": 0,
+      "acted_differs_share": null,
+      "recipe_sha256": "a2dd9b315aac79eb50507cdabb376cef9e4d9eded2018952ec62916cf734f881",
+      "gaps": [
+        "intent_readiness: 108 items, target 300",
+        "intent_readiness: intent=\"fix\" has 14 test items, minimum 40",
+        "intent_readiness: intent=\"implement\" has 14 test items, minimum 40",
+        "intent_readiness: intent=\"investigate\" has 13 test items, minimum 40",
+        "intent_readiness: intent=\"question\" has 13 test items, minimum 40",
+        "intent_readiness: specific_enough=false has 19 test items, minimum 40",
+        "intent_readiness: specific_enough=true has 35 test items, minimum 40",
+        "intent_readiness: 108 of 108 items have no kind",
+        "intent_readiness: negative is 0% of 108, minimum 20%",
+        "intent_readiness: control is 0% of 108, minimum 10%",
+        "intent_readiness: hard_negative is 0% of 108, minimum 15%",
+        "intent_readiness: adversarial is 0% of 108, minimum 5%",
+        "intent_readiness: insufficient_context is 0% of 108, minimum 5%",
+        "intent_readiness: variant is 0% of 108, minimum 10%"
+      ],
+      "exemptions": {},
+      "lint": "report",
+      "family": "coding",
+      "risk": false,
+      "rubric_since": {}
+    },
+    "routing": {
+      "items": 75,
+      "dev": 38,
+      "test": 37,
+      "per_label_per_split": {
+        "owner": {
+          "\"api\"": {
+            "dev": 8,
+            "test": 7
+          },
+          "\"storage\"": {
+            "dev": 7,
+            "test": 8
+          },
+          "\"ui\"": {
+            "dev": 8,
+            "test": 7
+          },
+          "\"infra\"": {
+            "dev": 7,
+            "test": 8
+          },
+          "\"unclear\"": {
+            "dev": 8,
+            "test": 7
+          }
+        }
+      },
+      "kind_shares": {
+        "untagged": 75
+      },
+      "source_shares": {
+        "authored": 75
+      },
+      "easy_items": 0,
+      "external_sources": [],
+      "label_stability": null,
+      "inter_source_agreement": null,
+      "rater_count": 1,
+      "second_review_pending": 0,
+      "acted_differs_share": null,
+      "recipe_sha256": "2780852796c906a723fa054952e4f66d74fc4a3bb3b28a36d0971cf5f306680a",
+      "gaps": [
+        "routing: 75 items, target 300",
+        "routing: owner=\"api\" has 7 test items, minimum 40",
+        "routing: owner=\"infra\" has 8 test items, minimum 40",
+        "routing: owner=\"storage\" has 8 test items, minimum 40",
+        "routing: owner=\"ui\" has 7 test items, minimum 40",
+        "routing: owner=\"unclear\" has 7 test items, minimum 40",
+        "routing: 75 of 75 items have no kind",
+        "routing: negative is 0% of 75, minimum 20%",
+        "routing: control is 0% of 75, minimum 10%",
+        "routing: hard_negative is 0% of 75, minimum 15%",
+        "routing: adversarial is 0% of 75, minimum 5%",
+        "routing: insufficient_context is 0% of 75, minimum 5%",
+        "routing: variant is 0% of 75, minimum 10%"
+      ],
+      "exemptions": {},
+      "lint": "report",
+      "family": "coding",
+      "risk": false,
+      "rubric_since": {}
+    },
+    "vision_choice": {
+      "items": 8,
+      "dev": 4,
+      "test": 4,
+      "per_label_per_split": {
+        "dominant_colour": {
+          "\"red\"": {
+            "dev": 1,
+            "test": 1
+          },
+          "\"green\"": {
+            "dev": 1,
+            "test": 1
+          },
+          "\"blue\"": {
+            "dev": 1,
+            "test": 1
+          },
+          "\"mixed\"": {
+            "dev": 1,
+            "test": 1
+          }
+        }
+      },
+      "kind_shares": {
+        "untagged": 8
+      },
+      "source_shares": {
+        "authored": 8
+      },
+      "easy_items": 0,
+      "external_sources": [],
+      "label_stability": null,
+      "inter_source_agreement": null,
+      "rater_count": 1,
+      "second_review_pending": 0,
+      "acted_differs_share": null,
+      "recipe_sha256": "8b24fdbeb93f1795d571ca9b46352fbc5373daf0b375a2fb0937b4a8eb224643",
+      "gaps": [
+        "vision_choice: 8 items, target 300",
+        "vision_choice: dominant_colour=\"blue\" has 1 test items, minimum 40",
+        "vision_choice: dominant_colour=\"green\" has 1 test items, minimum 40",
+        "vision_choice: dominant_colour=\"mixed\" has 1 test items, minimum 40",
+        "vision_choice: dominant_colour=\"red\" has 1 test items, minimum 40",
+        "vision_choice: 8 of 8 items have no kind",
+        "vision_choice: negative is 0% of 8, minimum 20%",
+        "vision_choice: control is 0% of 8, minimum 10%",
+        "vision_choice: hard_negative is 0% of 8, minimum 15%",
+        "vision_choice: adversarial is 0% of 8, minimum 5%",
+        "vision_choice: insufficient_context is 0% of 8, minimum 5%",
+        "vision_choice: variant is 0% of 8, minimum 10%"
+      ],
+      "exemptions": {},
+      "lint": "report",
+      "family": "vision",
+      "risk": false,
+      "rubric_since": {}
+    },
+    "vision_noul": {
+      "items": 8,
+      "dev": 4,
+      "test": 4,
+      "per_label_per_split": {
+        "dominant_red": {
+          "true": {
+            "dev": 2,
+            "test": 2
+          },
+          "false": {
+            "dev": 2,
+            "test": 2
+          }
+        }
+      },
+      "kind_shares": {
+        "untagged": 8
+      },
+      "source_shares": {
+        "authored": 8
+      },
+      "easy_items": 0,
+      "external_sources": [],
+      "label_stability": null,
+      "inter_source_agreement": null,
+      "rater_count": 1,
+      "second_review_pending": 0,
+      "acted_differs_share": null,
+      "recipe_sha256": "56e355b9dcb50a60702f6d95ba5bb9febebfe0f03f0125e2d46d23cf4c3ccb40",
+      "gaps": [
+        "vision_noul: 8 items, target 300",
+        "vision_noul: dominant_red=false has 2 test items, minimum 40",
+        "vision_noul: dominant_red=true has 2 test items, minimum 40",
+        "vision_noul: 8 of 8 items have no kind",
+        "vision_noul: negative is 0% of 8, minimum 20%",
+        "vision_noul: control is 0% of 8, minimum 10%",
+        "vision_noul: hard_negative is 0% of 8, minimum 15%",
+        "vision_noul: adversarial is 0% of 8, minimum 5%",
+        "vision_noul: insufficient_context is 0% of 8, minimum 5%",
+        "vision_noul: variant is 0% of 8, minimum 10%"
+      ],
+      "exemptions": {},
+      "lint": "report",
+      "family": "vision",
+      "risk": false,
+      "rubric_since": {}
+    },
+    "vision_score": {
+      "items": 8,
+      "dev": 4,
+      "test": 4,
+      "per_label_per_split": {
+        "alert_level": {
+          "0": {
+            "dev": 1,
+            "test": 1
+          },
+          "1": {
+            "dev": 1,
+            "test": 1
+          },
+          "2": {
+            "dev": 1,
+            "test": 1
+          },
+          "3": {
+            "dev": 1,
+            "test": 1
+          }
+        }
+      },
+      "kind_shares": {
+        "untagged": 8
+      },
+      "source_shares": {
+        "authored": 8
+      },
+      "easy_items": 0,
+      "external_sources": [],
+      "label_stability": null,
+      "inter_source_agreement": null,
+      "rater_count": 1,
+      "second_review_pending": 0,
+      "acted_differs_share": null,
+      "recipe_sha256": "08569eb7b6bf02afcf3c5b70e1a08d09a2f9f0cc84bbe54bc103ef352f6d1592",
+      "gaps": [
+        "vision_score: 8 items, target 300",
+        "vision_score: alert_level=0 has 1 test items, minimum 40",
+        "vision_score: alert_level=1 has 1 test items, minimum 40",
+        "vision_score: alert_level=2 has 1 test items, minimum 40",
+        "vision_score: alert_level=3 has 1 test items, minimum 40",
+        "vision_score: 8 of 8 items have no kind",
+        "vision_score: negative is 0% of 8, minimum 20%",
+        "vision_score: control is 0% of 8, minimum 10%",
+        "vision_score: hard_negative is 0% of 8, minimum 15%",
+        "vision_score: near_miss is 0% of 8, minimum 10%",
+        "vision_score: adversarial is 0% of 8, minimum 5%",
+        "vision_score: insufficient_context is 0% of 8, minimum 5%",
+        "vision_score: variant is 0% of 8, minimum 10%"
+      ],
+      "exemptions": {},
+      "lint": "report",
+      "family": "vision",
+      "risk": false,
+      "rubric_since": {
+        "alert_level": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"
+      }
+    },
+    "vision_video": {
+      "items": 8,
+      "dev": 4,
+      "test": 4,
+      "per_label_per_split": {
+        "colour_changed": {
+          "true": {
+            "dev": 2,
+            "test": 2
+          },
+          "false": {
+            "dev": 2,
+            "test": 2
+          }
+        }
+      },
+      "kind_shares": {
+        "untagged": 8
+      },
+      "source_shares": {
+        "authored": 8
+      },
+      "easy_items": 0,
+      "external_sources": [],
+      "label_stability": null,
+      "inter_source_agreement": null,
+      "rater_count": 1,
+      "second_review_pending": 0,
+      "acted_differs_share": null,
+      "recipe_sha256": "97526cc5e35f62d09d52e3cf645399f01ab969db217356041440df64114c2531",
+      "gaps": [
+        "vision_video: 8 items, target 300",
+        "vision_video: colour_changed=false has 2 test items, minimum 40",
+        "vision_video: colour_changed=true has 2 test items, minimum 40",
+        "vision_video: 8 of 8 items have no kind",
+        "vision_video: negative is 0% of 8, minimum 20%",
+        "vision_video: control is 0% of 8, minimum 10%",
+        "vision_video: hard_negative is 0% of 8, minimum 15%",
+        "vision_video: adversarial is 0% of 8, minimum 5%",
+        "vision_video: insufficient_context is 0% of 8, minimum 5%",
+        "vision_video: variant is 0% of 8, minimum 10%"
+      ],
+      "exemptions": {},
+      "lint": "report",
+      "family": "vision",
+      "risk": false,
+      "rubric_since": {}
+    }
+  }
+}

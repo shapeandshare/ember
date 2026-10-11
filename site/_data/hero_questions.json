@@ -1,0 +1,602 @@
+[
+  {
+    "id": "intent_008",
+    "question": "specific_enough",
+    "expect": false,
+    "ask": "Is “update the thing” enough to start?",
+    "verdict": "Ask first.",
+    "detail": "{p}% too vague."
+  },
+  {
+    "id": "intent_026",
+    "question": "specific_enough",
+    "expect": false,
+    "ask": "Is “fix it” enough to go on?",
+    "verdict": "Ask first.",
+    "detail": "{p}% too vague."
+  },
+  {
+    "id": "intent_041",
+    "question": "specific_enough",
+    "expect": false,
+    "ask": "Is “add a new feature” enough?",
+    "verdict": "Ask first.",
+    "detail": "{p}% too vague."
+  },
+  {
+    "id": "intent_009",
+    "question": "specific_enough",
+    "expect": true,
+    "ask": "“Bump torch, then re-run the tests.” Start?",
+    "verdict": "Go ahead.",
+    "detail": "{p}% clear enough."
+  },
+  {
+    "id": "intent_039",
+    "question": "specific_enough",
+    "expect": true,
+    "ask": "“Add type hints to one file.” Clear enough?",
+    "verdict": "Go ahead.",
+    "detail": "{p}% clear enough."
+  },
+  {
+    "id": "intent_034",
+    "question": "intent",
+    "expect": "question",
+    "ask": "“What does this do?” Write code?",
+    "verdict": "Just explain.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "failure_001",
+    "question": "failure_kind",
+    "expect": "logic_bug",
+    "ask": "add(2, 2) returned 5. Retry?",
+    "verdict": "It's a bug.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "failure_029",
+    "question": "failure_kind",
+    "expect": "logic_bug",
+    "ask": "84% printed as 8400%. A flake?",
+    "verdict": "A real bug.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "failure_008",
+    "question": "failure_kind",
+    "expect": "environment",
+    "ask": "No module named torch. A code bug?",
+    "verdict": "It's setup.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "failure_063",
+    "question": "retry",
+    "expect": false,
+    "ask": "Missing API key. Worth a retry?",
+    "verdict": "Don't retry.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "failure_009",
+    "question": "retry",
+    "expect": false,
+    "ask": "Model not found. Re-run the tests?",
+    "verdict": "Pull it first.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "risk_006",
+    "question": "needs_review",
+    "expect": false,
+    "ask": "A one-line .gitignore fix. Review?",
+    "verdict": "Ship it.",
+    "detail": "{p}% no review needed."
+  },
+  {
+    "id": "risk_029",
+    "question": "needs_review",
+    "expect": false,
+    "ask": "A missing period in a log line. Review?",
+    "verdict": "Ship it.",
+    "detail": "{p}% no review needed."
+  },
+  {
+    "id": "risk_011",
+    "question": "needs_review",
+    "expect": false,
+    "ask": "Bumping pytest 8.3 to 8.4. Review?",
+    "verdict": "Ship it.",
+    "detail": "{p}% no review needed."
+  },
+  {
+    "id": "risk_020",
+    "question": "needs_review",
+    "expect": true,
+    "ask": "Removing auth to cut latency. Push?",
+    "verdict": "Stop.",
+    "detail": "{p}% needs review."
+  },
+  {
+    "id": "risk_014",
+    "question": "needs_review",
+    "expect": true,
+    "ask": "A 120-line startup refactor. Push?",
+    "verdict": "Get a review.",
+    "detail": "{p}% needs one."
+  },
+  {
+    "id": "risk_017",
+    "question": "needs_review",
+    "expect": true,
+    "ask": "Moving the pid file. Safe to push?",
+    "verdict": "Get a review.",
+    "detail": "{p}% needs one."
+  },
+  {
+    "id": "routing_006",
+    "question": "owner",
+    "expect": "storage",
+    "ask": "Column tenant_id doesn't exist. Whose bug?",
+    "verdict": "Storage.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "routing_008",
+    "question": "owner",
+    "expect": "storage",
+    "ask": "A deadlock updating the ledger. Whose bug?",
+    "verdict": "Storage.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "routing_010",
+    "question": "owner",
+    "expect": "ui",
+    "ask": "Can't read map of undefined in TodoList. Who owns it?",
+    "verdict": "The UI team.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "routing_003",
+    "question": "owner",
+    "expect": "api",
+    "ask": "400 Bad Request on POST /orders. Who owns it?",
+    "verdict": "The API team.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "effort_001",
+    "question": "approach",
+    "expect": "minimal_patch",
+    "ask": "A typo in an error message. Redesign?",
+    "verdict": "Just patch it.",
+    "detail": "{p}% the smallest fix."
+  },
+  {
+    "id": "effort_021",
+    "question": "approach",
+    "expect": "minimal_patch",
+    "ask": "Off-by-one in figure numbers. Refactor?",
+    "verdict": "Just patch it.",
+    "detail": "{p}% the smallest fix."
+  },
+  {
+    "id": "effort_014",
+    "question": "approach",
+    "expect": "new_component",
+    "ask": "Slack alerts for failed deploys. Patch it in?",
+    "verdict": "New service.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "intent_006",
+    "question": "specific_enough",
+    "expect": false,
+    "ask": "“Quick question about the config stuff.” Start?",
+    "verdict": "Ask first.",
+    "detail": "{p}% too vague."
+  },
+  {
+    "id": "intent_013",
+    "question": "specific_enough",
+    "expect": false,
+    "ask": "Is “make it better” enough to start?",
+    "verdict": "Ask first.",
+    "detail": "{p}% too vague."
+  },
+  {
+    "id": "intent_014",
+    "question": "specific_enough",
+    "expect": false,
+    "ask": "Is “add some tests” enough to start?",
+    "verdict": "Ask first.",
+    "detail": "{p}% too vague."
+  },
+  {
+    "id": "intent_028",
+    "question": "specific_enough",
+    "expect": false,
+    "ask": "“The CLI is broken, fix it.” Enough to go on?",
+    "verdict": "Ask first.",
+    "detail": "{p}% too vague."
+  },
+  {
+    "id": "intent_040",
+    "question": "specific_enough",
+    "expect": false,
+    "ask": "Is “improve the docs” enough to start?",
+    "verdict": "Ask first.",
+    "detail": "{p}% too vague."
+  },
+  {
+    "id": "intent_010",
+    "question": "specific_enough",
+    "expect": true,
+    "ask": "“Add a --dry-run flag that lists what it would send.” Start?",
+    "verdict": "Go ahead.",
+    "detail": "{p}% clear enough."
+  },
+  {
+    "id": "intent_011",
+    "question": "specific_enough",
+    "expect": true,
+    "ask": "“Rename an env var, keep the old name as an alias.” Start?",
+    "verdict": "Go ahead.",
+    "detail": "{p}% clear enough."
+  },
+  {
+    "id": "intent_036",
+    "question": "specific_enough",
+    "expect": true,
+    "ask": "“Add a --timeout flag, in seconds.” Clear enough?",
+    "verdict": "Go ahead.",
+    "detail": "{p}% clear enough."
+  },
+  {
+    "id": "intent_051",
+    "question": "specific_enough",
+    "expect": true,
+    "ask": "“Make the theme toggle survive a reload.” Start?",
+    "verdict": "Go ahead.",
+    "detail": "{p}% clear enough."
+  },
+  {
+    "id": "failure_007",
+    "question": "failure_kind",
+    "expect": "environment",
+    "ask": "Connection refused in a health test. A code bug?",
+    "verdict": "No, it's setup.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "failure_011",
+    "question": "failure_kind",
+    "expect": "environment",
+    "ask": "No such file: 'opencode'. A code bug?",
+    "verdict": "No, it's setup.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "failure_013",
+    "question": "failure_kind",
+    "expect": "flaky",
+    "ask": "Timed out, but passed 3 of the last 5 runs. Real bug?",
+    "verdict": "A flake.",
+    "detail": "{p}% sure. Retry."
+  },
+  {
+    "id": "failure_033",
+    "question": "failure_kind",
+    "expect": "environment",
+    "ask": "No Python 3.12 interpreter found. A code bug?",
+    "verdict": "No, it's setup.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "failure_034",
+    "question": "failure_kind",
+    "expect": "environment",
+    "ask": "No such file: 'git'. A code bug?",
+    "verdict": "No, it's setup.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "failure_038",
+    "question": "failure_kind",
+    "expect": "flaky",
+    "ask": "Timed out, but passed 19 of the last 20 runs. Real bug?",
+    "verdict": "A flake.",
+    "detail": "{p}% sure. Retry."
+  },
+  {
+    "id": "failure_061",
+    "question": "failure_kind",
+    "expect": "environment",
+    "ask": "Can't reach the Docker daemon. A code bug?",
+    "verdict": "No, it's setup.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "risk_001",
+    "question": "needs_review",
+    "expect": false,
+    "ask": "Renaming a variable in one test helper. Review?",
+    "verdict": "Ship it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "risk_002",
+    "question": "needs_review",
+    "expect": false,
+    "ask": "Fixing a typo in the README. Review?",
+    "verdict": "Ship it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "risk_003",
+    "question": "needs_review",
+    "expect": false,
+    "ask": "A spelling fix in a docstring. Review?",
+    "verdict": "Ship it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "risk_004",
+    "question": "needs_review",
+    "expect": false,
+    "ask": "Reformatting one test file, whitespace only. Review?",
+    "verdict": "Ship it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "risk_005",
+    "question": "needs_review",
+    "expect": false,
+    "ask": "Updating the copyright year. Review?",
+    "verdict": "Ship it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "risk_009",
+    "question": "needs_review",
+    "expect": false,
+    "ask": "Adding one debug log line. Review?",
+    "verdict": "Ship it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "risk_023",
+    "question": "needs_review",
+    "expect": true,
+    "ask": "Make “stop” kill whatever holds the port. Push?",
+    "verdict": "Get a review.",
+    "detail": "{p}% needs one."
+  },
+  {
+    "id": "risk_025",
+    "question": "needs_review",
+    "expect": false,
+    "ask": "Fixing a broken link in CONTRIBUTING. Review?",
+    "verdict": "Ship it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "risk_027",
+    "question": "needs_review",
+    "expect": false,
+    "ask": "Sorting .gitignore alphabetically. Review?",
+    "verdict": "Ship it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "routing_001",
+    "question": "owner",
+    "expect": "api",
+    "ask": "422 from the API: empty choice criteria. Who owns it?",
+    "verdict": "The API team.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "routing_004",
+    "question": "owner",
+    "expect": "api",
+    "ask": "405 Method Not Allowed on PUT. Who owns it?",
+    "verdict": "The API team.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "routing_005",
+    "question": "owner",
+    "expect": "storage",
+    "ask": "UNIQUE constraint failed on sessions. Whose bug?",
+    "verdict": "Storage.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "routing_007",
+    "question": "owner",
+    "expect": "storage",
+    "ask": "A database migration revision is missing. Whose bug?",
+    "verdict": "Storage.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "routing_009",
+    "question": "owner",
+    "expect": "ui",
+    "ask": "React hydration mismatch on the dashboard. Who owns it?",
+    "verdict": "The UI team.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "routing_012",
+    "question": "owner",
+    "expect": "ui",
+    "ask": "“Too many re-renders” in a React hook. Who owns it?",
+    "verdict": "The UI team.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "routing_013",
+    "question": "owner",
+    "expect": "infra",
+    "ask": "CI can't get its OIDC token. Who owns it?",
+    "verdict": "Infra.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "routing_014",
+    "question": "owner",
+    "expect": "infra",
+    "ask": "Dependencies won't resolve in uv sync. Who owns it?",
+    "verdict": "Infra.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "routing_015",
+    "question": "owner",
+    "expect": "infra",
+    "ask": "Docker build can't find requirements.txt. Who owns it?",
+    "verdict": "Infra.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "routing_016",
+    "question": "owner",
+    "expect": "infra",
+    "ask": "A Helm upgrade timed out in prod. Who owns it?",
+    "verdict": "Infra.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "routing_024",
+    "question": "owner",
+    "expect": "api",
+    "ask": "413 Payload Too Large on uploads. Who owns it?",
+    "verdict": "The API team.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "effort_003",
+    "question": "approach",
+    "expect": "minimal_patch",
+    "ask": "A missing null check crashes empty carts. Redesign?",
+    "verdict": "Just patch it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "effort_022",
+    "question": "approach",
+    "expect": "minimal_patch",
+    "ask": "Change a polling interval from 0.5 s to 1 s. Refactor?",
+    "verdict": "Just patch it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "effort_023",
+    "question": "approach",
+    "expect": "minimal_patch",
+    "ask": "Print “stopped” instead of “not running”. Refactor?",
+    "verdict": "Just patch it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "effort_046",
+    "question": "approach",
+    "expect": "minimal_patch",
+    "ask": "Exit code 2, not 1, for an unknown model. Refactor?",
+    "verdict": "Just patch it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "effort_064",
+    "question": "approach",
+    "expect": "new_component",
+    "ask": "A Helm chart for a CUDA cluster. Patch something in?",
+    "verdict": "Build it new.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "effort_066",
+    "question": "approach",
+    "expect": "new_component",
+    "ask": "A sidecar that restarts a stuck server. Patch it in?",
+    "verdict": "Build it new.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "failure_037",
+    "question": "failure_kind",
+    "expect": "flaky",
+    "ask": "Requests finished out of order; passes on re-run. Real bug?",
+    "verdict": "A flake.",
+    "detail": "{p}% sure. Retry."
+  },
+  {
+    "id": "failure_046",
+    "question": "failure_kind",
+    "expect": "test_bug",
+    "ask": "A test reads a field the API renamed. Code bug?",
+    "verdict": "No, fix the test.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "failure_036",
+    "question": "failure_kind",
+    "expect": "environment",
+    "ask": "Can't reach the local Postgres. A code bug?",
+    "verdict": "No, it's setup.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "effort_002",
+    "question": "approach",
+    "expect": "minimal_patch",
+    "ask": "Show 100 log lines by default, not 40. Refactor?",
+    "verdict": "Just patch it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "effort_041",
+    "question": "approach",
+    "expect": "minimal_patch",
+    "ask": "Show the default value in one flag's help text. Redesign?",
+    "verdict": "Just patch it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "effort_043",
+    "question": "approach",
+    "expect": "minimal_patch",
+    "ask": "The copy button grabs the “$ ” prompt too. Rewrite it?",
+    "verdict": "Just patch it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "effort_044",
+    "question": "approach",
+    "expect": "minimal_patch",
+    "ask": "Round a displayed latency to whole milliseconds. Refactor?",
+    "verdict": "Just patch it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "effort_048",
+    "question": "approach",
+    "expect": "minimal_patch",
+    "ask": "Drop one blank line from a command's output. Redesign?",
+    "verdict": "Just patch it.",
+    "detail": "{p}% sure."
+  },
+  {
+    "id": "effort_025",
+    "question": "approach",
+    "expect": "minimal_patch",
+    "ask": "A missing file shows a traceback, not an error. Redesign?",
+    "verdict": "Just patch it.",
+    "detail": "{p}% sure."
+  }
+]

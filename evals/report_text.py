@@ -2,8 +2,8 @@
 
 Both renderers share these strings. They use a small inline markup: `code`,
 **bold**, [text](https://url), and [@key] citations that resolve against
-``REFERENCES``. Paragraphs with ``{name}`` fields are formatted with values
-from the report model before rendering.
+``REFERENCES`` (``evals/report_references.py``). Paragraphs with ``{name}``
+fields are formatted with values from the report model before rendering.
 """
 
 from __future__ import annotations
@@ -127,43 +127,6 @@ model benchmark runner ──HTTP──► model server (ember/serving/server.py
                                        ▼
                                 Clef-Flash, fp16 on MPS"""
 
-RECIPES = {
-    "intent_readiness": {
-        "title": "Intent and readiness",
-        "when": "Before changing files in response to a conversational request.",
-        "state": "The user's latest message, verbatim.",
-        "decides": "What the user is asking for, and whether it is specific enough "
-        "to act on without a clarifying question.",
-    },
-    "failure_triage": {
-        "title": "Failure triage",
-        "when": "Before retrying or fixing a failing test or command.",
-        "state": "The test or command, and the relevant error lines.",
-        "decides": "The most likely cause, and whether a plain re-run would pass.",
-    },
-    "change_risk": {
-        "title": "Change risk",
-        "when": "Before committing, pushing, or merging.",
-        "state": "A diff summary, the files touched, and the lines changed.",
-        "decides": "How risky the change is to ship unreviewed, and whether a "
-        "person should review it.",
-    },
-    "routing": {
-        "title": "Routing and ownership",
-        "when": "When an error needs an owner.",
-        "state": "The error message and the file or module it came from.",
-        "decides": "Which part of the system should handle it. The option set is "
-        "a template that projects replace with their own.",
-    },
-    "effort_approach": {
-        "title": "Effort and approach",
-        "when": "When planning a task.",
-        "state": "The task and its constraints.",
-        "decides": "How much work the task is, and which approach fits. The option "
-        "sets are templates.",
-    },
-}
-
 DATASET = [
     "The dataset has {items} items and {questions} scored questions: {choice} "
     "`choice`, {noul} `noul`, and {score} `score`. Each line is self-contained: the "
@@ -175,19 +138,6 @@ DATASET = [
     "split into `dev` ({dev} items, for tuning) and `test` ({test} items, for "
     "reporting), stratified so that every label of every question appears in both. "
     "The dataset card below answers the datasheet questions of [@gebru2021].",
-]
-
-PROTOCOL = [
-    "Labels were judged from `state` and the option descriptions alone, and were "
-    "fixed before any model run.",
-    "`needs_review` is true exactly when `risk` is Medium or High, and `retry` is "
-    "true only for `flaky` failures.",
-    "Drafts whose evidence fit two options were rewritten or dropped while "
-    "authoring, before any run.",
-    "A label changes only when a reviewer finds it wrong on its merits, never "
-    "because the model disagreed. Every change alters the dataset's SHA-256, which "
-    "each run records, so runs on different label sets cannot be compared by "
-    "accident.",
 ]
 
 METRICS = [
@@ -324,8 +274,10 @@ LIMITATIONS = [
     "**Sample size.** {questions} questions give a 95% interval about "
     "{ci_width} points wide overall; per-question samples of 20 to 28 are wider "
     "still, and calibration bins hold a few items each.",
-    "**One annotation team.** The labels come from the authors of the agent kit, "
-    "with no inter-annotator agreement yet. Shared assumptions could make items "
+    "**Single rater.** One maintainer labels every item from `state` and the "
+    "option descriptions; no inter-rater figure exists and none is shown. The "
+    "blinded re-labelling that publishes label stability (an optimistic bound on "
+    "the human ceiling) is pending (Phase 1). Shared assumptions could make items "
     "easier or harder for ember than real traffic.",
     "**Curated, not sampled.** Items are short, English, and written for the "
     "benchmark rather than drawn from real agent sessions.",
@@ -371,77 +323,4 @@ GLOSSARY = [
         "A decision rule from the agent kit, such as 'stop for review when "
         "needs_review >= 0.80 or risk >= 2.0'.",
     ),
-]
-
-REFERENCES = [
-    {
-        "key": "clef",
-        "text": "Cloudflare. Clef-Flash. Model repository, Hugging Face Hub.",
-        "url": "https://huggingface.co/Cloudflare/clef-flash",
-    },
-    {
-        "key": "mcp",
-        "text": "Model Context Protocol. Specification.",
-        "url": "https://modelcontextprotocol.io/specification",
-    },
-    {
-        "key": "naeini2015",
-        "text": "Naeini, M. P., Cooper, G. F., and Hauskrecht, M. Obtaining well "
-        "calibrated probabilities using Bayesian binning. AAAI, 2015.",
-        "url": "https://ojs.aaai.org/index.php/AAAI/article/view/9602",
-    },
-    {
-        "key": "guo2017",
-        "text": "Guo, C., Pleiss, G., Sun, Y., and Weinberger, K. Q. On calibration "
-        "of modern neural networks. ICML, 2017.",
-        "url": "https://arxiv.org/abs/1706.04599",
-    },
-    {
-        "key": "nixon2019",
-        "text": "Nixon, J., Dusenberry, M., Zhang, L., Jerfel, G., and Tran, D. "
-        "Measuring calibration in deep learning. CVPR Workshops, 2019.",
-        "url": "https://arxiv.org/abs/1904.01685",
-    },
-    {
-        "key": "brier1950",
-        "text": "Brier, G. W. Verification of forecasts expressed in terms of "
-        "probability. Monthly Weather Review 78(1), 1950.",
-        "url": "https://doi.org/10.1175/1520-0493(1950)078%3C0001:VOFEIT%3E2.0.CO;2",
-    },
-    {
-        "key": "epstein1969",
-        "text": "Epstein, E. S. A scoring system for probability forecasts of ranked "
-        "categories. Journal of Applied Meteorology 8(6), 1969.",
-        "url": "https://doi.org/10.1175/1520-0450(1969)008%3C0985:ASSFPF%3E2.0.CO;2",
-    },
-    {
-        "key": "opitz2019",
-        "text": "Opitz, J., and Burst, S. Macro F1 and Macro F1. arXiv:1911.03347, "
-        "2019.",
-        "url": "https://arxiv.org/abs/1911.03347",
-    },
-    {
-        "key": "efron1993",
-        "text": "Efron, B., and Tibshirani, R. J. An Introduction to the Bootstrap. "
-        "Chapman & Hall, 1993.",
-        "url": "https://doi.org/10.1201/9780429246593",
-    },
-    {
-        "key": "geifman2017",
-        "text": "Geifman, Y., and El-Yaniv, R. Selective classification for deep "
-        "neural networks. NeurIPS, 2017.",
-        "url": "https://arxiv.org/abs/1705.08500",
-    },
-    {
-        "key": "degroot1983",
-        "text": "DeGroot, M. H., and Fienberg, S. E. The comparison and evaluation of "
-        "forecasters. The Statistician 32(1-2), 1983.",
-        "url": "https://doi.org/10.2307/2987588",
-    },
-    {
-        "key": "gebru2021",
-        "text": "Gebru, T., et al. Datasheets for datasets. Communications of the "
-        "ACM 64(12), 2021.",
-        "url": "https://arxiv.org/abs/1803.09010",
-    },
 ]

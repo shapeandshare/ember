@@ -90,7 +90,8 @@ def summary(report: Report) -> Built:
             ),
         )
     )
-    blocks: list[Block] = [kpis, Heading("Key findings", "key-findings")]
+    blocks: list[Block] = [kpis, Para(report["text"].get("headline_scope", ""))]
+    blocks.append(Heading("Key findings", "key-findings"))
     blocks += [Callout(f["tone"], f["title"], f["text"]) for f in report["findings"]]
     return ("summary", "Summary", blocks)
 
@@ -226,16 +227,40 @@ def _recipe_card(recipe: Mapping[str, Any]) -> Card:
                 cell(options or "yes or no"),
             )
         )
+    facts: list[tuple[str, Cell]] = [
+        ("When", cell(recipe.get("when", ""))),
+        ("State", cell(recipe.get("state", ""))),
+        ("Decides", cell(recipe.get("decides", ""))),
+    ]
+    if recipe.get("family"):
+        facts.append(("Family", code(str(recipe["family"]))))
+    if recipe.get("risk"):
+        facts.append(("Risk recipe", cell("yes: dangerous recall is reported")))
+    if recipe.get("compliance"):
+        refs = ", ".join(
+            f"{c['framework']} {c['ref']} ({c['title']})" for c in recipe["compliance"]
+        )
+        facts.append(("Compliance", cell(refs)))
     return Card(
         title=str(recipe.get("title", recipe["category"])),
         tag=recipe["category"],
-        tone=Tone.INFO,
-        facts=(
-            ("When", cell(recipe.get("when", ""))),
-            ("State", cell(recipe.get("state", ""))),
-            ("Decides", cell(recipe.get("decides", ""))),
-        ),
+        tone=Tone.WARN if recipe.get("risk") else Tone.INFO,
+        facts=tuple(facts),
         body=(Table(("Question", "Type", "Asks", "Options"), tuple(rows)),),
+    )
+
+
+def _policy_in_force(policy: Mapping[str, Any]) -> Para:
+    """State which policy text each risk recipe's slot held for this run (FR-008)."""
+    if not policy:
+        return Para(
+            "**Policy in force:** no policy slot was filled for this run, so every "
+            "recipe applied its default criteria."
+        )
+    filled = "; ".join(f"`{recipe}`: {text}" for recipe, text in sorted(policy.items()))
+    return Para(
+        f"**Policy in force:** {filled}. Recipes not listed applied their default "
+        "criteria."
     )
 
 
@@ -289,10 +314,63 @@ def design(report: Report) -> Built:
         Cards(tuple(_recipe_card(r) for r in report["recipes"])),
         Heading("Labelling protocol", "protocol"),
         Bullets(tuple(text["protocol"])),
+        _policy_in_force(report["meta"].get("policy") or {}),
         Heading("Dataset card", "datasheet"),
         Definitions(tuple((q, a) for q, a in text["datasheet"])),
+        *_generated_card(report.get("card")),
     ]
     return ("design", "Benchmark design", blocks)
+
+
+def _shares(counts: Mapping[str, int]) -> str:
+    return ", ".join(f"{name} {count}" for name, count in counts.items()) or "—"
+
+
+def _generated_card(card: Mapping[str, Any] | None) -> list[Block]:
+    """One row per recipe from the generated dataset card (FR-033)."""
+    if not card:
+        return []
+    rows = tuple(
+        (
+            code(category),
+            num(f"{recipe['items']} ({recipe['dev']} / {recipe['test']})"),
+            cell(_shares(recipe["kind_shares"])),
+            cell(_shares(recipe["source_shares"])),
+            num(recipe["easy_items"]),
+            num(recipe["rater_count"]),
+            num(recipe["second_review_pending"]),
+            cell(
+                ", ".join(
+                    f"{s['id']} ({s['licence'] or 'licence unrecorded'})"
+                    for s in recipe["external_sources"]
+                )
+                or "none"
+            ),
+        )
+        for category, recipe in card["recipes"].items()
+    )
+    return [
+        Heading("Generated card", "card"),
+        Para(
+            "Generated from the dataset this run scored (`ember eval dataset card`), "
+            f"version `{card['dataset_content_sha256'][:12]}`; the per-label counts "
+            "per split for every question are in `evals/dataset/CARD.md`. Label "
+            "stability and inter-source agreement are unmeasured until Phase 1."
+        ),
+        Table(
+            (
+                "Recipe",
+                "Items (dev / test)",
+                "Kinds",
+                "Sources",
+                "Easy",
+                "Rater count",
+                "Second review",
+                "External sources",
+            ),
+            rows,
+        ),
+    ]
 
 
 def metrics(report: Report) -> Built:

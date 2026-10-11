@@ -28,7 +28,7 @@
     },
     "dataset": "clef-flash.jsonl",
     "dataset_sha256": "6a457f6badb7dd53b50a9ce04857d4d01e885d4718f3eb6db9db58658d9f923c",
-    "trace": "clef-flash_20261003T203810Z_trace.jsonl",
+    "trace": "trace.jsonl",
     "split": null,
     "category": null,
     "n_items": 264,
@@ -39,18 +39,89 @@
       "p95": 1091.1,
       "max": 1544.5
     },
-    "deployment_label": "Local (Apple Silicon, MPS)"
+    "deployment_label": "Local (Apple Silicon, MPS)",
+    "dataset_content_sha256": "913e1b65cf5a142d39a114e58edd1ccbe3524ba9871e3b5d246fdb9d17ed84e9",
+    "recipe_sha256": {
+      "change_risk": "1a0cff644e709b535315a18da45890e248cec7ec37721bccdd3fb3eb006a2618",
+      "effort_approach": "466bbac3e22c402cf3181de88c829a003ff40317573be5053ec1df91f16209d0",
+      "failure_triage": "fed9cc36fbb94474ac011be88acce301935bf650eee5841f22aec799955f2034",
+      "intent_readiness": "d8e60493ef97ee2ffdcfaeddc3abee9645a9ead0768ef824cb7605314976c928",
+      "routing": "2f910ef63e41a0e5e293bae242510e5c42df4ae940ae0b17e3246a97083de3b4",
+      "vision_choice": "8b24fdbeb93f1795d571ca9b46352fbc5373daf0b375a2fb0937b4a8eb224643",
+      "vision_noul": "56e355b9dcb50a60702f6d95ba5bb9febebfe0f03f0125e2d46d23cf4c3ccb40",
+      "vision_score": "08569eb7b6bf02afcf3c5b70e1a08d09a2f9f0cc84bbe54bc103ef352f6d1592",
+      "vision_video": "97526cc5e35f62d09d52e3cf645399f01ab969db217356041440df64114c2531"
+    },
+    "register_sha256": null,
+    "settings": {
+      "dtype": "float16",
+      "max_length": 262144,
+      "max_request_length": null
+    },
+    "dataset_file": "dataset.jsonl"
   },
   "summary": {
     "overall": {
-      "items": 264,
-      "questions": 456,
-      "accuracy": 0.8443,
+      "items": 232,
+      "questions": 424,
+      "accuracy": 0.8325,
       "accuracy_ci": [
-        0.8092,
-        0.8772
+        0.7948,
+        0.8679
       ],
-      "item_accuracy": 0.7765
+      "item_accuracy": 0.7457
+    },
+    "capability": {
+      "items": 32,
+      "questions": 32,
+      "accuracy": 1.0,
+      "accuracy_ci": [
+        1.0,
+        1.0
+      ],
+      "item_accuracy": 1.0,
+      "categories": {
+        "vision_choice": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        },
+        "vision_noul": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        },
+        "vision_score": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        },
+        "vision_video": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        }
+      }
     },
     "choice": {
       "n": 192,
@@ -337,6 +408,11 @@
         "accuracy": 1.0
       }
     },
+    "risk": {},
+    "tokens": null,
+    "consistency": {},
+    "by_source_kind": {},
+    "tiers": null,
     "misses": [
       {
         "id": "intent_001",

@@ -12,29 +12,13 @@ Layout under ``out_dir`` (default ``results/<run_id>_report/``)::
 
 from __future__ import annotations
 
-import os
 import shutil
 from pathlib import Path
 
 from . import analysis
 from .agent import report as agent_report
+from .atomic import copy_atomic, write_atomic
 from .render import render_html, render_markdown
-
-
-def write_atomic(path: Path, content: str) -> None:
-    """Write ``content`` to ``path`` via a sibling ``.tmp`` and ``os.replace``."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(path.name + ".tmp")
-    temporary.write_text(content, encoding="utf-8")
-    os.replace(temporary, path)
-
-
-def copy_atomic(source: Path, target: Path) -> None:
-    """Copy ``source`` to ``target`` via a sibling ``.tmp`` and ``os.replace``."""
-    target.parent.mkdir(parents=True, exist_ok=True)
-    temporary = target.with_name(target.name + ".tmp")
-    shutil.copyfile(source, temporary)
-    os.replace(temporary, target)
 
 
 def export(

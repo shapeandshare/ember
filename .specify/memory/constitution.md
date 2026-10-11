@@ -1,4 +1,74 @@
 <!--
+SYNC IMPACT REPORT — evals/ Size Debt Paid Down (Benchmark Foundations)
+Version change: 3.2.0 → 3.2.1 (PATCH: five migration-debt entries are resolved; no principle
+  changes)
+Date: 2026-10-10
+Reason: Feature 004-benchmark-categories (Phase 0, "Foundations") touched the benchmark's
+  report model, metrics, prose, results renderer, and harness, so §10.18's own rule applied:
+  pay a file's debt down when it is next touched. `evals/analysis.py` (recorded at 793 lines)
+  had grown to 826 without being recorded, as the 2.0.1 report found for `cli.py`;
+  `evals/eval/run_evals.py` was at 416 lines, over the ceiling and never recorded.
+  New line counts (`wc -l`), all under the §10.3 ceiling:
+  - `evals/analysis.py` 826 → 300: design tables to `analysis_design.py`, findings to
+    `analysis_findings.py`, decision rules and misses to `analysis_policies.py`,
+    coverage/confusion/score spread to `analysis_calibration.py`.
+  - `evals/sections/sections_results.py` 506 → 282: ordinal and confusion renderers to
+    `sections_scores.py`, decision rules to `sections_decisions.py`; the Phase 0 blocks
+    live in `sections_phase0.py`.
+  - `evals/report_text.py` 447 → 344: `REFERENCES` to `report_references.py`; the recipe
+    table (`RECIPES`) is now `evals/dataset/recipes.py`.
+  - `evals/metrics.py` 414 → 325: the formulas to `metric_functions.py`; the Phase 0
+    blocks to `metrics_phase0.py` and `risk_metrics.py`.
+  - `evals/eval/run_evals.py` 416 → 394: server I/O to `eval/client.py`, the run manifest
+    and resume logic to `eval/resume.py`.
+  - `evals/eval/report_evals.py` 408 → 320: the two-run comparison to `eval/report_compare.py`
+    and the Markdown helpers to `eval/report_markdown.py` (touched to compare runs by
+    dataset version rather than file hash).
+  Also recorded: `ember/serving/runtime.py` reached 402 lines when `usage` gained the token
+  split and was brought back to 387 the same day by moving `AdmissionError` and
+  `RequestTooLargeError` into `admission_error.py` and `request_too_large_error.py`.
+Modified principles: none
+Added sections: none
+Removed sections: none
+Articles amended:
+  - Article X §10.18 — `evals/analysis.py`, `evals/sections/sections_results.py`,
+    `evals/report_text.py`, `evals/metrics.py`, and `evals/eval/report_evals.py` removed
+    from the oversize list and added to the previously tracked items now resolved, with
+    `evals/eval/run_evals.py` recorded there as unrecorded growth paid down in the same
+    feature.
+  - Article XI §11.2 — floor ratcheted 81% → 94% (measured 94.50% by `make test-cov`).
+Templates / docs propagated:
+  - ✅ AGENTS.md (project structure, commands, Testing table, watch-outs, Recent Changes)
+  - ✅ README.md (Benchmark section, coverage floor), COMPATIBILITY.md (`usage` token split)
+  - ✅ pyproject.toml (fail_under 81 -> 94)
+Follow-up TODOs: none
+-->
+<!--
+SYNC IMPACT REPORT — Local and Remote as Equal Modes
+Version change: 3.1.2 → 3.2.0 (MINOR: Article I is reframed and gains an onboarding duty; its
+  privacy rules are unchanged)
+Date: 2026-10-10
+Reason: maintainer direction to make remote and self-hosted inference first class alongside
+  local. Local was framed as "the core value proposition" and remote as a fallback for users
+  who cannot host the model, and the docs and site followed that framing.
+Modified principles:
+  - Article I — renamed "Local or Remote, Never Silent". Local, self-hosted, and remote are
+    equal modes; docs and onboarding present them side by side; `ember init` asks a person at
+    a terminal which one to use (`--local` / `--server-url` answer it up front). Unchanged:
+    an unconfigured or non-interactive install is local-only, the default endpoint is
+    loopback, and remote requires one explicitly configured endpoint.
+Added sections: none
+Removed sections: none
+Templates / docs propagated:
+  - ✅ README.md, site/index.md, site/_config.yml, AGENTS.md, pyproject.toml, ember/cli.py
+  - ✅ ember/agent_kit/instructions.md, ember/agent_kit/ember-advise/SKILL.md (and the Claude
+    Code plugin's mirrored copy), ember/agent_kit/AGENTS.snippet.md
+  - ✅ ember/commands/agents.py, ember/commands/parser.py (`ember init` choice, `--local`)
+  - ➖ SECURITY.md, COMPATIBILITY.md, RESPONSIBLE_USE.md reviewed, unchanged: they describe
+    the loopback default and the configured-endpoint rule, which this amendment keeps
+Follow-up TODOs: none
+-->
+<!--
 SYNC IMPACT REPORT — runtime.py Size Debt Paid Down
 Version change: 3.1.1 → 3.1.2 (PATCH: a migration-debt entry is resolved; no principle changes)
 Date: 2026-10-09
@@ -517,21 +587,26 @@ Follow-up TODOs: none
 
 ## Core Principles
 
-### Article I — Local-First by Default
+### Article I — Local or Remote, Never Silent
 
-Inference MUST run on the user's machine **by default**, and the decision path
-(`ember-mcp` → HTTP server → model) MUST NOT send `state`, questions, or answers over the
-network **when no remote endpoint is configured**. A user MAY explicitly configure a single
-remote inference endpoint; when one is configured, `state`, questions, and answers are sent to
-that endpoint by the user's own choice. An unconfigured install remains local-only and the
-default endpoint remains loopback. The only other network access is the explicit,
-user-initiated weight download (`ember model pull`, `make download`). Model weights MUST stay
-in the Hugging Face cache or a user-chosen directory, and MUST NOT be redistributed from this
-repository.
+Local inference and remote inference are equal, first-class ways to run ember: on the user's
+machine, on a server the user hosts, or on an endpoint someone else runs. Documentation and
+onboarding MUST present them side by side, and `ember init` MUST let a person at a terminal
+choose between them.
+
+Where requests go MUST never change silently. The decision path (`ember-mcp` → HTTP
+server → model) MUST NOT send `state`, questions, or answers off the machine unless the user
+explicitly configured a single remote endpoint; when one is configured, they go to that
+endpoint by the user's own choice. An unconfigured install — including any non-interactive
+`ember init` — remains local-only, and the default endpoint remains loopback. The only other
+network access is the explicit, user-initiated weight download (`ember model pull`,
+`make download`). Model weights MUST stay in the Hugging Face cache or a user-chosen
+directory, and MUST NOT be redistributed from this repository.
 
 Rationale: agents pass sensitive context (code, diffs, logs, user messages) into `state`, so
-local stays the safe default and the core value proposition. Remote inference exists for users
-who cannot host the model (memory, disk, or CI) and is opt-in, explicit, and reversible.
+the user, not ember, decides where it is sent. Running locally keeps it on the machine;
+running remotely lets teams share one server and lets machines that cannot hold the model
+use it. Both are supported equally, and neither is ever chosen for the user behind their back.
 
 ### Article II — Typed Decisions, Not Text
 
@@ -753,10 +828,9 @@ darkfactory, infrastructure, k8s.platform) harvested on 2026-10-03.
   existence-guarded; a file write that could clobber another writes a sibling `.tmp` first and
   installs it with `os.replace()`.
 - §10.18 **Migration debt.** Known existing violations, tracked here and never increased:
-  modules over the 400-line ceiling that predate recording here: `evals/agent/scenarios.py` (905, scenario data), `evals/analysis.py` (793),
-  `evals/sections/sections_results.py` (506), `evals/charts/charts_calibration.py` (504),
-  `evals/report_text.py` (447), `evals/metrics.py` (414), `evals/charts/charts.py` (412),
-  `evals/eval/report_evals.py` (408); `ember/commands/lifecycle.py` defers
+  modules over the 400-line ceiling that predate recording here: `evals/agent/scenarios.py`
+  (905, scenario data), `evals/charts/charts_calibration.py` (504), `evals/charts/charts.py`
+  (412); `ember/commands/lifecycle.py` defers
   `from ..serving import server` and `from ..mcp import mcp_server` inside the `serve` and
   `mcp` handlers (tagged `# import-placement:allow`) to avoid loading torch at CLI startup —
   this violates §10.5's "internal ember modules MUST NOT be lazy-imported" and stays tracked
@@ -774,9 +848,22 @@ darkfactory, infrastructure, k8s.platform) harvested on 2026-10-03.
   rather than one-class-per-file. NumPy docstrings (ruff `D`) and the
   `py.typed` marker are now enforced for `ember/`; `evals/` and `tests/` are exempt from
   ruff `D`. Each remaining item is paid down as its file is next touched. Previously
-  tracked items now resolved: `ember/serving/runtime.py` (471 lines, paid down to 386 on
+  tracked items now resolved: `evals/analysis.py` (recorded at 793, found at 826, paid down
+  to 300 on 2026-10-10 by moving design tables, findings, decision rules, and calibration
+  views into `analysis_design.py`, `analysis_findings.py`, `analysis_policies.py`, and
+  `analysis_calibration.py`), `evals/sections/sections_results.py` (506 → 282, into
+  `sections_scores.py` and `sections_decisions.py`), `evals/report_text.py` (447 → 344,
+  `REFERENCES` into `report_references.py` and `RECIPES` into `evals/dataset/recipes.py`),
+  `evals/metrics.py` (414 → 325, formulas into `metric_functions.py`), and
+  `evals/eval/run_evals.py` (416 lines, never recorded, paid down to 394 by moving server I/O
+  into `eval/client.py` and the run manifest into `eval/resume.py`), and
+  `evals/eval/report_evals.py` (408 → 320, the comparison into `eval/report_compare.py` and
+  the Markdown helpers into `eval/report_markdown.py`), all 2026-10-10;
+  `ember/serving/runtime.py` (471 lines, paid down to 386 on
   2026-10-09 by moving limits, request sizing, the `media_kwargs` allowlist, and device
-  selection into `limits.py`, `request_size.py`, `media.py`, and `devices.py`);
+  selection into `limits.py`, `request_size.py`, `media.py`, and `devices.py`; at 402 again
+  on 2026-10-10 when `usage` gained the token split, and back to 387 the same day by moving
+  `AdmissionError` and `RequestTooLargeError` into their own modules);
   `ember/cli.py` (1086 lines, split into a 141-line composition
   root plus `ember/commands/`, every module under 400 lines, 2026-10-06); the `evals/`
   agent-condition and report-tone magic-string sets (`Condition` in
@@ -811,7 +898,7 @@ process violation and MUST be flagged at review.
 - §11.2 **Coverage ratchet.** The enforced floor (`fail_under` in
   `[tool.coverage.report]`) equals the current measured level and MAY only increase.
   Lowering it requires explicit human approval recorded in an amendment to this Article.
-  The current floor is **81%**. Run `make test-cov` to see the current percentage before
+  The current floor is **94%**. Run `make test-cov` to see the current percentage before
   setting a new floor.
 - §11.3 **No deleting tests to pass.** Removing a test to make coverage or a test run pass
   is a constitution violation. If a test is wrong, fix the test; do not delete it.
@@ -1002,4 +1089,4 @@ required by the current work.
 - Reviews MUST check changes against the Articles, with special attention to Article III
   (agent contract) and Article V (model loading).
 
-**Version**: 3.1.2 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-09
+**Version**: 3.2.1 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-10

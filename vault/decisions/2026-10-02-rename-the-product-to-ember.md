@@ -35,6 +35,9 @@ and the rest of the gut-feeling flavor.
 - "Gut feeling" phrasing is flavor text, not a name: the tagline, "a local gut feeling
   for coding agents", and the heading of the AGENTS.md snippet. AGENTS.md and the
   constitution now say so.
+- Update 2026-10-10: the secondary line is now "a gut feeling for coding agents";
+  "local" was dropped when local and remote became equal modes
+  ([[2026-10-10-local-and-remote-as-equal-modes]]).
 - History entries, saved image prompts, and dated provenance checks keep the old name.
 
 ## Consequences

@@ -21,6 +21,7 @@ from .commands.doctor import cmd_doctor
 from .commands.eval import (
     cmd_eval_agent,
     cmd_eval_context,
+    cmd_eval_dataset,
     cmd_eval_export,
     cmd_eval_report,
     cmd_eval_run,
@@ -62,8 +63,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="ember",
         description=(
-            "A local gut feeling for coding agents: calibrated advice from "
-            "decision models on Apple Silicon."
+            "A gut feeling for coding agents: calibrated advice from "
+            "decision models, run locally or on a server."
         ),
     )
     parser.add_argument(
@@ -111,6 +112,7 @@ def build_parser() -> argparse.ArgumentParser:
         cmd_snapshot=cmd_eval_snapshot,
         cmd_agent=cmd_eval_agent,
         cmd_context=cmd_eval_context,
+        cmd_dataset=cmd_eval_dataset,
     )
 
     return parser

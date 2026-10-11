@@ -1,6 +1,6 @@
 """Aggregate scored agent sessions per model and condition.
 
-Rates carry 95% bootstrap intervals (``evals.metrics.bootstrap_ci``). The
+Rates carry 95% bootstrap intervals (``evals.metric_functions.bootstrap_ci``). The
 headline comparison is each ember condition against ``none`` on the same
 scenarios and trials: the paired difference in gold-action accuracy.
 """
@@ -11,7 +11,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from typing import Any
 
-from .. import metrics
+from .. import metric_functions, metrics
 from .condition import Condition
 
 Record = dict[str, Any]
@@ -25,7 +25,7 @@ def rate(flags: Sequence[bool | None]) -> Record | None:
     return {
         "n": len(values),
         "rate": sum(values) / len(values),
-        "ci": metrics.bootstrap_ci(values),
+        "ci": metric_functions.bootstrap_ci(values),
     }
 
 
@@ -137,7 +137,7 @@ def summarize(records: Sequence[Record]) -> Record:
                     "condition": condition,
                     "n": len(pairs),
                     "delta": sum(pairs) / len(pairs),
-                    "ci": metrics.bootstrap_ci(pairs),
+                    "ci": metric_functions.bootstrap_ci(pairs),
                 }
             )
 
@@ -151,7 +151,7 @@ def summarize(records: Sequence[Record]) -> Record:
         "overall": {
             "runs": len(valid),
             "accuracy": _mean(flags),
-            "accuracy_ci": metrics.bootstrap_ci(flags),
+            "accuracy_ci": metric_functions.bootstrap_ci(flags),
             "item_accuracy": _mean(flags),  # 1 check per session = item = question
             "wrong_actions": sum(
                 1

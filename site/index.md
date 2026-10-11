@@ -1,11 +1,19 @@
 ---
 layout: home
 title: ember
-description: A local gut feeling for coding agents. ember runs a decision model (currently Cloudflare's Clef) on your Apple Silicon Mac and answers typed judgment questions as calibrated probabilities.
+description: ember helps AI coding assistants like Claude Code and Codex know when to go ahead and when to stop and check with you. Free and open source. Run it on your Mac, on your own server, or use one your team runs.
 ---
 {%- assign bench_url = '/results/' | relative_url %}
 {%- assign h = site.data.benchmark.headline %}
 <section class="splash-hero">
+  <h1>Give your agent a <span class="glow-text">gut feeling.</span></h1>
+  <p class="lede">ember helps AI coding assistants like Claude Code, Codex, and opencode know when to go ahead and when to stop and check with you.</p>
+  <div class="hero-actions">
+    <a class="button button-primary" href="{{ '/docs/overview/' | relative_url }}">Read the docs</a>
+    <a class="button button-secondary" href="{{ bench_url }}">Benchmark</a>
+    <a class="hero-link" href="{{ site.github }}">Source on GitHub</a>
+  </div>
+  <p class="hero-note">Run it on your Mac, on a server you host, or point it at one your team already runs.</p>
   <div class="hero-stage">
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="sparks" aria-hidden="true">
@@ -25,21 +33,27 @@ description: A local gut feeling for coding agents. ember runs a decision model 
       <img src="{{ '/assets/brand/svg/ember-light.svg' | relative_url }}" alt="ember, a curled plum mascot hugging a glowing tummy." width="260" height="260">
     </picture>
   </div>
-  <p class="eyebrow">A local gut feeling for coding agents</p>
-  <h1>Give your agent a <span class="glow-text">gut feeling.</span></h1>
-  <p class="lede">Coding agents make judgment calls at every step: act or ask, retry or fix, ship or stop for review. ember answers each one with a calibrated probability, on your Mac, in about a second.</p>
-  <div class="hero-actions">
-    <a class="button button-primary" href="{{ '/docs/overview/' | relative_url }}">Read the docs</a>
-    <a class="button button-secondary" href="{{ bench_url }}">Benchmark</a>
-    <a class="hero-link" href="{{ site.github }}">Source on GitHub</a>
-  </div>
+  {%- assign hero = site.data.benchmark.hero %}
+  {%- if hero and hero.size >= 5 %}
+  <ul class="hero-facts" data-swap aria-label="Questions your assistant asks ember, with ember's answers">
+    {%- for q in hero limit: 5 %}
+    <li tabindex="0">
+      <span class="ask">{{ q.ask }}</span>
+      <span class="thinking" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="reply"><b>{{ q.verdict }}</b> <span>{{ q.detail }}</span></span>
+    </li>
+    {%- endfor %}
+  </ul>
+  <button type="button" class="hero-pause" hidden aria-pressed="false">Pause motion</button>
+  <script type="application/json" id="hero-pool">{{ hero | jsonify }}</script>
+  {%- endif %}
 </section>
 
 <section class="splash-section" id="problem">
   <div class="splash-head reveal">
     <p class="eyebrow">The problem</p>
-    <h2>Agents guess at the judgment calls</h2>
-    <p class="splash-intro">An agent can write the fix. Knowing whether the request is clear, whether a failure is real, or whether a change needs a second pair of eyes is a different skill, and today it is a guess or a hard-coded rule. Lean one way and the agent stops to ask about everything; lean the other and the risky change ships.</p>
+    <h2>Your assistant is great at writing code, and bad at knowing when to check in</h2>
+    <p class="splash-intro">Today an assistant guesses at these moments, or follows a fixed rule. Too cautious, and it interrupts you about everything. Too bold, and it charges ahead on a vague request or pushes a risky change without a word. These are the three moments that matter most:</p>
   </div>
   <div class="cards">
     <article class="card reveal" style="--i: 0">
@@ -63,31 +77,31 @@ description: A local gut feeling for coding agents. ember runs a decision model 
 <section class="splash-section splash-tint" id="what">
   <div class="splash-head reveal">
     <p class="eyebrow">What ember does</p>
-    <h2>Questions in, probabilities out</h2>
-    <p class="splash-intro">The agent describes the situation and asks typed questions. ember scores every option in one pass and returns a probability for each. It writes no prose, so there is nothing to parse: the agent reads a number and decides.</p>
+    <h2>A quick second opinion, as a number</h2>
+    <p class="splash-intro">At one of those moments, your assistant tells ember what's going on and asks a short question. ember replies with how likely each answer is, like “93% likely this needs review”. Your assistant uses that number to decide what to do next. You don't call ember yourself; your assistant does it for you.</p>
   </div>
   <div class="flow reveal">
     <svg class="flow-wide" viewBox="0 0 960 220" role="img" aria-labelledby="flow-wide-title">
-      <title id="flow-wide-title">How a call flows: the coding agent sends state and typed questions to ember on your Mac, which returns a probability per option, and the agent decides.</title>
+      <title id="flow-wide-title">How a call flows: the coding agent sends state and typed questions to ember on your Mac, which returns how likely each answer is, and the agent decides.</title>
       <defs>
         <marker id="flow-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="flow-arrowhead" d="M0 0L10 5L0 10z"/></marker>
         <filter id="flow-soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="20"/></filter>
       </defs>
       <rect class="flow-node" x="10" y="60" width="190" height="100" rx="22"/>
       <text class="flow-text" x="105" y="116">Coding agent</text>
-      <text class="flow-label" x="292" y="90">state + typed questions</text>
+      <text class="flow-label" x="292" y="90">what's happening + a question</text>
       <line class="flow-wire" x1="210" y1="110" x2="372" y2="110" marker-end="url(#flow-arrow)"/>
       <ellipse class="flow-glow" cx="480" cy="110" rx="125" ry="72" filter="url(#flow-soft)"/>
       <rect class="flow-ember" x="385" y="55" width="190" height="110" rx="26"/>
       <text class="flow-name" x="480" y="110">ember</text>
       <text class="flow-note" x="480" y="134">on your Mac</text>
-      <text class="flow-label" x="668" y="90">a probability per option</text>
+      <text class="flow-label" x="668" y="90">how likely each answer is</text>
       <line class="flow-wire" x1="586" y1="110" x2="748" y2="110" marker-end="url(#flow-arrow)"/>
       <rect class="flow-node" x="760" y="60" width="190" height="100" rx="22"/>
       <text class="flow-text" x="855" y="116">The agent decides</text>
     </svg>
     <svg class="flow-tall" viewBox="0 0 320 540" role="img" aria-labelledby="flow-tall-title">
-      <title id="flow-tall-title">How a call flows: the coding agent sends state and typed questions to ember on your Mac, which returns a probability per option, and the agent decides.</title>
+      <title id="flow-tall-title">How a call flows: the coding agent sends state and typed questions to ember on your Mac, which returns how likely each answer is, and the agent decides.</title>
       <defs>
         <marker id="flow-arrow-tall" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="flow-arrowhead" d="M0 0L10 5L0 10z"/></marker>
         <filter id="flow-soft-tall" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="20"/></filter>
@@ -95,33 +109,33 @@ description: A local gut feeling for coding agents. ember runs a decision model 
       <rect class="flow-node" x="40" y="12" width="240" height="84" rx="20"/>
       <text class="flow-text" x="160" y="60">Coding agent</text>
       <line class="flow-wire" x1="160" y1="106" x2="160" y2="194" marker-end="url(#flow-arrow-tall)"/>
-      <text class="flow-label flow-label-side" x="174" y="144">state + typed</text>
-      <text class="flow-label flow-label-side" x="174" y="162">questions</text>
+      <text class="flow-label flow-label-side" x="174" y="144">what's happening</text>
+      <text class="flow-label flow-label-side" x="174" y="162">+ a question</text>
       <ellipse class="flow-glow" cx="160" cy="270" rx="135" ry="82" filter="url(#flow-soft-tall)"/>
       <rect class="flow-ember" x="40" y="208" width="240" height="124" rx="26"/>
       <text class="flow-name" x="160" y="266">ember</text>
       <text class="flow-note" x="160" y="292">on your Mac</text>
       <line class="flow-wire" x1="160" y1="342" x2="160" y2="430" marker-end="url(#flow-arrow-tall)"/>
-      <text class="flow-label flow-label-side" x="174" y="380">a probability</text>
-      <text class="flow-label flow-label-side" x="174" y="398">per option</text>
+      <text class="flow-label flow-label-side" x="174" y="380">how likely each</text>
+      <text class="flow-label flow-label-side" x="174" y="398">answer is</text>
       <rect class="flow-node" x="40" y="444" width="240" height="84" rx="20"/>
       <text class="flow-text" x="160" y="492">The agent decides</text>
     </svg>
   </div>
   <div class="cards">
     <article class="card reveal" style="--i: 0">
-      <p class="card-kicker"><code>noul</code></p>
+      <p class="card-kicker">Ask</p>
       <h3>Yes or no</h3>
       <p>“Does this change need review?”</p>
     </article>
     <article class="card reveal" style="--i: 1">
-      <p class="card-kicker"><code>choice</code></p>
-      <h3>One of the options you name</h3>
+      <p class="card-kicker">Ask</p>
+      <h3>Which one?</h3>
       <p>“Why did this test fail?”</p>
     </article>
     <article class="card reveal" style="--i: 2">
-      <p class="card-kicker"><code>score</code></p>
-      <h3>A point on your scale</h3>
+      <p class="card-kicker">Ask</p>
+      <h3>How much?</h3>
       <p>“How risky is this change, from 0 to 3?”</p>
     </article>
   </div>
@@ -130,8 +144,8 @@ description: A local gut feeling for coding agents. ember runs a decision model 
 <section class="splash-section" id="where">
   <div class="splash-head reveal">
     <p class="eyebrow">Where it helps</p>
-    <h2>What it says at real decision points</h2>
-    <p class="splash-intro">These are measured outputs from Cloudflare's Clef-Flash on an Apple M4 Max, taken from ember's agent kit. The kit turns each probability into an action.</p>
+    <h2>Three real examples</h2>
+    <p class="splash-intro">Each card shows what the assistant was facing, what ember said (0.96 means 96% likely), and what the assistant did as a result. These are real answers from ember.</p>
   </div>
   <div class="decisions">
     <figure class="decision reveal" style="--i: 0">
@@ -162,32 +176,32 @@ description: A local gut feeling for coding agents. ember runs a decision model 
       <p class="decision-action">Stop and ask for review</p>
     </figure>
   </div>
-  <p class="splash-note reveal">The kit has two more recipes, for routing and for effort, that you adapt to your own project.</p>
+  <p class="splash-note reveal">ember also helps with routing (“which team owns this?”) and effort (“quick fix or proper redesign?”), and you can teach your assistant your own rules, like “check risk before every push”.</p>
 </section>
 {% if h %}
 <section class="splash-section splash-tint" id="measured">
   <div class="splash-head reveal">
     <p class="eyebrow">Measured, not promised</p>
-    <h2>Confident answers held up</h2>
-    <p class="splash-intro">ember ships with a {{ h.items }}-item benchmark, with gold labels fixed before the run, that scores the model the way the agent kit uses it.</p>
+    <h2>When ember is sure, it's almost always right</h2>
+    <p class="splash-intro">We tested ember on {{ h.items }} realistic coding situations with known right answers, written down before the test so the results couldn't be nudged.{% if h.capability %} Reading screenshots and clips is scored separately as a capability: {{ h.capability.accuracy_pct }}% on {{ h.capability.questions }} vision questions, on the <a href="{{ bench_url }}">benchmark page</a>.{% endif %}</p>
   </div>
   <div class="stats">
     <div class="stat reveal" style="--i: 0">
       <p class="stat-figure">{{ h.confident.correct }} <small>of</small> {{ h.confident.answered }}</p>
-      <p class="stat-text">confident answers were right. At the agent kit's act-on-it thresholds, ember was confident on {{ h.confident.share_pct }}% of the yes-or-no and choice questions.</p>
+      <p class="stat-text">times ember was sure, it was right. It was sure enough to act on {{ h.confident.share_pct }}% of the yes-or-no and pick-one questions.</p>
     </div>
     <div class="stat reveal" style="--i: 1">
       <p class="stat-figure">{{ h.accuracy_pct }}%</p>
-      <p class="stat-text">of all {{ h.questions }} questions answered correctly, with a 95% interval of {{ h.accuracy_ci_pct[0] }} to {{ h.accuracy_ci_pct[1] }}%.</p>
+      <p class="stat-text">of all {{ h.questions }} questions answered correctly.</p>
     </div>
     <div class="stat reveal" style="--i: 2">
       <p class="stat-figure">{{ h.latency.p50_s }} <small>s</small></p>
-      <p class="stat-text">median time per call on an {{ h.host }}, and {{ h.latency.p95_s }} s at the 95th percentile.</p>
+      <p class="stat-text">typical time per answer, measured on an {{ h.host }}.</p>
     </div>
   </div>
   <figure class="calibration reveal">
     <figcaption>
-      <strong>Its confidence is conservative.</strong>
+      <strong>It doesn't overstate how sure it is.</strong>
       {% if h.conservative %}Choice questions, grouped by how confident ember was. In every group it was right at least as often as it claimed.{% else %}Choice questions, grouped by how confident ember was, next to how often it was right.{% endif %}
     </figcaption>
     {%- capture bands_label %}{% for band in h.reliability %}claimed {{ band.claimed_pct }}%, right {{ band.actual_pct }}%{% unless forloop.last %}; {% endunless %}{% endfor %}{% endcapture %}
@@ -205,35 +219,41 @@ description: A local gut feeling for coding agents. ember runs a decision model 
       <span><i class="band-actual"></i>right</span>
     </p>
   </figure>
-  <p class="splash-note reveal">One run of {{ h.items }} items across the five agent-kit recipes and four vision recipes. Ordered scores are harder: {{ h.score.exact_pct }}% exact, {{ h.score.within_one_pct }}% within one level. The full report shows where it misses. <a href="{{ bench_url }}">Read the benchmark report</a></p>
+  <p class="splash-note reveal">The full report shows every result, including where it gets things wrong. <a href="{{ bench_url }}">Read the benchmark report</a></p>
 </section>
 {% endif %}
-<section class="splash-section" id="local">
+<section class="splash-section" id="run">
   <div class="splash-head reveal">
-    <p class="eyebrow">On your machine</p>
-    <h2>Private by default, fast enough to ask often</h2>
-    <p class="splash-intro">The model runs on your Mac's GPU, behind a server on your machine. Your agent's evidence stays there; the only network call is the one-time model download.</p>
+    <p class="eyebrow">Run it your way</p>
+    <h2>On your Mac, or on a server</h2>
+    <p class="splash-intro">ember works the same wherever the model runs. You choose when you set it up, and it never sends anything anywhere you didn't pick.</p>
   </div>
-  <picture class="diagram reveal">
-    <source media="(prefers-color-scheme: dark)" srcset="{{ '/assets/diagrams/call-path-dark.svg' | relative_url }}">
-    <img src="{{ '/assets/diagrams/call-path-light.svg' | relative_url }}" width="760" alt="ember call path: a coding agent calls the advise tool over MCP into ember-mcp, which starts the ember model server on the first call; the server stays warm and runs Cloudflare's Clef-Flash on the Apple GPU.">
-  </picture>
-  <div class="cards cards-4">
+  <div class="cards">
     <article class="card reveal" style="--i: 0">
-      <h3>Local by default</h3>
-      <p>No account, no API key, no per-call bill. Point it at a server you run when one Mac serves another.</p>
+      <h3>On your Mac</h3>
+      <p>The model runs on your own Apple Silicon Mac, so your code stays on it. Needs 32 GB of memory and a one-time 18 GB download.</p>
     </article>
     <article class="card reveal" style="--i: 1">
-      <h3>About a second</h3>
-      <p>A warm call takes about a second, and two or three questions cost the same as one.</p>
+      <h3>On a server you host</h3>
+      <p>Run one copy on a spare Mac or a GPU machine and share it with your whole team, protected by a token.</p>
     </article>
     <article class="card reveal" style="--i: 2">
+      <h3>On a server someone else runs</h3>
+      <p>Point ember at its address and you're done. Nothing to download, and your machine doesn't need to hold the model.</p>
+    </article>
+  </div>
+  <div class="cards">
+    <article class="card reveal" style="--i: 0">
+      <h3>Fast</h3>
+      <p>Answers come back in about {{ h.latency.p50_s }} seconds once ember is running, and asking several questions at once costs the same as one.</p>
+    </article>
+    <article class="card reveal" style="--i: 1">
       <h3>Deterministic</h3>
       <p>The same request always gets the same answer, so a decision can be replayed.</p>
     </article>
-    <article class="card reveal" style="--i: 3">
+    <article class="card reveal" style="--i: 2">
       <h3>Open</h3>
-      <p>MIT-licensed code. Cloudflare's Clef weights are Apache-2.0, downloaded from their public Hugging Face repo.</p>
+      <p>MIT-licensed code, no account, no per-call bill. Cloudflare's Clef weights are Apache-2.0, from their public Hugging Face repo.</p>
     </article>
   </div>
 </section>
@@ -249,7 +269,7 @@ description: A local gut feeling for coding agents. ember runs a decision model 
     <li>Codex CLI</li>
     <li>Kilo Code</li>
   </ul>
-  <p class="splash-note reveal">One command registers the server. The agent kit teaches the agent when to ask and how to read the answer, through MCP instructions, a skill, and an AGENTS.md policy.</p>
+  <p class="splash-note reveal">One command connects ember to your assistant. ember also teaches your assistant when to ask it and how to read the answer, so there's nothing to configure by hand.</p>
 </section>
 
 <div class="get-started" id="get-started" markdown="1">
@@ -258,8 +278,9 @@ description: A local gut feeling for coding agents. ember runs a decision model 
 
 ## Up and running in five steps
 
-You need an Apple Silicon Mac with 32 GB of memory or more, about 18 GiB of free disk, and
-[uv](https://docs.astral.sh/uv/getting-started/installation/).
+You need [uv](https://docs.astral.sh/uv/getting-started/installation/). To run the model
+yourself, you also need an Apple Silicon Mac with 32 GB of memory or more and about 18 GiB of
+free disk; to use a server, you only need its address.
 
 1. **Install ember.**
 
@@ -273,19 +294,31 @@ You need an Apple Silicon Mac with 32 GB of memory or more, about 18 GiB of free
    uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.11.1"
    ```
 
-2. **Download the model.** It's about 18 GB, and an interrupted download resumes.
+2. **Choose where it runs.** To run it on your Mac, download the model. It's about 18 GB,
+   and an interrupted download resumes.
 
    ```bash
    ember model pull
    ```
 
-3. **Connect your agent.** Run the line for the agent you use, then restart it.
+   To use a server instead, skip the download: step 3 asks for its address, or you can pass
+   it with `--server-url`. If the server needs a token, export `EMBER_AUTH_TOKEN` in the
+   shell that starts your agent.
+
+3. **Connect your agent.** Run the line for the agent you use, then restart it. `ember init`
+   asks whether to run locally or use a server.
 
    ```bash
    ember init --opencode --global                    # opencode, every project
    claude mcp add --scope user ember -- ember-mcp    # Claude Code, every project
    ember init --codex                                # Codex CLI, this project
    ember init --kilocode                             # Kilo Code, this project
+   ```
+
+   Claude Code doesn't use `ember init`. To point it at a server, pass the address:
+
+   ```bash
+   claude mcp add --scope user ember -e EMBER_SERVER_URL=https://ember.example.com -e EMBER_AUTOSTART=0 -- ember-mcp
    ```
 
 4. **Check the setup.** `ember doctor` reports the platform, the model, the server, and
@@ -296,8 +329,8 @@ You need an Apple Silicon Mac with 32 GB of memory or more, about 18 GiB of free
    ```
 
 5. **Ask a judgment question.** Try "Is this bug report urgent, and which team should own
-   it?" The agent calls ember's `advise` tool, and the model server starts on that first
-   call.
+   it?" The agent calls ember's `advise` tool. When ember runs on your Mac, the model
+   starts on that first call.
 
 To make ember part of a project's routine, add a policy your agents follow, such as "check
 change risk before every push":
@@ -316,7 +349,7 @@ servers.
 <section class="splash-section splash-closing" id="try">
   <div class="splash-head reveal">
     <h2>Try it on your next judgment call</h2>
-    <p class="splash-intro">Installing takes four commands, and the model download is about 18 GB.</p>
+    <p class="splash-intro">Setup takes a few commands, on your Mac or against a server.</p>
   </div>
   <div class="hero-actions reveal">
     <a class="button button-primary" href="{{ '/docs/overview/' | relative_url }}">Read the docs</a>

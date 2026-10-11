@@ -41,7 +41,7 @@ from evals.context.records.probe_row import ProbeRow
 from evals.context.records.probe_summary import ProbeSummary
 from evals.context.records.row_status import RowStatus
 from evals.eval import provenance
-from evals.metrics import bootstrap_ci, brier_binary, brier_multiclass
+from evals.metric_functions import bootstrap_ci, brier_binary, brier_multiclass
 from pydantic import ValidationError
 
 RUN_ID = "context_20261009T120000Z"

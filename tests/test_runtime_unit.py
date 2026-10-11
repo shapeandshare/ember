@@ -1240,3 +1240,33 @@ def test_model_rm_writes_audit_entry_to_stderr(tmp_path, monkeypatch, capsys):
     assert "flash" in err.lower() or "remov" in err.lower(), (
         "R-004: cmd_model_rm must write an audit entry to stderr"
     )
+
+
+# ###########################################################################
+# Token split in usage (specs/004 FR-009, R8)
+# ###########################################################################
+
+
+def test_advise_adds_the_token_split_to_usage(monkeypatch, tmp_path):
+    engine = _counting_engine(monkeypatch, tmp_path, FakeJointModule(), _limits(99_999))
+    response = engine.advise("x" * 40, QUESTIONS)
+    usage = response["usage"]
+    for key in ("state_tokens", "fixed_tokens", "media_tokens"):
+        assert key in usage, key
+    assert (
+        usage["state_tokens"] + usage["fixed_tokens"] + usage["media_tokens"]
+        == (usage["input_tokens"])
+    )
+    assert usage["media_tokens"] == 0
+    assert usage["state_tokens"] > 0
+
+
+def test_advise_counts_media_tokens_in_the_split(monkeypatch, tmp_path):
+    engine = _counting_engine(monkeypatch, tmp_path, FakeJointModule(), _limits(99_999))
+    response = engine.advise("x" * 40, QUESTIONS, images=[_png_data_uri()])
+    usage = response["usage"]
+    assert usage["media_tokens"] > 0
+    assert (
+        usage["state_tokens"] + usage["fixed_tokens"] + usage["media_tokens"]
+        == (usage["input_tokens"])
+    )

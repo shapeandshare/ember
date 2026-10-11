@@ -205,6 +205,12 @@ def register_agents(
         ),
     )
     p.add_argument("--no-autostart", action="store_true")
+    p.add_argument(
+        "--local",
+        action="store_true",
+        help="run the model on this machine without asking (the default "
+        "when there is no terminal)",
+    )
     add_server_flags(p)
     add_endpoint_flag(p)
     p.add_argument(
@@ -247,6 +253,7 @@ def register_eval(
     cmd_snapshot: object,
     cmd_agent: object,
     cmd_context: object,
+    cmd_dataset: object,
 ) -> None:
     """Register ``ember eval`` subcommands on ``sub``.
 
@@ -266,6 +273,8 @@ def register_eval(
         Handler for ``ember eval agent``.
     cmd_context : object
         Handler for ``ember eval context``.
+    cmd_dataset : object
+        Handler for ``ember eval dataset``.
     """
     eval_cmd = sub.add_parser("eval", help="calibration eval suite")
     esub = eval_cmd.add_subparsers(dest="eval_command", required=True)
@@ -292,6 +301,9 @@ def register_eval(
         "--dry-run",
         action="store_true",
         help="print items without hitting the server",
+    )
+    p.add_argument(
+        "--resume", default=None, metavar="RUN_ID", help="continue an interrupted run"
     )
     p.set_defaults(func=cmd_run)
 
@@ -328,7 +340,14 @@ def register_eval(
         "snapshot",
         help="copy a run into the tracked benchmark/ bundle the site renders",
     )
-    p.add_argument("results_file", nargs="?", default=None, help=_RESULTS_FILE_HELP)
+    group = p.add_mutually_exclusive_group()
+    group.add_argument("results_file", nargs="?", default=None, help=_RESULTS_FILE_HELP)
+    group.add_argument(
+        "--rebuild",
+        metavar="RUN_ID",
+        default=None,
+        help="recompute a tracked bundle's summary and model from its own trace",
+    )
     p.set_defaults(func=cmd_snapshot)
 
     p = esub.add_parser(
@@ -348,3 +367,28 @@ def register_eval(
     )
     p.add_argument("context_args", nargs=argparse.REMAINDER)
     p.set_defaults(func=cmd_context)
+
+    p = esub.add_parser(
+        "dataset",
+        help="dataset tooling: lint, card, hash, check, tier (checkout only)",
+    )
+    dsub = p.add_subparsers(dest="dataset_command", required=True)
+    for name, help_text in (
+        ("lint", "run the dataset lint (report mode; enforced rules exit 1)"),
+        ("card", "regenerate the dataset card, or --check that it is fresh"),
+        ("hash", "print the content, file, per-recipe, and register hashes"),
+        ("check", "run the provenance check"),
+        ("tier", "tag easy items from the current version's leaderboard rows"),
+    ):
+        d = dsub.add_parser(name, help=help_text)
+        d.add_argument("--dataset", default=None, help="dataset JSONL path")
+        if name == "lint":
+            d.add_argument("--enforce-all", action="store_true")
+            d.add_argument("--json", action="store_true", dest="as_json")
+        if name == "card":
+            d.add_argument("--check", action="store_true")
+        if name == "hash":
+            d.add_argument("--json", action="store_true", dest="as_json")
+        if name == "tier":
+            d.add_argument("--from", dest="benchmark_dir", default=None)
+        d.set_defaults(func=cmd_dataset)

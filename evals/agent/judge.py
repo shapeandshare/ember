@@ -21,10 +21,10 @@ import re
 from typing import Any
 
 from .sandbox import Sandbox, changed, check, named_options
+from .scenarios import EFFORTS, OWNERS, RECIPE_QUESTIONS
 from .snapshot import Snapshot
 from .tool_call import ToolCall
 from .transcript import Transcript
-from .scenarios import EFFORTS, OWNERS, RECIPE_QUESTIONS
 
 EMBER_TOOL = "ember_advise"
 EDIT_TOOLS = frozenset({"edit", "write", "patch", "multiedit", "apply_patch"})

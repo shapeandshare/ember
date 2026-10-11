@@ -691,3 +691,18 @@ def test_mcp_refuses_an_oversized_request_end_to_end(base_url: str) -> None:
     # Over stdio, mcp prefixes tool errors with "Error executing tool advise: ".
     assert "ember server error 413: request too large:" in text
     assert "Split: state" in text
+
+
+def test_usage_token_split_survives_the_tool_round_trip(
+    stub_env, stub_server, monkeypatch
+):
+    usage = {
+        "input_tokens": 220,
+        "output_tokens": 0,
+        "state_tokens": 34,
+        "fixed_tokens": 186,
+        "media_tokens": 0,
+    }
+    url, _ = stub_server(payload={"model": "clef-flash", "answers": {}, "usage": usage})
+    result = _call_direct(monkeypatch, url)
+    assert result["usage"] == usage

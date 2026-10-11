@@ -55,10 +55,12 @@ os.environ.setdefault(
 import torch
 
 from . import media
+from .admission_error import AdmissionError
 from .devices import pick_device, pick_dtype
 from .limit_source import LimitSource
 from .limits import Limits, declared_max_length, resolve
 from .request_size import RequestSize, measure, refusal_message
+from .request_too_large_error import RequestTooLargeError
 
 _log = logging.getLogger(__name__)
 
@@ -72,35 +74,6 @@ DEFAULT_MODEL_DIR = REPO_ROOT / ".models" / "clef-flash"
 #: 4 comfortably covers the MCP server's normal single-call flow while bounding
 #: memory growth from a runaway agent or loopback flood.
 MAX_PENDING_ADVISE = 4
-
-
-class AdmissionError(RuntimeError):
-    """Raised when the admission semaphore is full (D-001).
-
-    Signals that ``MAX_PENDING_ADVISE`` requests are already queued. The HTTP
-    layer maps this to 503 so the agent knows to retry shortly.
-    """
-
-
-class RequestTooLargeError(ValueError):
-    """Raised when the encoded request exceeds the enforced limit.
-
-    The HTTP layer maps this to 413, with the message as ``detail``.
-
-    Parameters
-    ----------
-    message : str
-        The refusal, from ``request_size.refusal_message``.
-    size : RequestSize
-        The refused request's measured size.
-    limits : Limits
-        The limits it exceeded.
-    """
-
-    def __init__(self, message: str, *, size: RequestSize, limits: Limits) -> None:
-        super().__init__(message)
-        self.size = size
-        self.limits = limits
 
 
 _JOINT_MODULE: Any = None
@@ -287,7 +260,9 @@ class Engine:
         Returns
         -------
         dict[str, Any]
-            SystemOne response body including ``answers`` and ``usage``.
+            SystemOne response body including ``answers`` and ``usage``; ``usage``
+            carries ``state_tokens``, ``fixed_tokens``, and ``media_tokens`` (the
+            parts of ``input_tokens``).
 
         Raises
         ------
@@ -375,6 +350,16 @@ class Engine:
                 "size check mismatch; refusing to answer from a possibly "
                 "shortened input"
             )
+        if size is not None:
+            # The same RequestSize the limit check measured, so callers see exactly
+            # what the model saw: state, media, and the fixed overhead.
+            usage = dict(response.get("usage") or {})
+            usage.update(
+                state_tokens=size.state,
+                fixed_tokens=size.fixed,
+                media_tokens=size.media,
+            )
+            response["usage"] = usage
         return response
 
     def describe(self) -> dict[str, Any]:

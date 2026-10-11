@@ -17,61 +17,6 @@ from evals import analysis, metrics
 from tests.test_eval_benchmark import DATASET, ITEMS, _answers
 
 
-@pytest.fixture(scope="module")
-def synthetic_run(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """Write a results file and trace the way ``scripts/run_evals.py`` does."""
-    directory = tmp_path_factory.mktemp("results")
-    run_id = "clef-flash_20261003T000000Z"
-    scored = []
-    for index, item in enumerate(ITEMS):
-        result = metrics.score_item(item, _answers(item, right=index % 3 != 0))
-        result.update(
-            latency_ms=900.0 + index, model="clef-flash", usage={}, answers={}
-        )
-        scored.append(result)
-    trace = directory / f"{run_id}_trace.jsonl"
-    trace.write_text("".join(json.dumps(r) + "\n" for r in scored), encoding="utf-8")
-    config = {
-        "run_id": run_id,
-        "timestamp": "20261003T000000Z",
-        "git_hash": "abc1234",
-        "model": "clef-flash",
-        "model_spec": {
-            "name": "flash",
-            "repo": "Cloudflare/clef-flash",
-            "params": "9B",
-            "revision": "17f0b0a",
-        },
-        "engine": {"device": "mps", "dtype": "float16", "max_length": 262144},
-        "host": {
-            "platform": "macOS-26.0-arm64",
-            "cpu": "Apple M4 Max",
-            "python": "3.12.11",
-            "packages": {"torch": "2.14.1"},
-        },
-        "server": "http://127.0.0.1:8765",
-        "dataset": DATASET.name,
-        "dataset_sha256": hashlib.sha256(DATASET.read_bytes()).hexdigest(),
-        "trace": trace.name,
-        "split": None,
-        "category": None,
-        "n_items": len(scored),
-        "n_errors": 0,
-        "latency_ms": {"mean": 957.5, "p50": 957.0, "p95": 1009.0, "max": 1015.0},
-    }
-    results = directory / f"{run_id}_results.json"
-    results.write_text(
-        json.dumps({"config": config, "summary": metrics.aggregate(scored)}),
-        encoding="utf-8",
-    )
-    return results
-
-
-@pytest.fixture(scope="module")
-def report(synthetic_run: Path) -> dict:
-    return analysis.build(synthetic_run, dataset_path=DATASET)
-
-
 def test_report_model_is_complete_and_serialisable(report: dict) -> None:
     for section in (
         "meta",
@@ -349,14 +294,6 @@ SECTION_IDS = (
     "references",
     "appendix",
 )
-
-
-@pytest.fixture(scope="module")
-def bundle(synthetic_run: Path, tmp_path_factory: pytest.TempPathFactory) -> Path:
-    # import-placement:allow - deferred; loaded only for model-backed tests
-    from evals import export
-
-    return export.export(synthetic_run, tmp_path_factory.mktemp("bundle"))
 
 
 def test_export_writes_the_full_bundle(bundle: Path) -> None:

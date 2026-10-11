@@ -1,12 +1,12 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-10 (per-model request caps: every registry model declares its memory budget and its own fallback cap, the longest probe length that leaves 4 GiB of that budget free; flash falls back to 24,576 and full, which now requires 96 GB, to 65,536; `EMBER_REQUEST_TIMEOUT` defaults to 900 s)
+**Last updated**: 2026-10-10 (benchmark foundations: structured `source`, content-hash dataset versions, the data-source register, the `usage` token split, resumable runs, one leaderboard table per version — `specs/004-benchmark-categories/`; constitution v3.2.1)
 
 ## What this repo is
 
-`ember` runs decision models (currently Cloudflare's Clef) locally on Apple Silicon (MPS) by
-default, or against a single configured remote inference server
-(`EMBER_SERVER_URL`/config `server_url`) when the user opts in, and exposes them to coding
+`ember` runs decision models (currently Cloudflare's Clef) in one of three equal, first-class
+modes — locally on Apple Silicon (MPS), on a server the user hosts, or against a remote
+server someone else runs (`EMBER_SERVER_URL`/config `server_url`) — and exposes them to coding
 agents as one advisory MCP tool, `advise` (opencode: `ember_advise`; Kilo Code:
 `ember_advise`; Claude Code: `mcp__ember__advise`). An agent sends a `state` plus typed
 questions and gets calibrated probabilities back — no prose. It ships as the `ember-advise` uv tool
@@ -24,7 +24,8 @@ The product is **ember**, named after the Ember mascot. Only the distribution di
 in user-facing text.
 
 "Gut feeling" is flavor text, not a name. Keep the tagline *Give your agent a gut feeling.*,
-"a local gut feeling for coding agents", and the `gut` CLI alias as they are.
+"a gut feeling for coding agents", and the `gut` CLI alias as they are. (The secondary line
+dropped "local" on 2026-10-10, when local and remote became equal modes.)
 
 | Thing | Name |
 | --- | --- |
@@ -64,6 +65,7 @@ after changing brand assets. Do not invent missing provenance or license facts.
 | Development memory (decisions, discoveries, session logs) | `vault/` (hub `vault/ember.md`) |
 | Verification | `tests/`, `.github/workflows/ci.yml` |
 | Site build and deploy | `scripts/build_site_docs.py`, `site/_data/docs.json`, `.github/workflows/deploy-site.yml` |
+| Landing-page hero questions | `site/_data/hero_questions.json` (wording); percentages filled from the newest `benchmark/` run by `scripts/build_site_benchmark.py` |
 | Distribution (PyPI publish, MCP Registry entry, Claude Code plugin) | `.github/workflows/release-ember.yml`, `server.json`, `.claude-plugin/marketplace.json`, `packages/claude-plugin/` |
 | Benchmark runs (data the site renders) | `benchmark/<run-id>/`, written by `scripts/snapshot_evals.py` (via `evals/eval/snapshot_evals.py`) |
 
@@ -123,7 +125,23 @@ scripts/              # make-only dev tools: MPS smoke, MCP e2e, site build, pro
 tests/                # pytest suite (unit + model-backed, host-isolated)
 site/                 # Jekyll GitHub Pages site (docs, brand assets, benchmark report generated at build)
 benchmark/            # tracked benchmark runs (results, trace, dataset, model.json) the site renders
+evals/                # benchmark: dataset tooling, harness, metrics, report model, renderers
+  clef-flash.jsonl    #   the dataset (structured `source` per item; versioned by its content hash)
+  dataset/            #   records/ (one Pydantic class per file), scales, recipes, io, hashes, register,
+                      #   splitting (+ splits.lock), dedup, leakage, lint, secret_guard, card, tiers, check,
+                      #   protocol (+ versions.lock: the append-only record of dataset versions)
+  atomic.py           #   write_atomic / copy_atomic (leaf; no evals imports)
+  eval/               #   run_evals (harness), client (server I/O), resume (manifest), snapshot_evals,
+                      #   report_evals (+ report_compare, report_markdown), export
+  metric_functions.py #   the formulas (accuracy, CI, ECE, Brier, RPS); metrics.py aggregates
+  metrics_phase0.py   #   capability, risk, tokens, consistency, by-source-kind, and tier blocks
+  risk_metrics.py     #   dangerous-option recall at the kit's thresholds
+  analysis*.py        #   report model: build (analysis), design, findings, policies, calibration
+  report_text.py / report_references.py   # prose and citations
+  sections/, charts/  #   renderers: sections_{front,results,scores,decisions,phase0}, charts_tokens
+  leaderboard.py      #   one table per dataset version, per-recipe columns
 evals/context/        # long-context probe: padding, memory sampler, cap rule; runs/ holds cited snapshots
+scripts/audit_data_sources.py   # re-checks every data-source register row online (make audit-sources)
 vault/                # project memory (Obsidian): decisions, discoveries, sessions
   ember.md            #   hub note; every note must be reachable from it
   _meta/              #   tags.md (controlled vocabulary) and templates/
@@ -162,7 +180,9 @@ vault/                # project memory (Obsidian): decisions, discoveries, sessi
 | `make doctor` | Environment, model, and server readiness |
 | `make vault-audit` | Audit `vault/` notes: frontmatter, tags, wikilinks, code-refs, orphans |
 | `make eval-run` / `make eval-export` | Model benchmark (`evals/clef-flash.jsonl`) / reviewer report bundle |
-| `make eval-snapshot` | Copy the latest run into `benchmark/` for the site to render |
+| `make eval-snapshot` | Copy the latest run into `benchmark/` for the site to render (`ember eval snapshot --rebuild` re-renders a bundle from its trace) |
+| `make dataset-lint` / `make dataset-card` | Lint the dataset (report mode; `no-live-secret` enforced) / regenerate `evals/dataset/card.json` + `CARD.md` |
+| `make audit-sources` | Re-check every data-source register row online (before a dataset publication) |
 | `make eval-context` / `make eval-context-smoke` | Long-context probe on MPS: per-model request caps (hours) / smoke (minutes) |
 | `make eval-agent` / `make eval-agent-smoke` | Agent-in-the-loop eval through opencode (opt-in; spends provider credit) |
 | `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000`, rebuilt and reloaded in the browser on every edit (needs Docker) |
@@ -268,7 +288,7 @@ Rules for changing it:
 
    **Enforcement** — `make test` MUST pass before any task is marked complete. A single new
    failure outside pre-existing conditions reverts the work to Red phase. Run `make test-cov`
-   after every session; `fail_under = 81` is the ratchet floor — never lower it.
+   after every session; `fail_under = 94` is the ratchet floor — never lower it.
 
 10. **Simplest solution first** (Article XV). Before designing an implementation, identify the
     simplest viable approach. Document in the commit or vault if a more complex path was
@@ -350,6 +370,15 @@ base URL and MCP stdio parameters for integration tests.
 | `tests/test_advise_evals.py` | Calibration evals (model-backed): recipe correctness end-to-end |
 | `tests/test_agent_eval.py` | Agent-in-the-loop eval: judge scoring, sandbox lifecycle |
 | `tests/test_eval_report.py` | Report generation: HTML structure, Markdown fidelity, chart output |
+| `tests/test_eval_report_phase0.py` | Phase 0 report additions: scales definitions, legends, headline scope, capability/risk/tokens/consistency sections, `tokens.svg` |
+| `tests/test_dataset_tooling.py` / `test_dataset_hashes.py` / `test_dataset_lint.py` / `test_dataset_card_check.py` | Dataset records (`Source`, `Item`, `Scale`, `RecipeSpec`); io and the content/recipe/file hashes; splitting, leakage, dedup, lint rules, `no-live-secret`; the data card, the provenance check, protocol versions, tiers |
+| `tests/test_data_source_register.py` | Data-source register: row records, verdict rules, the committed `register.json`, the audit script |
+| `tests/test_risk_metrics.py` / `test_metrics_aggregate.py` | Dangerous-option recall; `aggregate` headline-only overall, capability, tokens, consistency, by-source-kind, tiers |
+| `tests/test_cli_eval_dataset.py` | `ember eval dataset {lint,card,hash,check,tier}` wiring and `--dataset` |
+| `tests/test_run_evals.py` / `test_run_evals_phase0.py` | Harness client and trace scrubbing / token-split requirement, manifest, `--resume` (bare resume inherits the manifest's filters), per-row annotations |
+| `tests/test_benchmark_bundles.py` | Committed `benchmark/` bundles: newest matches the current content hash, hashes and `settings` recorded |
+| `tests/test_leaderboard.py` / `test_leaderboard_versions.py` | Leaderboard grouping keys and rows / dataset versions, per-recipe assembly, incomplete rows |
+| `tests/test_site_benchmark.py` / `test_site_leaderboard.py` | Site build, landing headline, hero questions / one table per version, headline scope and capability, recipe-cell run links |
 | `tests/test_context_probe.py` | Long-context probe (no model): records, padding, scoring, the cap rule, summary determinism, resume, items, reproduction, memory sampler |
 | `packages/opencode-plugin/index.test.js` | npm plugin config hook: env defaults and overrides (`node --test index.test.js`) |
 
@@ -690,7 +719,7 @@ spacing values, or component styles outside the design system.
   `ember/` (tests and scripts are exempt) and `ember/py.typed` ships, so keep new public
   modules, classes, and functions documented or `make lint` fails.
 - **Tests ship with the code that needs them** (Article XI). A commit that adds behaviour
-  without a test is incomplete. Run `make test-cov` after; `fail_under = 81` is the ratchet
+  without a test is incomplete. Run `make test-cov` after; `fail_under = 94` is the ratchet
   floor — never lower it.
 - **New FastAPI route handlers are `async def`** (Article XII §12.1). Sync handlers that
   call the engine carry `# async-first:exception - engine lock is synchronous`. Any new
@@ -718,8 +747,75 @@ MUST pass the constitution check.
   (`MCPServer`), huggingface-hub 1.33; ruff, mypy (strict), bandit, pytest-cov, commitizen;
   `ember`/`gut` CLI; JavaScript opencode plugin (V1 `config` hook).
 
+- **`usage` carries the token split and the harness requires it.** `POST /v1/systemone`
+  returns `state_tokens`/`fixed_tokens`/`media_tokens` alongside `input_tokens`
+  (`ember/serving/runtime.py`); `ember eval run` refuses a server that omits them
+  (`evals/eval/run_evals.py`, `MIN_SERVER_VERSION`). Public API: change it with the README,
+  COMPATIBILITY.md, and `tests/test_runtime_unit.py` / `test_http_api.py` / `test_mcp_tool.py`.
+- **The dataset version is the content hash** (`evals/dataset/hashes.py`): id, category, split,
+  state, media, questions, gold labels. Annotations (`kind`, `tier`, `source`, `rationale`)
+  never change it; gold, state, questions, or a split do. Every run records
+  `dataset_content_sha256` and per-recipe `recipe_sha256`; the leaderboard never compares
+  runs across versions, and the release workflow writes the hash into the changelog.
+- **`evals/dataset/splits.lock` is append-only**: an item never changes split. New items get a
+  deterministic split from `splitting.assign_new`; delete nothing from the lock.
+- **The headline is coding recipes only** (`RECIPES[...].headline`). Vision recipes report as
+  the capability panel; do not fold them into `summary.overall` or a leaderboard headline.
+- **Never import an external record without a `used` register row**
+  (`evals/dataset/register.json`): licence reading, snapshot, mirror, and verdict first;
+  `ember eval dataset check` fails otherwise. `make audit-sources` re-checks rows online.
+- **`no-live-secret` is never relaxed.** The only lint rule that fails `make check`; add
+  vendor-documented example values to `evals/dataset/example_secrets.json` with their URL
+  rather than loosening the pattern.
+- **`card.json` embeds the register hash.** Regenerate it (`make dataset-card`) whenever
+  `register.json` or the dataset changes, or `tests/test_dataset_card_check.py` fails.
+- **`evals/dataset/versions.lock` is append-only.** Every dataset version (content hash) is
+  recorded there; `ember eval dataset card` appends the current one, and `ember eval dataset
+  check` fails on an unrecorded version. Protocol rules (`evals/dataset/protocol.py`) and
+  scale rubric anchors (`scales.py`) carry `since`, the version they first apply to; change a
+  rule or a pole by recording it under the version the change starts with, never by editing
+  history.
+
 ## Recent Changes
 
+- 2026-10-10: landing page rewritten for newcomers: plain-language hero and sections, buttons
+  above the fold, and a question cloud around Ember. Its 24 questions live in
+  `site/_data/hero_questions.json`; the site build fills each percentage from the newest
+  benchmark run and drops any the model got wrong (`hero_questions` in
+  `scripts/build_site_benchmark.py`, tested in `tests/test_site_benchmark.py`). The landing
+  headline now comes from the newest run, not the most accurate one. Hand-typed benchmark
+  numbers are banned from the landing prose (`tests/test_site_landing.py`). The hero script
+  (`site/_layouts/home.html`) honours reduced motion, has a pause control (WCAG 2.2.2), and
+  degrades to hover-to-reveal without JavaScript.
+- 2026-10-10: benchmark categories, Phase 0 "Foundations" (`specs/004-benchmark-categories/`):
+  the dataset gains a structured `source` (seven kinds, `evals/dataset/records/`), a content
+  hash as its version plus per-recipe hashes (`evals/dataset/hashes.py`), pinned splits
+  (`splits.lock`), lint with one enforced rule (`no-live-secret`), a data card, a provenance
+  check, item tiers, and the data-source register (`register.json`, 105 rows;
+  `scripts/audit_data_sources.py`); `ember eval dataset {lint,card,hash,check,tier}`. The
+  server's `usage` carries the token split (`state_tokens`/`fixed_tokens`/`media_tokens`) and
+  the harness requires it, records a run manifest, and resumes (`ember eval run --resume`);
+  `ember eval snapshot --rebuild` re-renders a bundle. The report adds scales definitions,
+  legends, a coding-only headline with a capability panel, dangerous-option recall
+  (`evals/risk_metrics.py`), token, consistency, by-source-kind, and tier blocks
+  (`evals/metrics_phase0.py`, `evals/sections/sections_phase0.py`, `charts_tokens.py`). The
+  leaderboard shows one table per dataset version with per-recipe columns assembled from the
+  latest run that scored each recipe (`evals/leaderboard.py`,
+  `scripts/build_site_benchmark.py`). Protocol rules and scale anchors carry `since` and
+  every dataset version is recorded in `evals/dataset/versions.lock`. Oversize modules were split (`analysis.py` →
+  `analysis_design/findings/policies/calibration.py`; `metrics.py` → `metric_functions.py`;
+  `report_text.py` → `report_references.py`; `sections_results.py` →
+  `sections_scores/decisions.py`; `run_evals.py` → `eval/client.py`, `eval/resume.py`;
+  `runtime.py` → `admission_error.py`, `request_too_large_error.py`). Both committed bundles
+  were rebuilt (headline 0.8200 over 811 coding questions; capability 1.000 over 32). See
+  `vault/decisions/2026-10-10-benchmark-foundations-token-split-and-registries.md`.
+- 2026-10-10: local, self-hosted, and remote inference are equal, first-class modes
+  (constitution v3.2.0, MINOR: Article I renamed "Local or Remote, Never Silent"; its privacy
+  rules are unchanged). `ember init` asks a person at a terminal whether to run locally or use
+  a server (`--local` and `--server-url` answer it up front; without a terminal it stays
+  local). The site's "Run it your way" section, the README's "Ways to run ember" table, and
+  the quick start present all three. See
+  `vault/decisions/2026-10-10-local-and-remote-as-equal-modes.md`.
 - 2026-10-10: per-model request caps: the shared 32,768 fallback is gone. Every `REGISTRY`
   entry declares its own `memory_budget_bytes` (moved from the probe's `MEMORY_BUDGETS`) and
   `fallback_request_length`, the longest probe length whose peak memory leaves 4 GiB of

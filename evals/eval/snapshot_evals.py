@@ -18,12 +18,17 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 
 from evals import analysis  # noqa: E402
-from evals.export import copy_atomic, write_atomic  # noqa: E402
+from evals.atomic import copy_atomic, write_atomic  # noqa: E402
+from evals.dataset import hashes  # noqa: E402
+from evals.dataset import io as dataset_io  # noqa: E402
+from evals.eval import resume  # noqa: E402
+from evals.metrics import aggregate  # noqa: E402
 
 RESULTS_DIR = REPO / "results"
 BENCHMARK_DIR = REPO / "benchmark"
@@ -96,10 +101,88 @@ def snapshot(results_path: Path) -> Path:
     return out
 
 
+def _rows(path: Path) -> list[dict[str, Any]]:
+    return [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+
+def rebuild(run_id: str) -> Path | None:
+    """Recompute a tracked bundle's summary and model from its own trace and dataset.
+
+    The bundle's ``dataset.jsonl`` may still carry pre-Phase-0 string sources,
+    so it is read through the legacy shim with the bundle's own file hash as the
+    legacy ``dataset_version``; trace rows gain the item annotations joined by
+    id; ``config`` gains the content, per-recipe, and register hashes (the
+    register hash is ``null`` for a run that predates the register).
+
+    Parameters
+    ----------
+    run_id : str
+        The bundle directory name under ``benchmark/``.
+
+    Returns
+    -------
+    Path | None
+        The bundle, or ``None`` when ``trace.jsonl`` or ``dataset.jsonl`` is missing.
+    """
+    bundle = BENCHMARK_DIR / run_id
+    trace_path, dataset_path = bundle / "trace.jsonl", bundle / "dataset.jsonl"
+    results_path = bundle / "results.json"
+    if not (trace_path.exists() and dataset_path.exists() and results_path.exists()):
+        print(
+            f"error: {bundle} lacks trace.jsonl, dataset.jsonl, or results.json",
+            file=sys.stderr,
+        )
+        return None
+    stored = json.loads(results_path.read_text(encoding="utf-8"))
+    config = dict(stored["config"])
+    items = dataset_io.read_items(
+        dataset_path, legacy_dataset_version=str(config["dataset_sha256"])
+    )
+    by_id = {item.id: item for item in items}
+    rows = []
+    for row in _rows(trace_path):
+        item = by_id.get(str(row["id"]))
+        if item is not None:
+            source = item.source
+            row.update(
+                kind=item.kind.value if item.kind else None,
+                tier=item.tier,
+                source_kind=source.kind.value,
+                parent_id=source.parent_id,
+                perturbation=source.perturbation,
+            )
+        rows.append(row)
+    write_atomic(trace_path, "".join(json.dumps(r) + "\n" for r in rows))
+    config.setdefault("dataset_content_sha256", hashes.dataset_content_sha256(items))
+    config.setdefault("recipe_sha256", hashes.recipe_hashes(items))
+    config.setdefault("register_sha256", None)
+    config.setdefault("settings", resume.settings_from(config.get("engine") or {}))
+    config.setdefault("dataset_file", "dataset.jsonl")
+    config["trace"] = "trace.jsonl"
+    public = {**stored, "config": config, "summary": aggregate(rows)}
+    write_atomic(results_path, json.dumps(public, indent=2) + "\n")
+    model = analysis.build(results_path, dataset_path=dataset_path)
+    write_atomic(bundle / "model.json", json.dumps(model, indent=2) + "\n")
+    return bundle
+
+
 def main(argv: list[str] | None = None) -> int:
+    """Snapshot a run, or ``--rebuild`` a tracked bundle in place."""
     parser = argparse.ArgumentParser(prog="snapshot_evals")
-    parser.add_argument("results_file", type=Path, nargs="?")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("results_file", type=Path, nargs="?")
+    group.add_argument("--rebuild", metavar="RUN_ID", default=None)
     args = parser.parse_args(argv)
+    if args.rebuild:
+        out = rebuild(args.rebuild)
+        if out is None:
+            return 1
+        print(f"rebuilt: {out}")
+        return 0
     path = args.results_file or _latest()
     if path is None:
         return 1

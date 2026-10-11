@@ -1,3 +1,3 @@
-"""ember: a local gut feeling for coding agents (decision models on Apple Silicon)."""
+"""ember: a gut feeling for coding agents, run locally or on a server."""
 
 __all__: list[str] = []
