@@ -215,6 +215,49 @@ def test_preflight_quota_too_low_fails() -> None:
     assert "quota" in quota_result.fix.lower() or "https://" in quota_result.fix
 
 
+def test_preflight_spot_quota_uses_spot_code() -> None:
+    """spot capacity checks the G/VT Spot vCPU quota, not the on-demand one."""
+    from ember_aws.capacity import Capacity
+
+    quotas = _make_quotas_client(vcpu_value=192.0)
+    clients = _make_aws_clients(quotas=quotas)
+    ts = _make_tailscale_client()
+    pf = Preflight(clients=clients, tailscale=ts, which=lambda _: "/usr/bin/tailscale")
+    deployment = Deployment(
+        name="default",
+        model="flash",
+        instance_type="g6e.xlarge",
+        capacity=Capacity.SPOT,
+    )
+
+    results = pf.run(deployment)
+
+    quotas.get_service_quota.assert_any_call(ServiceCode="ec2", QuotaCode="L-3819A6DF")
+    quota_result = next(r for r in results if r.check == PreflightCheck.GPU_QUOTA)
+    assert quota_result.ok is True
+
+
+def test_preflight_spot_quota_too_low_names_spot_link() -> None:
+    """A low spot quota reports the spot quota link, not the on-demand one."""
+    from ember_aws.capacity import Capacity
+
+    clients = _make_aws_clients(quotas=_make_quotas_client(vcpu_value=0.0))
+    ts = _make_tailscale_client()
+    pf = Preflight(clients=clients, tailscale=ts, which=lambda _: "/usr/bin/tailscale")
+    deployment = Deployment(
+        name="default",
+        model="flash",
+        instance_type="g6e.xlarge",
+        capacity=Capacity.SPOT,
+    )
+
+    results = pf.run(deployment)
+
+    quota_result = next(r for r in results if r.check == PreflightCheck.GPU_QUOTA)
+    assert quota_result.ok is False
+    assert "L-3819A6DF" in quota_result.fix
+
+
 def test_preflight_instance_not_offered_fails() -> None:
     """Instance type not offered in region → instance-offering check fails."""
     clients = _make_aws_clients(ec2=_make_ec2_client(offered_types=["g5.2xlarge"]))

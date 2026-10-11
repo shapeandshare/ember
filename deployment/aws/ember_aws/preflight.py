@@ -6,6 +6,7 @@ import shutil
 from collections.abc import Callable
 from typing import Any
 
+from .capacity import Capacity
 from .check_result import CheckResult
 from .deployment import Deployment
 from .preflight_check import PreflightCheck
@@ -23,8 +24,9 @@ _INSTANCE_VCPUS: dict[str, int] = {
     "p5.48xlarge": 192,
 }
 
-#: Service Quotas quota code for G and VT on-demand vCPUs.
+#: Service Quotas quota codes for G and VT vCPUs, per capacity.
 _GPU_QUOTA_CODE = "L-DB2E81BA"
+_GPU_QUOTA_CODE_SPOT = "L-3819A6DF"
 _GPU_QUOTA_SERVICE = "ec2"
 
 
@@ -157,13 +159,20 @@ class Preflight:
         )
 
     def _check_gpu_quota(self, deployment: Deployment) -> CheckResult:
-        """Verify the G/VT on-demand vCPU quota is sufficient."""
+        """Verify the G/VT vCPU quota for the deployment's capacity is sufficient."""
         instance_type = deployment.instance_type or "g6e.xlarge"
         required_vcpus = _INSTANCE_VCPUS.get(instance_type, 4)
+        spot = deployment.capacity == Capacity.SPOT
+        quota_code = _GPU_QUOTA_CODE_SPOT if spot else _GPU_QUOTA_CODE
+        quota_label = "G/VT Spot" if spot else "G/VT on-demand"
+        quota_link = (
+            "https://console.aws.amazon.com/servicequotas/home/services"
+            f"/ec2/quotas/{quota_code}"
+        )
         try:
             response = self._clients.quotas.get_service_quota(
                 ServiceCode=_GPU_QUOTA_SERVICE,
-                QuotaCode=_GPU_QUOTA_CODE,
+                QuotaCode=quota_code,
             )
             quota_value = float(response["Quota"]["Value"])
             if quota_value >= required_vcpus:
@@ -178,13 +187,10 @@ class Preflight:
                 check=PreflightCheck.GPU_QUOTA,
                 ok=False,
                 problem=(
-                    f"G/VT on-demand vCPU quota is {quota_value:.0f},"
+                    f"{quota_label} vCPU quota is {quota_value:.0f},"
                     f" but {instance_type} needs {required_vcpus}"
                 ),
-                fix=(
-                    "request a quota increase: "
-                    "https://console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
-                ),
+                fix=f"request a quota increase: {quota_link}",
                 blocking=True,
             )
         except Exception as exc:
@@ -192,10 +198,7 @@ class Preflight:
                 check=PreflightCheck.GPU_QUOTA,
                 ok=False,
                 problem=f"cannot check GPU quota: {exc}",
-                fix=(
-                    "request a quota increase: "
-                    "https://console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
-                ),
+                fix=f"request a quota increase: {quota_link}",
                 blocking=True,
             )
 
