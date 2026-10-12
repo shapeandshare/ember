@@ -122,7 +122,7 @@ ember's own vault (MIT) remains a mappable source — no licensing gate, dogfood
 
 ### Functional Requirements
 
-- **FR-001**: The miner MUST be reproducible from the pinned commit: item ids derive from the source path and commit; states, question sets, and gold labels regenerate byte-for-byte; each item's `source` records the artefact and the 40-hex commit.
+- **FR-001**: The miner MUST be reproducible from the pinned commit: item ids derive deterministically from the source artefact; states, question sets, and gold labels regenerate byte-for-byte; each item's `source` records the artefact, the 40-hex commit, and its register row.
 - **FR-002**: `tag_assignment` MUST contribute 65 items, drawn only from content notes other than `type/spec` (the memory notes: decisions, discoveries, sessions, design, code, systems, references), sampled deterministically across multiple `type/*` values and `domain/*` groups, split per the parent's ratio and pinned in the splits lock.
 - **FR-003**: Gold definitions MUST be the vault's own conventions: `tag_assignment` = the note's actual controlled tags; `note_placement` = its actual placement; `staleness` = the `stale:`/`status/*` convention; `memory_worthiness` = what comparable material actually became, adjudicated where silent.
 - **FR-004**: No item from the primary source MAY land without (a) the copyright holder's written permission recorded in the source repository and (b) a `used` register row carrying the licence reading, the permission reference, the snapshot, and the mirror; the dataset check MUST fail otherwise.

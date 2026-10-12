@@ -67,7 +67,7 @@ Rationale: FR-003/FR-010; `noul` is the kit's multi-label shape and needs no new
 Two additive, evals-internal schema changes (each with tests, in the same commit):
 
 1. `Source` for `mined` gains **`register_row`** (required) beside `artefact`/`commit`; `register.validate()` gains a `mined` branch that resolves it, so a mined item whose source has no `used` row fails the check (FR-004).
-2. `RegisterRow` gains **`permission: str | None`**, required by the `used` validator whenever `licence.class_ is not LicenceClass.permissive` — a non-permissive used source must cite how permission was obtained. Old Growth is all-rights-reserved → required; ember's own MIT vault is `permissive` → none needed (FR-013).
+2. `RegisterRow` gains **`permission: str | None`**, required by the `used` validator when `licence.class_ is LicenceClass.custom_permissive` — the permission a custom-permissive used source rests on. Old Growth is all-rights-reserved under a written grant → `custom_permissive` + permission; ember's own MIT vault is `permissive` → none needed (FR-013).
 
 The row: `id = oldgrowth-vault`; licence reading "All rights reserved; written permission granted for the ember benchmark dataset", class `custom_permissive`; `permission` = `LICENSES.md §Exception — ember benchmark reproduction (commit 422648d9)`; `snapshot` = `SnapshotRef(version=692f4bb5…, sha256=<tree digest>, retrieved_on=…)`; `mirror` = `MirrorRef(location="shapeandshare/oldgrowth @ 692f4bb5 (private)", sha256=<same digest>, public=False)` — the source tree itself satisfies `mirror.sha256 == snapshot.sha256` without committing a vault copy; `attribution` = "Old Growth — distributed in the ember benchmark dataset with written permission"; `transformation` describes extraction into items.
 

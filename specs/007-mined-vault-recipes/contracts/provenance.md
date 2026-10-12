@@ -9,7 +9,7 @@
 ## `RegisterRow` (used)
 
 - Requires `snapshot`, `mirror`, and `transformation`; `mirror.sha256` must equal `snapshot.sha256`.
-- For a non-permissive licence (`licence.class_ is not LicenceClass.permissive`), `permission` is required — how permission was obtained.
+- For a `custom_permissive` licence, `permission` is required — the permission the source rests on.
 - `attribution` is present (share-alike requires it; here it carries the grant credit).
 - `items_imported` equals the number of items `register.validate` resolves to the row.
 

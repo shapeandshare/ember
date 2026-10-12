@@ -24,7 +24,7 @@ Repository root is the working directory. Tooling lives under `evals/`, CLI wiri
 
 **Purpose**: The new package marker the miner modules live in
 
-- [ ] T001 Create the mined-tooling package skeleton: `evals/dataset/mined/__init__.py` (bare, docstring-only marker — no imports or re-exports, Article X §10.1); confirm `python -c "import evals.dataset.mined"` succeeds.
+- [x] T001 Create the mined-tooling package skeleton: `evals/dataset/mined/__init__.py` (bare, docstring-only marker — no imports or re-exports, Article X §10.1); confirm `python -c "import evals.dataset.mined"` succeeds.
 
 ---
 
@@ -34,9 +34,9 @@ Repository root is the working directory. Tooling lives under `evals/`, CLI wiri
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T002 Add `permission: str | None = None` to `RegisterRow` in `evals/dataset/records/register_row.py` and extend `_verdict_is_consistent` so a `used` row raises when `licence.class_ is not LicenceClass.permissive` and `permission` is empty (verbatim design: *"a used row for a non-permissive licence needs permission"*); failing test first in `tests/test_data_source_register.py`.
-- [ ] T003 Add `register_row` to the `mined` kind's required references in `evals/dataset/records/source.py`: `REQUIRED[SourceKind.mined] = frozenset({"artefact", "commit", "register_row"})`; foreign fields still raise, `commit` still matches `^[0-9a-f]{40}$`; update the mined fixtures in `tests/test_dataset_tooling.py`; failing test first.
-- [ ] T004 Extend `register.validate()` in `evals/dataset/register.py` with a `mined` branch mirroring `imported`: a mined item whose `source.register_row` names no row, or names a row that is not `used`, is a problem; resolved rows count toward `items_imported`; failing tests first in `tests/test_data_source_register.py`. (depends on T003)
+- [x] T002 Add `permission: str | None = None` to `RegisterRow` in `evals/dataset/records/register_row.py` and extend `_verdict_is_consistent` so a `used` row raises when `licence.class_ is LicenceClass.custom_permissive` and `permission` is empty (verbatim: *"a custom-permissive used row needs the permission it rests on"*); failing test first in `tests/test_data_source_register.py`.
+- [x] T003 Add `register_row` to the `mined` kind's required references in `evals/dataset/records/source.py`: `REQUIRED[SourceKind.mined] = frozenset({"artefact", "commit", "register_row"})`; foreign fields still raise, `commit` still matches `^[0-9a-f]{40}$`; update the mined fixtures in `tests/test_dataset_tooling.py`; failing test first.
+- [x] T004 Extend `register.validate()` in `evals/dataset/register.py` with a `mined` branch mirroring `imported`: a mined item whose `source.register_row` names no row, or names a row that is not `used`, is a problem; resolved rows count toward `items_imported`; failing tests first in `tests/test_data_source_register.py`. (depends on T003)
 - [ ] T005 [P] Add the shared fixture vault helper `tests/fixture_vault.py`: `build_fixture_vault(tmp_path)` creates a throwaway `git init` repository with a `docs/vault/` tree — seeded notes covering a decision, a discovery, a session-log, a `type/moc` hub, `index.md`, a drift note (tag absent from `_meta/tags.md`), a fake-secret note, and a `Specs/NNN Title/NNN Title.md` spec note — plus a small controlled `_meta/tags.md`; returns the repo path and commit. Git plumbing only; no network.
 - [ ] T006 [P] Implement `evals/dataset/mined/snapshot.py`: `VaultSnapshot` reads files with read-only git at a pinned commit (`git show <commit>:<path>` / `git archive`), never the working tree; `.read(path)`, `.files()`, `.tree_digest()` = sha256 over sorted `path\0<git blob sha>` pairs; failing tests first (fixture vault). (depends on T005)
 - [ ] T007 [P] Implement `evals/dataset/mined/frontmatter.py`: `NoteFrontmatter` (frozen Pydantic, `extra="allow"`) parsed with the vault-audit pattern (header regex + `yaml.safe_load`) and a body extractor that strips frontmatter; failing tests first. (depends on T005)

@@ -21,13 +21,13 @@ New optional field `permission: str | None = None`. `_verdict_is_consistent` gai
 ```python
 if (
     self.verdict is Verdict.used
-    and self.licence.class_ is not LicenceClass.permissive
+    and self.licence.class_ is LicenceClass.custom_permissive
     and not self.permission
 ):
-    raise ValueError(f"{self.id}: a used row for a non-permissive licence needs permission")
+    raise ValueError(f"{self.id}: a custom-permissive used row needs the permission it rests on")
 ```
 
-This keeps the ember-vault (MIT, `permissive`) source permission-free (FR-013) while requiring the grant reference for all-rights-reserved content (FR-004).
+This requires the grant reference for the all-rights-reserved Old Growth source (FR-004) while leaving the ember-vault (MIT, `permissive`) source permission-free (FR-013).
 
 ### `RegisterRow` — the Old Growth row (data in `register.json`)
 
