@@ -61,6 +61,7 @@ Session-level decisions with their context and consequences.
 - [[2026-10-10-benchmark-foundations-token-split-and-registries]]
 - [[2026-10-11-aws-gpu-deployment-over-tailscale]]
 - [[2026-10-11-hygiene-stability-records-and-probe-key]]
+- [[2026-10-11-accelerated-label-review-llm-panel-drafts]]
 
 ### Discoveries
 
