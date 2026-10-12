@@ -40,8 +40,11 @@ plan and task list, the full implementation, and the live runs.
 
 ## Still open
 
-US3's three later recipes (`memory_worthiness`, `note_placement`,
-`staleness`); the deployment refresh plus a clean CUDA re-run; PR and release
+US3: `note_placement` shipped (30 items across 10 folders, its kit entry
+included); `staleness` and `memory_worthiness` are deferred — the pinned
+source has no stale markers and no did-not-become fragments (see
+[[2026-10-12-staleness-and-worthiness-have-no-source]]). Also open: the
+deployment refresh plus a clean CUDA re-run; PR and release
 (maintainer's call — merging to main triggers the release workflow). One
 latent bug found on the way: the site build crashes when the newest committed
 bundle is a category-scoped run (`scripts/build_site_benchmark.py` assumes
