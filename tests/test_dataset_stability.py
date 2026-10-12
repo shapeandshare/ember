@@ -9,7 +9,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from evals.dataset import io, stability
 from evals.dataset.records.stability_round import StabilityRound
 from evals.dataset.stability import StabilityError
@@ -165,7 +164,9 @@ def test_render_mentions_single_rater(tmp_path: Path) -> None:
     items = _scoped_items()
     round_ = stability.ingest(_filled_sheet(items), items, directory=tmp_path)
     text = stability.render(stability.compute([round_]))
-    assert "single" in text.lower() and "rater" in text.lower()
+    lowered = text.lower()
+    assert "single" in lowered
+    assert "rater" in lowered
 
 
 # ---------------------------------------------------------------------------

@@ -26,9 +26,9 @@ from evals.dataset import card, check, hashes, lint, stability, tiers
         ),
         (["stability", "--emit"], stability, ["--emit"]),
         (
-            ["stability", "--ingest", "sheet.json", "--rounds-dir", "/tmp/r"],
+            ["stability", "--ingest", "sheet.json", "--rounds-dir", "rounds"],
             stability,
-            ["--ingest", "sheet.json", "--rounds-dir", "/tmp/r"],
+            ["--ingest", "sheet.json", "--rounds-dir", "rounds"],
         ),
     ],
 )
