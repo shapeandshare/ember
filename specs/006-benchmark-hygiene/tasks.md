@@ -90,14 +90,14 @@ comparison view renders. No other story is needed.
 
 ### Tests for User Story 2 ⚠️ (write first, confirm failing)
 
-- [ ] T014 [P] [US2] Create `tests/test_benchmark_comparison.py`: find the newest MPS bundle and the newest CUDA bundle among `benchmark/*/model.json` whose `meta.dataset_content_sha256` equals the current content hash; assert both are `dtype: float16`; assert their `settings` differ only in `device`; assert both carry `recipe_sha256`; render the pair through `evals.eval.report_compare` and assert the view names any per-recipe difference. Must FAIL until T015 lands the MPS bundle
+- [X] T014 [P] [US2] Create `tests/test_benchmark_comparison.py`: find the newest MPS bundle and the newest CUDA bundle among `benchmark/*/model.json` whose `meta.dataset_content_sha256` equals the current content hash; assert both are `dtype: float16`; assert their `settings` differ only in `device`; assert both carry `recipe_sha256`; render the pair through `evals.eval.report_compare` and assert the view names any per-recipe difference. Must FAIL until T015 lands the MPS bundle
 
 ### Implementation for User Story 2
 
-- [ ] T015 [US2] Run the MPS half on this machine: `EMBER_DEVICE=mps ember eval run --deployment-label "Local (MPS)"` (or the MPS server URL), then `ember eval snapshot`; commit the new `benchmark/<mps-run-id>/` bundle
-- [ ] T016 [US2] Confirm the CUDA half: `benchmark/17f0b0ad…_20261012T012758Z/` is on the same content hash with `dtype: float16`; `ember eval report --compare <mps> <cuda>` renders side by side with any difference named and the numerics note
-- [ ] T017 [US2] Confirm the leaderboard holds two rows: the MPS bundle's `deployment_key` (`Local (MPS)|mps`) differs from the CUDA one; extend `tests/test_site_leaderboard.py` to assert both rows render once both bundles exist
-- [ ] T018 [US2] Run `make check`; the gate test (T014) now passes
+- [X] T015 [US2] Run the MPS half on this machine: `EMBER_DEVICE=mps ember eval run --deployment-label "Local (MPS)"` (or the MPS server URL), then `ember eval snapshot`; commit the new `benchmark/<mps-run-id>/` bundle
+- [X] T016 [US2] Confirm the CUDA half: `benchmark/17f0b0ad…_20261012T012758Z/` is on the same content hash with `dtype: float16`; `ember eval report --compare <mps> <cuda>` renders side by side with any difference named and the numerics note
+- [X] T017 [US2] Confirm the leaderboard holds two rows: the MPS bundle's `deployment_key` (`Local (MPS)|mps`) differs from the CUDA one; extend `tests/test_site_leaderboard.py` to assert both rows render once both bundles exist
+- [X] T018 [US2] Run `make check`; the gate test (T014) now passes
 
 **Checkpoint**: Both phase gates' evidence exists; US2 works without US1.
 
