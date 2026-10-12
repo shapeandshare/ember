@@ -415,6 +415,8 @@ base URL and MCP stdio parameters for integration tests.
 | `tests/test_eval_report.py` | Report generation: HTML structure, Markdown fidelity, chart output |
 | `tests/test_eval_report_phase0.py` | Phase 0 report additions: scales definitions, legends, headline scope, capability/risk/tokens/consistency sections, `tokens.svg` |
 | `tests/test_dataset_tooling.py` / `test_dataset_hashes.py` / `test_dataset_lint.py` / `test_dataset_card_check.py` | Dataset records (`Source`, `Item`, `Scale`, `RecipeSpec`); io and the content/recipe/file hashes; splitting, leakage, dedup, lint rules, `no-live-secret`; the data card, the provenance check, protocol versions, tiers |
+| `tests/test_dataset_stability.py` / `test_dataset_anchors.py` | Label-stability rounds (blinded emit, ingest validation, agreement, the single-rater rule) and per-level rubric anchors (validation plus the enforced `scale-anchored` lint rule) |
+| `tests/test_benchmark_comparison.py` | The controlled-comparison gate: MPS and CUDA bundles on the current dataset version, float16, identical settings, both leaderboard rows |
 | `tests/test_data_source_register.py` | Data-source register: row records, verdict rules, the committed `register.json`, the audit script |
 | `tests/test_risk_metrics.py` / `test_metrics_aggregate.py` | Dangerous-option recall; `aggregate` headline-only overall, capability, tokens, consistency, by-source-kind, tiers |
 | `tests/test_cli_eval_dataset.py` | `ember eval dataset {lint,card,hash,check,tier}` wiring and `--dataset` |
