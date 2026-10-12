@@ -229,6 +229,28 @@ def _risk_cell(row: dict[str, Any]) -> str:
     return f'<td title="{missed} dangerous options missed">{text}</td>'
 
 
+def _probe_cell(row: dict[str, Any]) -> str:
+    """The long-context shape: cap / first-drop / worst depth, or not measured."""
+    probe = row.get("probe")
+    if not probe:
+        return "<td>not measured</td>"
+    cap = probe.get("request_cap")
+    drop = probe.get("first_drop_length")
+    depth = probe.get("worst_depth")
+    cap_text = f"{cap:,}" if cap else "—"
+    drop_text = f"{drop:,}" if drop else "—"
+    depth_text = escape(str(depth)) if depth else "—"
+    return f"<td>cap {cap_text} · drop {drop_text} · {depth_text}</td>"
+
+
+def _tiers_cell(row: dict[str, Any]) -> str:
+    """Non-easy accuracy, so a strong headline cannot hide the hard slice."""
+    tiers = row.get("tiers")
+    if not tiers or tiers.get("non_easy_accuracy") is None:
+        return "<td>—</td>"
+    return f"<td>{_pct(tiers['non_easy_accuracy'])}%</td>"
+
+
 def _leaderboard_table_html(rows: list[dict[str, Any]]) -> str:
     categories = [
         c for c in RECIPES if any(c in (r.get("recipes") or {}) for r in rows)
@@ -236,8 +258,9 @@ def _leaderboard_table_html(rows: list[dict[str, Any]]) -> str:
     recipe_headers = "".join(f"<th>{escape(RECIPES[c].title)}</th>" for c in categories)
     header = (
         "<tr><th>Model</th><th>Deployment</th><th>Device</th>"
-        f"<th>Headline</th><th>Items correct</th>{recipe_headers}"
-        "<th>Capability</th><th>Dangerous recall</th><th>Latency p50</th>"
+        f"<th>Headline</th><th>Items correct</th><th>Non-easy</th>{recipe_headers}"
+        "<th>Capability</th><th>Dangerous recall</th><th>Long context</th>"
+        "<th>Latency p50</th>"
         "<th>ember version</th><th>Run at</th></tr>"
     )
     body_rows = []
@@ -266,9 +289,11 @@ def _leaderboard_table_html(rows: list[dict[str, Any]]) -> str:
             f"<td>{escape(row['device'] or '?')}</td>"
             f"{_headline_cell(row)}"
             f"<td>{item_accuracy}</td>"
+            f"{_tiers_cell(row)}"
             f"{''.join(_recipe_cell(row, c) for c in categories)}"
             f"<td>{capability_text}</td>"
             f"{_risk_cell(row)}"
+            f"{_probe_cell(row)}"
             f"<td>{latency}</td>"
             f"<td>{_version_cell(row)}</td>"
             f"<td>{escape(row['run_at'])}</td>"

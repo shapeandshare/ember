@@ -1,0 +1,24 @@
+{
+  "session_id": "fixture-session-1",
+  "category": "failure_triage",
+  "question_id": "failure_kind",
+  "question": {
+    "type": "choice",
+    "criteria": {
+      "flaky": "a flaky test or environment issue",
+      "real": "a genuine product failure"
+    }
+  },
+  "turns": [
+    {
+      "role": "user",
+      "content": "The CI job failed on the fixtures test after a network timeout while fetching the third-party endpoint."
+    },
+    {
+      "role": "agent",
+      "content": "Re-running the job before investigating further."
+    }
+  ],
+  "reviewed_choice": "flaky",
+  "acted_choice": "real"
+}

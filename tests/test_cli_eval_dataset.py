@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 from ember import cli
-from evals.dataset import card, check, hashes, lint, tiers
+from evals.dataset import card, check, hashes, kinds, lint, stability, tiers
 
 
 @pytest.mark.parametrize(
@@ -24,6 +24,13 @@ from evals.dataset import card, check, hashes, lint, tiers
             tiers,
             ["--from", "bench", "--dataset", "x.jsonl"],
         ),
+        (["stability", "--emit"], stability, ["--emit"]),
+        (
+            ["stability", "--ingest", "sheet.json", "--rounds-dir", "rounds"],
+            stability,
+            ["--ingest", "sheet.json", "--rounds-dir", "rounds"],
+        ),
+        (["kind", "--json"], kinds, ["--json"]),
     ],
 )
 def test_eval_dataset_dispatches_to_the_module_main(
@@ -82,3 +89,41 @@ def test_eval_run_resume_and_snapshot_rebuild_dispatch(
     )
     assert cli.main(["eval", "snapshot", "--rebuild", "clef-flash_x"]) == 0
     assert calls == [["--rebuild", "clef-flash_x"]]
+
+
+def test_eval_run_forwards_the_deployment_label(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The deployment label reaches run_evals from the flag and the environment.
+
+    Without this, every CLI-driven benchmark records the generic derived label,
+    so different remote deployments collide on one leaderboard row.
+    """
+    from evals.eval import run_evals
+
+    seen: dict[str, object] = {}
+
+    def fake_run(server: str, **kwargs: object) -> int:
+        seen.update(kwargs)
+        return 0
+
+    monkeypatch.setattr(run_evals, "run_evals", fake_run)
+    assert cli.main(["eval", "run", "--deployment-label", "Remote hosted - X"]) == 0
+    assert seen["deployment_label"] == "Remote hosted - X"
+
+    seen.clear()
+    monkeypatch.setenv("EMBER_DEPLOYMENT_LABEL", "Remote hosted - Y")
+    assert cli.main(["eval", "run"]) == 0
+    assert seen["deployment_label"] == "Remote hosted - Y"
+
+
+def test_eval_capture_dispatches_through_the_passthrough(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`ember eval capture import ...` forwards its args unchanged."""
+    from evals.dataset import capture
+
+    received: list[list[str]] = []
+    monkeypatch.setattr(capture, "main", lambda argv: received.append(list(argv)) or 0)
+    assert cli.main(["eval", "capture", "import", "t.json", "r.json"]) == 0
+    assert received == [["import", "t.json", "r.json"]]

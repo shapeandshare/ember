@@ -641,6 +641,17 @@ records every dataset version ever published (and each protocol rule and scale n
 version it first applies to), and each release's changelog carries a
 `Benchmark dataset: <content hash>` line naming the version it was measured on.
 
+Phase 1 of the benchmark programme adds hygiene. The `risk` and `effort` recipes carry
+rubric anchors at every level and publish a label-stability measurement from a blinded
+re-label round — single-rater, and the report says so. The same dataset runs at float16
+on MPS and on a CUDA deployment as one controlled comparison, committed as a pair of
+bundles with a build gate. Every item carries a kind and a difficulty tier (annotations
+that never change the dataset version), and the report separates non-easy accuracy.
+Every leaderboard row carries its long-context shape — request cap, first-drop length,
+worst depth — or says "not measured" until a probe run exists. Real agent sessions can
+become candidate items through `ember eval capture import`, which refuses any session
+without a redaction record or with a surviving secret; the model is never used to label.
+
 A run can be interrupted and resumed (`ember eval run --resume`) as long as the dataset
 version, recipes, model, and settings match its manifest; `ember eval snapshot --rebuild`
 re-renders an existing bundle from its stored trace after the report code changes, without

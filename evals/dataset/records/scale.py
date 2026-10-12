@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .dangerous_end import DangerousEnd
 
@@ -30,6 +30,9 @@ class Scale(BaseModel):
     since : str
         The dataset version (content hash) these rubric anchors first apply
         to (FR-046); a changed pole is recorded under the version it starts with.
+    anchors : list[str]
+        Per-level rubric text, lowest first, one per level; the lint's
+        ``scale-anchored`` rule checks the count and that neighbours differ.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -42,6 +45,17 @@ class Scale(BaseModel):
     dangerous_end: DangerousEnd
     dangerous_from: int | None = Field(default=None, ge=0)
     since: str = Field(pattern=r"^[0-9a-f]{64}$")
+    anchors: list[str] = Field(
+        default_factory=list,
+        description="Per-level rubric text, lowest first, one per level.",
+    )
+
+    @field_validator("anchors")
+    @classmethod
+    def _anchors_non_empty(cls, value: list[str]) -> list[str]:
+        if any(not anchor.strip() for anchor in value):
+            raise ValueError("rubric anchors must be non-empty")
+        return value
 
     @model_validator(mode="after")
     def _dangerous_from_matches_end(self) -> Scale:

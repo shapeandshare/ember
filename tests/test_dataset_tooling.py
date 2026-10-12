@@ -105,6 +105,7 @@ from pydantic import ValidationError
                 "template-share",
                 "scale-declared",
                 "dangerous-set-declared",
+                "scale-anchored",
                 "source-resolves",
                 "family-split",
                 "split-pinned",

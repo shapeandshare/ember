@@ -200,10 +200,7 @@ def test_iam_resources_scoped() -> None:
                         "AWS::Region",
                         "AWS::AccountId",
                     )
-                ), (
-                    "IAM Resource not scoped to this deployment, cache, or account:"
-                    f" {r}"
-                )
+                ), f"IAM Resource not scoped to this deployment, cache, or account: {r}"
 
 
 def test_iam_kms_decrypt_scoped_to_ssm() -> None:

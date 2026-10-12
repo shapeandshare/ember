@@ -14,6 +14,7 @@ class LintRule(StrEnum):
     template_share = "template-share"
     scale_declared = "scale-declared"
     dangerous_set_declared = "dangerous-set-declared"
+    scale_anchored = "scale-anchored"
     source_resolves = "source-resolves"
     family_split = "family-split"
     split_pinned = "split-pinned"

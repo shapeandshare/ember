@@ -22,7 +22,8 @@ def cmd_eval_run(args: argparse.Namespace) -> int:
     ----------
     args : argparse.Namespace
         Parsed CLI arguments; uses ``args.server``, ``args.split``,
-        ``args.category``, ``args.dry_run``, and ``args.dataset``.
+        ``args.category``, ``args.dry_run``, ``args.dataset``, and
+        ``args.deployment_label``.
 
     Returns
     -------
@@ -42,6 +43,10 @@ def cmd_eval_run(args: argparse.Namespace) -> int:
         dry_run=args.dry_run,
         dataset_path=Path(args.dataset),
         resume=getattr(args, "resume", None),
+        deployment_label=(
+            getattr(args, "deployment_label", None)
+            or os.environ.get("EMBER_DEPLOYMENT_LABEL")
+        ),
     )
 
 
@@ -168,6 +173,27 @@ def cmd_eval_context(args: argparse.Namespace) -> int:
     return context_main(list(args.context_args))
 
 
+def cmd_eval_capture(args: argparse.Namespace) -> int:
+    """Convert a consented, redacted session into a candidate item.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; ``args.capture_args`` pass through to
+        ``evals/dataset/capture.py`` unchanged.
+
+    Returns
+    -------
+    int
+        Exit code from ``capture.main``.
+    """
+    try:
+        from evals.dataset.capture import main as capture_main
+    except ImportError as exc:
+        raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
+    return capture_main(list(args.capture_args))
+
+
 def cmd_eval_dataset(args: argparse.Namespace) -> int:
     """Run a dataset tooling command (``ember eval dataset <subcommand>``).
 
@@ -183,7 +209,7 @@ def cmd_eval_dataset(args: argparse.Namespace) -> int:
         Exit code from the module's ``main``.
     """
     try:
-        from evals.dataset import card, check, hashes, lint, tiers
+        from evals.dataset import card, check, hashes, kinds, lint, stability, tiers
     except ImportError as exc:
         raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
     modules = {
@@ -192,6 +218,8 @@ def cmd_eval_dataset(args: argparse.Namespace) -> int:
         "hash": hashes.main,
         "check": check.main,
         "tier": tiers.main,
+        "stability": stability.main,
+        "kind": kinds.main,
     }
     argv: list[str] = []
     if getattr(args, "benchmark_dir", None):
@@ -204,4 +232,16 @@ def cmd_eval_dataset(args: argparse.Namespace) -> int:
         argv.append("--json")
     if getattr(args, "check", False):
         argv.append("--check")
+    if getattr(args, "emit", False):
+        argv.append("--emit")
+    if getattr(args, "ingest", None):
+        argv += ["--ingest", str(args.ingest)]
+    if getattr(args, "report", False):
+        argv.append("--report")
+    if getattr(args, "round_id", None):
+        argv += ["--round", str(args.round_id)]
+    if getattr(args, "rounds_dir", None):
+        argv += ["--rounds-dir", str(args.rounds_dir)]
+    if getattr(args, "out", None):
+        argv += ["--out", str(args.out)]
     return modules[args.dataset_command](argv)

@@ -14,6 +14,8 @@ Labelling protocol (each rule since the dataset version it first applies to):
 - Every `score` scale runs from least to most of the quantity its instruction names; index 0 is always the least. The expected score is read in those units. A scale is never reversed to make a label read naturally. (since `1e1bb88d47f0`)
 - For a `noul` question, P(true) is the probability of the condition the instruction names; the condition is phrased so that `true` is the pole that calls for caution. (since `1e1bb88d47f0`)
 
+Single rater: stability is one person's blinded re-label after a cooling-off period, not inter-rater agreement; the model never labels.
+
 ## `change_risk`
 
 - Items: 92 (dev 46, test 46); family `coding`; risk False; lint `report`
@@ -21,8 +23,8 @@ Labelling protocol (each rule since the dataset version it first applies to):
 - Rubric anchors since: {"risk": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"}
 - Kinds: {"untagged": 92}
 - Sources: {"authored": 92}
-- Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Easy items: 48; rater count 1; second review pending 0
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -58,8 +60,8 @@ Gaps:
 - Rubric anchors since: {"effort": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"}
 - Kinds: {"untagged": 76}
 - Sources: {"authored": 76}
-- Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Easy items: 25; rater count 1; second review pending 0
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -98,8 +100,8 @@ Gaps:
 - Rubric anchors since: {}
 - Kinds: {"untagged": 92}
 - Sources: {"authored": 92}
-- Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Easy items: 87; rater count 1; second review pending 0
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -134,8 +136,8 @@ Gaps:
 - Rubric anchors since: {}
 - Kinds: {"untagged": 108}
 - Sources: {"authored": 108}
-- Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Easy items: 88; rater count 1; second review pending 0
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -169,8 +171,8 @@ Gaps:
 - Rubric anchors since: {}
 - Kinds: {"untagged": 75}
 - Sources: {"authored": 75}
-- Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Easy items: 73; rater count 1; second review pending 0
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -202,8 +204,8 @@ Gaps:
 - Rubric anchors since: {}
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
-- Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Easy items: 8; rater count 1; second review pending 0
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -233,8 +235,8 @@ Gaps:
 - Rubric anchors since: {}
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
-- Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Easy items: 8; rater count 1; second review pending 0
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -260,8 +262,8 @@ Gaps:
 - Rubric anchors since: {"alert_level": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"}
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
-- Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Easy items: 8; rater count 1; second review pending 0
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -292,8 +294,8 @@ Gaps:
 - Rubric anchors since: {}
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
-- Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Easy items: 8; rater count 1; second review pending 0
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |

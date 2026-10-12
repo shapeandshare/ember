@@ -20,9 +20,11 @@ from .records.lint_finding import LintFinding
 from .records.register_row import RegisterRow
 from .records.source_kind import SourceKind
 from .records.split import Split
+from .records.stability_result import StabilityResult
 from .register import REGISTER_PATH, load
 from .scales import SCALES
 from .splitting import LOCK_PATH, read_lock
+from .stability import SINGLE_RATER, compute, load_rounds
 
 DATASET_DIR = Path(__file__).resolve().parent
 CARD_JSON = DATASET_DIR / "card.json"
@@ -43,6 +45,7 @@ def _recipe_card(
     register: Sequence[RegisterRow],
     findings: Sequence[LintFinding],
     recipe_hash: str,
+    stability: StabilityResult | None,
 ) -> dict[str, Any]:
     spec = RECIPES.get(category)
     per_label: dict[str, dict[str, dict[str, int]]] = defaultdict(
@@ -78,7 +81,7 @@ def _recipe_card(
         "source_shares": dict(sorted(sources.items())),
         "easy_items": sum(1 for i in rows if i.tier == "easy"),
         "external_sources": external,
-        "label_stability": None,
+        "label_stability": stability.model_dump() if stability else None,
         "inter_source_agreement": None,
         "rater_count": 1,
         "second_review_pending": sum(1 for i in rows if i.second_review),
@@ -110,6 +113,7 @@ def build(
     *,
     register_sha256: str | None,
     generated_from: str = DATASET_PATH.name,
+    stability: dict[str, StabilityResult] | None = None,
 ) -> dict[str, Any]:
     """Build the card from the dataset, the register, and the lint findings.
 
@@ -125,6 +129,8 @@ def build(
         The register file's hash, or ``None`` when there is no register.
     generated_from : str
         The dataset file name recorded in the card.
+    stability : dict[str, StabilityResult] | None, optional
+        The computed label stability per recipe, when rounds exist.
 
     Returns
     -------
@@ -135,6 +141,7 @@ def build(
     for item in items:
         by_recipe[item.category].append(item)
     hashes = recipe_hashes(items)
+    rounds = stability or {}
     return {
         "generated_from": generated_from,
         "dataset_content_sha256": dataset_content_sha256(items),
@@ -142,10 +149,34 @@ def build(
         "items": len(items),
         "protocol": [rule.model_dump() for rule in RULES],
         "recipes": {
-            category: _recipe_card(category, rows, register, findings, hashes[category])
+            category: _recipe_card(
+                category,
+                rows,
+                register,
+                findings,
+                hashes[category],
+                rounds.get(category),
+            )
             for category, rows in sorted(by_recipe.items())
         },
     }
+
+
+def _stability_line(value: dict[str, Any] | None) -> str:
+    """Render a recipe's label stability for the Markdown card."""
+    if not value:
+        return "none yet"
+    return (
+        f"agreement {value['agreement']:.0%}, unstable {len(value['unstable'])},"
+        f" rater count {value['rater_count']}"
+    )
+
+
+def _agreement_line(value: float | None) -> str:
+    """Render inter-source agreement, naming why it is absent when it is."""
+    if value is None:
+        return "none yet (no imports)"
+    return f"{value:.0%}"
 
 
 def render_markdown(card: dict[str, Any]) -> str:
@@ -165,6 +196,8 @@ def render_markdown(card: dict[str, Any]) -> str:
             for rule in card["protocol"]
         ],
         "",
+        SINGLE_RATER,
+        "",
     ]
     for category, recipe in card["recipes"].items():
         lines += [
@@ -180,9 +213,10 @@ def render_markdown(card: dict[str, Any]) -> str:
             f"- Easy items: {recipe['easy_items']}; "
             f"rater count {recipe['rater_count']}; "
             f"second review pending {recipe['second_review_pending']}",
-            f"- Label stability: {recipe['label_stability']}; inter-source agreement: "
-            f"{recipe['inter_source_agreement']}; acted-differs share: "
-            f"{recipe['acted_differs_share']}",
+            f"- Label stability: {_stability_line(recipe['label_stability'])}; "
+            f"inter-source agreement: "
+            f"{_agreement_line(recipe['inter_source_agreement'])}; acted-differs "
+            f"share: {recipe['acted_differs_share']}",
             "",
             "| Question | Label | dev | test |",
             "| --- | --- | --- | --- |",
@@ -215,12 +249,14 @@ def current(dataset_path: Path = DATASET_PATH) -> dict[str, Any]:
     register = load()
     findings = run_lint(items, read_lock(LOCK_PATH), register)
     digest = register_sha256(REGISTER_PATH) if REGISTER_PATH.exists() else None
+    stability = compute(load_rounds()) if dataset_path == DATASET_PATH else None
     return build(
         items,
         register,
         findings,
         register_sha256=digest,
         generated_from=dataset_path.name,
+        stability=stability,
     )
 
 

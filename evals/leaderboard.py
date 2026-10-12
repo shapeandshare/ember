@@ -20,6 +20,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
 
+from .context.link import probe_shape
 from .dataset.recipes import headline_categories
 
 Record = dict[str, Any]
@@ -235,7 +236,7 @@ def _row(group: Sequence[Model], hashes: Mapping[str, str], version: str) -> Rec
         columns, incomplete, headline = {}, False, _overall(summary["overall"])
     latency = newest.get("latency") or {}
     numbers = headline or dict.fromkeys(_overall(summary["overall"]))
-    return {
+    record: Record = {
         "run_id": meta["run_id"],
         "run_at": meta["run_at"],
         **_identity(meta),
@@ -251,6 +252,9 @@ def _row(group: Sequence[Model], hashes: Mapping[str, str], version: str) -> Rec
         "tiers": _tiers(summary),
         "single_rater": True,
     }
+    probe = probe_shape(record)
+    record["probe"] = probe.model_dump() if probe else None
+    return record
 
 
 def _rows(version: str, runs: Sequence[Model]) -> list[Record]:

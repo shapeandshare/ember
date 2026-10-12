@@ -1,0 +1,6 @@
+{
+  "session_id": "fixture-session-1",
+  "redaction_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "method": "scrubbed host names, tokens, and user identifiers",
+  "redacted_on": "2026-10-11"
+}

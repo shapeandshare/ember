@@ -265,3 +265,23 @@ def test_card_reports_the_acted_differs_share_of_captured_items() -> None:
         ]["acted_differs_share"]
         is None
     )
+
+
+def test_card_publishes_stability_and_the_single_rater_rule() -> None:
+    """The card carries label stability and names why imports are absent."""
+    from evals.dataset.records.stability_result import StabilityResult
+
+    result = StabilityResult(agreement=0.9, by_label={"0": 1.0}, unstable=["r1"])
+    built = card.build(
+        [item("a1")],
+        [],
+        [],
+        register_sha256="e" * 64,
+        stability={"routing": result},
+    )
+    routing = built["recipes"]["routing"]
+    assert routing["label_stability"]["agreement"] == 0.9
+    assert routing["inter_source_agreement"] is None
+    markdown = card.render_markdown(built)
+    assert "Single rater" in markdown
+    assert "none yet (no imports)" in markdown

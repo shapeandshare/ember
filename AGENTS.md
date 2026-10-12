@@ -67,7 +67,7 @@ after changing brand assets. Do not invent missing provenance or license facts.
 | Site build and deploy | `scripts/build_site_docs.py`, `site/_data/docs.json`, `.github/workflows/deploy-site.yml` |
 | Landing-page hero questions | `site/_data/hero_questions.json` (wording); percentages filled from the newest `benchmark/` run by `scripts/build_site_benchmark.py` |
 | Distribution (PyPI publish, MCP Registry entry, Claude Code plugin) | `.github/workflows/release-ember.yml`, `server.json`, `.claude-plugin/marketplace.json`, `packages/claude-plugin/` |
-| Benchmark runs (data the site renders) | `benchmark/<run-id>/`, written by `scripts/snapshot_evals.py` (via `evals/eval/snapshot_evals.py`) |
+| Benchmark runs (data the site renders) | `benchmark/<run-id>/`, written by `scripts/snapshot_evals.py` (via `evals/eval/snapshot_evals.py`); Phase 1 adds label-stability rounds (`evals/dataset/stability/`), the MPS/CUDA comparison gate (`tests/test_benchmark_comparison.py`), and the per-row probe shape (`evals/context/link.py`) |
 
 ## Project structure
 
@@ -415,6 +415,8 @@ base URL and MCP stdio parameters for integration tests.
 | `tests/test_eval_report.py` | Report generation: HTML structure, Markdown fidelity, chart output |
 | `tests/test_eval_report_phase0.py` | Phase 0 report additions: scales definitions, legends, headline scope, capability/risk/tokens/consistency sections, `tokens.svg` |
 | `tests/test_dataset_tooling.py` / `test_dataset_hashes.py` / `test_dataset_lint.py` / `test_dataset_card_check.py` | Dataset records (`Source`, `Item`, `Scale`, `RecipeSpec`); io and the content/recipe/file hashes; splitting, leakage, dedup, lint rules, `no-live-secret`; the data card, the provenance check, protocol versions, tiers |
+| `tests/test_dataset_stability.py` / `test_dataset_anchors.py` | Label-stability rounds (blinded emit, ingest validation, agreement, the single-rater rule) and per-level rubric anchors (validation plus the enforced `scale-anchored` lint rule) |
+| `tests/test_benchmark_comparison.py` | The controlled-comparison gate: MPS and CUDA bundles on the current dataset version, float16, identical settings, both leaderboard rows |
 | `tests/test_data_source_register.py` | Data-source register: row records, verdict rules, the committed `register.json`, the audit script |
 | `tests/test_risk_metrics.py` / `test_metrics_aggregate.py` | Dangerous-option recall; `aggregate` headline-only overall, capability, tokens, consistency, by-source-kind, tiers |
 | `tests/test_cli_eval_dataset.py` | `ember eval dataset {lint,card,hash,check,tier}` wiring and `--dataset` |
