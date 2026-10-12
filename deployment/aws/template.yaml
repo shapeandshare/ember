@@ -110,6 +110,16 @@ Resources:
                   - ssm:DeleteParameter
                 Resource:
                   - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/ember/${DeploymentName}/tailscale-join-key"
+              # R8: decrypt SecureString parameters (join key, server token)
+              - Sid: DecryptSecureStrings
+                Effect: Allow
+                Action:
+                  - kms:Decrypt
+                Resource:
+                  - !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*"
+                Condition:
+                  StringEquals:
+                    kms:ViaService: !Sub "ssm.${AWS::Region}.amazonaws.com"
               # R8: download model weights from the cache bucket (scoped to model prefix)
               - Sid: ReadModelCacheObjects
                 Effect: Allow

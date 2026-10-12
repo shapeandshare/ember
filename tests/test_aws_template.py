@@ -179,7 +179,7 @@ def test_iam_no_star_resource() -> None:
 
 
 def test_iam_resources_scoped() -> None:
-    """Every IAM Resource must reference DeploymentName, CacheBucket, or ModelPrefix."""
+    """Every IAM Resource must be scoped to this deployment, cache, or account."""
     tmpl = _load(_TEMPLATE)
     role_props = _props(tmpl, "InstanceRole")
     policies = role_props.get("Policies", [])
@@ -197,14 +197,38 @@ def test_iam_resources_scoped() -> None:
                         "DeploymentName",
                         "CacheBucket",
                         "ModelPrefix",
-                        "${DeploymentName}",
-                        "${CacheBucket}",
-                        "${ModelPrefix}",
+                        "AWS::Region",
+                        "AWS::AccountId",
                     )
                 ), (
-                    "IAM Resource not scoped to"
-                    f" DeploymentName/CacheBucket/ModelPrefix: {r}"
+                    "IAM Resource not scoped to this deployment, cache, or account:"
+                    f" {r}"
                 )
+
+
+def test_iam_kms_decrypt_scoped_to_ssm() -> None:
+    """The role decrypts SecureStrings through SSM only (R8)."""
+    tmpl = _load(_TEMPLATE)
+    role_props = _props(tmpl, "InstanceRole")
+    statements = [
+        stmt
+        for policy in role_props.get("Policies", [])
+        for stmt in policy.get("PolicyDocument", {}).get("Statement", [])
+    ]
+
+    decrypt = [
+        stmt for stmt in statements if "kms:Decrypt" in _flatten(stmt.get("Action", []))
+    ]
+    assert len(decrypt) == 1, "expected exactly one kms:Decrypt statement"
+    stmt = decrypt[0]
+    condition = " ".join(_all_strings(stmt.get("Condition", {})))
+    assert "kms:ViaService" in condition, (
+        "kms:Decrypt must be conditioned on kms:ViaService"
+    )
+    assert "ssm." in condition, "the condition must constrain use to the SSM service"
+    assert "amazonaws.com" in condition, "the condition must name the AWS domain"
+    resources = _flatten(stmt.get("Resource", ""))
+    assert "*" not in resources, "kms:Decrypt must not use a '*' resource"
 
 
 def test_iam_names_are_region_scoped() -> None:
