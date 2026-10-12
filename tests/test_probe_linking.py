@@ -94,9 +94,7 @@ def test_the_leaderboard_row_carries_the_probe_or_none() -> None:
     from evals.leaderboard import build
 
     bundle = (
-        _Path(__file__).resolve().parents[1]
-        / "benchmark"
-        / "flash_20261012T014702Z"
+        _Path(__file__).resolve().parents[1] / "benchmark" / "flash_20261012T014702Z"
     )
     model = _json.loads((bundle / "model.json").read_text(encoding="utf-8"))
     board = build([model])

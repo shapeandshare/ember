@@ -114,3 +114,15 @@ def test_eval_run_forwards_the_deployment_label(
     monkeypatch.setenv("EMBER_DEPLOYMENT_LABEL", "Remote hosted - Y")
     assert cli.main(["eval", "run"]) == 0
     assert seen["deployment_label"] == "Remote hosted - Y"
+
+
+def test_eval_capture_dispatches_through_the_passthrough(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`ember eval capture import ...` forwards its args unchanged."""
+    from evals.dataset import capture
+
+    received: list[list[str]] = []
+    monkeypatch.setattr(capture, "main", lambda argv: received.append(list(argv)) or 0)
+    assert cli.main(["eval", "capture", "import", "t.json", "r.json"]) == 0
+    assert received == [["import", "t.json", "r.json"]]
