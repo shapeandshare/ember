@@ -1,3 +1,11 @@
+## v0.14.0 (2026-10-12)
+
+Benchmark dataset: 1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367
+
+### Feat
+
+- **evals**: benchmark hygiene Phase 1 — stability, comparison, anchors, tiers, probe shape, capture (#123)
+
 ## v0.13.0 (2026-10-12)
 
 Benchmark dataset: 1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367
