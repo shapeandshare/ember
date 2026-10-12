@@ -14,10 +14,11 @@ from ..splitting import LOCK_PATH, append_lock, assign_new, read_lock
 from .candidate_note import CandidateNote
 from .exclusions import MAX_GOLD, WORD_FLOOR, classify
 from .frontmatter import body_of, parse
+from .mine_error import MineError
 from .mine_summary import MineSummary
 from .sampling_manifest import SamplingManifest
 from .selection import RECIPE_SIZE, SEED, select
-from .snapshot import VaultSnapshot
+from .snapshot import VaultSnapshot, VaultSnapshotError
 from .snapshot_file import SnapshotFile
 from .tag_assignment import (
     CATEGORY as TAG_ASSIGNMENT,
@@ -31,6 +32,32 @@ DEFAULT_SOURCE: Final = Path(__file__).resolve().parents[3].parent / "oldgrowth"
 OLDGROWTH_PIN: Final = "692f4bb58b7f62105aeb73fba8dfee12bfdecd53"
 OLDGROWTH_REGISTER_ROW: Final = "oldgrowth-vault"
 MANIFEST_DIRNAME: Final = "mined"
+GRANT_FILE: Final = "LICENSES.md"
+GRANT_MARKER: Final = "ember benchmark reproduction"
+
+
+def _require_grant(source_dir: Path) -> None:
+    """Refuse when the repository's committed ``LICENSES.md`` records no grant.
+
+    Parameters
+    ----------
+    source_dir : Path
+        The source repository checkout.
+
+    Raises
+    ------
+    MineError
+        When the grant marker is absent (FR-012).
+    """
+    try:
+        text = VaultSnapshot(source_dir, "HEAD").read_file(GRANT_FILE)
+    except VaultSnapshotError:
+        text = ""
+    if GRANT_MARKER not in text:
+        raise MineError(
+            f"{GRANT_FILE} in {source_dir} records no written permission for mining "
+            f"(missing {GRANT_MARKER!r}); the copyright holder's grant is required."
+        )
 
 
 def _note_from(entry: SnapshotFile) -> CandidateNote:
@@ -83,6 +110,7 @@ def mine(
         Items written, candidates, and exclusion counts.
     """
     snapshot = VaultSnapshot(source_dir, commit).require()
+    _require_grant(source_dir)
     vocabulary = TagVocabulary.from_tags_md(snapshot.read("_meta/tags.md"))
     exclusions = []
     candidates: list[CandidateNote] = []

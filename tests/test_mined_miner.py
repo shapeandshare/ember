@@ -12,6 +12,7 @@ from evals.dataset.mined.exclusion_reason import ExclusionReason
 from evals.dataset.mined.exclusions import classify
 from evals.dataset.mined.frontmatter import NoteFrontmatter, body_of, parse
 from evals.dataset.mined.mine import mine
+from evals.dataset.mined.mine_error import MineError
 from evals.dataset.mined.selection import select
 from evals.dataset.mined.snapshot import VaultSnapshot, VaultSnapshotError
 from evals.dataset.mined.tag_assignment import build_item
@@ -236,3 +237,26 @@ def test_mine_writes_items_lock_and_manifest_idempotently(tmp_path: Path) -> Non
     assert reasons["Specs/047 Car Radio/047 Car Radio.md"] == "out_of_scope"
     lock_data = json.loads(lock.read_text(encoding="utf-8"))
     assert all(item_id in lock_data for item_id in manifest["item_ids"])
+
+
+def test_mine_refuses_when_the_grant_is_missing(tmp_path: Path) -> None:
+    vault = build_fixture_vault(tmp_path)
+    commit_change(vault.root, "LICENSES.md", "All rights reserved.\n")
+    with pytest.raises(MineError, match="grant"):
+        mine(
+            source_dir=vault.root,
+            commit=vault.commit,
+            dataset_path=tmp_path / "dataset.jsonl",
+            lock_path=tmp_path / "splits.lock",
+        )
+
+
+def test_mine_refuses_a_missing_commit(tmp_path: Path) -> None:
+    vault = build_fixture_vault(tmp_path)
+    with pytest.raises(VaultSnapshotError, match="0" * 40):
+        mine(
+            source_dir=vault.root,
+            commit="0" * 40,
+            dataset_path=tmp_path / "dataset.jsonl",
+            lock_path=tmp_path / "splits.lock",
+        )

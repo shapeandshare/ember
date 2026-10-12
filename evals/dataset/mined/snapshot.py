@@ -67,6 +67,10 @@ class VaultSnapshot:
         """Return one vault file's committed text."""
         return self._git("show", f"{self.commit}:{self._subdir}/{path}")
 
+    def read_file(self, path: str) -> str:
+        """Return any repository file's committed text, relative to the root."""
+        return self._git("show", f"{self.commit}:{path}")
+
     def files(self) -> Iterator[SnapshotFile]:
         """Yield every vault file, vault-relative and sorted by path."""
         for relative, _ in self._blobs():
