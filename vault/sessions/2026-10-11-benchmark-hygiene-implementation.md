@@ -15,7 +15,7 @@ updated: 2026-10-11
 ---
 # Session: benchmark-hygiene implementation (Phase 1, partial)
 
-Part of [[ember]]. Executed `/speckit.implement` on `specs/006-benchmark-hygiene/` — Phase 1 of the benchmark programme. **Both phase gates' machinery is done; the stability publication awaits the maintainer's blinded re-label.** 26 of 55 tasks landed, all committed and green.
+Part of [[ember]]. Executed `/speckit.implement` on `specs/006-benchmark-hygiene/` — Phase 1 of the benchmark programme. **43 of 55 tasks landed, all committed and green.** Both phase gates' machinery is complete; the stability ingest and the kind tagging are the deferred, labeling-shaped remainder.
 
 ## What shipped
 
@@ -24,13 +24,16 @@ Part of [[ember]]. Executed `/speckit.implement` on `specs/006-benchmark-hygiene
 - **US2 controlled comparison (T014–T018)** — the MPS full run (82.0% over 811 questions, 475 items, 0 errors, float16, `Local (MPS)`) committed as `benchmark/flash_20261012T014702Z/` beside the AWS CUDA bundle on the same content hash; `tests/test_benchmark_comparison.py` is the phase gate (float16 + per-recipe hashes, settings identical, devices differ, the compare view renders, both leaderboard rows). MPS and CUDA agree metric-for-metric.
 - **US3 anchors (T019–T025)** — `Scale` gains per-level anchors (non-empty entries), `evals/dataset/anchors.py` validates count/blanks/adjacent-duplicates against the question's criteria, a new always-enforced `scale-anchored` lint rule wires it in, and `risk`, `effort`, `alert_level` carry written anchors that distinguish each level.
 - **Tier run (T031)** — `ember eval dataset tier` marked **353 of 475** items easy from the committed bundles; the content hash is unchanged (annotations only) and the card's `easy_items` are real.
+- **US5 probe shape (T034–T039, T041)** — `ProbeManifest.dataset_content_sha256`, `ProbeShape`, `evals/context/link.py` (match by device, dtype, dataset version, model repo), `probe` on every leaderboard row, and the site's "Long context" column; every row honestly says "not measured" until T040's probe snapshot lands.
+- **US6 capture (T042–T047)** — a consented, redacted `SessionTranscript` + matching `RedactionRecord` converts to a candidate item (gold = reviewed choice; `acted` kept; disagreements tagged; source `captured`). Refusals write nothing and name the reason: a missing/mismatched redaction record, or any surviving live secret. Wired as `ember eval capture import`; candidates land in `evals/dataset/candidates/`.
+- **US7 card (T048–T051)** — the inter-source agreement renders as "none yet (no imports)", and tests pin the stability value, the reason line, and the single-rater sentence.
 
 ## What remains
 
-- **T012 (human)** — fill the emitted sheet after the cooling-off window and `--ingest`; then `ember eval dataset card` publishes the agreement. This is the last piece of the stability gate.
-- **US4 remainder** — the 475-item `ItemKind` tagging (editorial) and the resulting exemptions; the `kind` audit command and lint tests.
-- **US5 probe shape** — `ProbeManifest.dataset_content_sha256`, `ProbeShape`, `evals/context/link.py`, the leaderboard `probe` field, the site column; the probe snapshot itself takes hours and may land last ("not measured" until then).
-- **US6 capture** — the transcript→candidate pipeline; **US7** — the card's remaining hygiene edition; **Polish** — README, the quickstart walk-through, the coverage ratchet.
+- **T012 (skipped by maintainer direction)** — the blinded re-label ingest; the emitted sheet (168 items) waits. The tooling, validation, and publication path are complete and tested.
+- **US4's kind slice (T026–T030, T032–T033)** — the 475-item `ItemKind` editorial tagging, its exemptions, the `kind` audit command, and the lint tests; the tier half (T031) is done.
+- **T040** — the long-context probe snapshot (hours on MPS).
+- **Docs/quickstart (T052's Benchmark half, T053, T055)** — README prose, the full quickstart walk, and the coverage ratchet.
 
 ## Relevance
 
