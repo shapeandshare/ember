@@ -119,6 +119,7 @@ def _manifest(**overrides: object) -> ProbeManifest:
         "models": {"flash": _model()},
         "dataset_path": "evals/clef-flash.jsonl",
         "dataset_sha256": "0" * 64,
+        "dataset_content_sha256": "1" * 64,
         "item_ids": ["a1", "b2"],
         "excluded": {"m1": "media item"},
         "filler_path": "evals/context/filler.txt",

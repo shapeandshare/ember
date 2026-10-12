@@ -351,3 +351,21 @@ def test_hero_questions_cover_every_recipe_equally() -> None:
     )
     per_recipe = Counter(entry["id"].rsplit("_", 1)[0] for entry in entries)
     assert len(set(per_recipe.values())) == 1, per_recipe
+
+
+def test_probe_cell_renders_figures_or_not_measured() -> None:
+    """The leaderboard's long-context cell names the figures, or the gap."""
+    module = _load_build_site_benchmark()
+    assert "not measured" in module._probe_cell({})
+    cell = module._probe_cell(
+        {
+            "probe": {
+                "request_cap": 24576,
+                "first_drop_length": 32768,
+                "worst_depth": "end",
+            }
+        }
+    )
+    assert "24,576" in cell
+    assert "32,768" in cell
+    assert "end" in cell

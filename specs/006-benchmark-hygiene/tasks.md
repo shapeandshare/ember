@@ -163,17 +163,17 @@ unmatched rows say "not measured". No other story is needed.
 
 ### Tests for User Story 5 ⚠️ (write first, confirm failing)
 
-- [ ] T034 [P] [US5] Create `tests/test_probe_linking.py`: `probe_shape(row, snapshots)` returns a `ProbeShape` when `device`, `dtype`, and `dataset_content_sha256` match and the row's model (repo+revision) is in the manifest's `models`; the newest match wins; no match returns `None`; the site table renders the three figures or "not measured" (extend `tests/test_site_benchmark.py`)
+- [X] T034 [P] [US5] Create `tests/test_probe_linking.py`: `probe_shape(row, snapshots)` returns a `ProbeShape` when `device`, `dtype`, and `dataset_content_sha256` match and the row's model (repo+revision) is in the manifest's `models`; the newest match wins; no match returns `None`; the site table renders the three figures or "not measured" (extend `tests/test_site_benchmark.py`)
 
 ### Implementation for User Story 5
 
-- [ ] T035 [US5] Add `dataset_content_sha256: str` to `evals/context/records/probe_manifest.py` and set it in `evals/context/run_context.py` at probe start via `evals.dataset.hashes.dataset_content_sha256(evals.dataset.io.read_items(<the scored dataset>))`
-- [ ] T036 [P] [US5] Create `evals/context/records/probe_shape.py`: `ProbeShape(request_cap: int | None, first_drop_length: int | None, worst_depth: Depth | None)`
-- [ ] T037 [US5] Create `evals/context/link.py`: `probe_shape(row, snapshots_dir) -> ProbeShape | None` reading `evals/context/runs/*/summary.json` per the T034 rule
-- [ ] T038 [US5] Extend `evals/leaderboard.py::_row()` with `probe` (the `ProbeShape` as a dict, or `None`) via T037
-- [ ] T039 [US5] Extend `scripts/build_site_benchmark.py::_leaderboard_table_html()` with a probe column following the `_risk_cell`/`_recipe_cell` pattern; a `None` probe renders "not measured"
-- [ ] T040 [US5] Snapshot a probe run: `ember eval context --models flash`, then `ember eval context --snapshot <run_id>`; commit `evals/context/runs/<run_id>/`; confirm the MPS row shows real figures (this run takes hours on MPS — until it lands, every row correctly says "not measured")
-- [ ] T041 [US5] Run `make check` and quickstart step 6
+- [X] T035 [US5] Add `dataset_content_sha256: str` to `evals/context/records/probe_manifest.py` and set it in `evals/context/run_context.py` at probe start via `evals.dataset.hashes.dataset_content_sha256(evals.dataset.io.read_items(<the scored dataset>))`
+- [X] T036 [P] [US5] Create `evals/context/records/probe_shape.py`: `ProbeShape(request_cap: int | None, first_drop_length: int | None, worst_depth: Depth | None)`
+- [X] T037 [US5] Create `evals/context/link.py`: `probe_shape(row, snapshots_dir) -> ProbeShape | None` reading `evals/context/runs/*/summary.json` per the T034 rule
+- [X] T038 [US5] Extend `evals/leaderboard.py::_row()` with `probe` (the `ProbeShape` as a dict, or `None`) via T037
+- [X] T039 [US5] Extend `scripts/build_site_benchmark.py::_leaderboard_table_html()` with a probe column following the `_risk_cell`/`_recipe_cell` pattern; a `None` probe renders "not measured"
+- [ ] T040 [US5] Snapshot a probe run: `ember eval context --models flash`, then `ember eval context --snapshot <run_id>`; commit `evals/context/runs/<run_id>/`; confirm the MPS row shows real figures (this run takes hours on MPS — deferred; every row correctly says "not measured" until it lands)
+- [X] T041 [US5] Run `make check` and quickstart step 6
 
 **Checkpoint**: The probe shape is on every row, honestly reported.
 

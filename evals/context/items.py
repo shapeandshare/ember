@@ -14,6 +14,7 @@ from typing import Any
 
 from ember import models
 
+from ..dataset.hashes import dataset_content_sha256
 from ..eval import provenance
 from .filler import FILLER_LICENCE, FILLER_PATH, FILLER_SHA256, FILLER_SOURCE
 from .records.depth import Depth
@@ -172,6 +173,7 @@ def build_manifest(
         },
         dataset_path=_relative(dataset_path),
         dataset_sha256=hashlib.sha256(dataset_path.read_bytes()).hexdigest(),
+        dataset_content_sha256=dataset_content_sha256(kept),
         item_ids=[str(item["id"]) for item in kept],
         excluded=excluded,
         filler_path=_relative(FILLER_PATH),

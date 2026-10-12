@@ -67,6 +67,7 @@ class ProbeManifest(BaseModel):
     models: dict[str, ProbeModel]
     dataset_path: str
     dataset_sha256: str
+    dataset_content_sha256: str
     item_ids: list[str]
     excluded: dict[str, str]
     filler_path: str
