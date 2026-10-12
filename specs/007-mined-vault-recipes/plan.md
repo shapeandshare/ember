@@ -68,16 +68,18 @@ specs/007-mined-vault-recipes/
 ### Source Code (repository root)
 
 ```text
-evals/dataset/mine.py           # CLI entry (main) + the MinedMiner composition root
 evals/dataset/mined/
 ├── __init__.py                 # bare package marker (Article X §10.1)
-├── snapshot.py                 # VaultSnapshot: read docs/vault at a pinned commit (read-only git)
+├── snapshot.py / snapshot_file.py   # VaultSnapshot + SnapshotFile (read-only git at the pin)
 ├── frontmatter.py              # note frontmatter parse (vault-audit pattern)
 ├── vocabulary.py               # as-read tags.md → TagVocabulary (five axes)
-├── exclusions.py               # ExclusionReason StrEnum + the declared selection rules
-├── selection.py                # seeded deterministic sampling across type/domain
+├── candidate_note.py           # CandidateNote value type
+├── exclusions.py               # classify() + ExclusionReason / ExclusionRecord
+├── selection.py                # seeded, type-spread pick
 ├── tag_assignment.py           # gold = the note's tags; deterministic candidate set
-└── emit.py                     # Item construction + write_items / lock integration
+├── sampling_manifest.py        # the committed run record
+├── mine_summary.py             # MineSummary
+└── mine.py                     # composition root + `ember eval mine` main
 
 evals/dataset/records/source.py        # change: `register_row` required for `mined`
 evals/dataset/records/register_row.py  # change: optional `permission` + used-row rule
@@ -93,7 +95,7 @@ tests/
 └── test_dataset_tooling.py         # fixture updated for the mined `register_row`
 ```
 
-**Structure Decision**: a new `evals/dataset/mined/` sub-package inside the existing dataset tooling, with module boundaries by responsibility (snapshot, vocabulary, exclusions, selection, extraction, emission), and one top-level CLI entry (`evals/dataset/mine.py`) wired like `capture`/`context`. No `ember/` runtime or serving-layer changes. Register, lint, hash, and check behaviour reuse the existing modules; the only schema change is additive. The miner emits standard items and standard register rows, so scoring machinery is untouched.
+**Structure Decision**: a new `evals/dataset/mined/` sub-package inside the existing dataset tooling, with module boundaries by responsibility (snapshot, vocabulary, exclusions, selection, extraction, composition), and the CLI entry (`evals/dataset/mined/mine.py`'s `main`) wired like `capture`/`context`. No `ember/` runtime or serving-layer changes. Register, lint, hash, and check behaviour reuse the existing modules; the only schema change is additive. The miner emits standard items and standard register rows, so scoring machinery is untouched.
 
 ## Complexity Tracking
 

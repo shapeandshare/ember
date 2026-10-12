@@ -2,16 +2,21 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
+from evals.dataset.io import read_items
 from evals.dataset.mined.candidate_note import CandidateNote
 from evals.dataset.mined.exclusion_reason import ExclusionReason
 from evals.dataset.mined.exclusions import classify
 from evals.dataset.mined.frontmatter import NoteFrontmatter, body_of, parse
+from evals.dataset.mined.mine import mine
 from evals.dataset.mined.selection import select
 from evals.dataset.mined.snapshot import VaultSnapshot, VaultSnapshotError
+from evals.dataset.mined.tag_assignment import build_item
 from evals.dataset.mined.vocabulary import TagVocabulary
+from evals.dataset.records.source_kind import SourceKind
 
 from tests.fixture_vault import build_fixture_vault, commit_change
 
@@ -171,3 +176,63 @@ def test_selection_returns_everything_when_fewer_than_the_count(
     candidates = _fixture_candidates(tmp_path)
     picked = select(candidates, count=65)
     assert len(picked) == len(candidates) >= 4
+
+
+def test_tag_assignment_item_is_deterministic_and_exact(tmp_path: Path) -> None:
+    snapshot, vocabulary = _fixture_snapshot(tmp_path)
+    entry = next(e for e in snapshot.files() if e.path == SNAPSHOT_NOTE)
+    note = _note_from_entry(entry)
+    first = build_item(
+        note, vocabulary, commit="a" * 40, register_row="oldgrowth-vault"
+    )
+    again = build_item(
+        note, vocabulary, commit="a" * 40, register_row="oldgrowth-vault"
+    )
+    assert first == again
+    assert set(first.gold_labels) == set(first.questions)
+    gold = {tag for tag, value in first.gold_labels.items() if value}
+    assert gold == set(note.tags)
+    assert set(note.tags) <= set(first.questions)
+    assert len(first.questions) == 11
+    assert all(question["type"] == "noul" for question in first.questions.values())
+    assert note.title in first.state
+    assert "Controlled tag vocabulary (as read):" in first.state
+    assert first.id == "tag_assignment-decisions-rust-gdscript-split-architecture"
+
+
+def test_mine_writes_items_lock_and_manifest_idempotently(tmp_path: Path) -> None:
+    vault = build_fixture_vault(tmp_path)
+    dataset = tmp_path / "dataset.jsonl"
+    lock = tmp_path / "splits.lock"
+    first = mine(
+        source_dir=vault.root,
+        commit=vault.commit,
+        dataset_path=dataset,
+        lock_path=lock,
+    )
+    assert first.items_written == 4
+    assert first.candidates == 4
+    before = dataset.read_text(encoding="utf-8")
+    second = mine(
+        source_dir=vault.root,
+        commit=vault.commit,
+        dataset_path=dataset,
+        lock_path=lock,
+    )
+    assert second.items_written == 4
+    assert dataset.read_text(encoding="utf-8") == before
+    items = read_items(dataset)
+    assert len(items) == 4
+    assert all(item.source.kind is SourceKind.mined for item in items)
+    assert all(item.source.register_row == "oldgrowth-vault" for item in items)
+    assert {item.split.value for item in items} <= {"dev", "test"}
+    manifest = json.loads(
+        (tmp_path / "mined" / "tag_assignment.json").read_text(encoding="utf-8")
+    )
+    assert manifest["source_commit"] == vault.commit
+    assert len(manifest["item_ids"]) == 4
+    reasons = {row["artefact"]: row["reason"] for row in manifest["exclusions"]}
+    assert reasons["Decisions/Drifted Tags.md"] == "drift"
+    assert reasons["Specs/047 Car Radio/047 Car Radio.md"] == "out_of_scope"
+    lock_data = json.loads(lock.read_text(encoding="utf-8"))
+    assert all(item_id in lock_data for item_id in manifest["item_ids"])

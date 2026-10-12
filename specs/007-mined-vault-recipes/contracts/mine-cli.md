@@ -9,12 +9,12 @@ ember eval mine [--recipe NAME] [--source-dir PATH] [--dataset PATH] [--lock PAT
 - `--recipe` defaults to `tag_assignment`; an unknown name exits 2 and lists the known names.
 - `--source-dir` defaults to `<repo root>/../oldgrowth`.
 - `--dataset` defaults to `evals/clef-flash.jsonl`; `--lock` defaults to `evals/dataset/splits.lock`.
-- Wired like `capture`/`context`: an argparse passthrough (`add_help=False` + `REMAINDER`) whose handler `cmd_eval_mine` lazy-imports `evals.dataset.mine.main` — the command is checkout-only and raises the existing `_EVAL_CHECKOUT_ERROR` message when imported outside a clone.
+- Wired like `capture`/`context`: an argparse passthrough (`add_help=False` + `REMAINDER`) whose handler `cmd_eval_mine` lazy-imports `evals.dataset.mined.mine.main` — the command is checkout-only and raises the existing `_EVAL_CHECKOUT_ERROR` message when imported outside a clone.
 
 ## Behaviour
 
 1. Resolve the source directory; confirm the pin exists (`git -C <dir> cat-file -e <pin>^{commit}`). Absent → refuse, naming the pin and the directory.
-2. Confirm the grant is present in `LICENSES.md` at the recorded commit. Absent → refuse, naming the missing grant (FR-012).
+2. Confirm the grant is present in the source repository's committed `LICENSES.md` (read at HEAD; the working tree is never read). Absent → refuse, naming the missing grant (FR-012).
 3. Snapshot the tree read-only at the pin; build the vocabulary; classify candidates; apply exclusions; sample; build items.
 4. Write items through `write_items` (existing items preserved, new ones appended in id order); write the sampling manifest; extend `splits.lock` through `assign_new` + `append_lock`. Leave `register.json`, `versions.lock`, and the card untouched — the operator regenerates the card.
 5. Print a summary: items written, exclusions by reason, the seed, and the source commit.
