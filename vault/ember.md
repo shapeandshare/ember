@@ -98,7 +98,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-10-pilot-gate-and-per-model-caps]] — the pilot's sizing gate, memory checks, per-model fallback caps, and a larger benchmark
 - [[2026-10-10-benchmark-foundations]] — Phase 0 of the benchmark categories programme: dataset tooling, the register, the token split, resumable runs, versioned leaderboard
 - [[2026-10-11-first-live-aws-deploy]] — the first live `aws-up`: nine real-API bugs, one open converge failure
-- [[2026-10-11-benchmark-hygiene-implementation]] — Phase 1 implementation, 52/57 tasks: stability rounds, the controlled comparison gate, rubric anchors, the tier run with non-easy accuracy published, the probe-shape join, session capture, and the card edition (the stability ingest and the kind tagging await)
+- [[2026-10-11-benchmark-hygiene-implementation]] — Phase 1, 54/57: stability (panel-drafted, published), the controlled comparison gate, anchors, tiers with non-easy accuracy, the probe-shape join, capture, and the card; only the kind tagging and the probe snapshot remain
 
 Append-only session logs, never pruned.
 
