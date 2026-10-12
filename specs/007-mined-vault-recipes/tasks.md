@@ -91,12 +91,12 @@ Repository root is the working directory. Tooling lives under `evals/`, CLI wiri
 
 **Independent Test**: Each recipe's items reproduce from the pin, pass the lint at its declared size, and score on the leaderboard (US3-IT).
 
-- [ ] T026 [US3] Implement the `staleness` extractor `evals/dataset/mined/staleness.py` — gold = the `stale:` + `status/*` convention (with `stale_reason:` pairing); failing tests first on fixture notes (stale `true`, `status/stale`, stable).
-- [ ] T027 [US3] Register `staleness` in `evals/dataset/recipes.py` with its declared item count; mine (`ember eval mine --recipe staleness`), lint/card/check, MPS run + snapshot, commit. (depends on T026)
+- [ ] T026 [US3] Implement the `staleness` extractor `evals/dataset/mined/staleness.py` — gold = the `stale:` + `status/*` convention (with `stale_reason:` pairing); failing tests first on fixture notes (stale `true`, `status/stale`, stable). **(deferred: the pinned source has zero frontmatter stale/superseded markers — see the vault discovery)**
+- [ ] T027 [US3] Register `staleness` in `evals/dataset/recipes.py` with its declared item count; mine (`ember eval mine --recipe staleness`), lint/card/check, MPS run + snapshot, commit. (depends on T026; deferred with it)
 - [ ] T028 [US3] Implement the `note_placement` extractor `evals/dataset/mined/note_placement.py` — options = the plausible placements, gold = the placement the note actually has; failing tests first.
 - [ ] T029 [US3] Register `note_placement` with its declared count; mine, lint/card/check, run + snapshot, commit. (depends on T028)
-- [ ] T030 [US3] Implement the `memory_worthiness` extractor `evals/dataset/mined/memory_worthiness.py` — gold = what comparable material actually became, with adjudications recorded where the convention is silent; failing tests first.
-- [ ] T031 [US3] Register `memory_worthiness` with its declared count; mine, lint/card/check, run + snapshot, commit. (depends on T030)
+- [ ] T030 [US3] Implement the `memory_worthiness` extractor `evals/dataset/mined/memory_worthiness.py` — gold = what comparable material actually became, with adjudications recorded where the convention is silent; failing tests first. **(deferred: the source has no did-not-become-note fragments to draw negatives from — see the vault discovery)**
+- [ ] T031 [US3] Register `memory_worthiness` with its declared count; mine, lint/card/check, run + snapshot, commit. (depends on T030; deferred with it)
 
 ---
 

@@ -248,6 +248,29 @@ right. Answers at **≥ 0.80** confidence — 75% of all — were **89.7%** righ
 rare (4 of 65 notes had every tag right): read tags one at a time, trust the confident ones,
 and gather evidence for the middle band.
 
+### Vault note placement
+
+Run it when a note could live in more than one folder (ember's vault or a sibling's): ask
+where the note belongs against the vault's own folder list. This is how the `note_placement`
+mined recipe is posed — one `choice` whose options are the folders, fixed for the whole check.
+
+```json
+{"state": {"title": "<note title>", "note": "<the note body>"},
+ "questions": {
+   "placement": {"type": "choice", "instructions": "Which folder does this vault note belong in?",
+     "criteria": {"Art": "Place the note under Art/", "Decisions": "Place the note under Decisions/",
+                  "...": "one entry per folder in the vault"}}}}
+```
+
+| Note | Observed | Action |
+| --- | --- | --- |
+| `Decisions/Switched Weather Audio to ElevenLabs` | `placement` `Decisions` 0.52 | right, but barely — confirm against neighbouring notes |
+| `Art/Palettes` | `placement` `Design` 0.38 (it lives in `Art/`) | a weak prior; the folders' conventions decide |
+
+Across the mined set (30 real vault notes, MPS): 57% of placements were right and confidence
+stayed low — only 4 of 30 answers cleared 0.85, and those split 50/50. Treat `placement` as a
+weak signal: use it to shortlist, then check the folder conventions and the note's neighbours.
+
 ### Visual evidence
 
 Run it when the evidence is a screenshot, diagram, chart, or video clip rather than text.

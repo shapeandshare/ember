@@ -90,6 +90,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-11-tailscale-oauth-scope-and-suffix]]
 - [[2026-10-11-cloud-init-dropped-invalid-user-data]]
 - [[2026-10-12-oldgrowth-vault-real-shapes]]
+- [[2026-10-12-staleness-and-worthiness-have-no-source]]
 - [[2026-10-12-cuda-deployment-request-cap-drift]]
 
 ### Sessions
