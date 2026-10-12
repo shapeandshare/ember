@@ -16,8 +16,18 @@ The benchmark's first five recipes are authored. Phase 2 mines **real vault note
 
 - **Primary source**: the Old Growth vault at `../oldgrowth/docs/vault` — a sibling repository owned by the same maintainer — pinned at commit `692f4bb58b7f62105aeb73fba8dfee12bfdecd53`: **1,098 notes** with a governed, five-axis controlled tag vocabulary (`docs/vault/_meta/tags.md`): **`type/*`** (exactly one per note; eleven values), **`domain/*`** (zero or more; thirteen values), **`status/*`** (at most one; six values), **`layer/*`** (at most one; six values), and **`concept/*`** (zero or more; ten values) — plus frontmatter fields like `stale:`, `stale_reason:`, `code-refs`, `spec-refs`, `related`. Spec notes live as `Specs/NNN Title/NNN Title.md`; MOCs, folder hubs, `index.md`, `README.md`, and templates are navigation, not content.
 - **Licensing is a hard prerequisite**: Old Growth's `LICENSE` is all-rights-reserved. The copyright holder (the same maintainer) MUST grant explicit written permission — a grant note in `../oldgrowth/LICENSES.md` covering reproduction, transformation, and distribution within the ember benchmark dataset — and the register row MUST record it before **any** item from that source lands. No permission note, no items.
-- **Secondary source**: ember's own vault (`vault/`, MIT) — mined where it adds coverage.
+- **Secondary source**: ember's own vault (`vault/`, MIT) — mappable without a permission gate; items are deferred until a coverage gap appears.
 - **Recipes, in order**: `tag_assignment` (65 items) first — the gate category — then `memory_worthiness`, `note_placement`, `staleness`. Gold comes from the vault's own conventions, so the benchmark grades a real decision, not a copy of the note.
+
+## Clarifications
+
+### Session 2026-10-12
+
+- Q: Should the mined-vault recipes count toward the site's headline accuracy, or be reported as a separate panel like the vision capability recipes? → A: Count toward the headline — the headline features every decision family; a coding-only headline is rejected (vision and integration remain separate panels).
+- Q: Which notes should be eligible for the 65 `tag_assignment` items, and how balanced should the sample be across `type/*` values? → A: Exclude `type/spec` notes — mine only the non-spec memory notes (decisions, discoveries, sessions, design, code, systems, references).
+- Q: What is the largest candidate tag set a `tag_assignment` item may present? → A: 16 candidates per item — the note's gold tags plus deterministic distractors.
+- Q: When an item presents the vault's controlled vocabulary, should it give tag names only, or also each tag's one-line description as written in `_meta/tags.md`? → A: Full vocabulary with descriptions — every value, grouped by axis, each with its as-read one-line description.
+- Q: Should the ember-vault (MIT) secondary source be mined within this feature, or is it enough that the mechanism supports it while actual items wait? → A: Defer the items — keep the mechanism with a test that an ember-vault source maps with no permission required; mine items only if a coverage gap appears.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -84,23 +94,23 @@ The maintainer's agents can ask the new recipes through ember's own tool: the `e
 
 ---
 
-### User Story 5 - The secondary source adds coverage where it can (Priority: P3)
+### User Story 5 - The secondary source stays available without expanding scope (Priority: P3)
 
-ember's own vault (MIT) contributes items where it covers a decision the primary source does not — no licensing gate, and dogfooding our own memory for the benchmark.
+ember's own vault (MIT) remains a mappable source — no licensing gate, dogfooding our own memory when it is needed — but no items are mined from it in this feature unless a coverage gap is identified and recorded.
 
 **Why this priority**: Coverage insurance; the primary source already satisfies the gate.
 
-**Independent Test**: At least one mined item resolves to the ember-vault source with its own register row or source reference, and passes the same checks.
+**Independent Test**: A mined item built against an ember-vault source resolves to this repository's artefact and commit and passes the same checks with no permission field required; the dataset ships without such items until a gap is recorded.
 
 **Acceptance Scenarios**:
 
-1. **Given** an ember-vault note selected for mining, **When** its item is built, **Then** its `source` names the artefact and commit of this repository and no external permission is required.
+1. **Given** an ember-vault note selected for mining, **When** its item is built, **Then** its `source` names the artefact and commit of this repository, no external permission is required, and the mechanism passes the same dataset checks.
 
 ---
 
 ### Edge Cases
 
-- **Vocabulary drift**: notes carrying tags no longer in (or never added to) the vocabulary as-read — e.g. the observed bare `type/` fragments — are excluded by a declared rule, or mapped with the mapping recorded; they are never guessed.
+- **Vocabulary drift**: notes carrying tags no longer in (or never added to) the vocabulary as-read — including malformed axis fragments — are excluded by a declared rule, or mapped with the mapping recorded; they are never guessed.
 - **The source repository is dirty**: mining pins to the commit; the working tree's uncommitted state is irrelevant and never read.
 - **A vault note's content trips `no-live-secret`**: the note is excluded, or redacted with the redaction recorded — the rule is never relaxed.
 - **The snapshot is unavailable at check time**: the register's `used` invariants fail loudly; items never ship against an unrecorded source.
@@ -113,21 +123,22 @@ ember's own vault (MIT) contributes items where it covers a decision the primary
 ### Functional Requirements
 
 - **FR-001**: The miner MUST be reproducible from the pinned commit: item ids derive from the source path and commit; states, question sets, and gold labels regenerate byte-for-byte; each item's `source` records the artefact and the 40-hex commit.
-- **FR-002**: `tag_assignment` MUST contribute 65 items, sampled deterministically across multiple `type/*` values and `domain/*` groups, split per the parent's ratio and pinned in the splits lock.
+- **FR-002**: `tag_assignment` MUST contribute 65 items, drawn only from content notes other than `type/spec` (the memory notes: decisions, discoveries, sessions, design, code, systems, references), sampled deterministically across multiple `type/*` values and `domain/*` groups, split per the parent's ratio and pinned in the splits lock.
 - **FR-003**: Gold definitions MUST be the vault's own conventions: `tag_assignment` = the note's actual controlled tags; `note_placement` = its actual placement; `staleness` = the `stale:`/`status/*` convention; `memory_worthiness` = what comparable material actually became, adjudicated where silent.
 - **FR-004**: No item from the primary source MAY land without (a) the copyright holder's written permission recorded in the source repository and (b) a `used` register row carrying the licence reading, the permission reference, the snapshot, and the mirror; the dataset check MUST fail otherwise.
 - **FR-005**: The pinned source MUST be snapshotted and mirrored with recorded hashes, per the parent's register invariants.
-- **FR-006**: The four recipes MUST be registered (family `mined_vault`) with fixed question sets and declared scales where score-shaped; their headline membership follows the parent's family rule.
+- **FR-006**: The four recipes MUST be registered (family `mined_vault`) with fixed question sets and declared scales where score-shaped; they count toward the headline like every decision family — a coding-only headline is rejected (vision and integration remain separate panels) — and the "coding recipes only" wording in README.md/AGENTS.md MUST be updated when the first mined recipe scores.
 - **FR-007**: Mined items MUST pass the full lint (size targets, kind shares, leakage, dedup, `source-resolves`, `no-live-secret`); vault content is scanned and any live secret excludes or redacts the item.
 - **FR-008**: Mined items MUST enter the content hash like any other; every version is recorded append-only; no comparison spans versions.
 - **FR-009**: `tag_assignment` MUST appear on the leaderboard with per-recipe figures for the current version — the phase gate — and the gate MUST be mechanically checkable.
-- **FR-010**: A `tag_assignment` item's candidate tag set (gold tags plus distractors) MUST be deterministic and reproducible, and its gold MUST be exactly the note's vocabulary tags.
+- **FR-010**: A `tag_assignment` item's candidate tag set (gold tags plus distractors) MUST be deterministic and reproducible, MUST NOT exceed 16 candidates, and its gold MUST be exactly the note's vocabulary tags.
 - **FR-011**: Each recipe MUST join the `ember-advise` kit as it lands, with thresholds re-measured from real runs and the mirrored Claude plugin copy kept byte-identical.
 - **FR-012**: Mining MUST refuse when the permission grant is absent, and MUST name the missing grant.
-- **FR-013**: The secondary source (ember's own vault, MIT) MUST be mappable as a source without external permission; mined items resolve to its artefact and commit.
+- **FR-013**: The secondary source (ember's own vault, MIT) MUST be mappable as a source without external permission, and the mechanism MUST be tested; actual items are mined only when a coverage gap is identified and recorded, so the feature ships without them by default.
 - **FR-014**: Notes with vocabulary drift or non-content shape MUST be handled by declared, recorded rules (exclude or map); nothing is guessed.
 - **FR-015**: A permission revocation MUST have a removal path: affected items are removed and a new dataset version recorded.
 - **FR-016**: The dataset card MUST render the mined sources, their licence readings, the permission references, and their hashes.
+- **FR-017**: A `tag_assignment` item's state MUST present the note's title and body (frontmatter stripped) followed by the full as-read controlled vocabulary — every value grouped by axis, each with its one-line description from `docs/vault/_meta/tags.md` — so the judgment is grounded in the vocabulary's documented meanings.
 
 ### Key Entities
 
@@ -151,7 +162,7 @@ ember's own vault (MIT) contributes items where it covers a decision the primary
 
 ## Assumptions
 
-- **The maintainer grants the permission**: they hold the copyright on both sides; the grant note in `../oldgrowth/LICENSES.md` is drafted for approval and is a blocking prerequisite, not a formality. Until it lands, no item from that source exists.
+- **The maintainer grants the permission**: they hold the copyright on both sides; the grant is recorded in `../oldgrowth/LICENSES.md` (commit `422648d9`) and remains a hard prerequisite — mining refuses when it is absent.
 - **Source stability**: the Old Growth vault at commit `692f4bb5` is the frozen source; earlier or later commits are different sources, not adjustments.
 - **The vocabulary as-read defines the tag universe** for `tag_assignment` gold; a tag absent from the vocabulary at the pinned commit is drift, handled by FR-014.
 - **Sampling is seeded and deterministic**; the same snapshot always yields the same 65 notes.

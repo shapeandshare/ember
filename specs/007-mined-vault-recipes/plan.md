@@ -30,7 +30,7 @@ A new deterministic miner — `ember eval mine` — reads the pinned tree throug
 
 **Constraints**: byte-for-byte reproducibility from the pinned commit (FR-001/SC-001); no new dependencies; ≤400 lines/module (Article X §10.3); annotations never move the content hash; no live secrets; register invariants enforced at dataset-check time (`mirror.sha256` must equal `snapshot.sha256`); the miner refuses without the permission grant (FR-012).
 
-**Scale/Scope**: ~1,098 source notes → 65 `tag_assignment` items this change; the miner accepts a different commit as a different source without schema changes; the three later recipes reuse the miner with their own extractors, landing incrementally.
+**Scale/Scope**: the vault's ~1,098 notes, of which the non-spec memory notes form the candidate pool → 65 `tag_assignment` items this change; the miner accepts a different commit as a different source without schema changes; the three later recipes reuse the miner with their own extractors, landing incrementally.
 
 ## Constitution Check
 

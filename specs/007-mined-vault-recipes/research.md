@@ -39,25 +39,25 @@ Rationale: Article XV §15.4 (reuse) and §15.2 (boring over novel).
 
 Rationale: FR-003, FR-014; the spec assumption that the vocabulary as-read defines the universe.
 
-### R4 — Deterministic, seeded, stratified selection
+### R4 — Deterministic, seeded selection from the memory notes
 
-Candidates are content notes only: every `.md` not under `_meta/`, not `type/moc`, not `index.md`/`README.md`, and — inside `Specs/` — only the folder-named main note (sibling `- plan.md` etc. are ignored). Candidates sort by `artefact`; a fixed-seed `random.Random` (seed a module constant, recorded in the manifest) picks 65, stratified across `type/*` and `domain/*` (US1-AS3). The miner calls the existing `assign_new` + `append_lock` so new ids are pinned; no `_family_key` change is made — the 65 notes are distinct, and a second recipe over the same notes can add a `("mined", artefact)` key later.
+Candidates are the non-spec memory notes only (maintainer-clarified 2026-10-12): every `.md` not under `_meta/`, not `type/spec`, not `type/moc`, and not a hub, index, or README. Candidates sort by `artefact`; a fixed-seed `random.Random` (seed a module constant, recorded in the manifest) picks 65 spread across `type/*` values and `domain/*` groups. The miner calls the existing `assign_new` + `append_lock` so new ids are pinned; no `_family_key` change is made — the 65 notes are distinct, and a second recipe over the same notes can add a `("mined", artefact)` key later.
 
-Item id = `<recipe>-<path-slug>`; full spec-folder names avoid the duplicate-number collision.
+Item id = `<recipe>-<path-slug>`.
 
 Rationale: FR-001/FR-002/SC-001.
 
 ### R5 — Exclusions are declared and recorded
 
-`ExclusionReason` StrEnum: `drift` (R3), `non_content` (type/moc, hubs, index, README, `_meta`, sibling spec artifacts; an 80-word floor is kept as a backstop even though no non-Specs note trips it), `secret` (a candidate whose title+body trips the `SECRET_PATTERNS` from `evals/dataset/secret_guard.py` — excluded, or redacted with the redaction recorded; never relaxed), and `tag_set_bounds` (empty gold, or over the declared cap). A committed manifest records the rule values, the seed, per-note exclusions (`artefact → reason`), and the counts the card reports.
+`ExclusionReason` StrEnum: `drift` (R3), `non_content` (type/moc, hubs, index, README, `_meta`; an 80-word floor is kept as a backstop even though no memory note trips it), `secret` (a candidate whose title+body trips the `SECRET_PATTERNS` from `evals/dataset/secret_guard.py` — excluded, or redacted with the redaction recorded; never relaxed), and `tag_set_bounds` (empty gold, or over the declared cap). A committed manifest records the rule values, the seed, per-note exclusions (`artefact → reason`), and the counts the card reports.
 
 Rationale: FR-007/FR-014 and the spec Edge Cases.
 
 ### R6 — `tag_assignment`: gold, candidate set, questions, state
 
-- **state** = `title`, then the note body with frontmatter stripped, then the as-read vocabulary values grouped by axis (US1's "the note and the vault's controlled vocabulary"). Tag definitions are not inlined — rejected for fixed-token bloat; names are the vault's working surface, revisited only if the first run degenerates.
+- **state** = `title`, then the note body with frontmatter stripped, then the full as-read vocabulary grouped by axis with each value's one-line description (maintainer-clarified 2026-10-12): the vault's own decision context, grounded in the documented meanings (FR-017).
 - **questions** = one `noul` per candidate tag, `qid` = the tag, asking whether the note deserves it.
-- **candidates** = the note's gold tags plus a seeded distractor set (preferring same-axis, not-in-gold values), sorted and capped at a declared constant (start: 12).
+- **candidates** = the note's gold tags plus a seeded distractor set (preferring same-axis, not-in-gold values), sorted and capped at 16 (maintainer-clarified).
 - **gold** = 1 for exactly the note's vocabulary tags, 0 otherwise.
 
 Rationale: FR-003/FR-010; `noul` is the kit's multi-label shape and needs no new question type (Article II).
@@ -95,5 +95,6 @@ Rationale: FR-011, Article III §3.3.
 
 ## Consequences to accept
 
-- `mined_vault` recipes fall inside the headline family rule (`RecipeSpec.headline` is "family not in vision/integration"): once `tag_assignment` is scored on the new version, the headline includes it. This matches FR-006 ("follows the parent's family rule"); flagged for the maintainer.
+- `mined_vault` recipes count toward the headline (maintainer-clarified 2026-10-12): the headline features every decision family, and a coding-only headline is rejected. The "coding recipes only" wording in README.md/AGENTS.md is updated when the first mined recipe scores (FR-006).
+- The ember-vault secondary source keeps its tested mechanism; items are deferred until a coverage gap is recorded (maintainer-clarified).
 - The 65 items are far under `SIZE_TARGET = 300`; lint stays in `report` mode and the card shows the size gap — the normal bootstrap state.
