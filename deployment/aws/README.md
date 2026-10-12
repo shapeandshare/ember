@@ -230,6 +230,13 @@ make aws-start                        # start it back; same URL and token, no re
 Stop and start are idempotent: `aws-stop` on a stopped instance prints
 `already stopped`; `aws-start` on a running one prints `already running: <url>`.
 
+A stopped instance restarts in its own Availability Zone, so `aws-start` can
+fail with `InsufficientInstanceCapacity` while that AZ is out of the instance
+type — retry until capacity returns. `aws-down` + `aws-up` can land in another
+AZ (deploy retries candidate AZs on capacity), at the cost of new SSM
+parameters: the server token is regenerated and clients must re-export
+`EMBER_AUTH_TOKEN`.
+
 ### Replace
 
 ```bash
