@@ -106,7 +106,7 @@ Repository root is the working directory. Tooling lives under `evals/`, CLI wiri
 
 **Independent Test**: The kit lists the recipe with run-measured thresholds; agent-kit contract tests pass (US4-IT).
 
-- [ ] T032 [US4] Kit: add `tag_assignment` to `ember/agent_kit/ember-advise/SKILL.md` with thresholds **from the T018 run output** (never hand-typed); mirror byte-identically to `packages/claude-plugin/skills/ember-advise/SKILL.md`; `make check` (agent-kit + distribution tests). (depends on T018)
+- [x] T032 [US4] Kit: add `tag_assignment` to `ember/agent_kit/ember-advise/SKILL.md` with thresholds **from the T018 run output** (never hand-typed); mirror byte-identically to `packages/claude-plugin/skills/ember-advise/SKILL.md`; `make check` (agent-kit + distribution tests). (depends on T018)
 - [ ] T033 [US4] Kit: add each US3 recipe as its run completes — same two files, thresholds from that recipe's run output, mirrored copy kept byte-identical. (depends on T027, T029, T031)
 
 ---
