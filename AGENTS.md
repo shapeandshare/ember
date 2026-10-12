@@ -67,7 +67,7 @@ after changing brand assets. Do not invent missing provenance or license facts.
 | Site build and deploy | `scripts/build_site_docs.py`, `site/_data/docs.json`, `.github/workflows/deploy-site.yml` |
 | Landing-page hero questions | `site/_data/hero_questions.json` (wording); percentages filled from the newest `benchmark/` run by `scripts/build_site_benchmark.py` |
 | Distribution (PyPI publish, MCP Registry entry, Claude Code plugin) | `.github/workflows/release-ember.yml`, `server.json`, `.claude-plugin/marketplace.json`, `packages/claude-plugin/` |
-| Benchmark runs (data the site renders) | `benchmark/<run-id>/`, written by `scripts/snapshot_evals.py` (via `evals/eval/snapshot_evals.py`) |
+| Benchmark runs (data the site renders) | `benchmark/<run-id>/`, written by `scripts/snapshot_evals.py` (via `evals/eval/snapshot_evals.py`); Phase 1 adds label-stability rounds (`evals/dataset/stability/`), the MPS/CUDA comparison gate (`tests/test_benchmark_comparison.py`), and the per-row probe shape (`evals/context/link.py`) |
 
 ## Project structure
 

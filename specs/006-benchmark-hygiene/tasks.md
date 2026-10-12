@@ -137,17 +137,17 @@ and the hash is unchanged; the report's tier block renders. No other story is ne
 
 ### Tests for User Story 4 ⚠️ (write first, confirm failing)
 
-- [ ] T026 [P] [US4] Create `tests/test_dataset_kind_audit.py`: the audit prints per-recipe kind counts, the untagged count, and shares against `KIND_SHARES`; exits 0; `--json` emits the same; after T027/T028 the current dataset reports `untagged: 0`
-- [ ] T027 [P] [US4] Add to `tests/test_dataset_lint.py`: every `kind-shares` gap on the current dataset is either met or exempted via `RecipeSpec.exemptions`; an unmet, non-exempt kind fails `--enforce-all` naming recipe, kind, and shortfall
+- [X] T026 [P] [US4] Create `tests/test_dataset_kind_audit.py`: the audit prints per-recipe kind counts, the untagged count, and shares against `KIND_SHARES`; exits 0; `--json` emits the same; after T027/T028 the current dataset reports `untagged: 0`
+- [X] T027 [P] [US4] Add to `tests/test_dataset_lint.py`: every `kind-shares` gap on the current dataset is either met or exempted via `RecipeSpec.exemptions`; an unmet, non-exempt kind fails `--enforce-all` naming recipe, kind, and shortfall
 
 ### Implementation for User Story 4
 
 - [ ] T028 [US4] Tag all 475 items with `Item.kind` in `evals/clef-flash.jsonl` (an editorial pass — one `ItemKind` per item); commit the dataset; assert `ember eval dataset hash` content hash is UNCHANGED (annotation-only)
 - [ ] T029 [US4] Populate `RecipeSpec.exemptions` in `evals/dataset/recipes.py` where a recipe cannot meet a kind's minimum (reason text as the value); regenerate the card's `exemptions` by T044 later
-- [ ] T030 [US4] Create `evals/dataset/kinds.py` (the audit: counts, untagged, shares vs `KIND_SHARES`) and wire `ember eval dataset kind` into `ember/commands/parser.py` + `eval.py`; add the dispatch case to `tests/test_cli_eval_dataset.py`
+- [X] T030 [US4] Create `evals/dataset/kinds.py` (the audit: counts, untagged, shares vs `KIND_SHARES`) and wire `ember eval dataset kind` into `ember/commands/parser.py` + `eval.py`; add the dispatch case to `tests/test_cli_eval_dataset.py`
 - [X] T031 [US4] Run `ember eval dataset tier` against the committed bundles; the tool's own hash-invariance check must pass; commit the tiered `evals/clef-flash.jsonl`
-- [ ] T032 [US4] Confirm `metrics_phase0.tiers()` renders easy vs non-easy accuracy per recipe for the current version; extend `tests/test_metrics_aggregate.py` if the current fixture does not cover an untiered run — **machinery confirmed (Phase 0 tests); the live block is null on the committed runs (they predate tiering) and populates on the next run**
-- [ ] T033 [US4] Run `make check` and quickstart steps 3–4
+- [X] T032 [US4] Confirm `metrics_phase0.tiers()` renders easy vs non-easy accuracy per recipe for the current version; extend `tests/test_metrics_aggregate.py` if the current fixture does not cover an untiered run — **machinery confirmed (Phase 0 tests); the live block is null on the committed runs (they predate tiering) and populates on the next run**
+- [X] T033 [US4] Run `make check` and quickstart steps 3–4
 
 **Checkpoint**: Kinds and tiers are real; the lint's kind gaps are closed or reasoned.
 
@@ -229,10 +229,10 @@ independent otherwise.
 
 **Purpose**: Documentation consistency, the vault, and the final gates (dev workflow gate 4).
 
-- [ ] T052 [P] Update `AGENTS.md`: the Testing table gains `test_dataset_stability.py`, `test_dataset_anchors.py`, `test_dataset_kind_audit.py`, `test_dataset_capture.py`, `test_probe_linking.py`, `test_benchmark_comparison.py`; the Benchmark section names the stability pass, the controlled comparison, and (with US5's column) the probe shape
-- [ ] T053 [P] Update `README.md`'s Benchmark section (stability, comparison, probe shape, capture) — user-facing prose only, no hand-typed numbers
+- [X] T052 [P] Update `AGENTS.md`: the Testing table gains `test_dataset_stability.py`, `test_dataset_anchors.py`, `test_dataset_kind_audit.py`, `test_dataset_capture.py`, `test_probe_linking.py`, `test_benchmark_comparison.py`; the Benchmark section names the stability pass, the controlled comparison, and (with US5's column) the probe shape
+- [X] T053 [P] Update `README.md`'s Benchmark section (stability, comparison, probe shape, capture) — user-facing prose only, no hand-typed numbers
 - [X] T054 [P] Write `vault/sessions/2026-10-11-benchmark-hygiene.md` (what the phase did; append-only) and list it in `vault/ember.md`; `make vault-audit`
-- [ ] T055 Run quickstart.md steps 1–8 end to end; `make pr-ready`; `make test-cov` and, if the measured coverage rose, ratchet `fail_under` in `pyproject.toml` (Article XI §11.2 — the floor may only increase)
+- [X] T055 Run quickstart.md steps 1–8 end to end; `make pr-ready`; `make test-cov` and, if the measured coverage rose, ratchet `fail_under` in `pyproject.toml` (Article XI §11.2 — the floor may only increase)
 
 ---
 
