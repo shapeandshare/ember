@@ -634,7 +634,7 @@ question, or a split does. The file hash covers the bytes, for provenance. Every
 both, plus a hash per recipe, and the leaderboard shows one table per content hash, newest
 first; results on different versions are never compared. Within a table, one row per model,
 deployment, and engine settings, with one column per recipe: a re-run of a single recipe
-(`--category`) refreshes just that column, and the headline appears once every coding recipe
+(`--category`) refreshes just that column, and the headline appears once every decision recipe
 has been scored on that version. Vision recipes are reported separately as a **capability**
 panel, never in the headline. `splits.lock` pins every item's split for good, `versions.lock`
 records every dataset version ever published (and each protocol rule and scale names the

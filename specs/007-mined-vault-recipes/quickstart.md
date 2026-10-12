@@ -15,7 +15,7 @@ How a maintainer mines `tag_assignment`, verifies provenance, closes the phase g
 uv run ember eval mine --recipe tag_assignment
 ```
 
-Expect: 65 items with `source.kind = "mined"` appended to `evals/clef-flash.jsonl` (each carrying `register_row`, `artefact`, and the 40-hex commit), the sampling manifest and exclusion records written under `evals/dataset/mined/`, and new ids pinned in `evals/dataset/splits.lock`. The register row for the source already sits in `evals/dataset/register.json`; the miner never invents one.
+Expect: 65 items with `source.kind = "mined"` appended to `evals/clef-flash.jsonl` (each carrying `register_row`, `artefact`, and the 40-hex commit), the sampling manifest and exclusion records written under `evals/mined/`, and new ids pinned in `evals/dataset/splits.lock`. The register row for the source already sits in `evals/dataset/register.json`; the miner never invents one.
 
 Reproducibility check (SC-001): run the command again — the miner is idempotent, so `git status` shows no change. Different bytes are a bug, not a merge decision.
 

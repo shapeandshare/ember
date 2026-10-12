@@ -41,7 +41,7 @@ Rationale: FR-003, FR-014; the spec assumption that the vocabulary as-read defin
 
 ### R4 — Deterministic, seeded selection from the memory notes
 
-Candidates are the non-spec memory notes only (maintainer-clarified 2026-10-12): every `.md` not under `_meta/`, not `type/spec`, not `type/moc`, and not a hub, index, or README. Candidates sort by `artefact`; a fixed-seed `random.Random` (seed a module constant, recorded in the manifest) picks 65 spread across `type/*` values and `domain/*` groups. The miner calls the existing `assign_new` + `append_lock` so new ids are pinned; no `_family_key` change is made — the 65 notes are distinct, and a second recipe over the same notes can add a `("mined", artefact)` key later.
+Candidates are the non-spec memory notes only (maintainer-clarified 2026-10-12): every `.md` not under `_meta/`, nothing under `Specs/` (by path, the `type/spec` tag, or the `type` field), not `type/moc`, and not a hub, index, or README. Candidates sort by `artefact`; a fixed-seed `random.Random` (seed a module constant, recorded in the manifest) picks 65 spread across `type/*` values and `domain/*` groups. The miner calls the existing `assign_new` + `append_lock` so new ids are pinned; no `_family_key` change is made — the 65 notes are distinct, and a second recipe over the same notes can add a `("mined", artefact)` key later.
 
 Item id = `<recipe>-<path-slug>`.
 
@@ -49,7 +49,7 @@ Rationale: FR-001/FR-002/SC-001.
 
 ### R5 — Exclusions are declared and recorded
 
-`ExclusionReason` StrEnum, applied first-match-wins in a fixed order: `out_of_scope` (`type/spec`), `non_content` (type/moc, hubs, index, README, `_meta`, and the 80-word floor backstop), `drift` (R3), `tag_set_bounds` (empty gold, or more than 8 tags), and `secret` (a candidate whose title+body trips the `SECRET_PATTERNS` from `evals/dataset/secret_guard.py` — excluded; never relaxed). A committed manifest records the rule values, the seed, per-note exclusions (`artefact → reason`), and the counts the card reports.
+`ExclusionReason` StrEnum, applied first-match-wins in a fixed order: `out_of_scope` (anything under `Specs/` by path, tag, or field), `non_content` (type/moc, hubs, index, README, `_meta`, and the 80-word floor backstop), `oversize` (over 12,000 words, keeping states inside the request cap), `drift` (R3), `tag_set_bounds` (empty gold, or more than 8 tags), and `secret` (a candidate whose title+body trips the `SECRET_PATTERNS` from `evals/dataset/secret_guard.py` — excluded; never relaxed). A committed manifest records the rule values, the seed, per-note exclusions (`artefact → reason`), and the counts the card reports.
 
 Rationale: FR-007/FR-014 and the spec Edge Cases.
 

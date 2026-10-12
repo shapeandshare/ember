@@ -5,7 +5,7 @@ tags:
   - type/moc
   - domain/governance
 created: 2026-10-02
-updated: 2026-10-11
+updated: 2026-10-12
 ---
 
 # ember vault
@@ -62,6 +62,7 @@ Session-level decisions with their context and consequences.
 - [[2026-10-11-aws-gpu-deployment-over-tailscale]]
 - [[2026-10-11-hygiene-stability-records-and-probe-key]]
 - [[2026-10-11-accelerated-label-review-llm-panel-drafts]]
+- [[2026-10-12-mined-vault-miner]]
 
 ### Discoveries
 
@@ -88,6 +89,8 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-11-hosted-cache-treats-partial-dir-as-complete]]
 - [[2026-10-11-tailscale-oauth-scope-and-suffix]]
 - [[2026-10-11-cloud-init-dropped-invalid-user-data]]
+- [[2026-10-12-oldgrowth-vault-real-shapes]]
+- [[2026-10-12-cuda-deployment-request-cap-drift]]
 
 ### Sessions
 
@@ -99,6 +102,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-10-benchmark-foundations]] — Phase 0 of the benchmark categories programme: dataset tooling, the register, the token split, resumable runs, versioned leaderboard
 - [[2026-10-11-first-live-aws-deploy]] — the first live `aws-up`: nine real-API bugs, one open converge failure
 - [[2026-10-11-benchmark-hygiene-implementation]] — Phase 1, 54/57: stability (panel-drafted, published), the controlled comparison gate, anchors, tiers with non-easy accuracy, the probe-shape join, capture, and the card; only the kind tagging and the probe snapshot remain
+- [[2026-10-12-mined-vault-implementation]] — the Phase 2 gate: the miner, the 65 tag_assignment items, provenance, and the MPS + CUDA runs
 
 Append-only session logs, never pruned.
 

@@ -71,7 +71,7 @@ This requires the grant reference for the all-rights-reserved Old Growth source 
 | Entity | Lives in |
 | --- | --- |
 | the 65 items | `evals/clef-flash.jsonl` (through `write_items`) |
-| sampling manifest + exclusions | a committed JSON beside the dataset artifacts (`evals/dataset/mined/<version>.json`) |
+| sampling manifest + exclusions | a committed JSON beside the dataset artifacts (`evals/mined/<recipe>.json`) |
 | split pins | `evals/dataset/splits.lock` (via `assign_new` + `append_lock`) |
 | register row | `evals/dataset/register.json` |
 | dataset version | `evals/dataset/versions.lock` (via `ember eval dataset card`) |

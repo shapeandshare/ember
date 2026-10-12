@@ -844,7 +844,7 @@ MUST pass the constitution check.
   runs across versions, and the release workflow writes the hash into the changelog.
 - **`evals/dataset/splits.lock` is append-only**: an item never changes split. New items get a
   deterministic split from `splitting.assign_new`; delete nothing from the lock.
-- **The headline is coding recipes only** (`RECIPES[...].headline`). Vision recipes report as
+- **The headline is every decision family** (`RECIPES[...].headline`; vision and integration stay separate panels). Vision recipes report as
   the capability panel; do not fold them into `summary.overall` or a leaderboard headline.
 - **Never import an external record without a `used` register row**
   (`evals/dataset/register.json`): licence reading, snapshot, mirror, and verdict first;
