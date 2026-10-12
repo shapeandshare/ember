@@ -62,11 +62,13 @@ def _make_clients(
     }
     clients.cfn.get_waiter.return_value = MagicMock()
 
-    # list_stacks for destroy guard
+    # deployment stacks for the guards (iterated through the paginator)
     active_stacks = []
     for name in deployment_stacks or []:
         active_stacks.append({"StackName": name, "StackStatus": "CREATE_COMPLETE"})
-    clients.cfn.list_stacks.return_value = {"StackSummaries": active_stacks}
+    paginator = MagicMock()
+    paginator.paginate.return_value = [{"StackSummaries": active_stacks}]
+    clients.cfn.get_paginator.return_value = paginator
     clients.cfn.delete_stack.return_value = {}
 
     # S3

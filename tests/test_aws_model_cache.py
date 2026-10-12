@@ -100,9 +100,11 @@ def _make_cfn_client(
     }
     cfn.get_waiter.return_value = MagicMock()
 
-    # For listing deployment stacks
+    # Deployment stacks for the guards, iterated through the paginator
     stacks = deployment_stacks or []
-    cfn.list_stacks.return_value = {"StackSummaries": stacks}
+    paginator = MagicMock()
+    paginator.paginate.return_value = [{"StackSummaries": stacks}]
+    cfn.get_paginator.return_value = paginator
     cfn.describe_stack_resource.return_value = {}
 
     return cfn
@@ -569,14 +571,43 @@ def test_cache_destroy_refused_while_a_deploy_is_in_progress() -> None:
     ]
     cfn = _make_cfn_client(cache_stack_exists=True)
 
-    def list_stacks(StackStatusFilter: list[str]) -> dict[str, Any]:  # noqa: N803
-        return {
-            "StackSummaries": [
-                s for s in deployment_stacks if s["StackStatus"] in StackStatusFilter
-            ]
-        }
+    paginator = MagicMock()
 
-    cfn.list_stacks.side_effect = list_stacks
+    def _paginate(**kwargs: Any) -> list[dict[str, Any]]:
+        allowed = set(kwargs.get("StackStatusFilter", []))
+        return [
+            {
+                "StackSummaries": [
+                    s for s in deployment_stacks if s["StackStatus"] in allowed
+                ]
+            }
+        ]
+
+    paginator.paginate.side_effect = _paginate
+    cfn.get_paginator.return_value = paginator
+    s3 = _make_s3_client()
+    clients = _make_aws_clients(s3=s3, cfn=cfn)
+
+    cache = ModelCache(clients=clients)
+    with pytest.raises(CacheInUseError):
+        cache.destroy(confirm=_BUCKET, bucket=_BUCKET)
+
+
+def test_cache_destroy_guard_follows_stack_pagination() -> None:
+    """A deployment on a later list_stacks page still blocks destruction."""
+    from ember_aws.model_cache import CacheInUseError
+
+    cfn = _make_cfn_client(cache_stack_exists=True)
+    paginator = MagicMock()
+    paginator.paginate.return_value = [
+        {"StackSummaries": [], "NextToken": "page-2"},
+        {
+            "StackSummaries": [
+                {"StackName": "ember-default", "StackStatus": "CREATE_COMPLETE"}
+            ]
+        },
+    ]
+    cfn.get_paginator.return_value = paginator
     s3 = _make_s3_client()
     clients = _make_aws_clients(s3=s3, cfn=cfn)
 

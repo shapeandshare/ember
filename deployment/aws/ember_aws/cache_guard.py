@@ -53,6 +53,27 @@ def _raise_in_use(name: str) -> None:
     )
 
 
+def _live_stacks(clients: Any) -> list[dict[str, Any]]:
+    """Return every non-deleted stack summary, following pagination.
+
+    Parameters
+    ----------
+    clients : Any
+        An :class:`~ember_aws.aws_clients.AwsClients` instance (or a mock).
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        Stack summaries.  ``list_stacks`` returns one page at a time, so a
+        deployment on a later page must still be seen by the guards.
+    """
+    paginator = clients.cfn.get_paginator("list_stacks")
+    summaries: list[dict[str, Any]] = []
+    for page in paginator.paginate(StackStatusFilter=_LIVE_STACK_STATUSES):
+        summaries.extend(page.get("StackSummaries", []))
+    return summaries
+
+
 def check_no_deployments(clients: Any) -> None:
     """Raise CacheInUseError if any deployment exists or is being prepared.
 
@@ -71,8 +92,8 @@ def check_no_deployments(clients: Any) -> None:
         If any deployment stack exists in a non-deleted state, or any
         ``/ember/*/config`` deployment-intent parameter exists.
     """
-    stacks = clients.cfn.list_stacks(StackStatusFilter=_LIVE_STACK_STATUSES)
-    for stack_summary in stacks.get("StackSummaries", []):
+    stacks = _live_stacks(clients)
+    for stack_summary in stacks:
         stack_name = stack_summary.get("StackName", "")
         if stack_name.startswith("ember-") and stack_name != _CACHE_STACK_NAME:
             _raise_in_use(stack_name[len("ember-") :])
@@ -139,8 +160,7 @@ def check_not_in_use(
         or if an active deployment's config cannot be read.
     """
     expected_uri = f"s3://{bucket}/{prefix}{model}/{revision}".rstrip("/")
-    stacks = clients.cfn.list_stacks(StackStatusFilter=_LIVE_STACK_STATUSES)
-    for stack_summary in stacks.get("StackSummaries", []):
+    for stack_summary in _live_stacks(clients):
         stack_name = stack_summary.get("StackName", "")
         if not stack_name.startswith("ember-") or stack_name == _CACHE_STACK_NAME:
             continue

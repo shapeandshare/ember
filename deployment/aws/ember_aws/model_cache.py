@@ -10,9 +10,9 @@ from typing import Any
 
 from .cache_guard import (
     _CACHE_STACK_NAME,
-    _LIVE_STACK_STATUSES,
     CacheInUseError,
     ConfirmationError,
+    _live_stacks,
     check_no_deployments,
     check_not_in_use,
 )
@@ -297,8 +297,7 @@ class ModelCache:
             configs are skipped (this backs a listing, not a guard).
         """
         by_uri: dict[str, list[str]] = {}
-        stacks = self._clients.cfn.list_stacks(StackStatusFilter=_LIVE_STACK_STATUSES)
-        for stack_summary in stacks.get("StackSummaries", []):
+        for stack_summary in _live_stacks(self._clients):
             stack_name = stack_summary.get("StackName", "")
             if not stack_name.startswith("ember-") or stack_name == _CACHE_STACK_NAME:
                 continue
