@@ -387,6 +387,10 @@ def register_eval(
         ("hash", "print the content, file, per-recipe, and register hashes"),
         ("check", "run the provenance check"),
         ("tier", "tag easy items from the current version's leaderboard rows"),
+        (
+            "stability",
+            "stability rounds: --emit a blinded sheet, --ingest it, --report",
+        ),
     ):
         d = dsub.add_parser(name, help=help_text)
         d.add_argument("--dataset", default=None, help="dataset JSONL path")
@@ -399,4 +403,11 @@ def register_eval(
             d.add_argument("--json", action="store_true", dest="as_json")
         if name == "tier":
             d.add_argument("--from", dest="benchmark_dir", default=None)
+        if name == "stability":
+            d.add_argument("--emit", action="store_true")
+            d.add_argument("--ingest", default=None, metavar="SHEET")
+            d.add_argument("--report", action="store_true")
+            d.add_argument("--round", dest="round_id", default=None)
+            d.add_argument("--rounds-dir", dest="rounds_dir", default=None)
+            d.add_argument("--out", default=None)
         d.set_defaults(func=cmd_dataset)

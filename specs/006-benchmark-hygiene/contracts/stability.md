@@ -73,7 +73,7 @@ A JSON document the maintainer fills in a second sitting:
 {
   "change_risk": {
     "agreement": 0.93,
-    "by_label": {"Negligible": 1.0, "Low": 0.95, "Medium": 0.86, "High": 0.92},
+    "by_label": {"0": 1.0, "1": 0.95, "2": 0.86, "3": 0.92},
     "unstable": ["change_risk_041", "change_risk_077"],
     "rater_count": 1
   },
@@ -82,8 +82,8 @@ A JSON document the maintainer fills in a second sitting:
 ```
 
 - `agreement` is `agrees` count ÷ entries, per recipe.
-- `by_label` is computed when a gold level has at least one entry; levels without entries are
-  omitted.
+- `by_label` is computed when a gold level has at least one entry, keyed by the level's
+  index; levels without entries are omitted.
 - `unstable` lists the item ids that disagreed and stays available for the tracked review queue
   (`Item.second_review` remains for a genuine second human; the model never re-labels).
 - The published form carries `rater_count: 1` and the single-rater sentence (see

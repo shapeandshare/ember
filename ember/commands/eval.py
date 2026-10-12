@@ -188,7 +188,7 @@ def cmd_eval_dataset(args: argparse.Namespace) -> int:
         Exit code from the module's ``main``.
     """
     try:
-        from evals.dataset import card, check, hashes, lint, tiers
+        from evals.dataset import card, check, hashes, lint, stability, tiers
     except ImportError as exc:
         raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
     modules = {
@@ -197,6 +197,7 @@ def cmd_eval_dataset(args: argparse.Namespace) -> int:
         "hash": hashes.main,
         "check": check.main,
         "tier": tiers.main,
+        "stability": stability.main,
     }
     argv: list[str] = []
     if getattr(args, "benchmark_dir", None):
@@ -209,4 +210,16 @@ def cmd_eval_dataset(args: argparse.Namespace) -> int:
         argv.append("--json")
     if getattr(args, "check", False):
         argv.append("--check")
+    if getattr(args, "emit", False):
+        argv.append("--emit")
+    if getattr(args, "ingest", None):
+        argv += ["--ingest", str(args.ingest)]
+    if getattr(args, "report", False):
+        argv.append("--report")
+    if getattr(args, "round_id", None):
+        argv += ["--round", str(args.round_id)]
+    if getattr(args, "rounds_dir", None):
+        argv += ["--rounds-dir", str(args.rounds_dir)]
+    if getattr(args, "out", None):
+        argv += ["--out", str(args.out)]
     return modules[args.dataset_command](argv)

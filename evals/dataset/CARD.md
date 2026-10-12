@@ -14,6 +14,8 @@ Labelling protocol (each rule since the dataset version it first applies to):
 - Every `score` scale runs from least to most of the quantity its instruction names; index 0 is always the least. The expected score is read in those units. A scale is never reversed to make a label read naturally. (since `1e1bb88d47f0`)
 - For a `noul` question, P(true) is the probability of the condition the instruction names; the condition is phrased so that `true` is the pole that calls for caution. (since `1e1bb88d47f0`)
 
+Single rater: stability is one person's blinded re-label after a cooling-off period, not inter-rater agreement; the model never labels.
+
 ## `change_risk`
 
 - Items: 92 (dev 46, test 46); family `coding`; risk False; lint `report`
@@ -22,7 +24,7 @@ Labelling protocol (each rule since the dataset version it first applies to):
 - Kinds: {"untagged": 92}
 - Sources: {"authored": 92}
 - Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -59,7 +61,7 @@ Gaps:
 - Kinds: {"untagged": 76}
 - Sources: {"authored": 76}
 - Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -99,7 +101,7 @@ Gaps:
 - Kinds: {"untagged": 92}
 - Sources: {"authored": 92}
 - Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -135,7 +137,7 @@ Gaps:
 - Kinds: {"untagged": 108}
 - Sources: {"authored": 108}
 - Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -170,7 +172,7 @@ Gaps:
 - Kinds: {"untagged": 75}
 - Sources: {"authored": 75}
 - Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -203,7 +205,7 @@ Gaps:
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
 - Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -234,7 +236,7 @@ Gaps:
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
 - Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -261,7 +263,7 @@ Gaps:
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
 - Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -293,7 +295,7 @@ Gaps:
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
 - Easy items: 0; rater count 1; second review pending 0
-- Label stability: None; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
