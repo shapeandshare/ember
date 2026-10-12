@@ -117,7 +117,7 @@ Repository root is the working directory. Tooling lives under `evals/`, CLI wiri
 
 **Independent Test**: A mined item resolving to a `permissive` `used` row without `permission` passes the validators and `check` (US5-IT).
 
-- [ ] T034 [US5] Test the permissionless mapping in `tests/test_mined_provenance.py`: a `permissive` `used` row needs no `permission` field, and a mined item pointing at it validates and checks clean; add one line to `quickstart.md` that ember-vault items are deferred until a coverage gap is identified and recorded.
+- [x] T034 [US5] Test the permissionless mapping in `tests/test_mined_provenance.py`: a `permissive` `used` row needs no `permission` field, and a mined item pointing at it validates and checks clean; add one line to `quickstart.md` that ember-vault items are deferred until a coverage gap is identified and recorded.
 
 ---
 

@@ -72,4 +72,5 @@ The leaderboard renders one table per dataset version; the gate is closed when t
 
 - The miner reads the pinned commit through read-only git; the sibling working tree's dirty state is irrelevant and never read.
 - A note whose content trips `no-live-secret` is excluded (or redacted with the redaction recorded) by the declared rules — the rule is never relaxed.
-- Excluded notes are recorded with a declared reason (`drift`, `non_content`, `secret`, `tag_set_bounds`); the manifest explains every count in the card.
+- Excluded notes are recorded with a declared reason (`drift`, `non_content`, `oversize`, `secret`, `tag_set_bounds`); the manifest explains every count in the card.
+- The ember-vault (MIT) source is mappable and its mechanism is tested (`tests/test_mined_provenance.py`); its items are deferred until a coverage gap is identified and recorded.
