@@ -1,0 +1,10 @@
+[Unit]
+Description=ember idle auto-stop timer
+Requires=ember-idle.service
+
+[Timer]
+OnUnitActiveSec=1min
+Unit=ember-idle.service
+
+[Install]
+WantedBy=timers.target

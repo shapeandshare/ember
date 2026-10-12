@@ -92,6 +92,7 @@ def test_resolve_skips_download_when_already_cached(
     cache_dir = tmp_path / "cache"
     cache_dir.mkdir()
     (cache_dir / "config.json").write_text("{}")
+    (cache_dir / hosted.COMPLETION_MARKER).write_text("ok")
     monkeypatch.setenv("EMBER_MODEL_S3_URI", "s3://my-bucket/clef-flash")
     monkeypatch.setattr(hosted.paths, "hosted_model_cache", lambda uri: cache_dir)
 
@@ -112,6 +113,7 @@ def test_resolved_source_reports_the_uri(
     cache_dir = tmp_path / "cache"
     cache_dir.mkdir()
     (cache_dir / "config.json").write_text("{}")
+    (cache_dir / hosted.COMPLETION_MARKER).write_text("ok")
     monkeypatch.setenv("EMBER_MODEL_S3_URI", "s3://my-bucket/clef-flash")
     monkeypatch.setattr(hosted.paths, "hosted_model_cache", lambda uri: cache_dir)
 
@@ -119,3 +121,110 @@ def test_resolved_source_reports_the_uri(
 
     assert result is not None
     assert result.uri == "s3://my-bucket/clef-flash"
+
+
+# ###########################################################################
+# T056: partial-dir / completion-marker tests (research R4)
+# ###########################################################################
+
+
+def test_resolve_redownloads_a_partial_cache_dir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A non-empty but incomplete cache dir (no completion marker) must be
+    treated as partial and re-downloaded.
+
+    This is the R4 bug: the old code checked ``any(model_dir.iterdir())`` and
+    skipped the download if the directory was non-empty, so a partially
+    downloaded cache was silently treated as complete.  The fix writes a
+    ``_download_complete`` marker after a successful download and re-downloads
+    whenever the marker is absent.
+    """
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir()
+    # Partial: has a file but no completion marker.
+    (cache_dir / "config.json").write_text("{}")
+
+    monkeypatch.setenv("EMBER_MODEL_S3_URI", "s3://my-bucket/clef-flash")
+    monkeypatch.setattr(hosted.paths, "hosted_model_cache", lambda uri: cache_dir)
+
+    download_called: list[bool] = []
+
+    def _fake_download_prefix(
+        bucket: str,
+        prefix: str,
+        dest: Path,
+        label: str,
+        max_bytes: int = 0,
+        **_kw: object,
+    ) -> Path:
+        download_called.append(True)
+        # Simulate a complete download by writing the marker.
+        (dest / hosted.COMPLETION_MARKER).write_text("ok")
+        return dest
+
+    monkeypatch.setattr(s3, "download_prefix", _fake_download_prefix)
+
+    result = hosted.resolve()
+
+    assert result is not None
+    assert download_called, (
+        "resolve() must re-download a non-empty dir that has no completion marker"
+    )
+
+
+def test_resolve_skips_download_when_marker_present(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A cache dir with the completion marker is treated as complete and must
+    not trigger a re-download."""
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir()
+    (cache_dir / "config.json").write_text("{}")
+    (cache_dir / hosted.COMPLETION_MARKER).write_text("ok")
+
+    monkeypatch.setenv("EMBER_MODEL_S3_URI", "s3://my-bucket/clef-flash")
+    monkeypatch.setattr(hosted.paths, "hosted_model_cache", lambda uri: cache_dir)
+
+    def _fail_if_called(*_args: object, **_kwargs: object) -> Path:
+        raise AssertionError(
+            "download_prefix must not be called when the completion marker is present"
+        )
+
+    monkeypatch.setattr(s3, "download_prefix", _fail_if_called)
+
+    result = hosted.resolve()
+
+    assert result is not None
+    assert result.model_dir == cache_dir
+
+
+def test_resolve_writes_completion_marker_after_download(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """After a successful download, the completion marker must be present so
+    subsequent calls skip the download."""
+    cache_dir = tmp_path / "cache"
+    monkeypatch.setenv("EMBER_MODEL_S3_URI", "s3://my-bucket/clef-flash")
+    monkeypatch.setattr(hosted.paths, "hosted_model_cache", lambda uri: cache_dir)
+
+    def _fake_download_prefix(
+        bucket: str,
+        prefix: str,
+        dest: Path,
+        label: str,
+        max_bytes: int = 0,
+        **_kw: object,
+    ) -> Path:
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / "config.json").write_text("{}")
+        return dest
+
+    monkeypatch.setattr(s3, "download_prefix", _fake_download_prefix)
+
+    result = hosted.resolve()
+
+    assert result is not None
+    assert (cache_dir / hosted.COMPLETION_MARKER).exists(), (
+        "resolve() must write the completion marker after a successful download"
+    )

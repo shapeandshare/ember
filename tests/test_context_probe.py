@@ -368,6 +368,15 @@ def test_a_rows_peak_is_its_rss_start_plus_its_driver_peak():
         ProbeRow(**{**row.model_dump(), "peak_bytes": 2999})
 
 
+def test_a_cuda_rows_peak_is_its_driver_peak_alone():
+    """A cuda row's peak is the driver peak; RSS stays as telemetry."""
+    cuda_kwargs = {**_row().model_dump(), "device": "cuda", "peak_bytes": 2000}
+    row = ProbeRow(**cuda_kwargs)
+    assert row.peak_bytes == row.driver_peak_bytes
+    with pytest.raises(ValidationError):
+        ProbeRow(**{**cuda_kwargs, "peak_bytes": 3000})
+
+
 def test_a_row_key_identifies_model_item_length_and_depth():
     assert _row("b2", 4096, Depth.END).key == ("flash", "b2", 4096, Depth.END)
 
@@ -1092,6 +1101,185 @@ def test_pinned_filler_reads_and_verifies_the_manifest_copy(tmp_path):
     assert worker.pinned_filler(manifest) == "call me ishmael"
     with pytest.raises(ValueError, match="SHA-256"):
         worker.pinned_filler(_manifest(filler_path=str(path)))
+
+
+# ###########################################################################
+# T039: CUDA device support in MemorySampler
+# ###########################################################################
+
+
+def test_memory_sampler_for_cuda_uses_max_memory_allocated(monkeypatch):
+    """MemorySampler with device='cuda' calls torch.cuda.max_memory_allocated."""
+    from evals.context import memory_sampler
+
+    synced: list[bool] = []
+    reset: list[bool] = []
+    peak_values = [100, 500, 200]
+    call_count = [0]
+
+    def fake_synchronize() -> None:
+        synced.append(True)
+
+    def fake_max_memory_allocated() -> int:
+        val = peak_values[min(call_count[0], len(peak_values) - 1)]
+        call_count[0] += 1
+        return val
+
+    sampler = memory_sampler.MemorySampler(
+        device="cuda",
+        read_driver=fake_max_memory_allocated,
+        read_rss=lambda: 1000,
+        synchronize=fake_synchronize,
+        reset_peak=lambda: reset.append(True),
+        interval=0.001,
+    )
+    with sampler:
+        pass
+    # synchronize must have been called (at least on enter and exit)
+    assert len(synced) >= 2
+    assert len(reset) == 1
+    assert sampler.driver_peak_bytes == 500
+
+
+def test_memory_sampler_for_cuda_resets_peak_stats_before_reading():
+    """The CUDA sampler resets peak stats after syncing, before its first read."""
+    from evals.context import memory_sampler
+
+    events: list[str] = []
+
+    def read_driver() -> int:
+        events.append("read")
+        return 100
+
+    sampler = memory_sampler.MemorySampler(
+        device="cuda",
+        read_driver=read_driver,
+        read_rss=lambda: 1000,
+        synchronize=lambda: events.append("sync"),
+        reset_peak=lambda: events.append("reset"),
+        interval=0.001,
+    )
+    with sampler:
+        pass
+
+    assert events.index("sync") < events.index("reset") < events.index("read")
+
+
+def test_memory_sampler_cuda_default_resets_via_torch(monkeypatch):
+    """The CUDA default reset calls torch.cuda.reset_peak_memory_stats."""
+    from evals.context import memory_sampler
+
+    resets: list[bool] = []
+    monkeypatch.setattr(
+        memory_sampler.torch.cuda,
+        "reset_peak_memory_stats",
+        lambda: resets.append(True),
+    )
+    sampler = memory_sampler.MemorySampler(
+        device="cuda",
+        read_driver=lambda: 100,
+        read_rss=lambda: 1000,
+        synchronize=lambda: None,
+        interval=0.001,
+    )
+    with sampler:
+        pass
+    assert len(resets) == 1
+
+
+def test_the_cuda_peak_is_the_driver_peak_alone():
+    """For CUDA, peak_bytes is the driver peak; RSS stays as telemetry."""
+    from evals.context import memory_sampler
+
+    sampler = memory_sampler.MemorySampler(
+        device="cuda",
+        read_driver=lambda: 500,
+        read_rss=lambda: 1000,
+        synchronize=lambda: None,
+        reset_peak=lambda: None,
+        interval=0.001,
+    )
+    with sampler:
+        time.sleep(0.01)
+
+    assert sampler.rss_start_bytes == 1000
+    assert sampler.driver_peak_bytes == 500
+    assert sampler.peak_bytes == 500
+
+
+def test_memory_sampler_for_mps_uses_mps_synchronize(monkeypatch):
+    """MemorySampler with device='mps' calls the MPS synchronize path."""
+    from evals.context import memory_sampler
+
+    synced: list[bool] = []
+
+    def fake_mps_sync() -> None:
+        synced.append(True)
+
+    sampler = memory_sampler.MemorySampler(
+        device="mps",
+        read_driver=lambda: 100,
+        read_rss=lambda: 1000,
+        synchronize=fake_mps_sync,
+        interval=0.001,
+    )
+    with sampler:
+        pass
+    assert len(synced) >= 2
+
+
+def test_memory_sampler_default_device_is_mps():
+    """MemorySampler() without device= defaults to MPS behaviour."""
+    from evals.context import memory_sampler
+
+    # The default constructor must not raise even without a real MPS device.
+    sampler = memory_sampler.MemorySampler(
+        read_driver=lambda: 0,
+        read_rss=lambda: 0,
+        interval=0.001,
+    )
+    assert sampler is not None
+
+
+def test_probe_accepts_cuda_device_in_manifest():
+    """A ProbeManifest with device='cuda' is valid."""
+    manifest = _manifest(device="cuda")
+    assert manifest.device == "cuda"
+
+
+def test_cuda_budgets_are_resolved_per_model() -> None:
+    """CUDA budgets come from each model's own sizing row, not names[0]."""
+    from evals.context import run_context
+
+    budgets = run_context._cuda_budgets(["flash", "full"])
+
+    assert budgets["flash"] == 48 * 2**30
+    assert "full" not in budgets
+
+
+def test_resume_inherits_the_recorded_device(monkeypatch, tmp_path) -> None:
+    """--resume without an explicit device inherits the run's device."""
+    results, _runs = _probe_dirs(monkeypatch, tmp_path)
+    _write_run(results / RUN_ID, _rows(), device="cuda")
+    monkeypatch.delenv("EMBER_DEVICE", raising=False)
+
+    from evals.context import run_context
+
+    args = run_context._parser().parse_args(["--resume", RUN_ID])
+
+    assert run_context._effective_device(args) == "cuda"
+
+
+def test_explicit_device_wins_over_the_recorded_one(monkeypatch, tmp_path) -> None:
+    """--device overrides the device recorded in a resumed run."""
+    results, _runs = _probe_dirs(monkeypatch, tmp_path)
+    _write_run(results / RUN_ID, _rows(), device="cuda")
+
+    from evals.context import run_context
+
+    args = run_context._parser().parse_args(["--resume", RUN_ID, "--device", "mps"])
+
+    assert run_context._effective_device(args) == "mps"
 
 
 # ###########################################################################

@@ -16,7 +16,8 @@ class ProbeRow(BaseModel):
 
     The token parts sum to the total; an ``ok`` row's total lies within
     ``LENGTH_TOLERANCE`` tokens below its length; only an ``ok`` row carries
-    answers; and ``peak_bytes = rss_start_bytes + driver_peak_bytes``.
+    answers; and ``peak_bytes`` equals ``rss_start_bytes +
+    driver_peak_bytes`` on MPS but the ``driver_peak_bytes`` alone on CUDA.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -37,6 +38,7 @@ class ProbeRow(BaseModel):
     rss_start_bytes: int = Field(ge=0)
     driver_peak_bytes: int = Field(ge=0)
     peak_bytes: int = Field(ge=0)
+    device: str = "mps"
     status: RowStatus
     exploratory: bool = False
     error: str | None = None
@@ -51,9 +53,13 @@ class ProbeRow(BaseModel):
             raise ValueError("an ok row's total must be within the length tolerance")
         if self.status is not RowStatus.OK and self.answers:
             raise ValueError("only an ok row carries answers")
-        if self.peak_bytes != self.rss_start_bytes + self.driver_peak_bytes:
+        expected = self.driver_peak_bytes
+        if self.device != "cuda":
+            expected += self.rss_start_bytes
+        if self.peak_bytes != expected:
             raise ValueError(
-                "peak_bytes must equal rss_start_bytes + driver_peak_bytes"
+                "peak_bytes must equal rss_start_bytes + driver_peak_bytes on MPS,"
+                " and driver_peak_bytes alone on CUDA"
             )
         return self
 

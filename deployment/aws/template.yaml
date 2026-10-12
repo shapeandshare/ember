@@ -1,0 +1,197 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  ember GPU deployment over Tailscale - provisions a single EC2 GPU instance
+  that joins the operator's tailnet and serves ember at
+  https://ember-<name>.<tailnet>.ts.net. Stack name: ember-<DeploymentName>.
+
+# No UserData parameter: CloudFormation caps parameter values at 4,096 bytes.
+# The CLI inlines the rendered cloud-init into the template body at the
+# __EMBER_USER_DATA__ placeholder before sending it as TemplateBody.
+
+Parameters:
+
+  DeploymentName:
+    Type: String
+    Description: >
+      Deployment name (matches ^[a-z][a-z0-9-]{1,30}[a-z0-9]$).
+      Used as a suffix in resource names and tags.
+
+  InstanceType:
+    Type: String
+    Description: EC2 instance type (e.g. g6e.xlarge).
+
+  Capacity:
+    Type: String
+    AllowedValues:
+      - on-demand
+      - spot
+    Default: on-demand
+    Description: on-demand or spot capacity.
+
+  ImageId:
+    Type: AWS::EC2::Image::Id
+    Description: >
+      Deep Learning AMI (Ubuntu 24.04, x86_64) resolved by the CLI from the
+      AWS SSM public parameter before the stack is created or replaced.
+
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subnet in which to launch the instance (default VPC).
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC containing the subnet.
+
+  CacheBucket:
+    Type: String
+    Description: Name of the ember model cache S3 bucket.
+
+  ModelPrefix:
+    Type: String
+    Description: S3 key prefix for the model weights (models/<model>/<revision>/).
+
+  TailscaleTag:
+    Type: String
+    Default: tag:ember
+    Description: Tailscale ACL tag to advertise (e.g. tag:ember).
+
+Conditions:
+
+  IsSpot: !Equals [!Ref Capacity, spot]
+
+Resources:
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub "ember deployment ${DeploymentName} - no inbound rules"
+      VpcId: !Ref VpcId
+      # No SecurityGroupIngress: all inbound traffic is blocked (SC-004).
+      # Tailscale provides the only reachable listener on the tailnet.
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: "0.0.0.0/0"
+          Description: Allow all outbound traffic
+      Tags:
+        - Key: ember:deployment
+          Value: !Ref DeploymentName
+        - Key: ember:managed-by
+          Value: ember_aws
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "ember-${DeploymentName}-${AWS::Region}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      # No ManagedPolicyArns — all permissions are inline and scoped.
+      Policies:
+        - PolicyName: EmberInstancePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # R8: read the config and join-key parameters (scoped to this deployment)
+              - Sid: ReadConfigParam
+                Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                Resource:
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/ember/${DeploymentName}/*"
+              # R8: delete the join key after use (scoped to this deployment)
+              - Sid: DeleteJoinKeyParam
+                Effect: Allow
+                Action:
+                  - ssm:DeleteParameter
+                Resource:
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/ember/${DeploymentName}/tailscale-join-key"
+              # R8: decrypt SecureString parameters (join key, server token)
+              - Sid: DecryptSecureStrings
+                Effect: Allow
+                Action:
+                  - kms:Decrypt
+                Resource:
+                  - !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*"
+                Condition:
+                  StringEquals:
+                    kms:ViaService: !Sub "ssm.${AWS::Region}.amazonaws.com"
+              # R8: download model weights from the cache bucket (scoped to model prefix)
+              - Sid: ReadModelCacheObjects
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource:
+                  - !Sub "arn:aws:s3:::${CacheBucket}/${ModelPrefix}*"
+              # R8: list only this deployment's model prefix in the shared bucket
+              - Sid: ListModelCachePrefix
+                Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource:
+                  - !Sub "arn:aws:s3:::${CacheBucket}"
+                Condition:
+                  StringLike:
+                    s3:prefix:
+                      - !Sub "${ModelPrefix}*"
+      Tags:
+        - Key: ember:deployment
+          Value: !Ref DeploymentName
+        - Key: ember:managed-by
+          Value: ember_aws
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub "ember-${DeploymentName}-${AWS::Region}"
+      Roles:
+        - !Ref InstanceRole
+
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref InstanceProfile
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      InstanceInitiatedShutdownBehavior: stop
+      MetadataOptions:
+        HttpTokens: required
+        HttpEndpoint: enabled
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeType: gp3
+            VolumeSize: 100
+            Encrypted: true
+            DeleteOnTermination: true
+      InstanceMarketOptions: !If
+        - IsSpot
+        - MarketType: spot
+          SpotOptions:
+            SpotInstanceType: persistent
+            InstanceInterruptionBehavior: stop
+        - !Ref AWS::NoValue
+      UserData:
+        Fn::Base64: "__EMBER_USER_DATA__"
+      Tags:
+        - Key: ember:deployment
+          Value: !Ref DeploymentName
+        - Key: ember:managed-by
+          Value: ember_aws
+
+Outputs:
+
+  InstanceId:
+    Description: EC2 instance ID
+    Value: !Ref Instance
+
+  RoleArn:
+    Description: ARN of the instance IAM role
+    Value: !GetAtt InstanceRole.Arn

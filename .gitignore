@@ -39,3 +39,6 @@ vault/.trash/
 # Outerbounds CLI's local deploy-state/image-build cache (per-machine).
 .ob_apps/
 *.egg-info/
+/.aws-tools.installed
+# Local secrets — never commit
+.env

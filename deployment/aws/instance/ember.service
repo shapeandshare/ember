@@ -1,0 +1,19 @@
+[Unit]
+Description=ember model server
+After=ember-converge.service
+Requires=ember-converge.service
+
+[Service]
+Type=simple
+User=ember
+Group=ember
+EnvironmentFile=/etc/ember/env
+ExecStart=/home/ember/.local/bin/ember serve
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal+console
+StandardError=journal+console
+SyslogIdentifier=ember
+
+[Install]
+WantedBy=multi-user.target

@@ -12,6 +12,22 @@ This module is read once, at process startup (``ember.serving.process.start``
 and ``ember.serving.server``'s lifespan), before the server begins serving —
 the same fail-fast-before-ready timing Article XIV already requires for a
 missing model, not a lazy per-request ``config.resolve()`` read.
+
+Completion marker
+-----------------
+A download is only considered complete when ``COMPLETION_MARKER`` exists
+inside the cache directory.  The marker is written atomically (via a sibling
+``.tmp`` file + ``os.replace``) after every successful download.
+
+A non-empty directory that lacks the marker is treated as **partial** and
+re-downloaded in full.  This closes the R4 bug where a partially downloaded
+cache was silently accepted as complete because the old guard only checked
+``any(model_dir.iterdir())``.
+
+Existing complete caches that pre-date the marker (i.e. non-empty directories
+without it) are also treated as incomplete and re-downloaded.  This is the
+safest behaviour: a redundant re-download is far less harmful than serving a
+corrupt model.  The docstring of :func:`resolve` explains this choice.
 """
 
 from __future__ import annotations
@@ -24,6 +40,8 @@ from urllib.parse import urlparse
 from ..cfg import config, paths, s3
 
 _URI_ENV = "EMBER_MODEL_S3_URI"
+
+COMPLETION_MARKER = "_download_complete"
 
 
 @dataclass(frozen=True)
@@ -73,8 +91,48 @@ def _parse_uri(uri: str) -> tuple[str, str]:
     return bucket, prefix
 
 
+def _is_complete(model_dir: Path) -> bool:
+    """Return ``True`` when ``model_dir`` holds a completed download.
+
+    Parameters
+    ----------
+    model_dir : Path
+        The local cache directory to inspect.
+
+    Returns
+    -------
+    bool
+        ``True`` only when the directory exists **and** contains
+        ``COMPLETION_MARKER``.  A non-empty directory without the marker is
+        treated as partial (the R4 bug: old code accepted any non-empty dir).
+    """
+    return model_dir.is_dir() and (model_dir / COMPLETION_MARKER).exists()
+
+
+def _write_marker(model_dir: Path) -> None:
+    """Write the completion marker atomically into ``model_dir``.
+
+    Parameters
+    ----------
+    model_dir : Path
+        The directory to mark as complete.
+    """
+    marker = model_dir / COMPLETION_MARKER
+    tmp = model_dir / f"{COMPLETION_MARKER}.tmp"
+    tmp.write_text("ok")
+    os.replace(tmp, marker)
+
+
 def resolve() -> HostedModelSource | None:
     """Resolve an operator-supplied S3 model location, if configured.
+
+    A download is considered complete only when ``COMPLETION_MARKER`` exists
+    inside the cache directory.  A non-empty directory without the marker is
+    treated as **partial** and re-downloaded in full (research R4 fix).
+
+    Existing caches that pre-date the marker are also treated as incomplete
+    and re-downloaded — a redundant re-download is far less harmful than
+    serving a corrupt model.
 
     Returns
     -------
@@ -93,9 +151,10 @@ def resolve() -> HostedModelSource | None:
         return None
     bucket, prefix = _parse_uri(uri)
     model_dir = paths.hosted_model_cache(uri)
-    if not model_dir.is_dir() or not any(model_dir.iterdir()):
+    if not _is_complete(model_dir):
         max_bytes = int(config.resolve("s3_max_bytes") or 0)
         s3.download_prefix(
             bucket, prefix, model_dir, f"{_URI_ENV}={uri!r}", max_bytes=max_bytes
         )
+        _write_marker(model_dir)
     return HostedModelSource(uri=uri, model_dir=model_dir)

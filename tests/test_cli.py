@@ -827,3 +827,54 @@ def test_init_treats_end_of_input_as_local(sandbox, monkeypatch):
     monkeypatch.setattr("builtins.input", _eof)
     assert cli.main(["init"]) == 0
     assert _opencode_env(sandbox)["EMBER_AUTOSTART"] == "1"
+
+
+# ###########################################################################
+# T056b: FR-023 — doctor reports remote endpoint version and device
+# ###########################################################################
+
+
+def test_doctor_reports_remote_endpoint_version_and_device(
+    sandbox, monkeypatch, capsys
+):
+    """FR-023: with EMBER_SERVER_URL pointing at a stub /health that reports
+    version, auth_required=True, and engine.device='cuda', ember doctor must
+    report the endpoint as remote and print its version and device.
+
+    Uses a real stub HTTP server on a random port (never 8765).  The stub
+    binds to loopback; the endpoint URL uses the loopback address so the
+    insecure-transport guard is not triggered.  Because the URL is loopback,
+    endpoint_status() calls process.health() — we monkeypatch that to return
+    the stub body so the test never makes a real network call.
+    """
+    import socket
+
+    _health_response = {
+        "status": "ok",
+        "version": "1.2.3",
+        "auth_required": True,
+        "engine": {
+            "model": "flash",
+            "device": "cuda",
+            "dtype": "float16",
+            "max_length": 262144,
+            "max_request_length": 24576,
+            "max_request_length_source": "fallback",
+            "max_length_source": "model",
+        },
+    }
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    assert port != 8765
+
+    monkeypatch.setenv("EMBER_SERVER_URL", f"http://127.0.0.1:{port}")
+    monkeypatch.setattr(models, "resolve_dir", lambda *args, **kwargs: sandbox)
+    monkeypatch.setattr(process, "health", lambda *args, **kwargs: _health_response)
+
+    assert cli.main(["doctor"]) == 0
+    out = capsys.readouterr().out
+
+    assert "1.2.3" in out, f"version '1.2.3' not found in doctor output:\n{out}"
+    assert "cuda" in out, f"device 'cuda' not found in doctor output:\n{out}"

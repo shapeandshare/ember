@@ -1,0 +1,28 @@
+[
+  {
+    "model": "flash",
+    "instance_type": "g6e.xlarge",
+    "gpu": "L40S",
+    "gpu_memory_gib": 48,
+    "status": "supported",
+    "default": true,
+    "request_cap": 24576,
+    "cap_source": "fallback",
+    "hourly_usd": {"us-east-1": 1.861},
+    "priced_on": "2026-10-11",
+    "note": "fallback cap until aws-verify measures it"
+  },
+  {
+    "model": "flash",
+    "instance_type": "g5.2xlarge",
+    "gpu": "A10G",
+    "gpu_memory_gib": 24,
+    "status": "tight",
+    "default": false,
+    "request_cap": 24576,
+    "cap_source": "fallback",
+    "hourly_usd": {"us-east-1": 1.212},
+    "priced_on": "2026-10-11",
+    "note": "tight: 24 GiB GPU, flash weights ~18 GiB + 4 GiB overhead = 22 GiB"
+  }
+]

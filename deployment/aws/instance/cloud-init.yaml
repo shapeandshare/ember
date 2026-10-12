@@ -1,0 +1,430 @@
+#cloud-config
+# cloud-init.yaml — first-boot setup for the ember GPU instance.
+#
+# Installs uv, tailscale, and the aws CLI v2; creates the ember user;
+# writes the instance scripts and systemd units; enables the units.
+#
+# Placeholder values (substituted by UserData.render() before deploy):
+#   {{DEPLOYMENT_NAME}}, {{REGION}}, {{TAILSCALE_TAG}},
+#   {{EMBER_VERSION}}, {{MODEL_S3_URI}}, {{MAX_REQUEST_LENGTH}},
+#   {{CONFIG_PARAM}}, {{JOIN_KEY_PARAM}}, {{TOKEN_PARAM}}
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - curl
+  - unzip
+  - python3
+  - python3-pip
+  - jq
+  - ca-certificates
+  - gnupg
+
+users:
+  - name: ember
+    system: false
+    shell: /bin/bash
+    home: /home/ember
+    create_home: true
+    groups: []
+
+runcmd:
+  # Install uv to /usr/local/bin
+  - |
+    if ! command -v uv >/dev/null 2>&1; then
+      curl -fsSL https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
+    fi
+
+  # Install tailscale via official apt repo
+  - |
+    if ! command -v tailscale >/dev/null 2>&1; then
+      curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.noarmor.gpg \
+        | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+      curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.tailscale-keyring.list \
+        | tee /etc/apt/sources.list.d/tailscale.list
+      apt-get update -qq
+      apt-get install -y tailscale
+      systemctl enable --now tailscaled
+    fi
+
+  # Install aws CLI v2 if absent
+  - |
+    if ! command -v aws >/dev/null 2>&1; then
+      curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+      unzip -q /tmp/awscliv2.zip -d /tmp/awscliv2
+      /tmp/awscliv2/aws/install
+      rm -rf /tmp/awscliv2.zip /tmp/awscliv2
+    fi
+
+  # Create directories
+  - mkdir -p /etc/ember /var/lib/ember /usr/local/bin
+
+  # Write tailscale-join.sh
+  - |
+    cat > /usr/local/bin/tailscale-join.sh << 'SCRIPT_EOF'
+    #!/bin/bash
+    set -euo pipefail
+
+    DEPLOYMENT_NAME="{{DEPLOYMENT_NAME}}"
+    REGION="{{REGION}}"
+    TAILSCALE_TAG="{{TAILSCALE_TAG}}"
+    JOIN_KEY_PARAM="{{JOIN_KEY_PARAM}}"
+
+    if tailscale status --json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); sys.exit(0 if d.get('BackendState') == 'Running' else 1)" 2>/dev/null; then
+        echo "tailscale: already logged in, skipping join"
+    else
+        echo "tailscale: fetching join key from SSM"
+        AUTH_KEY="$(aws ssm get-parameter \
+            --region "${REGION}" \
+            --name "${JOIN_KEY_PARAM}" \
+            --with-decryption \
+            --query 'Parameter.Value' \
+            --output text)"
+
+        echo "tailscale: joining tailnet as ember-${DEPLOYMENT_NAME}"
+        tailscale up \
+            --auth-key="${AUTH_KEY}" \
+            --hostname "ember-${DEPLOYMENT_NAME}" \
+            --advertise-tags "${TAILSCALE_TAG}" \
+            --ssh
+
+        echo "tailscale: deleting join key from SSM"
+        aws ssm delete-parameter \
+            --region "${REGION}" \
+            --name "${JOIN_KEY_PARAM}"
+
+        unset AUTH_KEY
+    fi
+
+    echo "tailscale: starting HTTPS reverse proxy on port 443"
+    if ! tailscale serve --bg --https=443 http://127.0.0.1:8765; then
+        MSG="ember: tailscale serve failed — enable HTTPS Certificates in the Tailscale admin console (DNS page)"
+        echo "${MSG}" | systemd-cat -t ember-tailscale -p err
+        echo "${MSG}" >&2
+        exit 1
+    fi
+
+    echo "tailscale: HTTPS proxy started"
+    SCRIPT_EOF
+    chmod +x /usr/local/bin/tailscale-join.sh
+
+  # Write converge.sh
+  - |
+    cat > /usr/local/bin/converge.sh << 'SCRIPT_EOF'
+    #!/bin/bash
+    set -euo pipefail
+
+    trap 'echo "converge: FAILED at line ${LINENO}" >&2' ERR
+
+    DEPLOYMENT_NAME="{{DEPLOYMENT_NAME}}"
+    REGION="{{REGION}}"
+    CONFIG_PARAM="{{CONFIG_PARAM}}"
+    TOKEN_PARAM="{{TOKEN_PARAM}}"
+
+    GENERATION_FILE="/var/lib/ember/generation"
+    ENV_FILE="/etc/ember/env"
+
+    echo "converge: reading config from SSM (${CONFIG_PARAM})"
+    CONFIG_JSON="$(aws ssm get-parameter \
+        --region "${REGION}" \
+        --name "${CONFIG_PARAM}" \
+        --query 'Parameter.Value' \
+        --output text)"
+
+    EMBER_VERSION="$(echo "${CONFIG_JSON}" | python3 -c "import sys,json; print(json.load(sys.stdin)['ember_version'])")"
+    MODEL_S3_URI="$(echo "${CONFIG_JSON}" | python3 -c "import sys,json; print(json.load(sys.stdin)['model_s3_uri'])")"
+    MAX_REQUEST_LENGTH="$(echo "${CONFIG_JSON}" | python3 -c "import sys,json; print(json.load(sys.stdin)['max_request_length'])")"
+    IDLE_MINUTES="$(echo "${CONFIG_JSON}" | python3 -c "import sys,json; print(json.load(sys.stdin)['idle_minutes'])")"
+    GENERATION="$(echo "${CONFIG_JSON}" | python3 -c "import sys,json; print(json.load(sys.stdin)['generation'])")"
+
+    echo "converge: reading server token from SSM (${TOKEN_PARAM})"
+    EMBER_SERVER_AUTH_TOKEN="$(aws ssm get-parameter \
+        --region "${REGION}" \
+        --name "${TOKEN_PARAM}" \
+        --with-decryption \
+        --query 'Parameter.Value' \
+        --output text)"
+
+    mkdir -p /var/lib/ember
+    LAST_GENERATION=""
+    if [[ -f "${GENERATION_FILE}" ]]; then
+        LAST_GENERATION="$(cat "${GENERATION_FILE}")"
+    fi
+
+    if [[ "${GENERATION}" == "${LAST_GENERATION}" ]]; then
+        echo "converge: generation ${GENERATION} unchanged — skipping install and sync"
+    else
+        echo "converge: generation changed (${LAST_GENERATION} -> ${GENERATION}), converging"
+
+        echo "converge: installing ember-advise==${EMBER_VERSION}"
+        runuser -u ember -- env HOME=/home/ember XDG_CACHE_HOME=/home/ember/.cache \
+            uv tool install --python 3.12 "ember-advise==${EMBER_VERSION}"
+
+        URI_HASH="$(echo -n "${MODEL_S3_URI}" | python3 -c "import sys,hashlib; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest()[:16])")"
+        MODEL_CACHE_DIR="/home/ember/.cache/ember/hosted-models/${URI_HASH}"
+        mkdir -p "${MODEL_CACHE_DIR}"
+
+        S3_BUCKET="$(echo "${MODEL_S3_URI}" | python3 -c "import sys; u=sys.stdin.read().strip(); print(u.split('/')[2])")"
+        S3_PREFIX="$(echo "${MODEL_S3_URI}" | python3 -c "import sys; u=sys.stdin.read().strip(); print('/'.join(u.split('/')[3:]) + '/')")"
+
+        echo "converge: downloading manifest.json"
+        aws s3 cp \
+            --region "${REGION}" \
+            "s3://${S3_BUCKET}/${S3_PREFIX}manifest.json" \
+            "${MODEL_CACHE_DIR}/manifest.json"
+
+        export _EMBER_CACHE_DIR="${MODEL_CACHE_DIR}"
+        export _EMBER_S3_BUCKET="${S3_BUCKET}"
+        export _EMBER_S3_PREFIX="${S3_PREFIX}"
+        export _EMBER_REGION="${REGION}"
+
+        python3 - <<'PYEOF'
+    import json, hashlib, subprocess, sys, os
+    cache_dir = os.environ["_EMBER_CACHE_DIR"]
+    s3_bucket = os.environ["_EMBER_S3_BUCKET"]
+    s3_prefix = os.environ["_EMBER_S3_PREFIX"]
+    region = os.environ["_EMBER_REGION"]
+    with open(os.path.join(cache_dir, "manifest.json")) as f:
+        manifest = json.load(f)
+    for entry in manifest["files"]:
+        rel_path = entry["path"]
+        expected_sha256 = entry["sha256"]
+        local_path = os.path.join(cache_dir, rel_path)
+        needs_download = True
+        if os.path.exists(local_path):
+            h = hashlib.sha256()
+            with open(local_path, "rb") as f:
+                for chunk in iter(lambda: f.read(65536), b""):
+                    h.update(chunk)
+            if h.hexdigest() == expected_sha256:
+                needs_download = False
+            else:
+                print(f"converge: SHA-256 mismatch for {rel_path}, re-downloading", flush=True)
+                os.remove(local_path)
+        if needs_download:
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            s3_key = s3_prefix + rel_path
+            print(f"converge: downloading {rel_path}", flush=True)
+            subprocess.run(["aws", "s3", "cp", "--region", region, f"s3://{s3_bucket}/{s3_key}", local_path], check=True)
+            h = hashlib.sha256()
+            with open(local_path, "rb") as f:
+                for chunk in iter(lambda: f.read(65536), b""):
+                    h.update(chunk)
+            if h.hexdigest() != expected_sha256:
+                print(f"converge: ERROR: SHA-256 still mismatches for {rel_path}", flush=True)
+                sys.exit(1)
+    marker = os.path.join(cache_dir, "_download_complete")
+    tmp_marker = marker + ".tmp"
+    with open(tmp_marker, "w") as f:
+        f.write("ok")
+    os.replace(tmp_marker, marker)
+    print("converge: all model files verified", flush=True)
+    PYEOF
+
+        echo "converge: chown -R ember:ember ${MODEL_CACHE_DIR}"
+        chown -R ember:ember "${MODEL_CACHE_DIR}"
+
+        echo "${GENERATION}" > "${GENERATION_FILE}"
+        echo "converge: generation ${GENERATION} applied"
+    fi
+
+    URI_HASH="$(echo -n "${MODEL_S3_URI}" | python3 -c "import sys,hashlib; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest()[:16])")"
+    MODEL_CACHE_DIR="/home/ember/.cache/ember/hosted-models/${URI_HASH}"
+
+    mkdir -p /etc/ember
+    umask 077
+    cat > "${ENV_FILE}" <<EOF
+    EMBER_HOST=127.0.0.1
+    EMBER_DEVICE=cuda
+    EMBER_AUTOSTART=0
+    EMBER_MODEL_S3_URI=${MODEL_S3_URI}
+    EMBER_MAX_REQUEST_LENGTH=${MAX_REQUEST_LENGTH}
+    EMBER_SERVER_AUTH_TOKEN=${EMBER_SERVER_AUTH_TOKEN}
+    EOF
+    chmod 600 "${ENV_FILE}"
+    unset EMBER_SERVER_AUTH_TOKEN
+
+    if [[ "${IDLE_MINUTES}" -gt 0 ]]; then
+        echo "converge: enabling ember-idle.timer (idle_minutes=${IDLE_MINUTES})"
+        systemctl enable --now ember-idle.timer 2>/dev/null || true
+    else
+        echo "converge: disabling ember-idle.timer (idle_minutes=0)"
+        systemctl disable --now ember-idle.timer 2>/dev/null || true
+    fi
+
+    echo "converge: done"
+    SCRIPT_EOF
+    chmod +x /usr/local/bin/converge.sh
+
+  # Write idle.sh and its service and timer (request-count auto-stop)
+  - |
+    cat > /etc/ember/idle.sh << 'SCRIPT_EOF'
+    #!/bin/bash
+    # idle.sh — check ember request count and shut down if idle for >= IDLE_MINUTES.
+    #
+    # Runs as ember-idle.service, triggered by ember-idle.timer (every 1 minute).
+    # Reads ember_advise_requests_total from http://127.0.0.1:8765/metrics,
+    # sums over all status labels, and calls shutdown -h now once the count has
+    # not changed for IDLE_MINUTES consecutive minutes.
+    #
+    # State files (dir defaults to /var/lib/ember; EMBER_IDLE_STATE_DIR overrides):
+    #   idle-count   — last observed request count
+    #   idle-since   — epoch seconds when the count last changed (or first check)
+    #
+    # Do NOT enable xtrace (set -x): no secrets here, but keep the convention.
+
+    set -euo pipefail
+
+    IDLE_MINUTES="{{IDLE_MINUTES}}"
+    METRICS_URL="http://127.0.0.1:8765/metrics"
+    STATE_DIR="${EMBER_IDLE_STATE_DIR:-/var/lib/ember}"
+    COUNT_FILE="${STATE_DIR}/idle-count"
+    SINCE_FILE="${STATE_DIR}/idle-since"
+    SHUTDOWN_CMD="${IDLE_SHUTDOWN_CMD:-shutdown -h now}"
+
+    # Guard: do nothing when idle auto-stop is disabled.
+    if [[ "${IDLE_MINUTES}" -eq 0 ]]; then
+        exit 0
+    fi
+
+    mkdir -p "${STATE_DIR}"
+
+    # Fetch metrics and sum ember_advise_requests_total over all status labels.
+    CURRENT_COUNT="$(
+        curl -sf "${METRICS_URL}" 2>/dev/null \
+        | awk '/^ember_advise_requests_total\{/ { sum += $2 } END { print int(sum) }'
+    )" || CURRENT_COUNT="0"
+
+    # Read the last observed count (default 0 on first run).
+    LAST_COUNT="0"
+    if [[ -f "${COUNT_FILE}" ]]; then
+        LAST_COUNT="$(cat "${COUNT_FILE}")"
+    fi
+
+    NOW="$(date +%s)"
+
+    if [[ "${CURRENT_COUNT}" != "${LAST_COUNT}" ]]; then
+        # Count changed — reset the idle-since timestamp and record the new count.
+        echo "${CURRENT_COUNT}" > "${COUNT_FILE}"
+        echo "${NOW}" > "${SINCE_FILE}"
+        exit 0
+    fi
+
+    # Count unchanged — check how long we have been idle.
+    if [[ ! -f "${SINCE_FILE}" ]]; then
+        echo "${NOW}" > "${SINCE_FILE}"
+        exit 0
+    fi
+    IDLE_SINCE="$(cat "${SINCE_FILE}")"
+
+    IDLE_SECONDS=$(( NOW - IDLE_SINCE ))
+    THRESHOLD_SECONDS=$(( IDLE_MINUTES * 60 ))
+
+    if [[ "${IDLE_SECONDS}" -ge "${THRESHOLD_SECONDS}" ]]; then
+        echo "idle.sh: idle for ${IDLE_SECONDS}s (>= ${THRESHOLD_SECONDS}s), shutting down"
+        ${SHUTDOWN_CMD}
+    fi
+    SCRIPT_EOF
+    chmod +x /etc/ember/idle.sh
+
+  # Write ember-idle.service
+  - |
+    cat > /etc/systemd/system/ember-idle.service << 'UNIT_EOF'
+    [Unit]
+    Description=ember idle auto-stop check
+    After=ember.service
+
+    [Service]
+    Type=oneshot
+    ExecStart=/etc/ember/idle.sh
+    StandardOutput=journal+console
+    StandardError=journal+console
+    UNIT_EOF
+
+  # Write ember-idle.timer
+  - |
+    cat > /etc/systemd/system/ember-idle.timer << 'UNIT_EOF'
+    [Unit]
+    Description=ember idle auto-stop timer
+    Requires=ember-idle.service
+
+    [Timer]
+    OnUnitActiveSec=1min
+    Unit=ember-idle.service
+
+    [Install]
+    WantedBy=timers.target
+    UNIT_EOF
+
+
+  # Write ember-tailscale.service
+  - |
+    cat > /etc/systemd/system/ember-tailscale.service << 'UNIT_EOF'
+    [Unit]
+    Description=ember Tailscale join and HTTPS proxy setup
+    After=tailscaled.service network-online.target
+    Wants=network-online.target
+    Before=ember-converge.service
+
+    [Service]
+    Type=oneshot
+    RemainAfterExit=yes
+    ExecStart=/usr/local/bin/tailscale-join.sh
+    StandardOutput=journal+console
+    StandardError=journal+console
+    SyslogIdentifier=ember-tailscale
+
+    [Install]
+    WantedBy=multi-user.target
+    UNIT_EOF
+
+  # Write ember-converge.service
+  - |
+    cat > /etc/systemd/system/ember-converge.service << 'UNIT_EOF'
+    [Unit]
+    Description=ember converge — install and sync on every boot
+    After=ember-tailscale.service network-online.target
+    Wants=network-online.target
+    Before=ember.service
+
+    [Service]
+    Type=oneshot
+    RemainAfterExit=yes
+    ExecStart=/usr/local/bin/converge.sh
+    StandardOutput=journal+console
+    StandardError=journal+console
+    SyslogIdentifier=ember-converge
+
+    [Install]
+    WantedBy=multi-user.target
+    UNIT_EOF
+
+  # Write ember.service
+  - |
+    cat > /etc/systemd/system/ember.service << 'UNIT_EOF'
+    [Unit]
+    Description=ember model server
+    After=ember-converge.service
+    Requires=ember-converge.service
+
+    [Service]
+    Type=simple
+    User=ember
+    Group=ember
+    EnvironmentFile=/etc/ember/env
+    ExecStart=/home/ember/.local/bin/ember serve
+    Restart=on-failure
+    RestartSec=10
+    StandardOutput=journal+console
+    StandardError=journal+console
+    SyslogIdentifier=ember
+
+    [Install]
+    WantedBy=multi-user.target
+    UNIT_EOF
+
+  # Reload systemd and enable units
+  - systemctl daemon-reload
+  - systemctl enable ember-tailscale ember-converge ember
+  - systemctl start ember-tailscale ember-converge ember

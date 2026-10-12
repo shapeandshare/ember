@@ -59,7 +59,9 @@ def pinned_filler(manifest: ProbeManifest) -> str:
 class _Prober:
     """Holds the engine and inputs one worker needs to run probe cells."""
 
-    def __init__(self, run_dir: Path, manifest: ProbeManifest, model: str) -> None:
+    def __init__(
+        self, run_dir: Path, manifest: ProbeManifest, model: str, device: str = "mps"
+    ) -> None:
         check_pins(manifest, model)
         model_dir = models.resolve_dir(model, override=False)
         if model_dir is None:
@@ -84,6 +86,7 @@ class _Prober:
         )
         self.manifest = manifest
         self.model = model
+        self._device = device
         self.items = dataset_items(manifest, run_dir)
         self.path = run_dir / rows_name(model)
         self.approx_bytes = models.get(model).approx_bytes
@@ -118,7 +121,7 @@ class _Prober:
         )
         status, answers, error = RowStatus.OK, {}, None
         started = time.monotonic()
-        with MemorySampler() as sampler:
+        with MemorySampler(device=self._device) as sampler:
             try:
                 answers = self.engine.advise(state, item["questions"])["answers"]
             except RuntimeError as exc:
@@ -127,7 +130,10 @@ class _Prober:
             except Exception as exc:  # the row keeps any other failure's message
                 status, error = RowStatus.ERROR, f"{type(exc).__name__}: {exc}"
         if status is RowStatus.OOM:
-            torch.mps.empty_cache()
+            if self._device == "cuda":
+                torch.cuda.empty_cache()
+            else:
+                torch.mps.empty_cache()
         if sampler.rss_start_bytes > self.approx_bytes // 4:
             _log.warning(
                 "rss at start is %d bytes, over 25%% of the weights: the peak may "
@@ -151,6 +157,7 @@ class _Prober:
             rss_start_bytes=sampler.rss_start_bytes,
             driver_peak_bytes=sampler.driver_peak_bytes,
             peak_bytes=sampler.peak_bytes,
+            device=self._device,
             status=status,
             exploratory=exploratory,
             error=error,
@@ -187,7 +194,9 @@ def first_failure_at(summary: ProbeSummary, model: str, upto: int) -> int | None
     return min(failing) if failing else None
 
 
-def run_model(run_dir: Path, model: str, *, pilot: bool = False) -> int:
+def run_model(
+    run_dir: Path, model: str, *, pilot: bool = False, device: str = "mps"
+) -> int:
     """Run ``model``'s cells for the run in ``run_dir``; return an exit code.
 
     Each length starts with a memory check (the first item at every depth). A
@@ -197,7 +206,7 @@ def run_model(run_dir: Path, model: str, *, pilot: bool = False) -> int:
     """
     manifest = load_manifest(run_dir)
     try:
-        prober = _Prober(run_dir, manifest, model)
+        prober = _Prober(run_dir, manifest, model, device=device)
     except (RuntimeError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

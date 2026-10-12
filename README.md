@@ -420,6 +420,28 @@ from your shell still check the **local** default unless you also export the sam
 (`ember config path`). See `deployment/README.md`'s "Verifying from the shell" for the exact
 steps and what a healthy response looks like.
 
+#### Hosted on AWS over Tailscale
+
+`make aws-up` deploys ember to a single NVIDIA GPU instance on AWS and makes it
+reachable only over your Tailscale network, with no public ports. The instance
+runs `ember serve` with `EMBER_DEVICE=cuda` and loads weights from a private S3
+model cache. Clients connect over HTTPS at the node's MagicDNS name
+(`https://ember-<name>.<tailnet>.ts.net`); `EMBER_ALLOW_INSECURE_TRANSPORT` is
+never needed.
+
+```bash
+make aws-tools                        # install the tailscale CLI (macOS: brew; Linux: prints URL)
+make aws-cache MODEL=flash            # upload the pinned model to S3 once per region (~18 GiB)
+make aws-up                           # deploy; prints the URL and the ember init line
+export EMBER_AUTH_TOKEN="$(make -s aws-token)"
+ember init --opencode --server-url https://ember-default.<tailnet>.ts.net
+```
+
+ember advises; the agent decides — the deployment changes where the model runs,
+not how agents call it. See [`deployment/aws/README.md`](deployment/aws/README.md)
+for prerequisites (AWS quota, Tailscale OAuth client, MagicDNS, HTTPS
+certificates), costs, every lifecycle command, and teardown.
+
 ## Metrics
 
 While the model server is running it exposes Prometheus metrics at
@@ -516,6 +538,21 @@ committed: it registers the `vault` MCP server that agents use to read and write
 | `make doctor` | `ember doctor` |
 | `make vault-audit` | Check `vault/` notes: frontmatter, tags, wikilinks, code-refs, orphans |
 | `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000`, rebuilt and reloaded in the browser on every edit (needs Docker) |
+| `make aws-tools` / `aws-tools-rm` | Install / remove the `tailscale` CLI (macOS: brew; Linux: prints URL) |
+| `make aws-preflight` | Check AWS identity, quota, Tailscale OAuth, and MagicDNS before creating anything |
+| `make aws-cache` | Create the S3 model cache stack (if absent) and upload the pinned model |
+| `make aws-cache-list` / `aws-cache-rm` | List cached models / remove one cached revision |
+| `make aws-cache-destroy` | Delete the cache bucket (requires `CONFIRM=<bucket>`; refused while deployments exist) |
+| `make aws-up` | Deploy (or update) the ember GPU instance and wait for health |
+| `make aws-status` | Show deployment state, instance, tailnet URL, health, and cost estimate |
+| `make aws-stop` / `aws-start` | Stop / start the EC2 instance |
+| `make aws-replace` | Replace the instance with the latest DLAMI and wait for health |
+| `make aws-logs` | Stream instance logs via Tailscale SSH (`UNIT=ember\|converge\|idle\|tailscale`) |
+| `make aws-ssh` | Open a Tailscale SSH shell on the instance |
+| `make aws-token` | Print the server auth token |
+| `make aws-rotate-token` | Generate a new server token and reboot the instance |
+| `make aws-down` | Destroy the deployment (requires `CONFIRM=<name>`; keeps the S3 cache) |
+| `make aws-verify` | Run the CUDA verification gate over Tailscale SSH and benchmark from here |
 | `make release-dry` | Preview the next ember version bump without changes |
 | `make release-ember` | Trigger the release workflow on `main` (bump PR → GitHub Release → PyPI) |
 | `make clean` / `make clean-model` | Caches and build output / weights (`EMBER_FORCE=1` skips the prompt) |

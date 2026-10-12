@@ -1,6 +1,6 @@
 # AGENTS.md — ember
 
-**Last updated**: 2026-10-10 (benchmark foundations: structured `source`, content-hash dataset versions, the data-source register, the `usage` token split, resumable runs, one leaderboard table per version — `specs/004-benchmark-categories/`; constitution v3.2.1)
+**Last updated**: 2026-10-11 (AWS GPU deployment over Tailscale: `deployment/aws/`, `shared/aws.mk`, `make aws-*` commands — `specs/005-aws-gpu-deployment/`; `REGION` defaults to `us-west-2`)
 
 ## What this repo is
 
@@ -113,11 +113,39 @@ ember/
 packages/opencode-plugin/   # opencode plugin source (unpublished; `ember init --opencode` writes the installed copy)
 packages/claude-plugin/     # Claude Code plugin (MCP entry + mirrored ember-advise skill), listed by .claude-plugin/marketplace.json
 server.json                 # MCP Registry entry (io.github.shapeandshare/ember), published by release-ember.yml
+deployment/aws/       # AWS GPU deployment over Tailscale (operator tooling, not shipped in the wheel)
+  ember_aws/          #   Python package: run as `PYTHONPATH=deployment/aws uv run python -m ember_aws`
+    __main__.py       #     argparse composition root: preflight, cache, deploy, token, status, stop, start, replace, logs, ssh, rotate-token, destroy, verify
+    _cli_parsers.py   #     subcommand registration helpers (keeps __main__ under 400 lines)
+    _cli_handlers.py / _cli_handlers_control.py  # handler functions per subcommand
+    names.py          #     DeploymentName: derived stack/hostname/SSM/tag names
+    sizing_entry.py / sizing_table.py  # SizingEntry BaseModel; SizingTable.load + resolve; SizingError
+    deployment.py / instance_config.py  # Deployment + InstanceConfig Pydantic models
+    aws_clients.py    #     AwsClients dataclass: single boto3.Session seam for tests
+    tailscale_client.py  # TailscaleClient + TailscaleError; from_env() reads TS_OAUTH_CLIENT_*
+    preflight.py / check_result.py  # Preflight.run → list[CheckResult]; non-blocking HTTPS notice
+    model_cache.py / cached_model.py  # ModelCache: ensure_bucket, add, list, remove, destroy, status
+    user_data.py      #     UserData.render + template_body (inlines instance/ files at __EMBER_USER_DATA__)
+    stack.py          #     Stack: create/update/delete/wait/outputs; resolve_image_id; pick_subnet
+    health.py         #     wait_healthy: polls /health every 10 s; treats 503 as "loading"
+    lifecycle.py      #     Lifecycle.deploy/stop/start/replace/destroy/rotate_token/token
+    deployment_status.py / status_reader.py  # DeploymentStatus BaseModel; StatusReader.read
+    remote.py         #     Remote.logs/ssh/verify (Tailscale SSH; never shell=True)
+    capacity.py / deployment_state.py / stop_reason.py / sizing_status.py / cap_source.py / preflight_check.py  # StrEnum files
+  instance/           #   instance-side files (cloud-init, systemd units, shell scripts)
+    cloud-init.yaml   #     installs uv, tailscale, aws CLI; creates ember user; enables units
+    tailscale-join.sh #     joins tailnet, deletes join key, runs tailscale serve --https=443
+    converge.sh       #     reads SSM config, installs ember-advise==<v>, syncs model from S3, writes /etc/ember/env
+    ember-tailscale.service / ember-converge.service / ember.service  # systemd units
+  template.yaml       #   CloudFormation: SecurityGroup (no ingress), InstanceRole, InstanceProfile, Instance
+  cache-template.yaml #   CloudFormation: ember-model-cache bucket (Retain, SSE-S3, public-access blocked)
+  sizing.json         #   per-model instance sizing table (GPU, VRAM, status, request_cap, hourly_usd)
 shared/               # Makefile domain modules (.mk files)
   helper.mk           #   auto-generated make help
   python.mk           #   lint, format, typecheck, security, pr-ready
   testing.mk          #   test, test-fast, test-strict, test-cov, smoke, mcp-check
   server.mk           #   serve, start, stop, restart, status, logs, mcp, doctor
+  aws.mk              #   aws-preflight, aws-cache, aws-up, aws-status, aws-stop, aws-start, aws-replace, aws-logs, aws-ssh, aws-token, aws-rotate-token, aws-down, aws-verify, aws-tools, aws-tools-rm
    release.mk          #   download, init, bootstrap, check, ci, clean
    vault.mk            #   vault-audit
    site.mk             #   site, site-serve (Jekyll Pages)
@@ -188,6 +216,21 @@ vault/                # project memory (Obsidian): decisions, discoveries, sessi
 | `make site` / `make site-serve` | Build the Pages site into `site/_site` / preview it at `:4000`, rebuilt and reloaded in the browser on every edit (needs Docker) |
 | `make release-dry` | Preview the next ember version bump without changes |
 | `make release-ember` | Trigger the release workflow on `main` (bump PR → GitHub Release → PyPI) |
+| `make aws-tools` / `make aws-tools-rm` | Install / remove the `tailscale` CLI (macOS: brew; Linux: prints URL); idempotent; records installs in `.aws-tools.installed` |
+| `make aws-preflight` | Check AWS identity, quota, Tailscale OAuth, tag ownership, and MagicDNS before creating anything |
+| `make aws-cache` | Create the S3 model cache stack (if absent) and upload the pinned model revision |
+| `make aws-cache-list` / `make aws-cache-rm` | List cached models / remove one cached revision (exit 3 while a deployment uses it) |
+| `make aws-cache-destroy` | Delete the cache bucket (requires `CONFIRM=<bucket>`; exit 3 while any deployment exists) |
+| `make aws-up` | Deploy (or update) the ember GPU instance and wait for health |
+| `make aws-status` | Show deployment state, instance, tailnet URL, health, and cost estimate |
+| `make aws-stop` / `make aws-start` | Stop / start the EC2 instance (idempotent) |
+| `make aws-replace` | Replace the instance with the latest DLAMI and wait for health |
+| `make aws-logs` | Stream instance logs via Tailscale SSH (`UNIT=ember\|converge\|idle\|tailscale`, `FOLLOW=1`) |
+| `make aws-ssh` | Open a Tailscale SSH shell on the instance |
+| `make aws-token` | Print the server auth token (use with `export EMBER_AUTH_TOKEN="$(make -s aws-token)"`) |
+| `make aws-rotate-token` | Generate a new server token and reboot the instance |
+| `make aws-down` | Destroy the deployment (requires `CONFIRM=<name>`; keeps the S3 cache) |
+| `make aws-verify` | Run the CUDA verification gate over Tailscale SSH and benchmark from here |
 | `.venv/bin/ember …` or `.venv/bin/gut …` | Primary CLI, built from this checkout |
 
 ## Architecture (call path)
@@ -379,7 +422,18 @@ base URL and MCP stdio parameters for integration tests.
 | `tests/test_benchmark_bundles.py` | Committed `benchmark/` bundles: newest matches the current content hash, hashes and `settings` recorded |
 | `tests/test_leaderboard.py` / `test_leaderboard_versions.py` | Leaderboard grouping keys and rows / dataset versions, per-recipe assembly, incomplete rows |
 | `tests/test_site_benchmark.py` / `test_site_leaderboard.py` | Site build, landing headline, hero questions / one table per version, headline scope and capability, recipe-cell run links |
-| `tests/test_context_probe.py` | Long-context probe (no model): records, padding, scoring, the cap rule, summary determinism, resume, items, reproduction, memory sampler |
+| `tests/test_context_probe.py` | Long-context probe (no model): records, padding, scoring, the cap rule, summary determinism, resume, items, reproduction, memory sampler; CUDA device path and `torch.cuda.max_memory_allocated` sampler (fake torch module) |
+| `tests/test_aws_names_sizing.py` | `DeploymentName` validation and derived names; `SizingTable.load`, default rows, `resolve`, `SizingError`; one-line enum smoke tests |
+| `tests/test_aws_template.py` | CloudFormation template invariants: no ingress, scoped IAM, IMDSv2, gp3 root volume, tags, spot condition, cache bucket Retain/SSE/TLS-deny |
+| `tests/test_aws_deployment_models.py` | `Deployment` defaults and validation; `InstanceConfig` JSON round-trip; `model_s3_uri` and `max_request_length` constraints |
+| `tests/test_aws_tailscale.py` | `TailscaleClient`: token exchange, `mint_join_key`, `delete_devices`, `tailnet_dns`, `TailscaleError` (secret never in `str()`) |
+| `tests/test_aws_preflight.py` | `Preflight.run`: each failing `PreflightCheck` produces one `✗` line; no mutating AWS calls; HTTPS notice is non-blocking |
+| `tests/test_aws_model_cache.py` | `ModelCache`: stack creation, upload, manifest-last, idempotency, partial detection, `cache rm` exit 3, `cache destroy` confirmation |
+| `tests/test_aws_stack_lifecycle.py` | Deploy order, health poll, update paths (version/instance-type/replace), stop/start idempotency, destroy order, rotate-token |
+| `tests/test_aws_instance_scripts.py` | Rendered cloud-init and shell scripts: `tailscale-join.sh`, `converge.sh` (generation check, model sync, env file), systemd units; user-data size limits |
+| `tests/test_aws_status.py` | `DeploymentStatus` from stubbed AWS/Tailscale/health; state mapping, cost estimate, spot price, `--json` |
+| `tests/test_aws_remote.py` | `Remote.logs`, `Remote.ssh`, `Remote.verify` argv construction; never `shell=True` |
+| `tests/test_aws_cli.py` | Argparse wiring and exit-code mapping for all subcommands; `aws-tools` / `aws-tools-rm` `make -n` dry-run |
 | `packages/opencode-plugin/index.test.js` | npm plugin config hook: env defaults and overrides (`node --test index.test.js`) |
 
 **Writing new tests — unit pattern** (`tests/test_<module>.py`):
@@ -734,6 +788,35 @@ spacing values, or component styles outside the design system.
 - **YAGNI** (Article XV). Before adding a new abstraction, parameter, or capability, ask
   "does the current requirement actually need this?" If not, don't add it. Document any
   complexity beyond the simplest viable solution in the commit or vault.
+- **Never run AWS or Tailscale in tests or CI.** All `tests/test_aws_*.py` files use
+  `botocore.stub.Stubber`, `httpx.MockTransport`, `tmp_path`, and `monkeypatch`. No test
+  touches a real AWS account or tailnet. Keep every `aws-*` make target out of `make check`,
+  `make test`, and CI (FR-025).
+- **The instance has no inbound rules.** The CloudFormation security group has no
+  `SecurityGroupIngress` entries. Tailscale connects outbound; ember binds to `127.0.0.1`
+  only. Never add an inbound rule — it would expose the instance to the public internet.
+- **The Tailscale OAuth secret never leaves the operator machine.** `TS_OAUTH_CLIENT_ID`
+  and `TS_OAUTH_CLIENT_SECRET` are read from the environment at deploy time and never
+  written to any file, SSM parameter, template, or log. The instance only ever sees a
+  short-lived, single-use join key that expires in one hour and is deleted after use.
+- **The S3 model cache stack is `Retain` and is never deleted by `aws-down`.** The
+  `ember-model-cache` CloudFormation stack has `DeletionPolicy: Retain` and
+  `UpdateReplacePolicy: Retain`. Destroying a deployment (`make aws-down`) never touches
+  the cache. Removing the cache is its own command (`make aws-cache-destroy`) with typed
+  confirmation, and it exits 3 while any deployment still uses it.
+- **`full` is refused until sized.** `deployment/aws/sizing.json` has no `full` row with
+  `status: supported`. `SizingTable.resolve("full", None)` raises `SizingError` naming the
+  reason. Do not add a `full` row until `make aws-verify` measures the cap on a real
+  single-GPU instance with at least 80 GB of VRAM.
+- **`ember/serving/hosted.py` uses a completion marker `_download_complete`.** A
+  non-empty directory without this marker is treated as a partial download and
+  re-downloaded in full. This closes the R4 bug where any non-empty directory was
+  silently accepted as complete. The marker is written atomically after every successful
+  download. See `vault/discoveries/2026-10-11-hosted-cache-treats-partial-dir-as-complete.md`.
+- **`ember doctor` reports the remote version and device.** When `EMBER_SERVER_URL` points
+  at a deployed instance, `ember doctor` reports it as a remote endpoint and prints the
+  server's advertised `version` and `engine.device` (e.g. `cuda`). No new client code is
+  needed; this is the existing remote-health-probe path (FR-023).
 
 ## Speckit integration
 
@@ -778,6 +861,28 @@ MUST pass the constitution check.
 
 ## Recent Changes
 
+- 2026-10-11: AWS GPU deployment region: `REGION` defaults to `us-west-2` (was `us-east-1`).
+  One `DEFAULT_REGION` constant (`deployment/aws/ember_aws/defaults.py`) feeds the CLI parsers,
+  the `Deployment` model, the control handlers, and the cost fallback;
+  `tests/test_aws_cli_control.py` keeps it in sync with `REGION ?=` in `shared/aws.mk`.
+  `make aws-verify` now prints an actionable error naming the deployment and region when SSM
+  has no config there, instead of a bare `ParameterNotFound`.
+- 2026-10-11: AWS GPU deployment over Tailscale (`specs/005-aws-gpu-deployment/`): `make aws-up`
+  deploys ember to a single NVIDIA GPU instance (default `g6e.xlarge`, 1x L40S, 48 GB VRAM,
+  ~$1.86/h on demand in us-east-1) reachable only over the operator's tailnet at
+  `https://ember-<name>.<tailnet>.ts.net`. No public ports. The instance loads weights from a
+  private S3 model cache (`ember-model-cache-<account>-<region>`), joins the tailnet with a
+  short-lived SSM-delivered join key, and runs `ember serve` with `EMBER_DEVICE=cuda`. Full
+  lifecycle: `aws-preflight`, `aws-cache`, `aws-up`, `aws-status`, `aws-stop`, `aws-start`,
+  `aws-replace`, `aws-logs`, `aws-ssh`, `aws-token`, `aws-rotate-token`, `aws-down`,
+  `aws-verify`, `aws-tools`, `aws-tools-rm`. Updates (version, model, idle timeout) reboot
+  in place; the tailnet name and auth token are preserved. `ember/serving/hosted.py` now
+  uses a `_download_complete` marker to detect partial downloads (R4 fix). Tests:
+  `tests/test_aws_names_sizing.py`, `test_aws_template.py`, `test_aws_deployment_models.py`,
+  `test_aws_tailscale.py`, `test_aws_preflight.py`, `test_aws_model_cache.py`,
+  `test_aws_stack_lifecycle.py`, `test_aws_instance_scripts.py`, `test_aws_status.py`,
+  `test_aws_remote.py`, `test_aws_cli.py`; CUDA path added to `test_context_probe.py`.
+  See `deployment/aws/README.md` and `vault/decisions/2026-10-11-aws-gpu-deployment-over-tailscale.md`.
 - 2026-10-10: landing page rewritten for newcomers: plain-language hero and sections, buttons
   above the fold, and a question cloud around Ember. Its 24 questions live in
   `site/_data/hero_questions.json`; the site build fills each percentage from the newest

@@ -1,0 +1,17 @@
+[Unit]
+Description=ember Tailscale join and HTTPS proxy setup
+After=tailscaled.service network-online.target
+Wants=network-online.target
+Before=ember-converge.service
+ConditionPathExists=!/var/lib/ember/tailscale-joined
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/tailscale-join.sh
+StandardOutput=journal+console
+StandardError=journal+console
+SyslogIdentifier=ember-tailscale
+
+[Install]
+WantedBy=multi-user.target

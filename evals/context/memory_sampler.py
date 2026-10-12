@@ -1,4 +1,9 @@
-"""Sample peak MPS memory while one inference runs (research R11)."""
+"""Sample peak GPU memory while one inference runs (research R11).
+
+Supports MPS (Apple Silicon) and CUDA (NVIDIA) devices.  The device is
+selected at construction time; the default is ``"mps"`` to preserve the
+existing behaviour for the local long-context probe.
+"""
 
 from __future__ import annotations
 
@@ -19,35 +24,86 @@ def _rss_bytes() -> int:
     return int(out.strip()) * 1024
 
 
-def _synchronize() -> None:
+def _mps_synchronize() -> None:
     if torch.backends.mps.is_available():
         torch.mps.synchronize()
+
+
+def _cuda_synchronize() -> None:
+    torch.cuda.synchronize()
+
+
+def _mps_driver_allocated() -> int:
+    return torch.mps.driver_allocated_memory()
+
+
+def _cuda_max_memory_allocated() -> int:
+    return torch.cuda.max_memory_allocated()
+
+
+def _cuda_reset_peak_stats() -> None:
+    torch.cuda.reset_peak_memory_stats()
 
 
 class MemorySampler:
     """Context manager that polls driver memory on a thread during a block.
 
-    ``peak_bytes`` is the process RSS when the block starts plus the highest
-    driver-allocated value sampled during it.
+    On MPS, ``peak_bytes`` is the process RSS when the block starts plus the
+    highest ``torch.mps.driver_allocated_memory`` sampled during it.  On CUDA,
+    CUDA peak stats are reset at block entry (so a later block cannot inherit
+    an earlier block's peak) and ``peak_bytes`` is the CUDA maximum allocated
+    bytes alone; host RSS is kept as telemetry because the CUDA budget is
+    device memory.
 
     Parameters
     ----------
+    device : str, optional
+        ``"mps"`` (default) or ``"cuda"``.  Selects the synchronize and
+        driver-read functions when ``synchronize`` and ``read_driver`` are
+        not supplied explicitly.
     read_driver : Callable[[], int] | None, optional
-        Driver-allocated bytes; defaults to ``torch.mps.driver_allocated_memory``.
+        Driver-allocated bytes; defaults to the device-appropriate function.
     read_rss : Callable[[], int] | None, optional
         Process RSS in bytes; defaults to ``ps -o rss= -p <pid>``.
+    synchronize : Callable[[], None] | None, optional
+        Device synchronize function; defaults to the device-appropriate one.
+    reset_peak : Callable[[], None] | None, optional
+        Resets the driver's peak-stat counter; run after synchronize and
+        before the first reading.  Defaults to
+        ``torch.cuda.reset_peak_memory_stats`` on CUDA and a no-op on MPS.
     interval : float, optional
         Seconds between samples.
     """
 
     def __init__(
         self,
+        device: str = "mps",
         read_driver: Callable[[], int] | None = None,
         read_rss: Callable[[], int] | None = None,
+        synchronize: Callable[[], None] | None = None,
+        reset_peak: Callable[[], None] | None = None,
         interval: float = 0.02,
     ) -> None:
-        self._read_driver = read_driver or torch.mps.driver_allocated_memory
+        self._device = device
+        if read_driver is not None:
+            self._read_driver = read_driver
+        elif device == "cuda":
+            self._read_driver = _cuda_max_memory_allocated
+        else:
+            self._read_driver = _mps_driver_allocated
         self._read_rss = read_rss or _rss_bytes
+        if synchronize is not None:
+            self._synchronize = synchronize
+        elif device == "cuda":
+            self._synchronize = _cuda_synchronize
+        else:
+            self._synchronize = _mps_synchronize
+        if reset_peak is not None:
+            self._reset_peak = reset_peak
+        elif device == "cuda":
+            self._reset_peak = _cuda_reset_peak_stats
+        else:
+            self._reset_peak = None
         self._interval = interval
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -56,7 +112,9 @@ class MemorySampler:
 
     @property
     def peak_bytes(self) -> int:
-        """RSS at the start plus the driver peak."""
+        """The device-memory peak: RSS plus driver on MPS, driver alone on CUDA."""
+        if self._device == "cuda":
+            return self.driver_peak_bytes
         return self.rss_start_bytes + self.driver_peak_bytes
 
     @property
@@ -65,8 +123,10 @@ class MemorySampler:
         return self._thread is not None and self._thread.is_alive()
 
     def __enter__(self) -> MemorySampler:
-        """Synchronize, record the starting RSS, and start sampling."""
-        _synchronize()
+        """Synchronize, reset peak stats, record the starting RSS, and sample."""
+        self._synchronize()
+        if self._reset_peak is not None:
+            self._reset_peak()
         self.rss_start_bytes = self._read_rss()
         self.driver_peak_bytes = self._read_driver()
         self._stop.clear()
@@ -82,7 +142,7 @@ class MemorySampler:
     ) -> None:
         """Synchronize, stop sampling, and take a last reading; never swallow."""
         try:
-            _synchronize()
+            self._synchronize()
         finally:
             self._stop.set()
             if self._thread is not None:

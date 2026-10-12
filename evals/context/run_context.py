@@ -10,9 +10,10 @@ Usage
     python evals/context/run_context.py --rescore ID # rebuild summary.json
     python evals/context/run_context.py --reproduce ID [--items N]
     python evals/context/run_context.py --snapshot ID
+    python evals/context/run_context.py --device cuda  # NVIDIA GPU
 
 Writes ``results/context/<run_id>/``. Exit codes: 0 done, 1 error (including no
-MPS device), 2 the sizing gate failed or a reproduction differs.
+suitable device), 2 the sizing gate failed or a reproduction differs.
 """
 
 from __future__ import annotations
@@ -58,6 +59,7 @@ RUNS_DIR = REPO_ROOT / "evals" / "context" / "runs"
 SMOKE_LENGTHS = (2048, 4096)
 SMOKE_ITEMS = 3
 _GATE_LENGTH = 16384
+_SIZING_JSON = REPO_ROOT / "deployment" / "aws" / "sizing.json"
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -86,6 +88,12 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--rescore", metavar="ID", default=None)
     parser.add_argument("--reproduce", metavar="ID", default=None)
     parser.add_argument("--snapshot", metavar="ID", default=None)
+    parser.add_argument(
+        "--device",
+        default=None,
+        choices=["mps", "cuda"],
+        help="device to probe (default: from EMBER_DEVICE or mps)",
+    )
     parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--run-dir", default=None, help=argparse.SUPPRESS)
     parser.add_argument("--model", default=None, help=argparse.SUPPRESS)
@@ -184,10 +192,89 @@ def _canonical(args: argparse.Namespace, names: list[str]) -> bool:
     return not subset and set(names) == set(models.REGISTRY)
 
 
+def _resolve_device(args: argparse.Namespace) -> str:
+    """Return the device to probe: CLI flag > EMBER_DEVICE > 'mps'."""
+    import os  # import-placement:allow - os is stdlib, deferred for clarity
+
+    if args.device:
+        return args.device
+    env = os.environ.get("EMBER_DEVICE", "").lower()
+    if env in ("mps", "cuda"):
+        return env
+    return "mps"
+
+
+def _effective_device(args: argparse.Namespace) -> str:
+    """Resolve the probe device, inheriting a resumed run's recorded device.
+
+    An explicit ``--device`` or ``EMBER_DEVICE`` wins; a resume or
+    reproduction without either inherits the source manifest's device, so a
+    CUDA run can be resumed on a CUDA host without repeating the flag.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed probe arguments.
+
+    Returns
+    -------
+    str
+        ``"mps"`` or ``"cuda"``.
+    """
+    import os  # import-placement:allow - os is stdlib, deferred for clarity
+
+    if not args.device and not os.environ.get("EMBER_DEVICE"):
+        run_id = args.resume or args.reproduce
+        if run_id:
+            try:
+                return summarize.load_manifest(_run_dir(run_id)).device
+            except (FileNotFoundError, KeyError, ValueError):
+                pass  # _prepare re-raises with the run's real error
+    return _resolve_device(args)
+
+
+def _cuda_budget_bytes(model_name: str) -> int | None:
+    """Return gpu_memory_gib * 2**30 from sizing.json for the model, or None."""
+    import json  # import-placement:allow - json is stdlib, deferred for clarity
+
+    if not _SIZING_JSON.exists():
+        return None
+    rows = json.loads(_SIZING_JSON.read_text(encoding="utf-8"))
+    for row in rows:
+        if row.get("model") == model_name and row.get("default"):
+            gib = row.get("gpu_memory_gib")
+            if gib is not None:
+                return int(gib) * 2**30
+    return None
+
+
+def _cuda_budgets(names: list[str]) -> dict[str, int]:
+    """Return each model's CUDA memory budget from its own sizing row.
+
+    Parameters
+    ----------
+    names : list[str]
+        Registry model keys in the run.
+
+    Returns
+    -------
+    dict[str, int]
+        Model key → budget in bytes; models with no default sizing row are
+        omitted, so they keep their registry-declared budget.
+    """
+    budgets: dict[str, int] = {}
+    for name in names:
+        value = _cuda_budget_bytes(name)
+        if value is not None:
+            budgets[name] = value
+    return budgets
+
+
 def _new_manifest(args: argparse.Namespace) -> ProbeManifest:
     # import-placement:allow - transformers loads only when a run starts
     from transformers import AutoProcessor
 
+    device = _resolve_device(args)
     names = _model_names(args)
     model_dir = models.resolve_dir(names[0], override=False)
     if model_dir is None:
@@ -209,6 +296,12 @@ def _new_manifest(args: argparse.Namespace) -> ProbeManifest:
     limit = SMOKE_ITEMS if args.smoke else args.items
     if limit is not None:
         kept = kept[:limit]
+    recommended: int | None = None
+    if device == "mps":
+        recommended = int(torch.mps.recommended_max_memory())
+    budget: dict[str, int] | None = None
+    if device == "cuda":
+        budget = _cuda_budgets(names)
     return probe_items.build_manifest(
         run_id=args.run_id or new_run_id(),
         canonical=_canonical(args, names),
@@ -216,7 +309,9 @@ def _new_manifest(args: argparse.Namespace) -> ProbeManifest:
         kept=kept,
         excluded=excluded,
         lengths=_lengths(args),
-        recommended_max_memory=int(torch.mps.recommended_max_memory()),
+        device=device,
+        recommended_max_memory=recommended,
+        memory_budget_bytes=budget,
     )
 
 
@@ -245,7 +340,9 @@ def _reproduction(
     )
 
 
-def _run_worker(run_dir: Path, model: str, *, pilot: bool = False) -> int:
+def _run_worker(
+    run_dir: Path, model: str, *, pilot: bool = False, device: str = "mps"
+) -> int:
     argv = [
         sys.executable,
         __file__,
@@ -254,6 +351,8 @@ def _run_worker(run_dir: Path, model: str, *, pilot: bool = False) -> int:
         str(run_dir),
         "--model",
         model,
+        "--device",
+        device,
     ]
     command = [*argv, *(["--pilot"] if pilot else [])]
     return subprocess.run(command, check=False).returncode  # noqa: S603 - own script
@@ -294,10 +393,12 @@ def _pilot_width(
     return projected_half_width(deltas)
 
 
-def _sizing_gate(run_dir: Path, manifest: ProbeManifest) -> ProbeManifest | None:
+def _sizing_gate(
+    run_dir: Path, manifest: ProbeManifest, device: str = "mps"
+) -> ProbeManifest | None:
     """Run the pilot and record its half-width; ``None`` if the worker failed."""
     model = "flash" if "flash" in manifest.models else next(iter(manifest.models))
-    if _run_worker(run_dir, model, pilot=True) != 0:
+    if _run_worker(run_dir, model, pilot=True, device=device) != 0:
         return None
     items = summarize.dataset_items(manifest, run_dir)
     rows = read_rows(run_dir / summarize.rows_name(model))
@@ -338,6 +439,13 @@ def _prepare(args: argparse.Namespace) -> tuple[Path, ProbeManifest, Path | None
     return run_dir, manifest, original_dir
 
 
+def _check_device(device: str) -> bool:
+    """Return True when the requested device is available."""
+    if device == "cuda":
+        return torch.cuda.is_available()
+    return torch.backends.mps.is_available()
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the probe: 0 done, 1 on an error, 2 on a gate or reproduction failure."""
     args = _parser().parse_args(argv)
@@ -346,15 +454,26 @@ def main(argv: list[str] | None = None) -> int:
             return _rescore(args.rescore)
         if args.snapshot:
             return _snapshot(args.snapshot)
-        if not torch.backends.mps.is_available():
-            print(
-                "error: the long-context probe measures MPS memory and quality, and no "
-                "MPS device is available here; run it on an Apple Silicon Mac.",
-                file=sys.stderr,
-            )
+        device = _effective_device(args)
+        if not _check_device(device):
+            if device == "cuda":
+                print(
+                    "error: the long-context probe requires a CUDA device, and none "
+                    "is available here; run it on an NVIDIA GPU host.",
+                    file=sys.stderr,
+                )
+            else:
+                print(
+                    "error: the long-context probe measures MPS memory and quality, "
+                    "and no MPS device is available here; "
+                    "run it on an Apple Silicon Mac.",
+                    file=sys.stderr,
+                )
             return 1
         if args.worker:
-            return worker.run_model(Path(args.run_dir), args.model, pilot=args.pilot)
+            return worker.run_model(
+                Path(args.run_dir), args.model, pilot=args.pilot, device=device
+            )
         if process.is_up(str(config.resolve("host")), int(config.resolve("port"))):
             print(
                 "warning: an ember server is running and shares unified memory with "
@@ -374,13 +493,13 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
     if manifest.sizing_passed is None and _GATE_LENGTH in manifest.lengths:
-        gated = _sizing_gate(run_dir, manifest)
+        gated = _sizing_gate(run_dir, manifest, device=device)
         if gated is None:
             return 1
         if not gated.sizing_passed or args.pilot:
             return 0 if gated.sizing_passed else 2
     for model in manifest.models:
-        if _run_worker(run_dir, model) != 0:
+        if _run_worker(run_dir, model, device=device) != 0:
             return 1
     finished = summarize.load_manifest(run_dir).model_copy(update={"completed": True})
     _write_manifest(run_dir, finished)
