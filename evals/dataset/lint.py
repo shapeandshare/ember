@@ -13,6 +13,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from . import dedup, leakage
+from .anchors import validate_anchors
 from .io import DATASET_PATH, read_items
 from .recipes import RECIPES
 from .records.example_secret import ExampleSecret
@@ -177,6 +178,11 @@ def scale_rules(category: str, rows: Sequence[Item]) -> list[LintFinding]:
                         True,
                     )
                 )
+            if scale is not None:
+                for problem in validate_anchors(scale, criteria):
+                    findings.append(
+                        _finding(LintRule.scale_anchored, category, problem, True)
+                    )
             if (
                 spec is not None
                 and spec.risk

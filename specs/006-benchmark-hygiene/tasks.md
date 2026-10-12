@@ -112,16 +112,16 @@ enforced lint fail. No other story is needed.
 
 ### Tests for User Story 3 ⚠️ (write first, confirm failing)
 
-- [ ] T019 [P] [US3] Create `tests/test_dataset_anchors.py`: `anchors` length equals the question's `criteria` length; every anchor is non-empty; no anchor equals its neighbour; a blanked or duplicated anchor produces an enforced `scale-anchored` finding; the three declared scales pass
+- [X] T019 [P] [US3] Create `tests/test_dataset_anchors.py`: `anchors` length equals the question's `criteria` length; every anchor is non-empty; no anchor equals its neighbour; a blanked or duplicated anchor produces an enforced `scale-anchored` finding; the three declared scales pass
 
 ### Implementation for User Story 3
 
-- [ ] T020 [US3] Add `anchors: list[str]` to `evals/dataset/records/scale.py` with a validator (non-empty entries; count matches on validation against criteria)
-- [ ] T021 [P] [US3] Create `evals/dataset/anchors.py`: `validate_anchors(scale, criteria) -> list[str]` returning human-readable problems (count, empty, adjacent-equal)
-- [ ] T022 [P] [US3] Add `scale_anchored = "scale-anchored"` to `evals/dataset/records/lint_rule.py`
-- [ ] T023 [US3] Add the anchor check to `evals/dataset/lint.py::scale_rules()` with `enforced=True` (always-on, like `scale-declared`/`dangerous-set-declared`)
-- [ ] T024 [US3] Write the anchors in `evals/dataset/scales.py` for `("change_risk","risk")`, `("effort_approach","effort")`, `("vision_score","alert_level")` — each level's text distinguishes it from its neighbours; `since` stays `FOUNDATIONS_VERSION` (annotations; R10)
-- [ ] T025 [US3] Run `make check`; lint reports no `scale-anchored` findings; `ember eval dataset card --check` still fresh (anchors do not change the card schema)
+- [X] T020 [US3] Add `anchors: list[str]` to `evals/dataset/records/scale.py` with a validator (non-empty entries; count matches on validation against criteria)
+- [X] T021 [P] [US3] Create `evals/dataset/anchors.py`: `validate_anchors(scale, criteria) -> list[str]` returning human-readable problems (count, empty, adjacent-equal)
+- [X] T022 [P] [US3] Add `scale_anchored = "scale-anchored"` to `evals/dataset/records/lint_rule.py`
+- [X] T023 [US3] Add the anchor check to `evals/dataset/lint.py::scale_rules()` with `enforced=True` (always-on, like `scale-declared`/`dangerous-set-declared`)
+- [X] T024 [US3] Write the anchors in `evals/dataset/scales.py` for `("change_risk","risk")`, `("effort_approach","effort")`, `("vision_score","alert_level")` — each level's text distinguishes it from its neighbours; `since` stays `FOUNDATIONS_VERSION` (annotations; R10)
+- [X] T025 [US3] Run `make check`; lint reports no `scale-anchored` findings; `ember eval dataset card --check` still fresh (anchors do not change the card schema)
 
 **Checkpoint**: Anchors declared and enforced; the stability pass re-runs against them later.
 
