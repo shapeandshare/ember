@@ -169,6 +169,20 @@ def test_render_mentions_single_rater(tmp_path: Path) -> None:
     assert "rater" in lowered
 
 
+def test_the_committed_rounds_cover_the_scoped_recipes_and_publish() -> None:
+    """The phase gate: committed rounds cover the scoped recipes and the card
+    publishes non-null label stability for them (FR-018 / SC-008)."""
+    from evals.dataset import card as card_mod
+
+    rounds = stability.load_rounds()
+    assert rounds, "no committed stability round"
+    covered = {entry.category for round_ in rounds for entry in round_.entries}
+    assert covered >= set(stability.SCOPE), covered
+    built = card_mod.current()
+    for category in stability.SCOPE:
+        assert built["recipes"][category]["label_stability"] is not None, category
+
+
 # ---------------------------------------------------------------------------
 # CLI entry
 # ---------------------------------------------------------------------------

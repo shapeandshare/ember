@@ -14,7 +14,7 @@ Labelling protocol (each rule since the dataset version it first applies to):
 - Every `score` scale runs from least to most of the quantity its instruction names; index 0 is always the least. The expected score is read in those units. A scale is never reversed to make a label read naturally. (since `1e1bb88d47f0`)
 - For a `noul` question, P(true) is the probability of the condition the instruction names; the condition is phrased so that `true` is the pole that calls for caution. (since `1e1bb88d47f0`)
 
-Single rater: stability is one person's blinded re-label after a cooling-off period, not inter-rater agreement; the model never labels.
+Gold is single-rater human. Label stability was drafted by a blinded LLM panel (independent labels, the gold never shown); disagreements queue for the maintainer's adjudication. The model under test never labels.
 
 ## `change_risk`
 
@@ -24,7 +24,7 @@ Single rater: stability is one person's blinded re-label after a cooling-off per
 - Kinds: {"untagged": 92}
 - Sources: {"authored": 92}
 - Easy items: 48; rater count 1; second review pending 0
-- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
+- Label stability: agreement 79%, unstable 38, rater count 1; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -61,7 +61,7 @@ Gaps:
 - Kinds: {"untagged": 76}
 - Sources: {"authored": 76}
 - Easy items: 25; rater count 1; second review pending 0
-- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
+- Label stability: agreement 57%, unstable 66, rater count 1; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |

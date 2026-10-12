@@ -283,5 +283,6 @@ def test_card_publishes_stability_and_the_single_rater_rule() -> None:
     assert routing["label_stability"]["agreement"] == 0.9
     assert routing["inter_source_agreement"] is None
     markdown = card.render_markdown(built)
-    assert "Single rater" in markdown
+    assert "single-rater human" in markdown
+    assert "blinded LLM panel" in markdown
     assert "none yet (no imports)" in markdown
