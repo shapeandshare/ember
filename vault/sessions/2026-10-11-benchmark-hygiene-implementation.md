@@ -15,7 +15,7 @@ updated: 2026-10-11
 ---
 # Session: benchmark-hygiene implementation (Phase 1, partial)
 
-Part of [[ember]]. Executed `/speckit.implement` on `specs/006-benchmark-hygiene/` — Phase 1 of the benchmark programme. **51 of 55 tasks landed, all committed and green.** The four open tasks are the labeling-shaped passes and the hours-long probe snapshot, deferred by maintainer direction.
+Part of [[ember]]. Executed `/speckit.implement` on `specs/006-benchmark-hygiene/` — Phase 1 of the benchmark programme. **52 of 57 tasks landed, all committed and green** (the 55-task plan plus two convergence tasks; T056 is done). The open tasks are the labeling-shaped passes, the hours-long probe snapshot, and the gated T057.
 
 ## What shipped
 
@@ -33,6 +33,7 @@ Part of [[ember]]. Executed `/speckit.implement` on `specs/006-benchmark-hygiene
 - **T012 (skipped by maintainer direction)** — the blinded re-label ingest; the emitted sheet (168 items) waits. The tooling, validation, and publication path are complete and tested.
 - **T028 + T029 (labeling-shaped)** — the 475-item `ItemKind` editorial tagging and its exemptions; the audit tool, its tests, and the exemption mechanism are done, so the tagging pass alone remains.
 - **T040** — the long-context probe snapshot (hours on MPS); every leaderboard row honestly says "not measured" until it lands.
+- **T057 (convergence, gated)** — pin the stability-publication half of the gate together with T012's ingest. T056 is done: the fresh full run publishes the tier block (353 easy / 122 non-easy; non-easy accuracy 39.7% [33.5, 46.3]) and the site shows a Non-easy column beside the 82% headline.
 
 ## Relevance
 
