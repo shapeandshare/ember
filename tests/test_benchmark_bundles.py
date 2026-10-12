@@ -52,8 +52,26 @@ def test_bundle_capability_holds_only_vision_recipes(bundle: Path) -> None:
 def test_bundle_meta_carries_the_phase_0_hashes(bundle: Path) -> None:
     meta = json.loads((bundle / "model.json").read_text(encoding="utf-8"))["meta"]
     assert meta["recipe_sha256"]
-    assert meta["tokens_available"] is False
+    assert isinstance(meta["tokens_available"], bool), (
+        "every bundle records whether its trace carries token splits"
+    )
     assert len(meta["dataset_content_sha256"]) == 64
+
+
+def test_the_newest_bundle_carries_the_token_split() -> None:
+    """A run against a current server records the token split.
+
+    The Phase 0 harness refuses a server that omits it, so every new bundle has
+    the splits; the two older bundles predate the requirement.
+    """
+    newest = max(
+        BUNDLES,
+        key=lambda b: json.loads((b / "model.json").read_text(encoding="utf-8"))[
+            "meta"
+        ]["run_at"],
+    )
+    meta = json.loads((newest / "model.json").read_text(encoding="utf-8"))["meta"]
+    assert meta["tokens_available"] is True
 
 
 def test_the_newest_bundle_is_on_the_current_dataset_version() -> None:
