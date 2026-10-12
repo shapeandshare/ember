@@ -1,3 +1,11 @@
+## v0.13.0 (2026-10-12)
+
+Benchmark dataset: 1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367
+
+### Feat
+
+- deploy ember to an AWS GPU instance over Tailscale (#121)
+
 ## v0.12.0 (2026-10-11)
 
 Benchmark dataset: 1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367
