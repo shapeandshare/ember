@@ -15,7 +15,7 @@ updated: 2026-10-11
 ---
 # Session: benchmark-hygiene implementation (Phase 1, partial)
 
-Part of [[ember]]. Executed `/speckit.implement` on `specs/006-benchmark-hygiene/` — Phase 1 of the benchmark programme. **43 of 55 tasks landed, all committed and green.** Both phase gates' machinery is complete; the stability ingest and the kind tagging are the deferred, labeling-shaped remainder.
+Part of [[ember]]. Executed `/speckit.implement` on `specs/006-benchmark-hygiene/` — Phase 1 of the benchmark programme. **51 of 55 tasks landed, all committed and green.** The four open tasks are the labeling-shaped passes and the hours-long probe snapshot, deferred by maintainer direction.
 
 ## What shipped
 
@@ -31,9 +31,8 @@ Part of [[ember]]. Executed `/speckit.implement` on `specs/006-benchmark-hygiene
 ## What remains
 
 - **T012 (skipped by maintainer direction)** — the blinded re-label ingest; the emitted sheet (168 items) waits. The tooling, validation, and publication path are complete and tested.
-- **US4's kind slice (T026–T030, T032–T033)** — the 475-item `ItemKind` editorial tagging, its exemptions, the `kind` audit command, and the lint tests; the tier half (T031) is done.
-- **T040** — the long-context probe snapshot (hours on MPS).
-- **Docs/quickstart (T052's Benchmark half, T053, T055)** — README prose, the full quickstart walk, and the coverage ratchet.
+- **T028 + T029 (labeling-shaped)** — the 475-item `ItemKind` editorial tagging and its exemptions; the audit tool, its tests, and the exemption mechanism are done, so the tagging pass alone remains.
+- **T040** — the long-context probe snapshot (hours on MPS); every leaderboard row honestly says "not measured" until it lands.
 
 ## Relevance
 
