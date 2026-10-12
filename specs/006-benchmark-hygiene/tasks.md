@@ -229,9 +229,9 @@ independent otherwise.
 
 **Purpose**: Documentation consistency, the vault, and the final gates (dev workflow gate 4).
 
-- [ ] T052 [P] Update `AGENTS.md`: the Testing table gains `test_dataset_stability.py`, `test_dataset_anchors.py`, `test_dataset_kind_audit.py`, `test_dataset_capture.py`, `test_probe_linking.py`, `test_benchmark_comparison.py`; the Benchmark section names the stability pass, the controlled comparison, and the probe column
+- [ ] T052 [P] Update `AGENTS.md`: the Testing table gains `test_dataset_stability.py`, `test_dataset_anchors.py`, `test_dataset_kind_audit.py`, `test_dataset_capture.py`, `test_probe_linking.py`, `test_benchmark_comparison.py`; the Benchmark section names the stability pass, the controlled comparison, and (with US5's column) the probe shape
 - [ ] T053 [P] Update `README.md`'s Benchmark section (stability, comparison, probe shape, capture) — user-facing prose only, no hand-typed numbers
-- [ ] T054 [P] Write `vault/sessions/2026-10-11-benchmark-hygiene.md` (what the phase did; append-only) and list it in `vault/ember.md`; `make vault-audit`
+- [X] T054 [P] Write `vault/sessions/2026-10-11-benchmark-hygiene.md` (what the phase did; append-only) and list it in `vault/ember.md`; `make vault-audit`
 - [ ] T055 Run quickstart.md steps 1–8 end to end; `make pr-ready`; `make test-cov` and, if the measured coverage rose, ratchet `fail_under` in `pyproject.toml` (Article XI §11.2 — the floor may only increase)
 
 ---
