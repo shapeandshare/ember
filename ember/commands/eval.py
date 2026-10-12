@@ -22,7 +22,8 @@ def cmd_eval_run(args: argparse.Namespace) -> int:
     ----------
     args : argparse.Namespace
         Parsed CLI arguments; uses ``args.server``, ``args.split``,
-        ``args.category``, ``args.dry_run``, and ``args.dataset``.
+        ``args.category``, ``args.dry_run``, ``args.dataset``, and
+        ``args.deployment_label``.
 
     Returns
     -------
@@ -42,6 +43,10 @@ def cmd_eval_run(args: argparse.Namespace) -> int:
         dry_run=args.dry_run,
         dataset_path=Path(args.dataset),
         resume=getattr(args, "resume", None),
+        deployment_label=(
+            getattr(args, "deployment_label", None)
+            or os.environ.get("EMBER_DEPLOYMENT_LABEL")
+        ),
     )
 
 

@@ -82,3 +82,29 @@ def test_eval_run_resume_and_snapshot_rebuild_dispatch(
     )
     assert cli.main(["eval", "snapshot", "--rebuild", "clef-flash_x"]) == 0
     assert calls == [["--rebuild", "clef-flash_x"]]
+
+
+def test_eval_run_forwards_the_deployment_label(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The deployment label reaches run_evals from the flag and the environment.
+
+    Without this, every CLI-driven benchmark records the generic derived label,
+    so different remote deployments collide on one leaderboard row.
+    """
+    from evals.eval import run_evals
+
+    seen: dict[str, object] = {}
+
+    def fake_run(server: str, **kwargs: object) -> int:
+        seen.update(kwargs)
+        return 0
+
+    monkeypatch.setattr(run_evals, "run_evals", fake_run)
+    assert cli.main(["eval", "run", "--deployment-label", "Remote hosted - X"]) == 0
+    assert seen["deployment_label"] == "Remote hosted - X"
+
+    seen.clear()
+    monkeypatch.setenv("EMBER_DEPLOYMENT_LABEL", "Remote hosted - Y")
+    assert cli.main(["eval", "run"]) == 0
+    assert seen["deployment_label"] == "Remote hosted - Y"

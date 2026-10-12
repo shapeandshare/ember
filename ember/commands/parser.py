@@ -305,6 +305,14 @@ def register_eval(
     p.add_argument(
         "--resume", default=None, metavar="RUN_ID", help="continue an interrupted run"
     )
+    p.add_argument(
+        "--deployment-label",
+        default=None,
+        help=(
+            "generic deployment description for the published report "
+            "(default: $EMBER_DEPLOYMENT_LABEL, or derived from the server)"
+        ),
+    )
     p.set_defaults(func=cmd_run)
 
     p = esub.add_parser("report", help="render a results JSON as a Markdown table")
