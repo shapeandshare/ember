@@ -34,6 +34,20 @@ def _vision(
     )
 
 
+def _mined_vault(
+    category: str, title: str, when: str, state: str, decides: str
+) -> RecipeSpec:
+    return RecipeSpec(
+        category=category,
+        title=title,
+        when=when,
+        state=state,
+        decides=decides,
+        family=Family.mined_vault,
+        phase=2,
+    )
+
+
 RECIPES: dict[str, RecipeSpec] = {
     "intent_readiness": _coding(
         "intent_readiness",
@@ -101,6 +115,14 @@ RECIPES: dict[str, RecipeSpec] = {
         "Smoke check of the video path.",
         "Two synthetic frames.",
         "Whether the dominant colour changed between the frames.",
+    ),
+    "tag_assignment": _mined_vault(
+        "tag_assignment",
+        "Tag assignment",
+        "When deciding which controlled tags a vault note deserves.",
+        "A note's title and body plus the vault's controlled vocabulary (as read).",
+        "Which candidate tags the note deserves; the gold is the note's own "
+        "vocabulary tags.",
     ),
 }
 

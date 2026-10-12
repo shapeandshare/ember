@@ -10,6 +10,7 @@ class ExclusionReason(StrEnum):
 
     out_of_scope = "out_of_scope"
     non_content = "non_content"
+    oversize = "oversize"
     drift = "drift"
     tag_set_bounds = "tag_set_bounds"
     secret = "secret"  # noqa: S105 - names an exclusion reason, not a credential

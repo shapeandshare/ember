@@ -3091,6 +3091,41 @@
       "attribution": null,
       "upstream_available": true,
       "notes": null
+    },
+    {
+      "id": "oldgrowth-vault",
+      "name": "Old Growth vault",
+      "urls": [
+        {
+          "url": "https://github.com/shapeandshare/oldgrowth",
+          "read_on": "2026-10-12"
+        }
+      ],
+      "licence": {
+        "reading": "All rights reserved; written permission granted for the ember benchmark dataset",
+        "read_at": "https://github.com/shapeandshare/oldgrowth/blob/main/LICENSES.md",
+        "read_on": "2026-10-12",
+        "class": "custom_permissive"
+      },
+      "verdict": "used",
+      "reason": "The copyright holder granted written permission for the ember benchmark dataset (LICENSES.md, commit 422648d9).",
+      "permission": "LICENSES.md §Exception — ember benchmark reproduction (commit 422648d9)",
+      "snapshot": {
+        "version": "692f4bb58b7f62105aeb73fba8dfee12bfdecd53",
+        "sha256": "ace02f6f539ce55e4cf241fee82788ff999be2661ddce94e4a333918310d2bcf",
+        "retrieved_on": "2026-10-12"
+      },
+      "mirror": {
+        "location": "shapeandshare/oldgrowth @ 692f4bb5",
+        "sha256": "ace02f6f539ce55e4cf241fee82788ff999be2661ddce94e4a333918310d2bcf",
+        "public": false
+      },
+      "transformation": "Vault notes sampled into tag_assignment items: state carries the note title, body, and the as-read controlled vocabulary.",
+      "feeds": [
+        "tag_assignment"
+      ],
+      "items_imported": 65,
+      "attribution": "Old Growth — distributed in the ember benchmark dataset with written permission."
     }
   ]
 }

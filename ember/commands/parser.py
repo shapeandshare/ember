@@ -254,6 +254,7 @@ def register_eval(
     cmd_agent: object,
     cmd_context: object,
     cmd_capture: object,
+    cmd_mine: object,
     cmd_dataset: object,
 ) -> None:
     """Register ``ember eval`` subcommands on ``sub``.
@@ -276,6 +277,8 @@ def register_eval(
         Handler for ``ember eval context``.
     cmd_capture : object
         Handler for ``ember eval capture``.
+    cmd_mine : object
+        Handler for ``ember eval mine``.
     cmd_dataset : object
         Handler for ``ember eval dataset``.
     """
@@ -387,6 +390,15 @@ def register_eval(
     )
     p.add_argument("capture_args", nargs=argparse.REMAINDER)
     p.set_defaults(func=cmd_capture)
+
+    p = esub.add_parser(
+        "mine",
+        add_help=False,
+        help="mine a pinned vault snapshot into candidate items "
+        "(checkout only; try `ember eval mine --help`)",
+    )
+    p.add_argument("mine_args", nargs=argparse.REMAINDER)
+    p.set_defaults(func=cmd_mine)
 
     p = esub.add_parser(
         "dataset",

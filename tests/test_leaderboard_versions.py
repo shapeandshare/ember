@@ -8,6 +8,8 @@ Shares the synthetic ``model.json`` factory of ``tests/test_leaderboard.py``.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -74,6 +76,7 @@ ALL_HEADLINE = {
         "change_risk",
         "routing",
         "effort_approach",
+        "tag_assignment",
     )
 }
 ALL_CATEGORIES = {c: (10, 0.8) for c in ALL_HEADLINE}
@@ -103,6 +106,26 @@ def test_versions_are_keyed_by_content_hash_newest_first() -> None:
     assert [row["run_id"] for row in board["rows"]] == ["new"]
 
 
+def test_the_current_version_leaderboard_carries_tag_assignment() -> None:
+    """specs/007's phase gate: tag_assignment renders for the current version."""
+    from evals.dataset import hashes, io
+    from evals.leaderboard import build
+
+    benchmark = Path(__file__).resolve().parents[1] / "benchmark"
+    models = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in sorted(benchmark.glob("*/model.json"))
+    ]
+    current = hashes.dataset_content_sha256(io.read_items(io.DATASET_PATH))
+    board = build(models)
+    version = next(
+        entry
+        for entry in board["versions"]
+        if entry.get("dataset_content_sha256") == current
+    )
+    assert any("tag_assignment" in row["recipes"] for row in version["rows"])
+
+
 def test_rows_assemble_recipes_from_the_latest_matching_run_in_a_group() -> None:
     full = _versioned(
         run_id="full",
@@ -127,7 +150,9 @@ def test_rows_assemble_recipes_from_the_latest_matching_run_in_a_group() -> None
     assert row["incomplete"] is False
     assert row["headline"] is not None
     assert row["run_id"] == "partial"
-    assert row["headline"]["accuracy"] == pytest.approx((4 * 10 * 0.8 + 10 * 1.0) / 50)
+    assert row["headline"]["accuracy"] == pytest.approx(
+        round((5 * 10 * 0.8 + 10 * 1.0) / 60, 4)
+    )
 
 
 def test_rows_are_incomplete_until_every_headline_recipe_is_scored() -> None:

@@ -16,7 +16,7 @@ class SamplingManifest(BaseModel):
         What was mined, from where, under which register row.
     seed, count : int
         The deterministic seed and the requested pick count.
-    word_floor, max_gold, distractor_count, max_candidates : int
+    word_floor, max_words, max_gold, distractor_count, max_candidates : int
         The declared rule constants in force for the run.
     exclusions : list[ExclusionRecord]
         Every excluded note with its reason.
@@ -32,6 +32,7 @@ class SamplingManifest(BaseModel):
     seed: int
     count: int
     word_floor: int
+    max_words: int
     max_gold: int
     distractor_count: int
     max_candidates: int

@@ -32,26 +32,30 @@ class VaultSnapshot:
         self.commit = commit
         self._subdir = subdir
 
-    def _git(self, *args: str) -> str:
+    def _git(self, *args: str) -> bytes:
         try:
             result = subprocess.run(  # noqa: S603 - fixed git argv
                 ["git", "-C", str(self._repo), *args],  # noqa: S607 - system git
                 check=True,
                 capture_output=True,
-                text=True,
             )
         except subprocess.CalledProcessError as exc:
-            detail = (exc.stderr or "").strip() or "git failed"
+            detail = (exc.stderr or b"").decode("utf-8", "replace").strip()
             raise VaultSnapshotError(
-                f"cannot read {self.commit} in {self._repo}: {detail}"
+                f"cannot read {self.commit} in {self._repo}: {detail or 'git failed'}"
             ) from exc
         return result.stdout
 
     def _blobs(self) -> list[tuple[str, str]]:
-        listing = self._git("ls-tree", "-r", self.commit, "--", self._subdir)
+        # -z: raw NUL-delimited paths; without it git C-quotes em-dash names.
+        listing = self._git(
+            "ls-tree", "-r", "-z", self.commit, "--", self._subdir
+        ).decode("utf-8")
         blobs: list[tuple[str, str]] = []
-        for line in listing.splitlines():
-            meta, _, path = line.partition("\t")
+        for entry in listing.split("\0"):
+            if not entry:
+                continue
+            meta, _, path = entry.partition("\t")
             parts = meta.split()
             if len(parts) < 3 or parts[1] != "blob":
                 continue
@@ -65,16 +69,26 @@ class VaultSnapshot:
 
     def read(self, path: str) -> str:
         """Return one vault file's committed text."""
-        return self._git("show", f"{self.commit}:{self._subdir}/{path}")
+        return self._read_text(f"{self.commit}:{self._subdir}/{path}")
 
     def read_file(self, path: str) -> str:
         """Return any repository file's committed text, relative to the root."""
-        return self._git("show", f"{self.commit}:{path}")
+        return self._read_text(f"{self.commit}:{path}")
+
+    def _read_text(self, spec: str) -> str:
+        try:
+            return self._git("show", spec).decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise VaultSnapshotError(f"{spec} is not UTF-8 text") from exc
 
     def files(self) -> Iterator[SnapshotFile]:
-        """Yield every vault file, vault-relative and sorted by path."""
+        """Yield every UTF-8 text file in the vault, sorted by path."""
         for relative, _ in self._blobs():
-            yield SnapshotFile(path=relative, text=self.read(relative))
+            try:
+                text = self.read(relative)
+            except VaultSnapshotError:
+                continue
+            yield SnapshotFile(path=relative, text=text)
 
     def tree_digest(self) -> str:
         r"""Return a sha256 over the sorted ``path\0<blob sha>`` pairs."""

@@ -12,7 +12,9 @@ from ...atomic import write_atomic
 from ..io import DATASET_PATH, read_items, write_items
 from ..splitting import LOCK_PATH, append_lock, assign_new, read_lock
 from .candidate_note import CandidateNote
-from .exclusions import MAX_GOLD, WORD_FLOOR, classify
+from .exclusion_record import ExclusionRecord
+from .exclusion_reason import ExclusionReason
+from .exclusions import MAX_GOLD, MAX_WORDS, WORD_FLOOR, classify
 from .frontmatter import body_of, parse
 from .mine_error import MineError
 from .mine_summary import MineSummary
@@ -106,9 +108,13 @@ def mine(
     exclusions = []
     candidates: list[CandidateNote] = []
     for entry in snapshot.files():
-        if entry.path.startswith("_meta/"):
+        if entry.path.startswith("_meta/") or not entry.path.endswith(".md"):
             continue
-        note = _note_from(entry)
+        try:
+            note = _note_from(entry)
+        except ValueError:
+            exclusions.append(ExclusionRecord(entry.path, ExclusionReason.non_content))
+            continue
         record = classify(note, vocabulary)
         if record is None:
             candidates.append(note)
@@ -119,16 +125,21 @@ def mine(
         build_item(note, vocabulary, commit=commit, register_row=register_row)
         for note in picked
     ]
-    existing = read_items(dataset_path) if dataset_path.exists() else []
-    lock = read_lock(lock_path)
     built_ids = {item.id for item in built}
-    sequenced = [item for item in existing if item.id not in built_ids] + built
+    all_existing = read_items(dataset_path) if dataset_path.exists() else []
+    surviving = [
+        item
+        for item in all_existing
+        if item.category != recipe or item.id in built_ids
+    ]
+    lock = read_lock(lock_path)
+    sequenced = [item for item in surviving if item.id not in built_ids] + built
     assignments = assign_new(sequenced, lock)
     resolved = assignments | lock
     built = [
         item.model_copy(update={"split": resolved[item.id]}) for item in built
     ]
-    merged = list(existing)
+    merged = list(surviving)
     positions = {item.id: index for index, item in enumerate(merged)}
     for item in built:
         if item.id in positions:
@@ -145,6 +156,7 @@ def mine(
         seed=SEED,
         count=count,
         word_floor=WORD_FLOOR,
+        max_words=MAX_WORDS,
         max_gold=MAX_GOLD,
         distractor_count=DISTRACTOR_COUNT,
         max_candidates=MAX_CANDIDATES,

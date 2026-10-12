@@ -58,6 +58,21 @@ def test_snapshot_lists_every_vault_file_sorted(tmp_path: Path) -> None:
     assert all(not path.startswith("docs/") for path in paths)
 
 
+def test_snapshot_handles_paths_git_would_quote(tmp_path: Path) -> None:
+    vault = build_fixture_vault(tmp_path)
+    snapshot = VaultSnapshot(vault.root, vault.commit)
+    name = "Anomalies — Domain MOC.md"
+    assert "Map of Content" in snapshot.read(name)
+    assert name in [entry.path for entry in snapshot.files()]
+
+
+def test_snapshot_skips_binary_files_but_still_digests_them(tmp_path: Path) -> None:
+    vault = build_fixture_vault(tmp_path)
+    snapshot = VaultSnapshot(vault.root, vault.commit)
+    assert "Art/panel.png" not in [entry.path for entry in snapshot.files()]
+    assert len(snapshot.tree_digest()) == 64
+
+
 def test_frontmatter_parses_and_body_strips_the_header(tmp_path: Path) -> None:
     vault = build_fixture_vault(tmp_path)
     text = (vault.vault / SNAPSHOT_NOTE).read_text(encoding="utf-8")
@@ -115,32 +130,52 @@ def _fixture_snapshot(tmp_path: Path):  # type: ignore[no-untyped-def]
 
 def _fixture_candidates(tmp_path: Path) -> list[CandidateNote]:
     snapshot, vocabulary = _fixture_snapshot(tmp_path)
-    return [
-        _note_from_entry(entry)
-        for entry in snapshot.files()
-        if not entry.path.startswith("_meta/")
-        and classify(_note_from_entry(entry), vocabulary) is None
-    ]
+    candidates: list[CandidateNote] = []
+    for entry in snapshot.files():
+        if entry.path.startswith("_meta/") or not entry.path.endswith(".md"):
+            continue
+        try:
+            note = _note_from_entry(entry)
+        except ValueError:
+            continue
+        if classify(note, vocabulary) is None:
+            candidates.append(note)
+    return candidates
 
 
 def test_exclusions_record_each_reason(tmp_path: Path) -> None:
     snapshot, vocabulary = _fixture_snapshot(tmp_path)
     reasons = {}
     for entry in snapshot.files():
-        if entry.path.startswith("_meta/"):
+        if entry.path.startswith("_meta/") or not entry.path.endswith(".md"):
             continue
-        record = classify(_note_from_entry(entry), vocabulary)
+        try:
+            note = _note_from_entry(entry)
+        except ValueError:
+            reasons[entry.path] = ExclusionReason.non_content
+            continue
+        record = classify(note, vocabulary)
         if record is not None:
             reasons[record.artefact] = record.reason
     assert reasons["Decisions/Drifted Tags.md"] is ExclusionReason.drift
     assert reasons["Audio.md"] is ExclusionReason.non_content
     assert reasons["index.md"] is ExclusionReason.non_content
     assert reasons["README.md"] is ExclusionReason.non_content
+    assert reasons["Narrative/No Header.md"] is ExclusionReason.non_content
     assert (
         reasons["Specs/047 Car Radio/047 Car Radio.md"] is ExclusionReason.out_of_scope
     )
+    assert (
+        reasons["Specs/048 Sibling/048 Sibling - plan.md"]
+        is ExclusionReason.out_of_scope
+    )
+    assert (
+        reasons["Specs/049 Drifted/049 Drifted - data-model.md"]
+        is ExclusionReason.out_of_scope
+    )
     assert reasons["Discoveries/A Secret Was Left Here.md"] is ExclusionReason.secret
     assert reasons["Narrative/Empty Tags.md"] is ExclusionReason.tag_set_bounds
+    assert reasons["Narrative/Too Long.md"] is ExclusionReason.oversize
     for kept in (
         "Decisions/Rust-GDScript Split Architecture.md",
         "Discoveries/Generation Pipeline Order.md",
@@ -235,6 +270,8 @@ def test_mine_writes_items_lock_and_manifest_idempotently(tmp_path: Path) -> Non
     reasons = {row["artefact"]: row["reason"] for row in manifest["exclusions"]}
     assert reasons["Decisions/Drifted Tags.md"] == "drift"
     assert reasons["Specs/047 Car Radio/047 Car Radio.md"] == "out_of_scope"
+    assert reasons["Narrative/No Header.md"] == "non_content"
+    assert "legacy.base" not in reasons
     lock_data = json.loads(lock.read_text(encoding="utf-8"))
     assert all(item_id in lock_data for item_id in manifest["item_ids"])
 
@@ -260,3 +297,35 @@ def test_mine_refuses_a_missing_commit(tmp_path: Path) -> None:
             dataset_path=tmp_path / "dataset.jsonl",
             lock_path=tmp_path / "splits.lock",
         )
+
+
+def test_tag_assignment_recipe_is_registered_as_a_headline_mined_family() -> None:
+    from evals.dataset.recipes import RECIPES
+    from evals.dataset.records.family import Family
+
+    spec = RECIPES["tag_assignment"]
+    assert spec.family is Family.mined_vault
+    assert spec.phase == 2
+    assert spec.headline is True
+
+
+def test_mine_drops_stale_items_of_the_recipe(tmp_path: Path) -> None:
+    vault = build_fixture_vault(tmp_path)
+    dataset = tmp_path / "dataset.jsonl"
+    lock = tmp_path / "splits.lock"
+    mine(
+        source_dir=vault.root,
+        commit=vault.commit,
+        dataset_path=dataset,
+        lock_path=lock,
+    )
+    assert len(read_items(dataset)) == 4
+    summary = mine(
+        source_dir=vault.root,
+        commit=vault.commit,
+        dataset_path=dataset,
+        lock_path=lock,
+        count=2,
+    )
+    assert summary.items_written == 2
+    assert len(read_items(dataset)) == 2

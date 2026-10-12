@@ -79,6 +79,58 @@ def test_card_markdown_is_deterministic() -> None:
     assert "routing" in card.render_markdown(built)
 
 
+def test_card_renders_a_mined_source_with_its_permission_and_hashes() -> None:
+    from evals.dataset.records.register_row import RegisterRow
+
+    mined = item(
+        "m1",
+        split="test",
+        source={
+            "kind": "mined",
+            "artefact": "docs/vault/x.md",
+            "commit": "a" * 40,
+            "register_row": "oldgrowth-vault",
+        },
+    )
+    row = RegisterRow.model_validate(
+        {
+            "id": "oldgrowth-vault",
+            "name": "Old Growth vault",
+            "urls": [{"url": "https://example.org", "read_on": "2026-10-10"}],
+            "licence": {
+                "reading": "All rights reserved",
+                "read_at": "https://example.org/LICENSES.md",
+                "read_on": "2026-10-10",
+                "class": "custom_permissive",
+            },
+            "verdict": "used",
+            "reason": "granted",
+            "permission": "LICENSES.md §Exception",
+            "snapshot": {
+                "version": "v1",
+                "sha256": HASH64,
+                "retrieved_on": "2026-10-10",
+            },
+            "mirror": {
+                "location": "example.org @ v1",
+                "sha256": HASH64,
+                "public": False,
+            },
+            "transformation": "extracted",
+            "items_imported": 1,
+            "attribution": "Old Growth",
+        }
+    )
+    built = card.build([mined], [row], [], register_sha256="e" * 64)
+    sources = built["recipes"]["routing"]["external_sources"]
+    assert sources[0]["id"] == "oldgrowth-vault"
+    assert sources[0]["permission"] == "LICENSES.md §Exception"
+    assert sources[0]["snapshot"]["sha256"] == HASH64
+    markdown = card.render_markdown(built)
+    assert "Permission: LICENSES.md §Exception" in markdown
+    assert "Old Growth" in markdown
+
+
 def test_committed_card_is_fresh() -> None:
     assert card.main(["--check"]) == 0
 

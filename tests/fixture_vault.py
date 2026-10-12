@@ -104,6 +104,20 @@ updated: '2026-01-02'
 
 Map of Content for the audio domain.
 """,
+    "Anomalies — Domain MOC.md": """---
+title: Anomalies
+type: moc
+tags:
+  - type/moc
+  - domain/gameplay
+created: '2026-01-01'
+updated: '2026-01-02'
+---
+
+# Anomalies
+
+Map of Content for the anomaly domain.
+""",
     "Decisions/Rust-GDScript Split Architecture.md": """---
 title: Rust-GDScript Split Architecture
 type: decision
@@ -211,6 +225,8 @@ model nothing about the vocabulary, so the miner has to record it and move
 on. If the content matures, the note can be retagged and mined like any
 other.
 """,
+    "Narrative/No Header.md": "No frontmatter here, just raw text.\n",
+    "legacy.base": "raw artifact\n",
     "Reference/Glossary.md": """---
 title: Glossary
 type: reference
@@ -265,7 +281,45 @@ updated: '2026-01-08'
 
 The radio spec.
 """,
+    "Specs/048 Sibling/048 Sibling - plan.md": """---
+title: 048 Sibling - plan
+type: plan
+tags:
+  - type/spec
+created: '2026-01-07'
+updated: '2026-01-08'
+---
+
+# 048 Sibling - plan
+
+Sibling artifact whose field and tag disagree.
+""",
+    "Specs/049 Drifted/049 Drifted - data-model.md": """---
+title: 049 Drifted - data-model
+type: data-model
+tags:
+  - type/reference
+created: '2026-01-07'
+updated: '2026-01-08'
+---
+
+# 049 Drifted - data-model
+
+A sibling whose only tag is a governed reference type. The data-model
+artifact describes the entities and relationships of the spec, and this
+fixture copy is long enough to clear the word floor so that only the Specs
+path rule can keep it out of the candidate pool, exactly like the real
+vault's remaining sibling artifacts. It exists to pin the rule: anything
+under the Specs tree is out of scope for the mined recipes, whatever its
+frontmatter claims, because these files are workflow artifacts rather than
+the memory notes the benchmark grades. The miner records it with the
+out_of_scope reason and moves on.
+""",
     "_meta/tags.md": TAGS_MD,
+}
+
+BINARY_FILES: Final[dict[str, bytes]] = {
+    "Art/panel.png": b"\x89PNG\r\n\x1a\nfixture-bytes",
 }
 
 
@@ -312,6 +366,18 @@ def build_fixture_vault(tmp_path: Path) -> FixtureVault:
         path = vault / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
+    for relative, data in BINARY_FILES.items():
+        path = vault / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    oversized = vault / "Narrative" / "Too Long.md"
+    oversized.write_text(
+        "---\ntitle: Too Long\ntype: reference\ntags:\n  - type/reference\n"
+        "created: '2026-01-05'\nupdated: '2026-01-06'\n---\n\n# Too Long\n\n"
+        + "word "
+        * 12010,
+        encoding="utf-8",
+    )
     _git(root, "add", "-A")
     _git(
         root,

@@ -18,6 +18,7 @@ from .vocabulary import TagVocabulary
 
 NON_CONTENT_NAMES: Final = frozenset({"index.md", "README.md"})
 WORD_FLOOR: Final = 80
+MAX_WORDS: Final = 12000
 MAX_GOLD: Final = 8
 
 
@@ -29,10 +30,11 @@ def _has_secret(note: CandidateNote) -> bool:
 def classify(note: CandidateNote, vocabulary: TagVocabulary) -> ExclusionRecord | None:
     """Classify one vault note against the declared exclusion rules.
 
-    The order is fixed: navigation and governance shapes first, then the
-    out-of-scope type, then content shape and tag-set bounds, then drift,
-    then the credential screen. The first matching rule decides, so every
-    excluded note carries exactly one reason.
+    The order is fixed: out-of-scope spec artefacts first (by path or tag),
+    then navigation shapes, then content shape (a floor and a ceiling) and
+    tag-set bounds, then drift, then the credential screen. The first
+    matching rule decides, so every excluded note carries exactly one
+    reason.
 
     Parameters
     ----------
@@ -46,12 +48,20 @@ def classify(note: CandidateNote, vocabulary: TagVocabulary) -> ExclusionRecord 
     ExclusionRecord | None
         The exclusion, or ``None`` when the note is a candidate.
     """
-    if Path(note.artefact).name in NON_CONTENT_NAMES or note.type == "moc":
-        return ExclusionRecord(note.artefact, ExclusionReason.non_content)
-    if note.type == "spec":
+    if (
+        note.artefact.startswith("Specs/")
+        or "type/spec" in note.tags
+        or note.type == "spec"
+    ):
         return ExclusionRecord(note.artefact, ExclusionReason.out_of_scope)
+    if "type/moc" in note.tags or note.type == "moc":
+        return ExclusionRecord(note.artefact, ExclusionReason.non_content)
+    if Path(note.artefact).name in NON_CONTENT_NAMES:
+        return ExclusionRecord(note.artefact, ExclusionReason.non_content)
     if len(note.body.split()) < WORD_FLOOR:
         return ExclusionRecord(note.artefact, ExclusionReason.non_content)
+    if len(note.body.split()) > MAX_WORDS:
+        return ExclusionRecord(note.artefact, ExclusionReason.oversize)
     if not note.tags or len(note.tags) > MAX_GOLD:
         return ExclusionRecord(note.artefact, ExclusionReason.tag_set_bounds)
     if any(not vocabulary.contains(tag) for tag in note.tags):

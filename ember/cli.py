@@ -24,6 +24,7 @@ from .commands.eval import (
     cmd_eval_context,
     cmd_eval_dataset,
     cmd_eval_export,
+    cmd_eval_mine,
     cmd_eval_report,
     cmd_eval_run,
     cmd_eval_snapshot,
@@ -114,6 +115,7 @@ def build_parser() -> argparse.ArgumentParser:
         cmd_agent=cmd_eval_agent,
         cmd_context=cmd_eval_context,
         cmd_capture=cmd_eval_capture,
+        cmd_mine=cmd_eval_mine,
         cmd_dataset=cmd_eval_dataset,
     )
 
@@ -140,6 +142,7 @@ def main(argv: list[str] | None = None) -> int:
         cmd_eval_agent: "agent_args",
         cmd_eval_context: "context_args",
         cmd_eval_capture: "capture_args",
+        cmd_eval_mine: "mine_args",
     }
     func = getattr(args, "func", None)
     field = passthrough.get(func) if func is not None else None
