@@ -20,6 +20,7 @@ from .commands.config import cmd_config_path, cmd_config_show
 from .commands.doctor import cmd_doctor
 from .commands.eval import (
     cmd_eval_agent,
+    cmd_eval_capture,
     cmd_eval_context,
     cmd_eval_dataset,
     cmd_eval_export,
@@ -112,6 +113,7 @@ def build_parser() -> argparse.ArgumentParser:
         cmd_snapshot=cmd_eval_snapshot,
         cmd_agent=cmd_eval_agent,
         cmd_context=cmd_eval_context,
+        cmd_capture=cmd_eval_capture,
         cmd_dataset=cmd_eval_dataset,
     )
 
@@ -134,7 +136,11 @@ def main(argv: list[str] | None = None) -> int:
     """
     parser = build_parser()
     args, extra = parser.parse_known_args(argv)
-    passthrough = {cmd_eval_agent: "agent_args", cmd_eval_context: "context_args"}
+    passthrough = {
+        cmd_eval_agent: "agent_args",
+        cmd_eval_context: "context_args",
+        cmd_eval_capture: "capture_args",
+    }
     func = getattr(args, "func", None)
     field = passthrough.get(func) if func is not None else None
     if extra and field is None:

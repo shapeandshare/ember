@@ -188,15 +188,15 @@ surviving secret are both refused. No other story is needed.
 
 ### Tests for User Story 6 ⚠️ (write first, confirm failing)
 
-- [ ] T042 [P] [US6] Create `tests/test_dataset_capture.py`: a fixture transcript + matching redaction record converts to a schema-valid `Item` (`source.kind=captured`, `session_id`, `redaction_sha256`, gold = reviewed choice, `acted`, `acted_differs` true when they differ); a missing/mismatched redaction record exits 1 (`refused_no_redaction`); a transcript whose state trips `secret_guard` exits 1 (`refused_live_secret`); malformed input exits 2; nothing is written on refusal
+- [X] T042 [P] [US6] Create `tests/test_dataset_capture.py`: a fixture transcript + matching redaction record converts to a schema-valid `Item` (`source.kind=captured`, `session_id`, `redaction_sha256`, gold = reviewed choice, `acted`, `acted_differs` true when they differ); a missing/mismatched redaction record exits 1 (`refused_no_redaction`); a transcript whose state trips `secret_guard` exits 1 (`refused_live_secret`); malformed input exits 2; nothing is written on refusal
 
 ### Implementation for User Story 6
 
-- [ ] T043 [P] [US6] Create the records under `evals/dataset/records/`: `session_transcript.py` (`SessionTranscript(session_id, turns, reviewed_choice, acted_choice)`), `transcript_turn.py` (`TranscriptTurn(role, content)`), `redaction_record.py` (`RedactionRecord(session_id, redaction_sha256` 64-hex`, method, redacted_on)`), `capture_outcome.py` (`CaptureOutcome` StrEnum: `converted`, `refused_no_redaction`, `refused_live_secret`)
-- [ ] T044 [US6] Create `evals/dataset/capture.py`: `convert(transcript, redaction, items) -> tuple[CaptureOutcome, Item | None]`; run `secret_guard.no_live_secret` on the resulting state; write candidates to `evals/dataset/candidates/<session-id>.jsonl` via `write_atomic`; never write to `evals/clef-flash.jsonl`
-- [ ] T045 [US6] Wire `ember eval capture import` as a top-level subcommand (`ember/commands/parser.py`, `ember/commands/eval.py`, and the `register_eval` call site in `ember/cli.py`); add a dispatch case to `tests/test_cli.py` or `tests/test_cli_eval_dataset.py`
-- [ ] T046 [US6] Commit the fixtures `tests/fixtures/session.json` and `tests/fixtures/session.redaction.json` (no live secrets — the guard must pass on them)
-- [ ] T047 [US6] Run `make check` and quickstart step 7
+- [X] T043 [P] [US6] Create the records under `evals/dataset/records/`: `session_transcript.py` (`SessionTranscript(session_id, turns, reviewed_choice, acted_choice)`), `transcript_turn.py` (`TranscriptTurn(role, content)`), `redaction_record.py` (`RedactionRecord(session_id, redaction_sha256` 64-hex`, method, redacted_on)`), `capture_outcome.py` (`CaptureOutcome` StrEnum: `converted`, `refused_no_redaction`, `refused_live_secret`)
+- [X] T044 [US6] Create `evals/dataset/capture.py`: `convert(transcript, redaction, items) -> tuple[CaptureOutcome, Item | None]`; run `secret_guard.no_live_secret` on the resulting state; write candidates to `evals/dataset/candidates/<session-id>.jsonl` via `write_atomic`; never write to `evals/clef-flash.jsonl`
+- [X] T045 [US6] Wire `ember eval capture import` as a top-level subcommand (`ember/commands/parser.py`, `ember/commands/eval.py`, and the `register_eval` call site in `ember/cli.py`); add a dispatch case to `tests/test_cli.py` or `tests/test_cli_eval_dataset.py`
+- [X] T046 [US6] Commit the fixtures `tests/fixtures/session.json` and `tests/fixtures/session.redaction.json` (no live secrets — the guard must pass on them)
+- [X] T047 [US6] Run `make check` and quickstart step 7
 
 **Checkpoint**: Capture works and refuses unsafe input; nothing unredacted can land.
 

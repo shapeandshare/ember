@@ -253,6 +253,7 @@ def register_eval(
     cmd_snapshot: object,
     cmd_agent: object,
     cmd_context: object,
+    cmd_capture: object,
     cmd_dataset: object,
 ) -> None:
     """Register ``ember eval`` subcommands on ``sub``.
@@ -273,6 +274,8 @@ def register_eval(
         Handler for ``ember eval agent``.
     cmd_context : object
         Handler for ``ember eval context``.
+    cmd_capture : object
+        Handler for ``ember eval capture``.
     cmd_dataset : object
         Handler for ``ember eval dataset``.
     """
@@ -375,6 +378,15 @@ def register_eval(
     )
     p.add_argument("context_args", nargs=argparse.REMAINDER)
     p.set_defaults(func=cmd_context)
+
+    p = esub.add_parser(
+        "capture",
+        add_help=False,
+        help="session capture: convert a consented, redacted session into a "
+        "candidate item (checkout only; try `ember eval capture --help`)",
+    )
+    p.add_argument("capture_args", nargs=argparse.REMAINDER)
+    p.set_defaults(func=cmd_capture)
 
     p = esub.add_parser(
         "dataset",

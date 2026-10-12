@@ -173,6 +173,27 @@ def cmd_eval_context(args: argparse.Namespace) -> int:
     return context_main(list(args.context_args))
 
 
+def cmd_eval_capture(args: argparse.Namespace) -> int:
+    """Convert a consented, redacted session into a candidate item.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; ``args.capture_args`` pass through to
+        ``evals/dataset/capture.py`` unchanged.
+
+    Returns
+    -------
+    int
+        Exit code from ``capture.main``.
+    """
+    try:
+        from evals.dataset.capture import main as capture_main
+    except ImportError as exc:
+        raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
+    return capture_main(list(args.capture_args))
+
+
 def cmd_eval_dataset(args: argparse.Namespace) -> int:
     """Run a dataset tooling command (``ember eval dataset <subcommand>``).
 
