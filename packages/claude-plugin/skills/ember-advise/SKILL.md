@@ -220,6 +220,34 @@ Run it before committing, pushing, or merging.
 The routing and effort recipes are templates: replace their option sets with ones that describe
 your project, measure them, and keep each set fixed once your checks depend on it.
 
+### Vault tag assignment
+
+Run it when a note needs its controlled tags in a governed vault (ember's own, or a sibling
+like the benchmark's source): ask which tags the note deserves against the vault's own
+vocabulary. This is how the `tag_assignment` mined recipe is posed: one `noul` per candidate
+tag, with the candidate set (the note's tags plus distractors, capped — the benchmark uses
+16) fixed and reproducible per note, and the vocabulary carried in `state` with its one-line
+descriptions.
+
+```json
+{"state": {"title": "<note title>", "note": "<the note body>",
+           "vocabulary": ["type/decision — ...", "domain/tooling — ..."]},
+ "questions": {
+   "type/decision": {"type": "noul", "instructions": "Does this note deserve the tag `type/decision`?"},
+   "domain/tooling": {"type": "noul", "instructions": "Does this note deserve the tag `domain/tooling`?"}}}
+```
+
+| Note | Observed | Action |
+| --- | --- | --- |
+| `Design/World Model` | `type/design` 0.97, `domain/world` 0.91 | apply both |
+| `Reference/…/Slack App Kill Switch Runbook` | `type/reference` 0.04 (a gold tag) | the confident "no" was wrong — re-read the note before dropping a tag |
+
+Across the mined set (65 real vault notes, 724 answers, MPS): 80.5% of tag answers were
+right. Answers at **≥ 0.80** confidence — 75% of all — were **89.7%** right; at **≥ 0.90**
+(60%) **92.7%**; the 0.20–0.80 middle band was a coin flip (**53%**). Full-set agreement is
+rare (4 of 65 notes had every tag right): read tags one at a time, trust the confident ones,
+and gather evidence for the middle band.
+
 ### Visual evidence
 
 Run it when the evidence is a screenshot, diagram, chart, or video clip rather than text.
