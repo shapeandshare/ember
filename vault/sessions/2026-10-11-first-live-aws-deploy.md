@@ -29,8 +29,11 @@ Part of [[ember]]. Taking the AWS GPU deployment (`specs/005-aws-gpu-deployment/
 
 ## State at the end of the session
 
-- Stack `ember-default` is `CREATE_COMPLETE`; the instance runs in `us-west-2c` (after two AZs with no capacity), joined the tailnet as `ember-default`, and `tailscale serve` answers HTTPS.
-- `ember-converge.service` fails on first boot, so `ember.service` never starts and `/health` returns `502`. **Open:** the cause is in the journal, blocked until the tailnet policy permits Tailscale SSH to `tag:ember` (now documented in `deployment/aws/README.md`, along with `aws-down` recovery for a `ROLLBACK_COMPLETE` stack).
+- The deployment is **healthy**: stack `ember-default` `CREATE_COMPLETE`, the instance joined the tailnet, `tailscale serve` answers HTTPS, and `/health` returns `device: cuda` (ember 0.12.0). `ember doctor` sees the remote endpoint as reachable.
+- The last failure was disk, not logic: converge's model download hit `AWS_ERROR_NO_SPACE` because the template's `BlockDeviceMappings` targeted `DeviceName: /dev/xvda`, while this DLAMI's root device is `/dev/sda1`. The instance got an untouched 75 GiB root (holding `/home`) plus a separate, unused 100 GiB volume; the download filled the root at ~16 GiB of the ~18 GiB model. Mapping `/dev/sda1` fixed it (`55f6e35`).
+- That cause was found by reading the EC2 serial console: the boot units now mirror output there and `converge.sh` names its failing line (`03daf33`), so a boot failure is diagnosable before Tailscale SSH works.
+- `g6e.xlarge` had no on-demand capacity across `us-west-2`'s offering AZs, so the verified instance is the tight `g5.2xlarge` (A10G, 24 GiB); redeploy `g6e.xlarge` when capacity returns.
+- Still needed for `aws-logs`/`aws-ssh`/`aws-verify`: the Tailscale SSH rule documented in `deployment/aws/README.md`.
 
 ## Relevance
 
@@ -40,4 +43,4 @@ The whole night's theme: **the deploy path was only ever exercised against mocks
 
 - `deployment/aws/` — the AWS GPU deployment package
 - `vault/decisions/2026-10-11-aws-gpu-deployment-over-tailscale.md` — the feature decision
-- Commits `1c86a76`, `5f7e0d8`, `b0d85f3`, `6fe7338`, `a42c82c`, `066d089`
+- Commits `1c86a76`, `5f7e0d8`, `b0d85f3`, `6fe7338`, `a42c82c`, `066d089`, `03daf33`, `55f6e35`
