@@ -369,3 +369,11 @@ def test_probe_cell_renders_figures_or_not_measured() -> None:
     assert "24,576" in cell
     assert "32,768" in cell
     assert "end" in cell
+
+
+def test_tiers_cell_renders_non_easy_accuracy_or_dash() -> None:
+    """The leaderboard names the hard slice beside the headline."""
+    module = _load_build_site_benchmark()
+    assert "—" in module._tiers_cell({})
+    cell = module._tiers_cell({"tiers": {"non_easy_accuracy": 0.3967}})
+    assert "40%" in cell

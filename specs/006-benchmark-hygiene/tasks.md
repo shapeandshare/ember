@@ -320,5 +320,5 @@ Task: "Wire ember eval dataset stability per T010"
 already-tracked open tasks (T012's re-label ingest, T028/T029's kind tagging, T040's probe
 snapshot) are deliberately deferred and are not duplicated here.
 
-- [ ] T056 Re-run the full benchmark on the current dataset version and snapshot it, so each recipe's report and the leaderboard publish the non-easy accuracy block now that tiers exist (353 of 475 items are easy; the committed runs predate tiering and render `tiers: null`) per FR-011/SC-003 (partial)
+- [X] T056 Re-run the full benchmark on the current dataset version and snapshot it, so each recipe's report and the leaderboard publish the non-easy accuracy block now that tiers exist (353 of 475 items are easy; the committed runs predate tiering and render `tiers: null`) per FR-011/SC-003 (partial)
 - [ ] T057 Add the stability-publication half of the phase gate: a check that a committed round covers the scoped recipes and the card's `label_stability` is non-null on the current version — land it together with T012's ingest per FR-018/SC-008 (partial)
