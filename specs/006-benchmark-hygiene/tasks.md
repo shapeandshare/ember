@@ -33,8 +33,8 @@ tests `tests/`, scripts `scripts/`, tracked bundles `benchmark/`, probe snapshot
 
 **Purpose**: Establish the baseline and confirm the state every story builds on.
 
-- [ ] T001 Run `make setup` then `make check` and record the baseline (no file changes): the unit suite is green, `fail_under = 94`, `evals/clef-flash.jsonl` has 475 items
-- [ ] T002 [P] Recon (read-only): run `ember eval dataset hash` and `ember eval dataset check`; confirm the current content hash `1e1bb88d…c367` is recorded in `evals/dataset/versions.lock`, the CUDA bundle `benchmark/17f0b0ad64efb65d273590632833508766b2aae6_20261012T012758Z/` exists on that hash, and `evals/context/runs/` is empty
+- [X] T001 Run `make setup` then `make check` and record the baseline (no file changes): the unit suite is green, `fail_under = 94`, `evals/clef-flash.jsonl` has 475 items
+- [X] T002 [P] Recon (read-only): run `ember eval dataset hash` and `ember eval dataset check`; confirm the current content hash `1e1bb88d…c367` is recorded in `evals/dataset/versions.lock`, the CUDA bundle `benchmark/17f0b0ad64efb65d273590632833508766b2aae6_20261012T012758Z/` exists on that hash, and `evals/context/runs/` is empty
 
 ---
 
@@ -45,8 +45,8 @@ else in this phase is cross-story: the tools are story-local by design (R12).
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T003 [P] Create `evals/dataset/stability/.gitkeep`, `evals/dataset/candidates/.gitkeep`, and `tests/fixtures/.gitkeep` (US1's round records, US6's candidates, and the shared fixtures)
-- [ ] T004 [P] Write `vault/decisions/2026-10-11-hygiene-stability-records-and-probe-key.md` from `vault/_meta/templates/decision.md` recording R1 (a round record, not a per-item field), R6 (the `(model, device, dtype, dataset_content_sha256)` match key), and R10 (annotations never move the hash); tags from `vault/_meta/tags.md` (`type/decision`, `domain/tooling`, `status/draft`); link it under the decisions heading in `vault/ember.md`; run `make vault-audit`
+- [X] T003 [P] Create `evals/dataset/stability/.gitkeep`, `evals/dataset/candidates/.gitkeep`, and `tests/fixtures/.gitkeep` (US1's round records, US6's candidates, and the shared fixtures)
+- [X] T004 [P] Write `vault/decisions/2026-10-11-hygiene-stability-records-and-probe-key.md` from `vault/_meta/templates/decision.md` recording R1 (a round record, not a per-item field), R6 (the `(model, device, dtype, dataset_content_sha256)` match key), and R10 (annotations never move the hash); tags from `vault/_meta/tags.md` (`type/decision`, `domain/tooling`, `status/draft`); link it under the decisions heading in `vault/ember.md`; run `make vault-audit`
 
 **Checkpoint**: Directories exist, the decision note is linked, `make check` remains green.
 

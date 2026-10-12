@@ -60,6 +60,7 @@ Session-level decisions with their context and consequences.
 - [[2026-10-10-split-outerbounds-deployment-per-model]]
 - [[2026-10-10-benchmark-foundations-token-split-and-registries]]
 - [[2026-10-11-aws-gpu-deployment-over-tailscale]]
+- [[2026-10-11-hygiene-stability-records-and-probe-key]]
 
 ### Discoveries
 
