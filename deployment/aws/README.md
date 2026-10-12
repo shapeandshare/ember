@@ -90,23 +90,32 @@ deployments there. Destroying a deployment never touches this bucket.
 - **A Tailscale SSH rule** permitting your user (or `autogroup:admin`) to
   reach `tag:ember` nodes as `root` **and** `ember` — `make aws-logs` and
   `make aws-ssh` connect as root; `make aws-verify` runs its checks as the
-  unprivileged `ember` user. Add it in Admin console → Access Controls (the
-  top-level `ssh` list in the policy file, or the SSH section of the visual
-  editor). Example policy fragment:
+  unprivileged `ember` user.
+
+  Add it in Admin console → Access Controls → **SSH** → **Add rule**. The
+  console is a form, not a JSON editor: fill these fields and its live JSON
+  preview will read like the fragment below.
+
+  | Form field | Enter |
+  | --- | --- |
+  | Source | `autogroup:admin` — or your own login |
+  | Destination | `tag:ember` |
+  | As destination user | `root` and `ember` (add both) |
+  | Check mode | **Off** — On re-prompts for approval every session |
+  | Description | optional, e.g. `ember AWS deployment ops` |
+
+  The rule you end up with (the console's preview; the policy file is
+  HuJSON, so the `//` comment and trailing comma it shows are accepted):
 
   ```json
-  "ssh": [
-    {
-      "action": "accept",
-      "src": ["autogroup:admin"],
-      "dst": ["tag:ember"],
-      "users": ["root", "ember"]
-    }
-  ]
+  // ember AWS deployment ops
+  {
+    "src": ["autogroup:admin"],
+    "dst": ["tag:ember"],
+    "users": ["root", "ember"],
+    "action": "accept",
+  }
   ```
-
-  `src` can name your login instead of `autogroup:admin`; `action: "check"`
-  also works but re-prompts for approval on every session.
 
 - Your machine is on the same tailnet (`tailscale status` shows it connected).
 
@@ -359,10 +368,10 @@ Request "Running On-Demand G and VT instances" quota at the Service Quotas
 console. The preflight output includes the direct link.
 
 **`make aws-logs` says "tailnet policy does not permit you to SSH to this node"**
-Add an `ssh` rule to your tailnet policy accepting your user (or
-`autogroup:admin`) to `tag:ember` with `users: ["root", "ember"]` — root
-for `aws-logs`/`aws-ssh`, ember for `aws-verify` — see the Tailscale
-prerequisites above. The node joined and serves traffic without it; only
+Fill in the SSH form as in the Tailscale prerequisites above — source your
+user (or `autogroup:admin`), destination `tag:ember`, destination users
+`root` **and** `ember` (root for `aws-logs`/`aws-ssh`, ember for
+`aws-verify`). The node joined and serves traffic without the rule; only
 SSH-based commands are denied.
 
 **Deploy fails and the stack rolls back**
