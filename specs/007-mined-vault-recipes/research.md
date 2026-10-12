@@ -49,7 +49,7 @@ Rationale: FR-001/FR-002/SC-001.
 
 ### R5 — Exclusions are declared and recorded
 
-`ExclusionReason` StrEnum: `drift` (R3), `non_content` (type/moc, hubs, index, README, `_meta`; an 80-word floor is kept as a backstop even though no memory note trips it), `secret` (a candidate whose title+body trips the `SECRET_PATTERNS` from `evals/dataset/secret_guard.py` — excluded, or redacted with the redaction recorded; never relaxed), and `tag_set_bounds` (empty gold, or over the declared cap). A committed manifest records the rule values, the seed, per-note exclusions (`artefact → reason`), and the counts the card reports.
+`ExclusionReason` StrEnum, applied first-match-wins in a fixed order: `out_of_scope` (`type/spec`), `non_content` (type/moc, hubs, index, README, `_meta`, and the 80-word floor backstop), `drift` (R3), `tag_set_bounds` (empty gold, or more than 8 tags), and `secret` (a candidate whose title+body trips the `SECRET_PATTERNS` from `evals/dataset/secret_guard.py` — excluded; never relaxed). A committed manifest records the rule values, the seed, per-note exclusions (`artefact → reason`), and the counts the card reports.
 
 Rationale: FR-007/FR-014 and the spec Edge Cases.
 

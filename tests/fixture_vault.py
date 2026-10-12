@@ -120,7 +120,15 @@ code-refs: ["src/x.rs"]
 
 # Rust-GDScript Split Architecture
 
-The engine split keeps scene logic in GDScript and simulation in Rust.
+The engine split keeps scene logic in GDScript and simulation in Rust. The
+decision settled a long argument about where movement constraints should run,
+and it came down to testability: the Rust core can be exercised without
+launching the editor, while the scene tier keeps its fast iteration loop.
+Everything that crosses the boundary speaks a small message vocabulary that
+both sides version together. The split also keeps a hostile editing session
+from breaking simulation determinism, which the gameplay tests rely on when
+they replay recorded inputs. The compromise cost one indirection layer, and
+everyone agreed it was worth it.
 """,
     "Decisions/Drifted Tags.md": """---
 title: Drifted Tags
@@ -134,7 +142,14 @@ updated: '2026-01-04'
 
 # Drifted Tags
 
-This note carries a tag that never reached the controlled vocabulary.
+This note carries a tag that never reached the controlled vocabulary, so the
+miner records it as drift and moves on. The tag was coined during a late-night
+session and never proposed for the extension log, which is exactly the class
+of quiet divergence the audit exists to surface. When the next vocabulary
+pass runs, either the tag gets proposed properly or the note gets retagged.
+Until then the note is not usable as ground truth, because its intended axis
+is ambiguous and any guess would poison the benchmark instead of measuring
+it.
 """,
     "Discoveries/Generation Pipeline Order.md": """---
 title: Generation Pipeline Order
@@ -149,7 +164,14 @@ updated: '2026-01-06'
 
 # Generation Pipeline Order
 
-Generation must order biomes before movement constraints.
+Generation must order biomes before movement constraints. When the pipeline
+ran movement first, spawn smoothing pulled against biome seams and produced
+corridors that the traversal probes could not cross, which cost the team a
+week of playtest notes. The dependency is now explicit: terrain and biome
+assignment settle first, then the movement pass consumes their output. The
+note records the failure mode so the next pipeline reshuffle keeps the
+ordering, and so the benchmark can test whether an agent reads the constraint
+out of the text rather than from the ordering of the code.
 """,
     "Discoveries/A Secret Was Left Here.md": """---
 title: A Secret Was Left Here
@@ -163,7 +185,13 @@ updated: '2026-01-06'
 
 # A Secret Was Left Here
 
-The deploy log contained AKIAQWERTYUIOPASDF12 verbatim.
+The deploy log contained AKIAQWERTYUIOPASDF12 verbatim, which is why this
+note exists at all. The string was pasted during a debugging session and
+nobody rotated it before the incident review, so the note went out as a
+warning to the team. The fix was a two-part change: the token was revoked and
+replaced with a short-lived credential, and the log-scrubbing step now runs
+on every deploy so a credential never lands in a note body again. This note
+stays as the record of what happened, and of why the scrubber exists.
 """,
     "Narrative/Empty Tags.md": """---
 title: Empty Tags
@@ -175,7 +203,13 @@ updated: '2026-01-06'
 
 # Empty Tags
 
-A note that never earned its tags.
+A note that never earned its tags. It started as a scratch pad during a
+design conversation and was promoted to a note by habit, but nobody assigned
+a type or domain because the content never settled into a decision or a
+discovery. The audit flags it as out of bounds: an empty tag set teaches a
+model nothing about the vocabulary, so the miner has to record it and move
+on. If the content matures, the note can be retagged and mined like any
+other.
 """,
     "Reference/Glossary.md": """---
 title: Glossary
@@ -189,7 +223,13 @@ updated: '2026-01-06'
 
 # Glossary
 
-Shared terms for playtests and notes.
+Shared terms for playtests and notes. The team kept inventing synonyms for
+the same handful of concepts, so this glossary pins one name per idea and
+points at the note that owns the definition. Entries cover the pipeline
+vocabulary, the movement vocabulary, and the handful of incident terms that
+keep resurfacing in session logs. When a note disagrees with the glossary,
+the glossary wins until someone updates it deliberately, which keeps
+playtest reports comparable across sessions and reviewers.
 """,
     "Sessions/Spec 080 Planning Session.md": """---
 title: Spec 080 Planning Session
@@ -203,7 +243,13 @@ updated: '2026-01-08'
 
 # Spec 080 Planning Session
 
-Planned the vocabulary extension work.
+Planned the vocabulary extension work. The session walked the outstanding
+drift reports, agreed which tags get proposed at the next pass, and assigned
+owners for the notes that need retagging. It also settled the audit cadence:
+the mechanical pass runs on every vault audit, and the semantic pass runs
+before each spec milestone. The session closed with a checklist of notes to
+re-verify, all of which are linked from the extension log so the next
+session can pick up without re-reading everything.
 """,
     "Specs/047 Car Radio/047 Car Radio.md": """---
 title: "047 Car Radio"

@@ -60,10 +60,10 @@ This requires the grant reference for the all-rights-reserved Old Growth source 
 | `VaultSnapshot` | `snapshot.py` | `.commit`, `.tree_digest() -> str`, `.read(path) -> str`, `.files() -> Iterator[SnapshotFile]`; reads through read-only git |
 | `NoteFrontmatter` | `frontmatter.py` | frozen Pydantic, `extra="allow"`: `title`, `type`, `tags`, `created`, `updated` + extras |
 | `TagVocabulary` | `vocabulary.py` | `.axes: Mapping[str, frozenset[str]]` (type/domain/status/layer/concept), `.contains(tag)`, `.as_state_block() -> str` — each value with its as-read one-line description (FR-017) |
-| `ExclusionReason` | `exclusions.py` | `StrEnum`: `drift`, `non_content`, `secret`, `tag_set_bounds` |
-| `ExclusionRecord` | `exclusions.py` or a record module | frozen: `artefact: str`, `reason: ExclusionReason` |
+| `ExclusionReason` | `exclusion_reason.py` | `StrEnum`: `out_of_scope`, `non_content`, `drift`, `tag_set_bounds`, `secret` |
+| `ExclusionRecord` | `exclusion_record.py` | frozen: `artefact: str`, `reason: ExclusionReason` |
 | `SamplingManifest` | `selection.py` | `source_commit`, `seed`, the rule constants (`word_floor`, `candidate_cap = 16`), `exclusions`, `item_ids` |
-| candidate note | `selection.py` | internal frozen dataclass: `(artefact, frontmatter, body, tags)` |
+| `CandidateNote` | `candidate_note.py` | frozen dataclass: `artefact`, `title`, `type`, `tags`, `body` |
 | item builder | `tag_assignment.py` | produces a standard `Item` (no new wire type) |
 
 ## Entities → artifacts
