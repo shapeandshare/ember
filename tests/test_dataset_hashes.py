@@ -101,7 +101,12 @@ def test_content_hashes_ignore_annotations_and_track_scored_content() -> None:
                 rationale="different words",
                 kind="control",
                 tier="easy",
-                source=_source("mined", artefact="vault/x.md", commit=SHA40),
+                source=_source(
+                    "mined",
+                    artefact="vault/x.md",
+                    commit=SHA40,
+                    register_row="example-row",
+                ),
             )
         ),
         base[1],

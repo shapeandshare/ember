@@ -12,6 +12,7 @@ from evals.dataset.records.verdict import Verdict
 from pydantic import ValidationError
 
 HASH64 = "e" * 64
+SHA40 = "a" * 40
 
 
 def _row(**overrides: object) -> dict[str, object]:
@@ -111,6 +112,15 @@ def test_share_alike_used_rows_need_attribution() -> None:
     )
 
 
+def test_custom_permissive_used_rows_need_permission() -> None:
+    licence = {**_row()["licence"], "class": "custom_permissive"}  # type: ignore[dict-item]
+    with pytest.raises(ValidationError, match="permission"):
+        RegisterRow.model_validate(_used(licence=licence))
+    RegisterRow.model_validate(
+        _used(licence=licence, permission="LICENSES.md §Exception (commit 422648d9)")
+    )
+
+
 def _item(item_id: str, source: dict[str, object]) -> Item:
     return Item.model_validate(
         {
@@ -144,6 +154,32 @@ def test_validate_cross_checks_items_against_rows() -> None:
     assert any("is candidate" in p for p in problems)
     assert any("items_imported is 0 but 1" in p for p in problems)
     assert any("items_imported is 1 but 0" in p for p in register.validate([used], []))
+
+
+def test_validate_cross_checks_mined_items_against_rows() -> None:
+    used = RegisterRow.model_validate(_used())
+    mined = _item(
+        "m1",
+        {
+            "kind": "mined",
+            "artefact": "docs/vault/Decisions/a.md",
+            "commit": SHA40,
+            "register_row": "example-source",
+        },
+    )
+    assert register.validate([used], [mined]) == []
+    stray = _item(
+        "m2",
+        {
+            "kind": "mined",
+            "artefact": "docs/vault/Decisions/b.md",
+            "commit": SHA40,
+            "register_row": "other",
+        },
+    )
+    problems = register.validate([used], [stray])
+    assert any("does not exist" in p for p in problems)
+    assert any("items_imported is 1 but 0" in p for p in problems)
 
 
 # ###########################################################################

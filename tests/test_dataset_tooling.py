@@ -223,7 +223,12 @@ def _source(kind: str, **refs: object) -> dict[str, object]:
     [
         _source("authored", dataset_version=HASH64),
         _source("authored", dataset_version=HASH64, note="reproduces a worked example"),
-        _source("mined", artefact="vault/decisions/x.md", commit=SHA40),
+        _source(
+            "mined",
+            artefact="vault/decisions/x.md",
+            commit=SHA40,
+            register_row="example-row",
+        ),
         _source("captured", session_id="ses_1", redaction_sha256=HASH64),
         _source("perturbed", parent_id="risk_001", perturbation="paraphrase"),
         _source("templated", family="cmd-x-target", template_version="1"),
@@ -251,6 +256,7 @@ def test_source_accepts_each_kind_with_its_references(
         _source("templated", family="f"),
         _source("drafted", draft_id="d", adjudicated=False),
         _source("imported", register_row="r"),
+        _source("mined", artefact="vault/x.md", commit=SHA40),
         _source("mined", artefact="vault/x.md", commit=SHA40, note="foreign field"),
         _source("authored", dataset_version=HASH64, parent_id="foreign"),
     ],

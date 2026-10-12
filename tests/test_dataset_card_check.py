@@ -115,6 +115,7 @@ def test_source_rejects_a_malformed_commit_before_check_runs() -> None:
                 "kind": "mined",
                 "artefact": "vault/x.md",
                 "commit": "f" * 39 + "g",
+                "register_row": "example-row",
             },
         )
 
