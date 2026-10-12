@@ -34,8 +34,8 @@ class VaultSnapshot:
 
     def _git(self, *args: str) -> str:
         try:
-            result = subprocess.run(
-                ["git", "-C", str(self._repo), *args],
+            result = subprocess.run(  # noqa: S603 - fixed git argv
+                ["git", "-C", str(self._repo), *args],  # noqa: S607 - system git
                 check=True,
                 capture_output=True,
                 text=True,
@@ -77,7 +77,7 @@ class VaultSnapshot:
             yield SnapshotFile(path=relative, text=self.read(relative))
 
     def tree_digest(self) -> str:
-        """Return a sha256 over the sorted ``path\\0<blob sha>`` pairs."""
+        r"""Return a sha256 over the sorted ``path\0<blob sha>`` pairs."""
         digest = hashlib.sha256()
         for relative, sha in self._blobs():
             digest.update(f"{relative}\0{sha}\n".encode())

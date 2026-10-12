@@ -12,4 +12,4 @@ class ExclusionReason(StrEnum):
     non_content = "non_content"
     drift = "drift"
     tag_set_bounds = "tag_set_bounds"
-    secret = "secret"
+    secret = "secret"  # noqa: S105 - names an exclusion reason, not a credential

@@ -12,8 +12,8 @@ from typing import Final
 
 from ..secret_guard import SECRET_PATTERNS
 from .candidate_note import CandidateNote
-from .exclusion_record import ExclusionRecord
 from .exclusion_reason import ExclusionReason
+from .exclusion_record import ExclusionRecord
 from .vocabulary import TagVocabulary
 
 NON_CONTENT_NAMES: Final = frozenset({"index.md", "README.md"})

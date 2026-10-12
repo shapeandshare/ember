@@ -22,6 +22,8 @@ from .snapshot import VaultSnapshot, VaultSnapshotError
 from .snapshot_file import SnapshotFile
 from .tag_assignment import (
     CATEGORY as TAG_ASSIGNMENT,
+)
+from .tag_assignment import (
     DISTRACTOR_COUNT,
     MAX_CANDIDATES,
     build_item,
@@ -37,18 +39,7 @@ GRANT_MARKER: Final = "ember benchmark reproduction"
 
 
 def _require_grant(source_dir: Path) -> None:
-    """Refuse when the repository's committed ``LICENSES.md`` records no grant.
-
-    Parameters
-    ----------
-    source_dir : Path
-        The source repository checkout.
-
-    Raises
-    ------
-    MineError
-        When the grant marker is absent (FR-012).
-    """
+    """Refuse when the committed ``LICENSES.md`` records no grant (FR-012)."""
     try:
         text = VaultSnapshot(source_dir, "HEAD").read_file(GRANT_FILE)
     except VaultSnapshotError:

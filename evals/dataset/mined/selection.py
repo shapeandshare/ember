@@ -42,7 +42,7 @@ def select(
     groups: dict[str, list[CandidateNote]] = defaultdict(list)
     for note in sorted(candidates, key=lambda item: item.artefact):
         groups[note.type].append(note)
-    rng = random.Random(seed)
+    rng = random.Random(seed)  # noqa: S311 - deterministic sampling
     for group in groups.values():
         rng.shuffle(group)
     keys = sorted(groups)

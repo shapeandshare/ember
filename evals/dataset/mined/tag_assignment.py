@@ -49,7 +49,7 @@ def candidate_tags(
         Sorted candidate tags.
     """
     gold = set(note.tags)
-    rng = random.Random(f"{seed}:{note.artefact}")
+    rng = random.Random(f"{seed}:{note.artefact}")  # noqa: S311 - deterministic sampling
     picks: list[str] = []
 
     def draw(pool: list[str]) -> None:
