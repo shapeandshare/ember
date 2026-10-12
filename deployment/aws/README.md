@@ -88,8 +88,11 @@ deployments there. Destroying a deployment never touches this bucket.
   short-lived, single-use join key that expires in one hour.
 
 - **A Tailscale SSH rule** permitting your user (or `autogroup:admin`) to
-  reach `tag:ember` nodes as root — `make aws-logs`, `make aws-ssh`, and
-  `make aws-verify` all connect over Tailscale SSH. Example policy fragment:
+  reach `tag:ember` nodes as `root` **and** `ember` — `make aws-logs` and
+  `make aws-ssh` connect as root; `make aws-verify` runs its checks as the
+  unprivileged `ember` user. Add it in Admin console → Access Controls (the
+  top-level `ssh` list in the policy file, or the SSH section of the visual
+  editor). Example policy fragment:
 
   ```json
   "ssh": [
@@ -97,10 +100,13 @@ deployments there. Destroying a deployment never touches this bucket.
       "action": "accept",
       "src": ["autogroup:admin"],
       "dst": ["tag:ember"],
-      "users": ["root"]
+      "users": ["root", "ember"]
     }
   ]
   ```
+
+  `src` can name your login instead of `autogroup:admin`; `action: "check"`
+  also works but re-prompts for approval on every session.
 
 - Your machine is on the same tailnet (`tailscale status` shows it connected).
 
@@ -354,7 +360,8 @@ console. The preflight output includes the direct link.
 
 **`make aws-logs` says "tailnet policy does not permit you to SSH to this node"**
 Add an `ssh` rule to your tailnet policy accepting your user (or
-`autogroup:admin`) to `tag:ember` with `users: ["root"]` — see the Tailscale
+`autogroup:admin`) to `tag:ember` with `users: ["root", "ember"]` — root
+for `aws-logs`/`aws-ssh`, ember for `aws-verify` — see the Tailscale
 prerequisites above. The node joined and serves traffic without it; only
 SSH-based commands are denied.
 
