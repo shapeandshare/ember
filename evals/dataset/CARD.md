@@ -23,7 +23,7 @@ Single rater: stability is one person's blinded re-label after a cooling-off per
 - Rubric anchors since: {"risk": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"}
 - Kinds: {"untagged": 92}
 - Sources: {"authored": 92}
-- Easy items: 0; rater count 1; second review pending 0
+- Easy items: 48; rater count 1; second review pending 0
 - Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
@@ -60,7 +60,7 @@ Gaps:
 - Rubric anchors since: {"effort": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"}
 - Kinds: {"untagged": 76}
 - Sources: {"authored": 76}
-- Easy items: 0; rater count 1; second review pending 0
+- Easy items: 25; rater count 1; second review pending 0
 - Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
@@ -100,7 +100,7 @@ Gaps:
 - Rubric anchors since: {}
 - Kinds: {"untagged": 92}
 - Sources: {"authored": 92}
-- Easy items: 0; rater count 1; second review pending 0
+- Easy items: 87; rater count 1; second review pending 0
 - Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
@@ -136,7 +136,7 @@ Gaps:
 - Rubric anchors since: {}
 - Kinds: {"untagged": 108}
 - Sources: {"authored": 108}
-- Easy items: 0; rater count 1; second review pending 0
+- Easy items: 88; rater count 1; second review pending 0
 - Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
@@ -171,7 +171,7 @@ Gaps:
 - Rubric anchors since: {}
 - Kinds: {"untagged": 75}
 - Sources: {"authored": 75}
-- Easy items: 0; rater count 1; second review pending 0
+- Easy items: 73; rater count 1; second review pending 0
 - Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
@@ -204,7 +204,7 @@ Gaps:
 - Rubric anchors since: {}
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
-- Easy items: 0; rater count 1; second review pending 0
+- Easy items: 8; rater count 1; second review pending 0
 - Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
@@ -235,7 +235,7 @@ Gaps:
 - Rubric anchors since: {}
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
-- Easy items: 0; rater count 1; second review pending 0
+- Easy items: 8; rater count 1; second review pending 0
 - Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
@@ -262,7 +262,7 @@ Gaps:
 - Rubric anchors since: {"alert_level": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367"}
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
-- Easy items: 0; rater count 1; second review pending 0
+- Easy items: 8; rater count 1; second review pending 0
 - Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |
@@ -294,7 +294,7 @@ Gaps:
 - Rubric anchors since: {}
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
-- Easy items: 0; rater count 1; second review pending 0
+- Easy items: 8; rater count 1; second review pending 0
 - Label stability: none yet; inter-source agreement: None; acted-differs share: None
 
 | Question | Label | dev | test |

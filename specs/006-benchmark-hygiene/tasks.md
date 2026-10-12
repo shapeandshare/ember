@@ -145,7 +145,7 @@ and the hash is unchanged; the report's tier block renders. No other story is ne
 - [ ] T028 [US4] Tag all 475 items with `Item.kind` in `evals/clef-flash.jsonl` (an editorial pass — one `ItemKind` per item); commit the dataset; assert `ember eval dataset hash` content hash is UNCHANGED (annotation-only)
 - [ ] T029 [US4] Populate `RecipeSpec.exemptions` in `evals/dataset/recipes.py` where a recipe cannot meet a kind's minimum (reason text as the value); regenerate the card's `exemptions` by T044 later
 - [ ] T030 [US4] Create `evals/dataset/kinds.py` (the audit: counts, untagged, shares vs `KIND_SHARES`) and wire `ember eval dataset kind` into `ember/commands/parser.py` + `eval.py`; add the dispatch case to `tests/test_cli_eval_dataset.py`
-- [ ] T031 [US4] Run `ember eval dataset tier` against the committed bundles; the tool's own hash-invariance check must pass; commit the tiered `evals/clef-flash.jsonl`
+- [X] T031 [US4] Run `ember eval dataset tier` against the committed bundles; the tool's own hash-invariance check must pass; commit the tiered `evals/clef-flash.jsonl`
 - [ ] T032 [US4] Confirm `metrics_phase0.tiers()` renders easy vs non-easy accuracy per recipe for the current version; extend `tests/test_metrics_aggregate.py` if the current fixture does not cover an untiered run
 - [ ] T033 [US4] Run `make check` and quickstart steps 3–4
 
