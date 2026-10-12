@@ -213,13 +213,13 @@ independent otherwise.
 
 ### Tests for User Story 7 ⚠️ (write first, confirm failing)
 
-- [ ] T048 [P] [US7] Extend `tests/test_dataset_card_check.py`: the card's per-recipe blocks carry non-null `kind_shares` counts matching the dataset, real `easy_items`, `label_stability` for covered recipes, `exemptions` with reasons, `rubric_since`; the card states single-rater; `inter_source_agreement` is null with a reason; a dataset or register change without regeneration fails `--check`
+- [X] T048 [P] [US7] Extend `tests/test_dataset_card_check.py`: the card's per-recipe blocks carry non-null `kind_shares` counts matching the dataset, real `easy_items`, `label_stability` for covered recipes, `exemptions` with reasons, `rubric_since`; the card states single-rater; `inter_source_agreement` is null with a reason; a dataset or register change without regeneration fails `--check`
 
 ### Implementation for User Story 7
 
-- [ ] T049 [US7] Complete the card edition in `evals/dataset/card.py`: render kinds/exemptions/tiers/source shares/licences (register rows) and the `inter_source_agreement` reason; keep `register_sha256` embedded (already)
-- [ ] T050 [US7] Regenerate `evals/dataset/card.json` + `CARD.md`; `ember eval dataset card --check` prints fresh; `evals/dataset/versions.lock` gains no line (the content hash did not move)
-- [ ] T051 [US7] Run `make check` and quickstart step 8
+- [X] T049 [US7] Complete the card edition in `evals/dataset/card.py`: render kinds/exemptions/tiers/source shares/licences (register rows) and the `inter_source_agreement` reason; keep `register_sha256` embedded (already)
+- [X] T050 [US7] Regenerate `evals/dataset/card.json` + `CARD.md`; `ember eval dataset card --check` prints fresh; `evals/dataset/versions.lock` gains no line (the content hash did not move)
+- [X] T051 [US7] Run `make check` and quickstart step 8
 
 **Checkpoint**: All seven stories are independently functional; the card is the publication.
 

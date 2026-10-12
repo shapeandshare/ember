@@ -172,6 +172,13 @@ def _stability_line(value: dict[str, Any] | None) -> str:
     )
 
 
+def _agreement_line(value: float | None) -> str:
+    """Render inter-source agreement, naming why it is absent when it is."""
+    if value is None:
+        return "none yet (no imports)"
+    return f"{value:.0%}"
+
+
 def render_markdown(card: dict[str, Any]) -> str:
     """Render the card as Markdown; deterministic for a given card."""
     lines = [
@@ -208,8 +215,8 @@ def render_markdown(card: dict[str, Any]) -> str:
             f"second review pending {recipe['second_review_pending']}",
             f"- Label stability: {_stability_line(recipe['label_stability'])}; "
             f"inter-source agreement: "
-            f"{recipe['inter_source_agreement']}; acted-differs share: "
-            f"{recipe['acted_differs_share']}",
+            f"{_agreement_line(recipe['inter_source_agreement'])}; acted-differs "
+            f"share: {recipe['acted_differs_share']}",
             "",
             "| Question | Label | dev | test |",
             "| --- | --- | --- | --- |",

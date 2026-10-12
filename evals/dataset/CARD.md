@@ -24,7 +24,7 @@ Single rater: stability is one person's blinded re-label after a cooling-off per
 - Kinds: {"untagged": 92}
 - Sources: {"authored": 92}
 - Easy items: 48; rater count 1; second review pending 0
-- Label stability: none yet; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -61,7 +61,7 @@ Gaps:
 - Kinds: {"untagged": 76}
 - Sources: {"authored": 76}
 - Easy items: 25; rater count 1; second review pending 0
-- Label stability: none yet; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -101,7 +101,7 @@ Gaps:
 - Kinds: {"untagged": 92}
 - Sources: {"authored": 92}
 - Easy items: 87; rater count 1; second review pending 0
-- Label stability: none yet; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -137,7 +137,7 @@ Gaps:
 - Kinds: {"untagged": 108}
 - Sources: {"authored": 108}
 - Easy items: 88; rater count 1; second review pending 0
-- Label stability: none yet; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -172,7 +172,7 @@ Gaps:
 - Kinds: {"untagged": 75}
 - Sources: {"authored": 75}
 - Easy items: 73; rater count 1; second review pending 0
-- Label stability: none yet; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -205,7 +205,7 @@ Gaps:
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
 - Easy items: 8; rater count 1; second review pending 0
-- Label stability: none yet; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -236,7 +236,7 @@ Gaps:
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
 - Easy items: 8; rater count 1; second review pending 0
-- Label stability: none yet; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -263,7 +263,7 @@ Gaps:
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
 - Easy items: 8; rater count 1; second review pending 0
-- Label stability: none yet; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
@@ -295,7 +295,7 @@ Gaps:
 - Kinds: {"untagged": 8}
 - Sources: {"authored": 8}
 - Easy items: 8; rater count 1; second review pending 0
-- Label stability: none yet; inter-source agreement: None; acted-differs share: None
+- Label stability: none yet; inter-source agreement: none yet (no imports); acted-differs share: None
 
 | Question | Label | dev | test |
 | --- | --- | --- | --- |
