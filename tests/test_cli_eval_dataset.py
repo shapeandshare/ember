@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 from ember import cli
-from evals.dataset import card, check, hashes, lint, stability, tiers
+from evals.dataset import card, check, hashes, kinds, lint, stability, tiers
 
 
 @pytest.mark.parametrize(
@@ -30,6 +30,7 @@ from evals.dataset import card, check, hashes, lint, stability, tiers
             stability,
             ["--ingest", "sheet.json", "--rounds-dir", "rounds"],
         ),
+        (["kind", "--json"], kinds, ["--json"]),
     ],
 )
 def test_eval_dataset_dispatches_to_the_module_main(

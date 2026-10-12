@@ -304,3 +304,30 @@ def test_lint_passes_the_committed_dataset_in_report_mode() -> None:
     findings = lint.run(items, sp.read_lock(sp.LOCK_PATH))
     assert lint.exit_code(findings) == 0
     assert LintRule.no_live_secret not in _rules(findings)
+
+
+def test_an_exemption_silences_that_kinds_gap(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A documented exemption removes the kind's minimum-share finding."""
+    from evals.dataset import io, recipes
+    from evals.dataset import splitting as sp
+    from evals.dataset.records.item_kind import ItemKind
+
+    items = io.read_items(io.DATASET_PATH)
+    lock = sp.read_lock(sp.LOCK_PATH)
+    before = [
+        finding
+        for finding in lint.run(items, lock)
+        if finding.rule is LintRule.kind_shares and finding.category == "routing"
+    ]
+    assert before, "the untagged dataset must have kind-share gaps"
+    spec = recipes.RECIPES["routing"]
+    silenced = spec.model_copy(
+        update={"exemptions": {ItemKind.negative: "authored mainline set"}}
+    )
+    monkeypatch.setitem(recipes.RECIPES, "routing", silenced)
+    after = [
+        finding
+        for finding in lint.run(items, lock)
+        if finding.rule is LintRule.kind_shares and finding.category == "routing"
+    ]
+    assert len(after) == len(before) - 1

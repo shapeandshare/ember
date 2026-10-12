@@ -209,7 +209,7 @@ def cmd_eval_dataset(args: argparse.Namespace) -> int:
         Exit code from the module's ``main``.
     """
     try:
-        from evals.dataset import card, check, hashes, lint, stability, tiers
+        from evals.dataset import card, check, hashes, kinds, lint, stability, tiers
     except ImportError as exc:
         raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
     modules = {
@@ -219,6 +219,7 @@ def cmd_eval_dataset(args: argparse.Namespace) -> int:
         "check": check.main,
         "tier": tiers.main,
         "stability": stability.main,
+        "kind": kinds.main,
     }
     argv: list[str] = []
     if getattr(args, "benchmark_dir", None):
