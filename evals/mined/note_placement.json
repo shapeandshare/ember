@@ -1,0 +1,3586 @@
+{
+  "recipe": "note_placement",
+  "source_commit": "692f4bb58b7f62105aeb73fba8dfee12bfdecd53",
+  "register_row": "oldgrowth-vault",
+  "seed": 20261012,
+  "count": 30,
+  "word_floor": 80,
+  "max_words": 12000,
+  "max_gold": 8,
+  "distractor_count": null,
+  "max_candidates": null,
+  "exclusions": [
+    {
+      "artefact": "Anomalies — Domain MOC.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Art.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Audio — Domain MOC.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Biome Behavior.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Code.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Code/Tools — Blender.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Code/Tools — ComfyUI.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Contamination Thread.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Decisions.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Design.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Diegesis Thread.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Ephemerality Thread.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Governance.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Governance/Constitution.md",
+      "reason": "oversize"
+    },
+    {
+      "artefact": "Horror Thread.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Inter-Agent Extensions MOC.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Narrative — Domain MOC.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Player — Domain MOC.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Procedural Generation Thread.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "README.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Reference.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Reference/Autonomous Company/Autonomous Company Architecture.md",
+      "reason": "secret"
+    },
+    {
+      "artefact": "Reference/Vault Audit Quick Reference.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Road Generation — Domain MOC.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Sessions/2026-05-09 Spec 134 Week 0 Setup.md",
+      "reason": "secret"
+    },
+    {
+      "artefact": "Specs/001 Project Scaffold/001 Project Scaffold - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/001 Project Scaffold/001 Project Scaffold - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/001 Project Scaffold/001 Project Scaffold - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/001 Project Scaffold/001 Project Scaffold - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/001 Project Scaffold/001 Project Scaffold - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/001 Project Scaffold/001 Project Scaffold.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/001 Project Scaffold/checklists/001 Project Scaffold - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/001 Project Scaffold/contracts/001 Project Scaffold - autoload-interfaces.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/002 Car Drives/002 Car Drives - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/002 Car Drives/002 Car Drives - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/002 Car Drives/002 Car Drives - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/002 Car Drives/002 Car Drives - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/002 Car Drives/002 Car Drives - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/002 Car Drives/002 Car Drives.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/002 Car Drives/checklists/002 Car Drives - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/002 Car Drives/contracts/002 Car Drives - events-vehicle-signals.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/002 Car Drives/contracts/002 Car Drives - samba-vehicle.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/002 Car Drives/contracts/002 Car Drives - vehicle-damage-system.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/002 Car Drives/contracts/002 Car Drives - vehicle-panel.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/003 First Person Interior/003 First Person Interior - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/003 First Person Interior/003 First Person Interior - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/003 First Person Interior/003 First Person Interior - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/003 First Person Interior/003 First Person Interior - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/003 First Person Interior/003 First Person Interior - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/003 First Person Interior/003 First Person Interior.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/003 First Person Interior/checklists/003 First Person Interior - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/003 First Person Interior/contracts/003 First Person Interior - engine-audio.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/003 First Person Interior/contracts/003 First Person Interior - interior-camera.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/003 First Person Interior/contracts/003 First Person Interior - steering-wheel.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/004 Road Terrain/004 Road Terrain - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/004 Road Terrain/004 Road Terrain - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/004 Road Terrain/004 Road Terrain - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/004 Road Terrain/004 Road Terrain - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/004 Road Terrain/004 Road Terrain - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/004 Road Terrain/004 Road Terrain.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/004 Road Terrain/checklists/004 Road Terrain - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/005 Wheel Tire Damage/005 Wheel Tire Damage - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/005 Wheel Tire Damage/005 Wheel Tire Damage - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/005 Wheel Tire Damage/005 Wheel Tire Damage - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/005 Wheel Tire Damage/005 Wheel Tire Damage - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/005 Wheel Tire Damage/005 Wheel Tire Damage - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/005 Wheel Tire Damage/005 Wheel Tire Damage.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/005 Wheel Tire Damage/checklists/005 Wheel Tire Damage - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/006 Trees Fog/006 Trees Fog - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/006 Trees Fog/006 Trees Fog - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/006 Trees Fog/006 Trees Fog - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/006 Trees Fog/006 Trees Fog - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/006 Trees Fog/006 Trees Fog - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/006 Trees Fog/006 Trees Fog.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/006 Trees Fog/checklists/006 Trees Fog - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/006 Trees Fog/contracts/006 Trees Fog - fog-system.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/006 Trees Fog/contracts/006 Trees Fog - vegetation-scatter.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/007 Message Deduplication/007 Message Deduplication - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/007 Message Deduplication/007 Message Deduplication - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/007 Message Deduplication/007 Message Deduplication - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/007 Message Deduplication/007 Message Deduplication - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/007 Message Deduplication/007 Message Deduplication - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/007 Message Deduplication/007 Message Deduplication.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/007 Message Deduplication/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/007 Rain Weather Zones/007 Rain Weather Zones - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/007 Rain Weather Zones/007 Rain Weather Zones - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/007 Rain Weather Zones/007 Rain Weather Zones - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/007 Rain Weather Zones/007 Rain Weather Zones - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/007 Rain Weather Zones/007 Rain Weather Zones - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/007 Rain Weather Zones/007 Rain Weather Zones.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/007 Rain Weather Zones/checklists/007 Rain Weather Zones - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/007 Rain Weather Zones/contracts/007 Rain Weather Zones - events.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/008 Headlights Night/008 Headlights Night - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/008 Headlights Night/008 Headlights Night - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/008 Headlights Night/008 Headlights Night - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/008 Headlights Night/008 Headlights Night - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/008 Headlights Night/008 Headlights Night - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/008 Headlights Night/008 Headlights Night.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/008 Headlights Night/checklists/008 Headlights Night - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/008 Headlights Night/contracts/008 Headlights Night - events-phase8.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/009 Road Structures/009 Road Structures - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/009 Road Structures/009 Road Structures - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/009 Road Structures/009 Road Structures - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/009 Road Structures/009 Road Structures - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/009 Road Structures/009 Road Structures.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/009 Road Structures/checklists/009 Road Structures - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/009 Road Structures/contracts/009 Road Structures - signal-contracts.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/010 Procedural World Gen/010 Procedural World Gen - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/010 Procedural World Gen/010 Procedural World Gen - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/010 Procedural World Gen/010 Procedural World Gen - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/010 Procedural World Gen/010 Procedural World Gen - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/010 Procedural World Gen/010 Procedural World Gen.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/010 Procedural World Gen/checklists/010 Procedural World Gen - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/010 Procedural World Gen/contracts/010 Procedural World Gen - biome-profiles.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/010 Procedural World Gen/contracts/010 Procedural World Gen - enemy-pathfinding.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/010 Procedural World Gen/contracts/010 Procedural World Gen - exit-gates.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/010 Procedural World Gen/contracts/010 Procedural World Gen - storm-system.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/011 Observer Analysis/011 Observer Analysis - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/011 Observer Analysis/011 Observer Analysis - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/011 Observer Analysis/011 Observer Analysis - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/011 Observer Analysis/011 Observer Analysis - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/011 Observer Analysis/011 Observer Analysis - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/011 Observer Analysis/011 Observer Analysis.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/011 Observer Analysis/checklists/011 Observer Analysis - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/011 Observer Analysis/contracts/011 Observer Analysis - cli-contract.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/012 Observer Capture Harness/012 Observer Capture Harness - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/012 Observer Capture Harness/012 Observer Capture Harness - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/012 Observer Capture Harness/012 Observer Capture Harness - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/012 Observer Capture Harness/012 Observer Capture Harness - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/012 Observer Capture Harness/012 Observer Capture Harness - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/012 Observer Capture Harness/012 Observer Capture Harness.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/012 Observer Capture Harness/checklists/012 Observer Capture Harness - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/012 Observer Capture Harness/contracts/012 Observer Capture Harness - cli-contract.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/013 Offroad Suspension Retune/013 Offroad Suspension Retune - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/013 Offroad Suspension Retune/013 Offroad Suspension Retune - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/013 Offroad Suspension Retune/013 Offroad Suspension Retune - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/013 Offroad Suspension Retune/013 Offroad Suspension Retune - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/013 Offroad Suspension Retune/013 Offroad Suspension Retune - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/013 Offroad Suspension Retune/013 Offroad Suspension Retune.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/013 Offroad Suspension Retune/checklists/013 Offroad Suspension Retune - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/014 Seed Terrain Hardening/014 Seed Terrain Hardening - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/014 Seed Terrain Hardening/014 Seed Terrain Hardening - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/014 Seed Terrain Hardening/014 Seed Terrain Hardening - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/014 Seed Terrain Hardening/014 Seed Terrain Hardening - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/014 Seed Terrain Hardening/014 Seed Terrain Hardening - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/014 Seed Terrain Hardening/014 Seed Terrain Hardening.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/014 Seed Terrain Hardening/checklists/014 Seed Terrain Hardening - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/014 Seed Terrain Hardening/contracts/014 Seed Terrain Hardening - playability_result_schema.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/014 Seed Terrain Hardening/contracts/014 Seed Terrain Hardening - seed_sweep_cli.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/014 Seed Terrain Hardening/contracts/014 Seed Terrain Hardening - slope_validation_api.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/015 On Foot Controller/015 On Foot Controller - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/015 On Foot Controller/015 On Foot Controller - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/015 On Foot Controller/015 On Foot Controller - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/015 On Foot Controller/015 On Foot Controller - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/015 On Foot Controller/015 On Foot Controller - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/015 On Foot Controller/015 On Foot Controller.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/015 On Foot Controller/checklists/015 On Foot Controller - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/015 On Foot Controller/contracts/015 On Foot Controller - signals.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/016 Audio Observer/016 Audio Observer - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/016 Audio Observer/016 Audio Observer - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/016 Audio Observer/016 Audio Observer - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/016 Audio Observer/016 Audio Observer - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/016 Audio Observer/016 Audio Observer - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/016 Audio Observer/016 Audio Observer.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/016 Audio Observer/checklists/016 Audio Observer - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/017 On Foot Rain/017 On Foot Rain - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/017 On Foot Rain/017 On Foot Rain - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/017 On Foot Rain/017 On Foot Rain - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/017 On Foot Rain/017 On Foot Rain - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/017 On Foot Rain/017 On Foot Rain - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/017 On Foot Rain/017 On Foot Rain.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/017 On Foot Rain/checklists/017 On Foot Rain - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/018 Log Size Variants/018 Log Size Variants - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/018 Log Size Variants/018 Log Size Variants - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/018 Log Size Variants/018 Log Size Variants - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/018 Log Size Variants/018 Log Size Variants - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/018 Log Size Variants/018 Log Size Variants - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/018 Log Size Variants/018 Log Size Variants.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/018 Log Size Variants/checklists/018 Log Size Variants - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/019 Exit Run Loop/019 Exit Run Loop - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/019 Exit Run Loop/019 Exit Run Loop - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/019 Exit Run Loop/019 Exit Run Loop.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/020 Disturbance Storm/020 Disturbance Storm.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/020 Disturbance Storm/checklists/020 Disturbance Storm - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/021 Biome Profiles/021 Biome Profiles - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/021 Biome Profiles/021 Biome Profiles - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/021 Biome Profiles/021 Biome Profiles.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/022 Forest Anomalies/022 Forest Anomalies - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/022 Forest Anomalies/022 Forest Anomalies - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/022 Forest Anomalies/022 Forest Anomalies.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/023 Deep Anomalies/023 Deep Anomalies - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/023 Deep Anomalies/023 Deep Anomalies - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/023 Deep Anomalies/023 Deep Anomalies.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/024 Combat Weapons/024 Combat Weapons - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/024 Combat Weapons/024 Combat Weapons - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/024 Combat Weapons/024 Combat Weapons.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/025 Enemy Ai Behavior/025 Enemy Ai Behavior - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/025 Enemy Ai Behavior/025 Enemy Ai Behavior - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/025 Enemy Ai Behavior/025 Enemy Ai Behavior.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/026 Resources Fuel/026 Resources Fuel - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/026 Resources Fuel/026 Resources Fuel - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/026 Resources Fuel/026 Resources Fuel.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/027 Garage Hub/027 Garage Hub - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/027 Garage Hub/027 Garage Hub - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/027 Garage Hub/027 Garage Hub.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/028 Save Persistence/028 Save Persistence - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/028 Save Persistence/028 Save Persistence - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/028 Save Persistence/028 Save Persistence.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/029 Audio Polish/029 Audio Polish - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/029 Audio Polish/029 Audio Polish - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/029 Audio Polish/029 Audio Polish.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/030 Damage Upgrades/030 Damage Upgrades - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/030 Damage Upgrades/030 Damage Upgrades - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/030 Damage Upgrades/030 Damage Upgrades.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/031 Settings Accessibility/031 Settings Accessibility - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/031 Settings Accessibility/031 Settings Accessibility - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/031 Settings Accessibility/031 Settings Accessibility.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/032 Macos Packaging/032 Macos Packaging - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/032 Macos Packaging/032 Macos Packaging - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/032 Macos Packaging/032 Macos Packaging.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/033 Dashboard Electrical/033 Dashboard Electrical - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/033 Dashboard Electrical/033 Dashboard Electrical - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/033 Dashboard Electrical/033 Dashboard Electrical.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/034 Rearview Mirrors/034 Rearview Mirrors - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/034 Rearview Mirrors/034 Rearview Mirrors - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/034 Rearview Mirrors/034 Rearview Mirrors.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/035 Mirror Tuning/035 Mirror Tuning - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/035 Mirror Tuning/035 Mirror Tuning - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/035 Mirror Tuning/035 Mirror Tuning.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/036 Parking Brake/036 Parking Brake - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/036 Parking Brake/036 Parking Brake - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/036 Parking Brake/036 Parking Brake.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/037 Rng World Variation/037 Rng World Variation.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/038 Snow Blizzard Wind/038 Snow Blizzard Wind.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/038 Snow Blizzard Wind/checklists/038 Snow Blizzard Wind - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/039 Interior Fog Fix/039 Interior Fog Fix.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/040 World Preview/040 World Preview - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/040 World Preview/040 World Preview - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/040 World Preview/040 World Preview - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/040 World Preview/040 World Preview - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/040 World Preview/040 World Preview - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/040 World Preview/040 World Preview.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/040 World Preview/checklists/040 World Preview - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/041 Road Surface Quality/041 Road Surface Quality - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/041 Road Surface Quality/041 Road Surface Quality - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/041 Road Surface Quality/041 Road Surface Quality - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/041 Road Surface Quality/041 Road Surface Quality - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/041 Road Surface Quality/041 Road Surface Quality - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/041 Road Surface Quality/041 Road Surface Quality.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/041 Road Surface Quality/checklists/041 Road Surface Quality - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/041 Road Surface Quality/contracts/041 Road Surface Quality - road_mesh_generator_api.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/042 Bodies Of Water/042 Bodies Of Water.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/042 Bodies Of Water/checklists/042 Bodies Of Water - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/043 Thunder Lightning/043 Thunder Lightning.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/043 Thunder Lightning/checklists/043 Thunder Lightning - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/044 Assets Submodule/044 Assets Submodule - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/044 Assets Submodule/044 Assets Submodule - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/044 Assets Submodule/044 Assets Submodule - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/044 Assets Submodule/044 Assets Submodule - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/044 Assets Submodule/044 Assets Submodule - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/044 Assets Submodule/044 Assets Submodule.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/044 Assets Submodule/checklists/044 Assets Submodule - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/044 Assets Submodule/contracts/044 Assets Submodule - makefile-targets.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/045 Biome Transitions/045 Biome Transitions - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/045 Biome Transitions/045 Biome Transitions - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/045 Biome Transitions/045 Biome Transitions - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/045 Biome Transitions/045 Biome Transitions - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/045 Biome Transitions/045 Biome Transitions - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/045 Biome Transitions/045 Biome Transitions.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/045 Biome Transitions/checklists/045 Biome Transitions - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/046 Terrain Roughness/046 Terrain Roughness - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/046 Terrain Roughness/046 Terrain Roughness - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/046 Terrain Roughness/046 Terrain Roughness - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/046 Terrain Roughness/046 Terrain Roughness - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/046 Terrain Roughness/046 Terrain Roughness - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/046 Terrain Roughness/046 Terrain Roughness.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/046 Terrain Roughness/checklists/046 Terrain Roughness - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/047 Car Radio/047 Car Radio - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/047 Car Radio/047 Car Radio - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/047 Car Radio/047 Car Radio - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/047 Car Radio/047 Car Radio - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/047 Car Radio/047 Car Radio - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/047 Car Radio/047 Car Radio.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/047 Car Radio/checklists/047 Car Radio - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/047 Car Radio/contracts/047 Car Radio - signals.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/048 Rust Migration/048 Rust Migration - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/048 Rust Migration/048 Rust Migration - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/048 Rust Migration/048 Rust Migration - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/048 Rust Migration/048 Rust Migration - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/048 Rust Migration/048 Rust Migration - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/048 Rust Migration/048 Rust Migration.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/048 Rust Migration/checklists/048 Rust Migration - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/048 Rust Migration/contracts/048 Rust Migration - biomes.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/048 Rust Migration/contracts/048 Rust Migration - core-systems.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/048 Rust Migration/contracts/048 Rust Migration - fog.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/048 Rust Migration/contracts/048 Rust Migration - roads.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/048 Rust Migration/contracts/048 Rust Migration - structures.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/048 Rust Migration/contracts/048 Rust Migration - terrain.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/048 Rust Migration/contracts/048 Rust Migration - vegetation.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/049 Audio Asset Management/049 Audio Asset Management - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/049 Audio Asset Management/049 Audio Asset Management - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/049 Audio Asset Management/049 Audio Asset Management - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/049 Audio Asset Management/049 Audio Asset Management - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/049 Audio Asset Management/049 Audio Asset Management - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/049 Audio Asset Management/049 Audio Asset Management.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/049 Audio Asset Management/checklists/049 Audio Asset Management - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/049 Audio Asset Management/contracts/049 Audio Asset Management - naming-convention.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/049 Audio Asset Management/contracts/049 Audio Asset Management - provenance-schema.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/050 World Gen Cli Params/050 World Gen Cli Params - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/050 World Gen Cli Params/050 World Gen Cli Params - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/050 World Gen Cli Params/050 World Gen Cli Params - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/050 World Gen Cli Params/050 World Gen Cli Params - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/050 World Gen Cli Params/050 World Gen Cli Params - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/050 World Gen Cli Params/050 World Gen Cli Params.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/050 World Gen Cli Params/checklists/050 World Gen Cli Params - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/050 World Gen Cli Params/contracts/050 World Gen Cli Params - cli-args.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/051 Road Debug Viz/051 Road Debug Viz - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/051 Road Debug Viz/051 Road Debug Viz - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/051 Road Debug Viz/051 Road Debug Viz - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/051 Road Debug Viz/051 Road Debug Viz - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/051 Road Debug Viz/051 Road Debug Viz - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/051 Road Debug Viz/051 Road Debug Viz.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/051 Road Debug Viz/checklists/051 Road Debug Viz - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/051 Road Debug Viz/contracts/051 Road Debug Viz - cli-args.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/051 Road Debug Viz/contracts/051 Road Debug Viz - json-report.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/052 Ktlk Gary Character/052 Ktlk Gary Character - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/052 Ktlk Gary Character/052 Ktlk Gary Character - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/052 Ktlk Gary Character/052 Ktlk Gary Character - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/052 Ktlk Gary Character/052 Ktlk Gary Character - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/052 Ktlk Gary Character/052 Ktlk Gary Character - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/052 Ktlk Gary Character/052 Ktlk Gary Character.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/052 Ktlk Gary Character/checklists/052 Ktlk Gary Character - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/052 Ktlk Gary Character/contracts/052 Ktlk Gary Character - audio-naming.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/052 Ktlk Gary Character/contracts/052 Ktlk Gary Character - signals.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/053 Road Gen Remediation/053 Road Gen Remediation - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/053 Road Gen Remediation/053 Road Gen Remediation - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/053 Road Gen Remediation/053 Road Gen Remediation - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/053 Road Gen Remediation/053 Road Gen Remediation - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/053 Road Gen Remediation/053 Road Gen Remediation.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/053 Road Gen Remediation/audit/baseline-scores.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/053 Road Gen Remediation/audit/generation-time-baseline.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/053 Road Gen Remediation/audit/root-cause-report.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/053 Road Gen Remediation/checklists/053 Road Gen Remediation - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/053 Road Gen Remediation/contracts/053 Road Gen Remediation - road_segments.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/054 Radio Genre Expansion/054 Radio Genre Expansion - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/054 Radio Genre Expansion/054 Radio Genre Expansion - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/054 Radio Genre Expansion/054 Radio Genre Expansion - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/054 Radio Genre Expansion/054 Radio Genre Expansion - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/054 Radio Genre Expansion/054 Radio Genre Expansion - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/054 Radio Genre Expansion/054 Radio Genre Expansion.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/054 Radio Genre Expansion/checklists/054 Radio Genre Expansion - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/055 Radio Redesign/055 Radio Redesign - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/055 Radio Redesign/055 Radio Redesign - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/055 Radio Redesign/055 Radio Redesign.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/055 Radio Redesign/checklists/055 Radio Redesign - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/056 Car Ignition/056 Car Ignition - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/056 Car Ignition/056 Car Ignition - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/056 Car Ignition/056 Car Ignition.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/056 Car Ignition/checklists/056 Car Ignition - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/057 Flashlight Implementation/057 Flashlight Implementation.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/057 Flashlight Implementation/checklists/057 Flashlight Implementation - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/058 Splash Screen Wiring/058 Splash Screen Wiring - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/058 Splash Screen Wiring/058 Splash Screen Wiring - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/058 Splash Screen Wiring/058 Splash Screen Wiring - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/058 Splash Screen Wiring/058 Splash Screen Wiring - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/058 Splash Screen Wiring/058 Splash Screen Wiring - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/058 Splash Screen Wiring/058 Splash Screen Wiring.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/058 Splash Screen Wiring/checklists/058 Splash Screen Wiring - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/059 Car Kick/059 Car Kick - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/059 Car Kick/059 Car Kick - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/059 Car Kick/059 Car Kick - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/059 Car Kick/059 Car Kick - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/059 Car Kick/059 Car Kick.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/059 Car Kick/checklists/059 Car Kick - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/059 Car Kick/contracts/059 Car Kick - kick-signals.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/060 Github Pages Jekyll/060 Github Pages Jekyll - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/060 Github Pages Jekyll/060 Github Pages Jekyll - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/060 Github Pages Jekyll/060 Github Pages Jekyll - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/060 Github Pages Jekyll/060 Github Pages Jekyll - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/060 Github Pages Jekyll/060 Github Pages Jekyll - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/060 Github Pages Jekyll/060 Github Pages Jekyll.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/060 Github Pages Jekyll/checklists/060 Github Pages Jekyll - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/060 Github Pages Jekyll/contracts/060 Github Pages Jekyll - site-contracts.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/060 Github Pages Jekyll/plan-visual.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/061 Main Menu/061 Main Menu - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/061 Main Menu/061 Main Menu - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/061 Main Menu/061 Main Menu - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/061 Main Menu/061 Main Menu - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/061 Main Menu/061 Main Menu - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/061 Main Menu/061 Main Menu.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/061 Main Menu/checklists/061 Main Menu - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/061 Main Menu/contracts/061 Main Menu - signals.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/062 Gdd Bible Alignment/062 Gdd Bible Alignment - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/062 Gdd Bible Alignment/062 Gdd Bible Alignment - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/062 Gdd Bible Alignment/062 Gdd Bible Alignment - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/062 Gdd Bible Alignment/062 Gdd Bible Alignment - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/062 Gdd Bible Alignment/062 Gdd Bible Alignment - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/062 Gdd Bible Alignment/062 Gdd Bible Alignment.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/062 Gdd Bible Alignment/checklists/062 Gdd Bible Alignment - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/062 Gdd Bible Alignment/divergence-register.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/063 R2 Hosting/063 R2 Hosting - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/063 R2 Hosting/063 R2 Hosting - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/063 R2 Hosting/063 R2 Hosting.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/063 R2 Hosting/DEPLOYMENT_CHECKLIST.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/063 R2 Hosting/RUNBOOK.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/063 R2 Hosting/checklists/063 R2 Hosting - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/064 Brand Identity/064 Brand Identity - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/064 Brand Identity/064 Brand Identity - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/064 Brand Identity/064 Brand Identity - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/064 Brand Identity/064 Brand Identity - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/064 Brand Identity/064 Brand Identity - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/064 Brand Identity/064 Brand Identity.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/064 Brand Identity/asset-library.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/064 Brand Identity/checklists/064 Brand Identity - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/065 Styled Dmg Installer/065 Styled Dmg Installer - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/065 Styled Dmg Installer/065 Styled Dmg Installer - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/065 Styled Dmg Installer/065 Styled Dmg Installer - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/065 Styled Dmg Installer/065 Styled Dmg Installer - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/065 Styled Dmg Installer/065 Styled Dmg Installer - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/065 Styled Dmg Installer/065 Styled Dmg Installer.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/065 Styled Dmg Installer/checklists/065 Styled Dmg Installer - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/065 Styled Dmg Installer/contracts/065 Styled Dmg Installer - create_dmg_invocation.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/065 Styled Dmg Installer/reference/background_authoring_guide.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/066 Van Image Acquisition/066 Van Image Acquisition - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/066 Van Image Acquisition/066 Van Image Acquisition - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/066 Van Image Acquisition/066 Van Image Acquisition - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/066 Van Image Acquisition/066 Van Image Acquisition.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/066 Van Image Acquisition/checklists/066 Van Image Acquisition - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/067 Phased Rust Migration/067 Phased Rust Migration - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/067 Phased Rust Migration/067 Phased Rust Migration - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/067 Phased Rust Migration/067 Phased Rust Migration - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/067 Phased Rust Migration/067 Phased Rust Migration - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/067 Phased Rust Migration/067 Phased Rust Migration - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/067 Phased Rust Migration/067 Phased Rust Migration.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/067 Phased Rust Migration/baselines/.gitkeep.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/067 Phased Rust Migration/checklists/067 Phased Rust Migration - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/067 Phased Rust Migration/contracts/067 Phased Rust Migration - baseline-json-schema.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/067 Phased Rust Migration/contracts/067 Phased Rust Migration - migration-state-schema.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/067 Phased Rust Migration/migration-inventory.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/067 Phased Rust Migration/migration-state.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/068 Bus Asset Integration/068 Bus Asset Integration - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/068 Bus Asset Integration/068 Bus Asset Integration - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/068 Bus Asset Integration/068 Bus Asset Integration - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/068 Bus Asset Integration/068 Bus Asset Integration - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/068 Bus Asset Integration/068 Bus Asset Integration.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/068 Bus Asset Integration/PHASE_3_BLOCKER.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/068 Bus Asset Integration/PHASE_3_CRITICAL_REVIEW.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/068 Bus Asset Integration/PHASE_3_EXECUTIVE_SUMMARY.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/068 Bus Asset Integration/PHASE_3_RCA.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/068 Bus Asset Integration/checklists/068 Bus Asset Integration - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/068 Bus Asset Integration/node_disposition_map.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/068 Bus Asset Integration/panel_mesh_map.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/069 Autonomous Weather Simulation/069 Autonomous Weather Simulation - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/069 Autonomous Weather Simulation/069 Autonomous Weather Simulation - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/069 Autonomous Weather Simulation/069 Autonomous Weather Simulation - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/069 Autonomous Weather Simulation/069 Autonomous Weather Simulation - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/069 Autonomous Weather Simulation/069 Autonomous Weather Simulation.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/069 Autonomous Weather Simulation/checklists/069 Autonomous Weather Simulation - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/069 Autonomous Weather Simulation/contracts/069 Autonomous Weather Simulation - weather_changed_signal.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/069 Autonomous Weather Simulation/performance-validation.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/069 Autonomous Weather Simulation/research-external.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/069 Autonomous Weather Simulation/research-rust-migration.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/070 Biome Blending Rust/070 Biome Blending Rust - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/070 Biome Blending Rust/070 Biome Blending Rust - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/070 Biome Blending Rust/070 Biome Blending Rust - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/070 Biome Blending Rust/070 Biome Blending Rust - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/070 Biome Blending Rust/070 Biome Blending Rust.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/070 Biome Blending Rust/checklists/070 Biome Blending Rust - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/070 Biome Blending Rust/migration-state.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/071 Site Ux Improvements/071 Site Ux Improvements - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/071 Site Ux Improvements/071 Site Ux Improvements - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/071 Site Ux Improvements/071 Site Ux Improvements - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/071 Site Ux Improvements/071 Site Ux Improvements - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/071 Site Ux Improvements/071 Site Ux Improvements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/071 Site Ux Improvements/checklists/071 Site Ux Improvements - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/071 Site Ux Improvements/contracts/071 Site Ux Improvements - ui-contracts.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/072 Release Metadata Automation/072 Release Metadata Automation.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/072 Release Metadata Automation/checklists/072 Release Metadata Automation - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/073 Screenshot Key/073 Screenshot Key - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/073 Screenshot Key/073 Screenshot Key - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/073 Screenshot Key/073 Screenshot Key - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/073 Screenshot Key/073 Screenshot Key - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/073 Screenshot Key/073 Screenshot Key - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/073 Screenshot Key/073 Screenshot Key.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/073 Screenshot Key/checklists/073 Screenshot Key - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/074 Consolidate Runtime Config/074 Consolidate Runtime Config - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/074 Consolidate Runtime Config/074 Consolidate Runtime Config - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/074 Consolidate Runtime Config/074 Consolidate Runtime Config - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/074 Consolidate Runtime Config/074 Consolidate Runtime Config - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/074 Consolidate Runtime Config/074 Consolidate Runtime Config - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/074 Consolidate Runtime Config/074 Consolidate Runtime Config.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/074 Consolidate Runtime Config/checklists/074 Consolidate Runtime Config - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/074 Consolidate Runtime Config/contracts/074 Consolidate Runtime Config - biome.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/074 Consolidate Runtime Config/contracts/074 Consolidate Runtime Config - road.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/075 Version Bump Enforcement/075 Version Bump Enforcement - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/075 Version Bump Enforcement/075 Version Bump Enforcement - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/075 Version Bump Enforcement/075 Version Bump Enforcement - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/075 Version Bump Enforcement/075 Version Bump Enforcement - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/075 Version Bump Enforcement/075 Version Bump Enforcement.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/075 Version Bump Enforcement/checklists/075 Version Bump Enforcement - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/076 Ci Actions Optimization/076 Ci Actions Optimization - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/076 Ci Actions Optimization/076 Ci Actions Optimization - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/076 Ci Actions Optimization/076 Ci Actions Optimization - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/076 Ci Actions Optimization/076 Ci Actions Optimization - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/076 Ci Actions Optimization/076 Ci Actions Optimization.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/076 Ci Actions Optimization/checklists/076 Ci Actions Optimization - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/077 Export Audit Fixes/077 Export Audit Fixes - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/077 Export Audit Fixes/077 Export Audit Fixes - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/077 Export Audit Fixes/077 Export Audit Fixes - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/077 Export Audit Fixes/077 Export Audit Fixes - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/077 Export Audit Fixes/077 Export Audit Fixes.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/077 Export Audit Fixes/checklists/077 Export Audit Fixes - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/078 Hardcoded Values Remediation/078 Hardcoded Values Remediation - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/078 Hardcoded Values Remediation/078 Hardcoded Values Remediation - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/078 Hardcoded Values Remediation/078 Hardcoded Values Remediation - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/078 Hardcoded Values Remediation/078 Hardcoded Values Remediation - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/078 Hardcoded Values Remediation/078 Hardcoded Values Remediation.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/078 Hardcoded Values Remediation/checklists/078 Hardcoded Values Remediation - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/079 Obsidian Vault Scaffold/079 Obsidian Vault Scaffold - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/079 Obsidian Vault Scaffold/079 Obsidian Vault Scaffold - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/079 Obsidian Vault Scaffold/079 Obsidian Vault Scaffold - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/079 Obsidian Vault Scaffold/079 Obsidian Vault Scaffold - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/079 Obsidian Vault Scaffold/079 Obsidian Vault Scaffold.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/079 Obsidian Vault Scaffold/checklists/079 Obsidian Vault Scaffold - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/079 Obsidian Vault Scaffold/constitution-amendment-vault.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/079 Obsidian Vault Scaffold/obsidian-vault-directive.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/080 Agent Vault Knowledge Graph/080 Agent Vault Knowledge Graph - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/080 Agent Vault Knowledge Graph/080 Agent Vault Knowledge Graph - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/080 Agent Vault Knowledge Graph/080 Agent Vault Knowledge Graph - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/080 Agent Vault Knowledge Graph/080 Agent Vault Knowledge Graph - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/080 Agent Vault Knowledge Graph/080 Agent Vault Knowledge Graph - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/080 Agent Vault Knowledge Graph/080 Agent Vault Knowledge Graph.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/080 Agent Vault Knowledge Graph/checklists/080 Agent Vault Knowledge Graph - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/080 Agent Vault Knowledge Graph/contracts/080 Agent Vault Knowledge Graph - agent-note-schema.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/080 Agent Vault Knowledge Graph/contracts/080 Agent Vault Knowledge Graph - mcp-tools.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/081 Code Dedup Consolidation/081 Code Dedup Consolidation - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/081 Code Dedup Consolidation/081 Code Dedup Consolidation - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/081 Code Dedup Consolidation/081 Code Dedup Consolidation - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/081 Code Dedup Consolidation/081 Code Dedup Consolidation - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/081 Code Dedup Consolidation/081 Code Dedup Consolidation.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/081 Code Dedup Consolidation/checklists/081 Code Dedup Consolidation - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/082 Vault Vehicle Reconciliation/082 Vault Vehicle Reconciliation.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/083 Atmospheric Splash Screen/083 Atmospheric Splash Screen.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/084 First Run Experience/084 First Run Experience.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/085 Game Controller Support/085 Game Controller Support.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/086 Performance Stability Testing/086 Performance Stability Testing.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/087 Main Menu Polish/087 Main Menu Polish.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/088 Vault Audit Agent/088 Vault Audit Agent - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/088 Vault Audit Agent/088 Vault Audit Agent - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/088 Vault Audit Agent/088 Vault Audit Agent - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/088 Vault Audit Agent/088 Vault Audit Agent - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/088 Vault Audit Agent/088 Vault Audit Agent.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/089 Crafting Panel/089 Crafting Panel.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/090 Car Maintenance/090 Car Maintenance.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/091 Player Abilities/091 Player Abilities.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/092 Garage Trip Planner/092 Garage Trip Planner.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/093 Player Equipment/093 Player Equipment.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/094 Meadow Swamp Biomes/094 Meadow Swamp Biomes.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/095 Train Tracks/095 Train Tracks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/096 Water Ways/096 Water Ways.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/097 Covered Bridges/097 Covered Bridges.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/098 Weather Effects Completion/098 Weather Effects Completion - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/098 Weather Effects Completion/098 Weather Effects Completion - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/098 Weather Effects Completion/098 Weather Effects Completion - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/098 Weather Effects Completion/098 Weather Effects Completion - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/098 Weather Effects Completion/098 Weather Effects Completion.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/098 Weather Effects Completion/checklists/098 Weather Effects Completion - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/098 Weather Effects Completion/contracts/098 Weather Effects Completion - instrument_disruption_signal.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/098 Weather Effects Completion/elevenlabs-generation-guide.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/099 Sfx Pipeline Expansion/099 Sfx Pipeline Expansion - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/099 Sfx Pipeline Expansion/099 Sfx Pipeline Expansion - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/099 Sfx Pipeline Expansion/099 Sfx Pipeline Expansion - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/099 Sfx Pipeline Expansion/099 Sfx Pipeline Expansion - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/099 Sfx Pipeline Expansion/099 Sfx Pipeline Expansion.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/099 Sfx Pipeline Expansion/checklists/099 Sfx Pipeline Expansion - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/099 Sfx Pipeline Expansion/contracts/099 Sfx Pipeline Expansion - sfx_provenance_schema.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/100 Vault Spec Status Sot/100 Vault Spec Status Sot.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/100 Vault Spec Status Sot/checklists/100 Vault Spec Status Sot - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/101 Vault Authoritative Specs/101 Vault Authoritative Specs - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/101 Vault Authoritative Specs/101 Vault Authoritative Specs - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/101 Vault Authoritative Specs/101 Vault Authoritative Specs - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/101 Vault Authoritative Specs/101 Vault Authoritative Specs - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/101 Vault Authoritative Specs/101 Vault Authoritative Specs.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/101 Vault Authoritative Specs/checklists/101 Vault Authoritative Specs - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/101 Vault Authoritative Specs/contracts/101 Vault Authoritative Specs - vault-spec-frontmatter.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/102 Vault Artifact Naming/102 Vault Artifact Naming - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/102 Vault Artifact Naming/102 Vault Artifact Naming - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/102 Vault Artifact Naming/102 Vault Artifact Naming - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/102 Vault Artifact Naming/102 Vault Artifact Naming - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/102 Vault Artifact Naming/102 Vault Artifact Naming.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/102 Vault Artifact Naming/checklists/102 Vault Artifact Naming - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/103 Roads Around Trees/103 Roads Around Trees - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/103 Roads Around Trees/103 Roads Around Trees - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/103 Roads Around Trees/103 Roads Around Trees - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/103 Roads Around Trees/103 Roads Around Trees - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/103 Roads Around Trees/103 Roads Around Trees.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/103 Roads Around Trees/checklists/103 Roads Around Trees - requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/104 Biome Ambient Audio/104 Biome Ambient Audio.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/104 Biome Ambient Audio/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/105 Disturbance Arc Audio/105 Disturbance Arc Audio.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/105 Disturbance Arc Audio/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/106 Anomaly Audio Signatures/106 Anomaly Audio Signatures.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/106 Anomaly Audio Signatures/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/107 Storm Audio System/107 Storm Audio System.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/107 Storm Audio System/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/108 Garage And Exit Gate Audio/108 Garage And Exit Gate Audio.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/108 Garage And Exit Gate Audio/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/109 Weather Bed Layer/109 Weather Bed Layer.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/109 Weather Bed Layer/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/110 Time Of Day Audio Variants/110 Time Of Day Audio Variants.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/110 Time Of Day Audio Variants/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/111 Audio Bus Architecture/111 Audio Bus Architecture.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/111 Audio Bus Architecture/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/112 Environmental Presence System/112 Environmental Presence System.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/112 Environmental Presence System/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/113 Player And World Interaction Audio/113 Player And World Interaction Audio.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/113 Player And World Interaction Audio/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/114 Road Artifact Remediation/114 Road Artifact Remediation - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/114 Road Artifact Remediation/114 Road Artifact Remediation - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/114 Road Artifact Remediation/114 Road Artifact Remediation - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/114 Road Artifact Remediation/114 Road Artifact Remediation - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/114 Road Artifact Remediation/114 Road Artifact Remediation.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/114 Road Artifact Remediation/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/115 Terrain Region Boundary Rendering/115 Terrain Region Boundary Rendering.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/116 Epic Reorganization/116 Epic Reorganization - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/116 Epic Reorganization/116 Epic Reorganization - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/116 Epic Reorganization/116 Epic Reorganization.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/116 Epic Reorganization/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/117 Anomaly Implementation/117 Anomaly Implementation.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/118 Resource Spawning Collection/118 Resource Spawning Collection.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/119 Garage Hub Implementation/119 Garage Hub Implementation.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/120 Save Persistence/120 Save Persistence.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/121 Vehicle Configuration System/121 Vehicle Configuration System.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/122 Component Acquisition/122 Component Acquisition.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/123 Environmental Presence System/123 Environmental Presence System.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/124 Player Exposure Arc/124 Player Exposure Arc.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/125 Player Gear/125 Player Gear.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/126 Garage Contamination Arc/126 Garage Contamination Arc.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/127 Player Bus Convergence Endpoint/127 Player Bus Convergence Endpoint.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/128 User Settings Persistence/128 User Settings Persistence - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/128 User Settings Persistence/128 User Settings Persistence - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/128 User Settings Persistence/128 User Settings Persistence - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/128 User Settings Persistence/128 User Settings Persistence - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/128 User Settings Persistence/128 User Settings Persistence - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/128 User Settings Persistence/128 User Settings Persistence.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/128 User Settings Persistence/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/129 Bus Door Hinge Animations/129 Bus Door Hinge Animations.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/130 Wiki Deploy Setup/130 Wiki Deploy Setup.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/130 Wiki Deploy Setup/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/131 Codebase Graph Agent/131 Codebase Graph Agent - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/131 Codebase Graph Agent/131 Codebase Graph Agent - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/131 Codebase Graph Agent/131 Codebase Graph Agent - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/131 Codebase Graph Agent/131 Codebase Graph Agent - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/131 Codebase Graph Agent/131 Codebase Graph Agent - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/131 Codebase Graph Agent/131 Codebase Graph Agent.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/131 Codebase Graph Agent/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/131 Codebase Graph Agent/contracts/README.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/132 External PCK Export/132 External PCK Export - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/132 External PCK Export/132 External PCK Export - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/132 External PCK Export/132 External PCK Export - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/132 External PCK Export/132 External PCK Export - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/132 External PCK Export/132 External PCK Export.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/132 External PCK Export/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/133 Autonomous Company V01 Experiment/133 Autonomous Company V01 Experiment - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/133 Autonomous Company V01 Experiment/133 Autonomous Company V01 Experiment - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/133 Autonomous Company V01 Experiment/133 Autonomous Company V01 Experiment - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/133 Autonomous Company V01 Experiment/133 Autonomous Company V01 Experiment - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/133 Autonomous Company V01 Experiment/133 Autonomous Company V01 Experiment - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/133 Autonomous Company V01 Experiment/133 Autonomous Company V01 Experiment.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/134 Per Persona Slack App Registration/134 Per Persona Slack App Registration - analyze-2.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/134 Per Persona Slack App Registration/134 Per Persona Slack App Registration - analyze-3.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/134 Per Persona Slack App Registration/134 Per Persona Slack App Registration - analyze-4.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/134 Per Persona Slack App Registration/134 Per Persona Slack App Registration - analyze-5.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/134 Per Persona Slack App Registration/134 Per Persona Slack App Registration - analyze.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/134 Per Persona Slack App Registration/134 Per Persona Slack App Registration - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/134 Per Persona Slack App Registration/134 Per Persona Slack App Registration - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/134 Per Persona Slack App Registration/134 Per Persona Slack App Registration - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/134 Per Persona Slack App Registration/134 Per Persona Slack App Registration - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/134 Per Persona Slack App Registration/134 Per Persona Slack App Registration - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/134 Per Persona Slack App Registration/134 Per Persona Slack App Registration.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/134 Per Persona Slack App Registration/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/135 Persona Middleware Specs/135 Persona Middleware Specs - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/135 Persona Middleware Specs/135 Persona Middleware Specs - letta-integration-plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/135 Persona Middleware Specs/135 Persona Middleware Specs - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/135 Persona Middleware Specs/135 Persona Middleware Specs - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/135 Persona Middleware Specs/135 Persona Middleware Specs - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/135 Persona Middleware Specs/135 Persona Middleware Specs - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/135 Persona Middleware Specs/135 Persona Middleware Specs.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/136 Training Dataset Sourcing/136 Training Dataset Sourcing - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/136 Training Dataset Sourcing/136 Training Dataset Sourcing.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/136 Training Dataset Sourcing/generation-prompts.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/136 Training Dataset Sourcing/search-prompts.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/137 GitHub App Vault Deploy/137 GitHub App Vault Deploy.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/137 GitHub App Vault Deploy/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/138 Multi-User Infrastructure/138 Multi-User Infrastructure.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/138 Multi-User Infrastructure/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/139 CI Export Tier Split/139 CI Export Tier Split - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/139 CI Export Tier Split/139 CI Export Tier Split - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/139 CI Export Tier Split/139 CI Export Tier Split - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/139 CI Export Tier Split/139 CI Export Tier Split - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/139 CI Export Tier Split/139 CI Export Tier Split - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/139 CI Export Tier Split/139 CI Export Tier Split.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/139 CI Export Tier Split/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/140 Letta MCP Tools/140 Letta MCP Tools - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/140 Letta MCP Tools/140 Letta MCP Tools - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/140 Letta MCP Tools/140 Letta MCP Tools - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/140 Letta MCP Tools/140 Letta MCP Tools - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/140 Letta MCP Tools/140 Letta MCP Tools - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/140 Letta MCP Tools/140 Letta MCP Tools.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/140 Letta MCP Tools/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/141 Auto Restart Recovery/141 Auto Restart Recovery - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/141 Auto Restart Recovery/141 Auto Restart Recovery - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/141 Auto Restart Recovery/141 Auto Restart Recovery - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/141 Auto Restart Recovery/141 Auto Restart Recovery - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/141 Auto Restart Recovery/141 Auto Restart Recovery.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/141 Auto Restart Recovery/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/142 Persona Inter Agent Messaging/142 Persona Inter Agent Messaging - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/142 Persona Inter Agent Messaging/142 Persona Inter Agent Messaging - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/142 Persona Inter Agent Messaging/142 Persona Inter Agent Messaging - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/142 Persona Inter Agent Messaging/142 Persona Inter Agent Messaging - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/142 Persona Inter Agent Messaging/142 Persona Inter Agent Messaging - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/142 Persona Inter Agent Messaging/142 Persona Inter Agent Messaging.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/142 Persona Inter Agent Messaging/contracts/inter-agent-api.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/142 Persona Inter Agent Messaging/contracts/slack-echo-api.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/143 Inter Agent Extensions/143 Inter Agent Extensions - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/143 Inter Agent Extensions/143 Inter Agent Extensions - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/143 Inter Agent Extensions/143 Inter Agent Extensions - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/143 Inter Agent Extensions/143 Inter Agent Extensions - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/143 Inter Agent Extensions/143 Inter Agent Extensions - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/143 Inter Agent Extensions/143 Inter Agent Extensions.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/143 Inter Agent Extensions/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/143 Inter Agent Extensions/contracts/broadcast-api.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/143 Inter Agent Extensions/contracts/health-api.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/144 Consolidate Notification Channel/144 Consolidate Notification Channel - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/144 Consolidate Notification Channel/144 Consolidate Notification Channel - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/144 Consolidate Notification Channel/144 Consolidate Notification Channel - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/144 Consolidate Notification Channel/144 Consolidate Notification Channel - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/144 Consolidate Notification Channel/144 Consolidate Notification Channel - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/144 Consolidate Notification Channel/144 Consolidate Notification Channel.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/144 Consolidate Notification Channel/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/144 Consolidate Notification Channel/contracts/notification-api.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/145 Fan-Out Human Injection/145 Fan-Out Human Injection - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/145 Fan-Out Human Injection/145 Fan-Out Human Injection - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/145 Fan-Out Human Injection/145 Fan-Out Human Injection - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/145 Fan-Out Human Injection/145 Fan-Out Human Injection - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/145 Fan-Out Human Injection/145 Fan-Out Human Injection - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/145 Fan-Out Human Injection/145 Fan-Out Human Injection.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/145 Fan-Out Human Injection/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/145 Fan-Out Human Injection/contracts/interfaces.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/145 Fan-Out Human Injection/fanout-human-injection.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/146 Assets Storage Migration/146 Assets Storage Migration - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/146 Assets Storage Migration/146 Assets Storage Migration - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/146 Assets Storage Migration/146 Assets Storage Migration - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/146 Assets Storage Migration/146 Assets Storage Migration - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/146 Assets Storage Migration/146 Assets Storage Migration - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/146 Assets Storage Migration/146 Assets Storage Migration.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/146 Assets Storage Migration/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/146 Assets Storage Migration/contracts/manifest-schema.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/146 Assets Storage Migration/contracts/script-api.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/147 Vault Graph Health/147 Vault Graph Health - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/147 Vault Graph Health/147 Vault Graph Health - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/147 Vault Graph Health/147 Vault Graph Health - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/147 Vault Graph Health/147 Vault Graph Health - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/147 Vault Graph Health/147 Vault Graph Health - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/147 Vault Graph Health/147 Vault Graph Health.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/147 Vault Graph Health/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/147 Vault Graph Health/contracts/cli-interface.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/148 Link Prediction Ensemble/148 Link Prediction Ensemble - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/148 Link Prediction Ensemble/148 Link Prediction Ensemble - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/148 Link Prediction Ensemble/148 Link Prediction Ensemble - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/148 Link Prediction Ensemble/148 Link Prediction Ensemble - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/148 Link Prediction Ensemble/148 Link Prediction Ensemble - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/148 Link Prediction Ensemble/148 Link Prediction Ensemble.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/148 Link Prediction Ensemble/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/148 Link Prediction Ensemble/contracts/prediction-api.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/148 Link Prediction Ensemble/contracts/report-schema.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/149 Agent Escalation Routing/149 Agent Escalation Routing - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/149 Agent Escalation Routing/149 Agent Escalation Routing - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/149 Agent Escalation Routing/149 Agent Escalation Routing - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/149 Agent Escalation Routing/149 Agent Escalation Routing - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/149 Agent Escalation Routing/149 Agent Escalation Routing - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/149 Agent Escalation Routing/149 Agent Escalation Routing.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Specs/149 Agent Escalation Routing/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/149 Agent Escalation Routing/contracts/route-to-contract.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/150 Slack Format Converter/150 Slack Format Converter - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/150 Slack Format Converter/150 Slack Format Converter - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/150 Slack Format Converter/150 Slack Format Converter - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/150 Slack Format Converter/150 Slack Format Converter - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/150 Slack Format Converter/150 Slack Format Converter - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/150 Slack Format Converter/150 Slack Format Converter.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/150 Slack Format Converter/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/151 Slack Event Queue/151 Slack Event Queue.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/151 Slack Event Queue/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/152 Gtm Multiprocess Hardening/152 Gtm Multiprocess Hardening - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/152 Gtm Multiprocess Hardening/152 Gtm Multiprocess Hardening - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/152 Gtm Multiprocess Hardening/152 Gtm Multiprocess Hardening - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/152 Gtm Multiprocess Hardening/152 Gtm Multiprocess Hardening - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/152 Gtm Multiprocess Hardening/152 Gtm Multiprocess Hardening - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/152 Gtm Multiprocess Hardening/152 Gtm Multiprocess Hardening.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Specs/152 Gtm Multiprocess Hardening/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/152 Gtm Multiprocess Hardening/contracts/claim-state-schema.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/153 Windows Support/153 Windows Support - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/153 Windows Support/153 Windows Support - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/153 Windows Support/153 Windows Support - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/153 Windows Support/153 Windows Support - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/153 Windows Support/153 Windows Support - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/153 Windows Support/153 Windows Support.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/153 Windows Support/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/153 Windows Support/contracts/README.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/154 Windows Development - Extended Tooling/154 Windows Development - Extended Tooling - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/154 Windows Development - Extended Tooling/154 Windows Development - Extended Tooling - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/154 Windows Development - Extended Tooling/154 Windows Development - Extended Tooling - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/154 Windows Development - Extended Tooling/154 Windows Development - Extended Tooling - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/154 Windows Development - Extended Tooling/154 Windows Development - Extended Tooling - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/154 Windows Development - Extended Tooling/154 Windows Development - Extended Tooling.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Specs/154 Windows Development - Extended Tooling/contracts/ci-workflow-contract.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/154 Windows Development - Extended Tooling/contracts/powershell-pipeline-contract.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/154 Windows Development - Extended Tooling/contracts/wix-installer-contract.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/155 Bus Chassis Components/155 Bus Chassis Components.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/156 Bus Damage Rebalance/156 Bus Damage Rebalance - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/156 Bus Damage Rebalance/156 Bus Damage Rebalance - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/156 Bus Damage Rebalance/156 Bus Damage Rebalance - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/156 Bus Damage Rebalance/156 Bus Damage Rebalance - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/156 Bus Damage Rebalance/156 Bus Damage Rebalance - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/156 Bus Damage Rebalance/156 Bus Damage Rebalance.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/156 Bus Damage Rebalance/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/157 Tire Destruction Fix/157 Tire Destruction Fix - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/157 Tire Destruction Fix/157 Tire Destruction Fix - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/157 Tire Destruction Fix/157 Tire Destruction Fix - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/157 Tire Destruction Fix/157 Tire Destruction Fix - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/157 Tire Destruction Fix/157 Tire Destruction Fix - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/157 Tire Destruction Fix/157 Tire Destruction Fix.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/157 Tire Destruction Fix/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/158 Vehicle High Center Fix/158 Vehicle High Center Fix - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/158 Vehicle High Center Fix/158 Vehicle High Center Fix - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/158 Vehicle High Center Fix/158 Vehicle High Center Fix - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/158 Vehicle High Center Fix/158 Vehicle High Center Fix - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/158 Vehicle High Center Fix/158 Vehicle High Center Fix - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/158 Vehicle High Center Fix/158 Vehicle High Center Fix.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/158 Vehicle High Center Fix/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/159 Makefile Workflow Support/159 Makefile Workflow Support - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/159 Makefile Workflow Support/159 Makefile Workflow Support - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/159 Makefile Workflow Support/159 Makefile Workflow Support - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/159 Makefile Workflow Support/159 Makefile Workflow Support - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/159 Makefile Workflow Support/159 Makefile Workflow Support.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/159 Makefile Workflow Support/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/160 Windows Game Build/160 Windows Game Build - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/160 Windows Game Build/160 Windows Game Build - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/160 Windows Game Build/160 Windows Game Build - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/160 Windows Game Build/160 Windows Game Build.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Specs/160 Windows Game Build/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/161 Linux Release Builds/161 Linux Release Builds - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/161 Linux Release Builds/161 Linux Release Builds - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/161 Linux Release Builds/161 Linux Release Builds - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/161 Linux Release Builds/161 Linux Release Builds - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/161 Linux Release Builds/161 Linux Release Builds - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/161 Linux Release Builds/161 Linux Release Builds.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Specs/161 Linux Release Builds/checklists/requirements.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/161 Linux Release Builds/contracts/README.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/162 CI Version Consistency/162 CI Version Consistency - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/162 CI Version Consistency/162 CI Version Consistency - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/162 CI Version Consistency/162 CI Version Consistency - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/162 CI Version Consistency/162 CI Version Consistency - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/162 CI Version Consistency/162 CI Version Consistency - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/162 CI Version Consistency/162 CI Version Consistency.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Specs/163 Windows Godot Export Bug/163 Windows Godot Export Bug.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/164 Linux CI Runner Fix/164 Linux CI Runner Fix - data-model.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/164 Linux CI Runner Fix/164 Linux CI Runner Fix - plan.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/164 Linux CI Runner Fix/164 Linux CI Runner Fix - quickstart.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/164 Linux CI Runner Fix/164 Linux CI Runner Fix - research.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/164 Linux CI Runner Fix/164 Linux CI Runner Fix - tasks.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/164 Linux CI Runner Fix/164 Linux CI Runner Fix.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/164 Linux CI Runner Fix/checklists/requirements.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Specs/164 Linux CI Runner Fix/contracts/export-linux-job.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Specs/164 Windows Export Platform Field Fix/164 Windows Export Platform Field Fix.md",
+      "reason": "out_of_scope"
+    },
+    {
+      "artefact": "Systems.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Systems/Audio — Pipeline.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "The Disturbance Thread.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "The Player Causes the Storm.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Tooling — Domain MOC.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Vault Tooling.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Vehicle — Domain MOC.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "Vision/Vision.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "World — Domain MOC.md",
+      "reason": "non_content"
+    },
+    {
+      "artefact": "index.md",
+      "reason": "non_content"
+    }
+  ],
+  "item_ids": [
+    "note_placement-art-palettes",
+    "note_placement-code-tools-music-pipeline",
+    "note_placement-decisions-switched-weather-audio-suno-to-elevenlabs",
+    "note_placement-design-snow-and-winter-driving",
+    "note_placement-discoveries-pre-commit-hook-semver-check-blind-spot",
+    "note_placement-governance-component-semver-policy",
+    "note_placement-narrative-ktlk-gary-character-case-study",
+    "note_placement-reference-autonomous-company-ngrok-tunnel-setup",
+    "note_placement-sessions-sessions",
+    "note_placement-systems-settings",
+    "note_placement-art-pacific-drive-reference",
+    "note_placement-code-source-tree",
+    "note_placement-decisions-catastrophic-tire-damage-collision-discrimination",
+    "note_placement-design-world-model",
+    "note_placement-discoveries-steering-wheel-dynamic-rotation",
+    "note_placement-governance-phased-spec",
+    "note_placement-reference-code-todos",
+    "note_placement-sessions-spec-088-implementation-session",
+    "note_placement-systems-audio-radio-stations",
+    "note_placement-art-rock-scatter-design",
+    "note_placement-code-release-and-distribution",
+    "note_placement-decisions-garage-map-shows-previous-run",
+    "note_placement-design-horror-register",
+    "note_placement-discoveries-mode-gated-key-sharing-pattern",
+    "note_placement-governance-tech-stack-review",
+    "note_placement-reference-glossary",
+    "note_placement-sessions-dashboard-telemetry-and-model-routing-may-22-2026",
+    "note_placement-systems-assets-storage",
+    "note_placement-art-visual-direction",
+    "note_placement-code-autoloads-disturbance"
+  ]
+}

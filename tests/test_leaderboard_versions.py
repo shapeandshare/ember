@@ -77,6 +77,7 @@ ALL_HEADLINE = {
         "routing",
         "effort_approach",
         "tag_assignment",
+        "note_placement",
     )
 }
 ALL_CATEGORIES = {c: (10, 0.8) for c in ALL_HEADLINE}
@@ -151,7 +152,7 @@ def test_rows_assemble_recipes_from_the_latest_matching_run_in_a_group() -> None
     assert row["headline"] is not None
     assert row["run_id"] == "partial"
     assert row["headline"]["accuracy"] == pytest.approx(
-        round((5 * 10 * 0.8 + 10 * 1.0) / 60, 4)
+        round((6 * 10 * 0.8 + 10 * 1.0) / 70, 4)
     )
 
 

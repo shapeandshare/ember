@@ -12,14 +12,20 @@ from ...atomic import write_atomic
 from ..io import DATASET_PATH, read_items, write_items
 from ..splitting import LOCK_PATH, append_lock, assign_new, read_lock
 from .candidate_note import CandidateNote
-from .exclusion_record import ExclusionRecord
 from .exclusion_reason import ExclusionReason
+from .exclusion_record import ExclusionRecord
 from .exclusions import MAX_GOLD, MAX_WORDS, WORD_FLOOR, classify
 from .frontmatter import body_of, parse
 from .mine_error import MineError
 from .mine_summary import MineSummary
+from .note_placement import (
+    CATEGORY as NOTE_PLACEMENT,
+)
+from .note_placement import (
+    build_items as build_placement_items,
+)
 from .sampling_manifest import SamplingManifest
-from .selection import RECIPE_SIZE, SEED, select
+from .selection import SEED
 from .snapshot import VaultSnapshot, VaultSnapshotError
 from .snapshot_file import SnapshotFile
 from .tag_assignment import (
@@ -28,7 +34,9 @@ from .tag_assignment import (
 from .tag_assignment import (
     DISTRACTOR_COUNT,
     MAX_CANDIDATES,
-    build_item,
+)
+from .tag_assignment import (
+    build_items as build_tag_items,
 )
 from .vocabulary import TagVocabulary
 
@@ -38,6 +46,11 @@ OLDGROWTH_REGISTER_ROW: Final = "oldgrowth-vault"
 MANIFEST_DIRNAME: Final = "mined"
 GRANT_FILE: Final = "LICENSES.md"
 GRANT_MARKER: Final = "ember benchmark reproduction"
+
+BUILDERS = {
+    TAG_ASSIGNMENT: build_tag_items,
+    NOTE_PLACEMENT: build_placement_items,
+}
 
 
 def _require_grant(source_dir: Path) -> None:
@@ -72,7 +85,7 @@ def mine(
     recipe: str = TAG_ASSIGNMENT,
     dataset_path: Path = DATASET_PATH,
     lock_path: Path = LOCK_PATH,
-    count: int = RECIPE_SIZE,
+    count: int | None = None,
 ) -> MineSummary:
     """Mine one recipe's items and write the dataset, lock, and manifest.
 
@@ -94,8 +107,8 @@ def mine(
         The dataset JSONL to update.
     lock_path : Path, optional
         The splits lock to extend.
-    count : int, optional
-        How many notes to pick.
+    count : int | None, optional
+        How many notes to pick; the recipe's declared size when omitted.
 
     Returns
     -------
@@ -120,11 +133,20 @@ def mine(
             candidates.append(note)
         else:
             exclusions.append(record)
-    picked = select(candidates, count=count)
-    built = [
-        build_item(note, vocabulary, commit=commit, register_row=register_row)
-        for note in picked
-    ]
+    builder = BUILDERS.get(recipe)
+    if builder is None:
+        raise MineError(
+            f"unknown recipe {recipe!r}; known: {', '.join(sorted(BUILDERS))}"
+        )
+    built = list(
+        builder(
+            candidates,
+            vocabulary,
+            commit=commit,
+            register_row=register_row,
+            count=count,
+        )
+    )
     built_ids = {item.id for item in built}
     all_existing = read_items(dataset_path) if dataset_path.exists() else []
     surviving = [
@@ -154,12 +176,12 @@ def mine(
         source_commit=commit,
         register_row=register_row,
         seed=SEED,
-        count=count,
+        count=len(built),
         word_floor=WORD_FLOOR,
         max_words=MAX_WORDS,
         max_gold=MAX_GOLD,
-        distractor_count=DISTRACTOR_COUNT,
-        max_candidates=MAX_CANDIDATES,
+        distractor_count=DISTRACTOR_COUNT if recipe == TAG_ASSIGNMENT else None,
+        max_candidates=MAX_CANDIDATES if recipe == TAG_ASSIGNMENT else None,
         exclusions=exclusions,
         item_ids=[item.id for item in built],
     )
@@ -181,10 +203,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--source-dir", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--dataset", type=Path, default=DATASET_PATH)
     parser.add_argument("--lock", type=Path, default=LOCK_PATH)
-    parser.add_argument("--count", type=int, default=RECIPE_SIZE)
+    parser.add_argument("--count", type=int, default=None)
     args = parser.parse_args(argv)
-    if args.recipe != TAG_ASSIGNMENT:
-        parser.error(f"unknown recipe {args.recipe!r}; known: {TAG_ASSIGNMENT}")
+    if args.recipe not in BUILDERS:
+        parser.error(
+            f"unknown recipe {args.recipe!r}; known: {', '.join(sorted(BUILDERS))}"
+        )
     summary = mine(
         source_dir=args.source_dir,
         recipe=args.recipe,

@@ -53,9 +53,7 @@ def _mined_item() -> Item:
             "category": "tag_assignment",
             "split": "dev",
             "state": "x",
-            "questions": {
-                "type/decision": {"type": "noul", "instructions": "?"}
-            },
+            "questions": {"type/decision": {"type": "noul", "instructions": "?"}},
             "gold_labels": {"type/decision": True},
             "rationale": "r",
             "source": {

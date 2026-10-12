@@ -3,27 +3,22 @@
 from __future__ import annotations
 
 import random
-import re
+from collections.abc import Sequence
 from typing import Final
 
 from ..records.item import Item
 from ..records.source import Source
 from ..records.source_kind import SourceKind
 from ..records.split import Split
+from . import ids
 from .candidate_note import CandidateNote
-from .selection import SEED
+from .note_text import note_text
+from .selection import RECIPE_SIZE, SEED, select
 from .vocabulary import AXES, TagVocabulary
 
 CATEGORY: Final = "tag_assignment"
 DISTRACTOR_COUNT: Final = 8
 MAX_CANDIDATES: Final = 16
-
-
-def item_id(artefact: str) -> str:
-    """Return the deterministic item id for a source artefact."""
-    base = artefact.removesuffix(".md")
-    slug = re.sub(r"[^a-z0-9]+", "-", base.lower()).strip("-")
-    return f"{CATEGORY}-{slug}"
 
 
 def candidate_tags(
@@ -120,13 +115,9 @@ def build_item(
     """
     tags = candidate_tags(note, vocabulary)
     gold = set(note.tags)
-    body = note.body.strip()
-    heading = f"# {note.title}"
-    if body.startswith(heading):
-        body = body[len(heading) :].lstrip("\n")
-    state = f"{note.title}\n\n{body}\n\n{vocabulary.as_state_block()}"
+    state = f"{note_text(note)}\n\n{vocabulary.as_state_block()}"
     return Item(
-        id=item_id(note.artefact),
+        id=ids.item_id(CATEGORY, note.artefact),
         category=CATEGORY,
         split=split,
         state=state,
@@ -143,3 +134,19 @@ def build_item(
             register_row=register_row,
         ),
     )
+
+
+def build_items(
+    candidates: Sequence[CandidateNote],
+    vocabulary: TagVocabulary,
+    *,
+    commit: str,
+    register_row: str,
+    count: int | None = None,
+) -> list[Item]:
+    """Build the recipe's items: seeded selection, one item per note."""
+    target = RECIPE_SIZE if count is None else count
+    return [
+        build_item(note, vocabulary, commit=commit, register_row=register_row)
+        for note in select(candidates, count=target)
+    ]

@@ -128,8 +128,7 @@ def _fixture_snapshot(tmp_path: Path):  # type: ignore[no-untyped-def]
     return snapshot, vocabulary
 
 
-def _fixture_candidates(tmp_path: Path) -> list[CandidateNote]:
-    snapshot, vocabulary = _fixture_snapshot(tmp_path)
+def _candidates_from(snapshot, vocabulary) -> list[CandidateNote]:  # type: ignore[no-untyped-def]
     candidates: list[CandidateNote] = []
     for entry in snapshot.files():
         if entry.path.startswith("_meta/") or not entry.path.endswith(".md"):
@@ -141,6 +140,11 @@ def _fixture_candidates(tmp_path: Path) -> list[CandidateNote]:
         if classify(note, vocabulary) is None:
             candidates.append(note)
     return candidates
+
+
+def _fixture_candidates(tmp_path: Path) -> list[CandidateNote]:
+    snapshot, vocabulary = _fixture_snapshot(tmp_path)
+    return _candidates_from(snapshot, vocabulary)
 
 
 def test_exclusions_record_each_reason(tmp_path: Path) -> None:
@@ -307,6 +311,54 @@ def test_tag_assignment_recipe_is_registered_as_a_headline_mined_family() -> Non
     assert spec.family is Family.mined_vault
     assert spec.phase == 2
     assert spec.headline is True
+
+
+def test_note_placement_gold_is_the_notes_folder_with_a_fixed_set(
+    tmp_path: Path,
+) -> None:
+    from evals.dataset.mined.note_placement import build_items, placements_for
+
+    snapshot, vocabulary = _fixture_snapshot(tmp_path)
+    candidates = _candidates_from(snapshot, vocabulary)
+    placements = placements_for(candidates)
+    assert placements == ["Decisions", "Discoveries", "Reference", "Sessions"]
+    items = build_items(
+        candidates,
+        vocabulary,
+        commit="a" * 40,
+        register_row="oldgrowth-vault",
+    )
+    assert len(items) == len(candidates)
+    for item in items:
+        assert item.category == "note_placement"
+        assert item.id.startswith("note_placement-")
+        gold = item.gold_labels["placement"]
+        assert gold == item.source.artefact.split("/")[0]
+        assert str(gold) in item.questions["placement"]["criteria"]
+    shapes = {json.dumps(item.questions, sort_keys=True) for item in items}
+    assert len(shapes) == 1
+
+
+def test_mine_runs_the_note_placement_recipe(tmp_path: Path) -> None:
+    vault = build_fixture_vault(tmp_path)
+    dataset = tmp_path / "dataset.jsonl"
+    lock = tmp_path / "splits.lock"
+    summary = mine(
+        source_dir=vault.root,
+        commit=vault.commit,
+        recipe="note_placement",
+        dataset_path=dataset,
+        lock_path=lock,
+    )
+    assert summary.items_written == 4
+    items = read_items(dataset)
+    assert {item.category for item in items} == {"note_placement"}
+    manifest = json.loads(
+        (tmp_path / "mined" / "note_placement.json").read_text(encoding="utf-8")
+    )
+    assert manifest["distractor_count"] is None
+    assert manifest["max_candidates"] is None
+    assert len(manifest["item_ids"]) == 4
 
 
 def test_mine_drops_stale_items_of_the_recipe(tmp_path: Path) -> None:

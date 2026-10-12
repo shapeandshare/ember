@@ -124,6 +124,13 @@ RECIPES: dict[str, RecipeSpec] = {
         "Which candidate tags the note deserves; the gold is the note's own "
         "vocabulary tags.",
     ),
+    "note_placement": _mined_vault(
+        "note_placement",
+        "Note placement",
+        "When deciding where a vault note belongs.",
+        "A note's title and body.",
+        "Which folder the note belongs in; the gold is its actual placement.",
+    ),
 }
 
 
