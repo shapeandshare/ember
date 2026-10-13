@@ -181,3 +181,15 @@ Task: "T008 evals/dataset/mined/vocabulary.py — TagVocabulary + as_state_block
 - Commits: conventional, scoped (`feat(evals): …`, `feat(ember): …`), atomic, tests in the same commit (Article XI).
 - ≤400 lines per module; no new dependencies; annotation-only edits never move the content hash.
 - Dataset discipline: every item addition → `card` records a new version; never compare across versions.
+
+---
+
+## Phase 2 Close-out (converge, 2026-10-12)
+
+The US1/US2 gate is green and [PR #125](https://github.com/shapeandshare/ember/pull/125)
+carries the shipped work; these are the remaining unbuilt items across the feature's own
+follow-through.
+
+- [ ] T039 [Post-release] Refresh the AWS deployment to the current version/config (`make aws-up`) and re-run the CUDA legs (`--category tag_assignment`, `--category note_placement`), re-snapshot, so the comparison halves carry no cap-refused items; verify the deployment's reported per-request cap matches the local default (`ember doctor`). See `vault/discoveries/2026-10-12-cuda-deployment-request-cap-drift.md`.
+- [ ] T040 [Follow-up] Handle category-scoped (partial) newest bundles in `scripts/build_site_benchmark.py` and its tests — the build assumes every summary kind block exists and crashes on a partial newest, so per-category re-runs cannot be snapshotted as newest safely. See the session note's "Still open".
+- [ ] T041 [Release ops] After PR #125 merges and the release workflow publishes (v0.15.0), dispatch the Pages deploy and verify the new recipes render; T026/T027/T030/T031 (the deferred recipes) re-open when their material exists.

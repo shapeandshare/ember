@@ -238,6 +238,12 @@ hand authoring: the vault's notes already carry their labels (type, domain, stat
 history records where each note was placed and when a reference went stale. The first mined
 category appears on the leaderboard and can be regenerated from a recorded commit.
 
+**Status (2026-10-12)**: `tag_assignment` and `note_placement` shipped (dataset versions
+`4049ac55a1fa` and `e0bbb468e213`; both on the leaderboard and in the kit). `staleness` and
+`memory_worthiness` are deferred — the pinned source carries no stale markers and no
+did-not-become fragments
+(`vault/discoveries/2026-10-12-staleness-and-worthiness-have-no-source.md`).
+
 **Why this priority**: Cheapest high-quality source; it exercises the phase-0 tooling and
 proves the miner before hand-authored recipes consume labelling effort.
 

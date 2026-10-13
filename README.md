@@ -598,7 +598,8 @@ approval per Article XI §11.2.
 ### Benchmark
 
 `evals/clef-flash.jsonl` is the benchmark. It covers the five agent-kit recipes (intent
-and readiness, failure triage, change risk, routing, effort and approach) plus four vision
+and readiness, failure triage, change risk, routing, effort and approach), two mined
+recipes from the maintainer's vault (`tag_assignment`, `note_placement`), plus four vision
 recipes (`vision_noul`, `vision_choice`, `vision_score`, `vision_video`), with every item in
 a `dev` or `test` split; the [benchmark report](https://shapeandshare.github.io/ember/results/)
 gives the current item and question counts. Vision items carry an `images` or `videos` field
