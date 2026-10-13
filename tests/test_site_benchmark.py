@@ -271,8 +271,11 @@ def test_build_survives_a_partial_newest_bundle(sandbox: Path) -> None:
         (
             json.loads(p.read_text(encoding="utf-8"))
             for p in (sandbox.parent / "benchmark").glob("*/model.json")
-            if json.loads(p.read_text(encoding="utf-8"))["summary"].get("choice")
-            is not None
+            if all(
+                json.loads(p.read_text(encoding="utf-8"))["summary"].get(kind)
+                is not None
+                for kind in ("overall", "choice", "noul", "score")
+            )
         ),
         key=lambda m: m["meta"]["run_at"],
     )
@@ -380,12 +383,15 @@ def test_hero_questions_drop_an_item_missing_from_the_run() -> None:
     assert bench.hero_questions({"items": []}, [HERO_ENTRY]) == []
 
 
-def test_every_curated_hero_question_holds_in_the_newest_run() -> None:
+def test_every_curated_hero_question_holds_in_the_headline_run() -> None:
+    """The landing page's heroes come from the headline run, so it must answer
+    every curated question (a partial newest bundle cannot stand in)."""
     models = [
         json.loads(path.read_text(encoding="utf-8"))
         for path in REAL_BENCHMARK.glob("*/model.json")
     ]
-    newest = max(models, key=lambda m: m["meta"]["run_at"])
+    newest = bench._headline_model(models)
+    assert newest is not None
     entries = json.loads(
         (REAL_BENCHMARK.parent / "site" / "_data" / "hero_questions.json").read_text(
             encoding="utf-8"
@@ -399,7 +405,8 @@ def test_every_hero_reply_is_shorter_than_its_question() -> None:
         json.loads(path.read_text(encoding="utf-8"))
         for path in REAL_BENCHMARK.glob("*/model.json")
     ]
-    newest = max(models, key=lambda m: m["meta"]["run_at"])
+    newest = bench._headline_model(models)
+    assert newest is not None
     entries = json.loads(
         (REAL_BENCHMARK.parent / "site" / "_data" / "hero_questions.json").read_text(
             encoding="utf-8"

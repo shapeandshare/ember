@@ -295,6 +295,22 @@ class TestStackUpdate:
         call_kwargs = clients.cfn.create_change_set.call_args.kwargs
         assert "CAPABILITY_NAMED_IAM" in call_kwargs["Capabilities"]
 
+    def test_update_passes_the_rendered_template_body(self) -> None:
+        """update() must send the rendered template with the change set.
+
+        The live CreateChangeSet API rejects a call carrying neither
+        TemplateBody, TemplateURL, nor UsePreviousTemplate ("Either Template
+        URL or Template Body must be specified").
+        """
+        clients = _make_clients()
+        mock_waiter = MagicMock()
+        clients.cfn.get_waiter.return_value = mock_waiter
+
+        stack = _make_stack(clients)
+        stack.update(params={"InstanceType": "g6e.xlarge", "_template_body": "<t>"})
+        call_kwargs = clients.cfn.create_change_set.call_args.kwargs
+        assert call_kwargs["TemplateBody"] == "<t>"
+
 
 # ---------------------------------------------------------------------------
 # prepare_change_set()
@@ -326,6 +342,23 @@ class TestStackPrepareChangeSet:
         call_kwargs = clients.cfn.create_change_set.call_args.kwargs
         assert "CAPABILITY_NAMED_IAM" in call_kwargs["Capabilities"]
 
+    def test_prepare_change_set_passes_the_rendered_template_body(self) -> None:
+        """prepare_change_set() must send the rendered template too.
+
+        Same live-API constraint as update(): a change set with no template
+        fails with "Either Template URL or Template Body must be specified".
+        """
+        clients = _make_clients()
+        mock_waiter = MagicMock()
+        clients.cfn.get_waiter.return_value = mock_waiter
+
+        stack = _make_stack(clients)
+        stack.prepare_change_set(
+            params={"InstanceType": "g6e.xlarge", "_template_body": "<t>"}
+        )
+        call_kwargs = clients.cfn.create_change_set.call_args.kwargs
+        assert call_kwargs["TemplateBody"] == "<t>"
+
     def test_prepare_change_set_returns_none_when_empty(self) -> None:
         """prepare_change_set() returns None when the change set is empty."""
         clients = _make_clients()
@@ -336,6 +369,33 @@ class TestStackPrepareChangeSet:
         stack = _make_stack(clients)
         result = stack.prepare_change_set(params={})
         assert result is None
+
+    def test_prepare_change_set_returns_none_when_the_waiter_reports_no_changes(
+        self,
+    ) -> None:
+        """The waiter path surfaces emptiness only in StatusReason.
+
+        A no-op change set is created in the FAILED state; the waiter's own
+        message ("terminal failure state") does not say why — the reason lives
+        in describe_change_set ("The submitted information didn't contain
+        changes"), and prepare_change_set must treat that as empty and clean
+        the failed change set up.
+        """
+        clients = _make_clients()
+        mock_waiter = MagicMock()
+        mock_waiter.wait.side_effect = Exception(
+            "Waiter encountered a terminal failure state: For expression "
+            '"Status" we matched expected path: "FAILED"'
+        )
+        clients.cfn.get_waiter.return_value = mock_waiter
+        clients.cfn.describe_change_set.return_value = {
+            "Status": "FAILED",
+            "StatusReason": "The submitted information didn't contain changes.",
+        }
+
+        stack = _make_stack(clients)
+        assert stack.prepare_change_set(params={"InstanceType": "g6e.xlarge"}) is None
+        clients.cfn.delete_change_set.assert_called_once()
 
     def test_prepare_change_set_reraises_non_empty_exceptions(self) -> None:
         """prepare_change_set() re-raises non-empty-change-set exceptions."""
