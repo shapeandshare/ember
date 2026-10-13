@@ -36,7 +36,7 @@ and device rules are unchanged. Planning decisions were taken through `/speckit.
   feedstock is canonical and carries versions via the conda-forge bot. No publishing credentials
   live in this repo.
 - **Interim self-hosted channel (2026-10-13)**: while the feedstock is under review, releases
-  are also published to the `shapeandshare` channel on **Anaconda.org** — the named channel
+  are also published to the `joshburt` channel on **Anaconda.org** — the named channel
   users recognise. It has no OIDC, so publishing is a deliberate manual `anaconda upload` with a
   locally-held token (no credential stored in this repo). Builds run in
   `.github/workflows/conda-package.yml`; `scripts/render_conda_recipe.py` renders the recipe per

@@ -1,11 +1,11 @@
 # Build per-release conda packages for the interim Anaconda.org channel.
 #
 # conda-forge is the long-term door (its feedstock is under review). Until it lands, releases
-# are also published to the `shapeandshare` channel on Anaconda.org. Anaconda.org has no OIDC,
+# are also published to the `joshburt` channel on Anaconda.org. Anaconda.org has no OIDC,
 # so publishing is a deliberate manual step with a locally-held token — no credential is stored
 # in this repository. Download a run's `conda-<platform>` artifacts, then:
 #
-#     anaconda upload --user shapeandshare ember-advise-<version>-<build>.conda
+#     anaconda upload --user joshburt ember-advise-<version>-<build>.conda
 #
 # `conda/recipe.yaml` is a frozen conda-forge snapshot; each run renders it for the released
 # version (scripts/render_conda_recipe.py) before building.
