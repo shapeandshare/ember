@@ -1,6 +1,6 @@
 [project]
 name = "ember-advise"
-version = "0.14.0"
+version = "0.15.0"
 description = "A gut feeling for coding agents: calibrated advice over MCP from Cloudflare's Clef model, run locally or on a server."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
