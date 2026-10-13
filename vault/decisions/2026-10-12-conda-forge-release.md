@@ -6,13 +6,16 @@ tags:
   - domain/distribution
   - status/draft
 created: "2026-10-12"
-updated: "2026-10-12"
+updated: "2026-10-13"
 code-refs:
   - conda/lock-environment.yml
   - conda/recipe.yaml
   - scripts/freeze_conda_lock.py
+  - scripts/render_conda_recipe.py
+  - scripts/upload_conda_packages.py
   - shared/release.mk
   - shared/testing.mk
+  - .github/workflows/conda-package.yml
   - .github/workflows/conda-smoke.yml
   - tests/test_distribution.py
 ---
@@ -36,12 +39,14 @@ and device rules are unchanged. Planning decisions were taken through `/speckit.
   feedstock is canonical and carries versions via the conda-forge bot. No publishing credentials
   live in this repo.
 - **Interim self-hosted channel (2026-10-13)**: while the feedstock is under review, releases
-  are also published to the `joshburt` channel on **Anaconda.org** — the named channel
-  users recognise. It has no OIDC, so publishing is a deliberate manual `anaconda upload` with a
-  locally-held token (no credential stored in this repo). Builds run in
-  `.github/workflows/conda-package.yml`; `scripts/render_conda_recipe.py` renders the recipe per
-  release. (`prefix.dev`, the OIDC alternative, was rejected — a URL channel too undiscoverable
-  for a public tool.)
+  are also published to the `joshburt` channel on **Anaconda.org** — the named channel users
+  recognise. Anaconda.org has no OIDC, so publishing is automated with a stored credential: the
+  `ANACONDA_API_TOKEN` repository secret, read only by the `publish` job in
+  `.github/workflows/conda-package.yml` on a release, which uploads via
+  `scripts/upload_conda_packages.py` (`--skip-existing`, so reruns are safe). (`prefix.dev` —
+  OIDC, no stored secret — was rejected: a URL channel too undiscoverable for a public tool.)
+  `scripts/render_conda_recipe.py` renders the recipe per release. Retire this job when the
+  conda-forge feedstock lands and its bot publishes versions.
 - **Locks**: the dependency environment (never `ember-advise` itself) is pinned by `conda-lock`;
   the unified lock and the per-platform **explicit** renders are committed. The smoke installs from
   the explicit render — see [[2026-10-12-conda-forge-dependency-and-tooling-gaps]].

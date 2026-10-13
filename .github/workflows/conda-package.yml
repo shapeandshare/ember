@@ -1,14 +1,15 @@
-# Build per-release conda packages for the interim Anaconda.org channel.
+# Build and publish per-release conda packages for the interim Anaconda.org channel.
 #
 # conda-forge is the long-term door (its feedstock is under review). Until it lands, releases
-# are also published to the `joshburt` channel on Anaconda.org. Anaconda.org has no OIDC,
-# so publishing is a deliberate manual step with a locally-held token — no credential is stored
-# in this repository. Download a run's `conda-<platform>` artifacts, then:
-#
-#     anaconda upload --user joshburt ember-advise-<version>-<build>.conda
+# are also published to the `joshburt` channel on Anaconda.org. Anaconda.org has no OIDC, so
+# publishing needs a stored credential: the `ANACONDA_API_TOKEN` repository secret, read only
+# by the `publish` job on a release. (`prefix.dev` — OIDC, no stored secret — was rejected: a
+# URL channel too undiscoverable for a public tool.) Retire this workflow when the conda-forge
+# feedstock lands and its bot publishes versions.
 #
 # `conda/recipe.yaml` is a frozen conda-forge snapshot; each run renders it for the released
-# version (scripts/render_conda_recipe.py) before building.
+# version (scripts/render_conda_recipe.py) before building. `build` runs for releases and manual
+# dispatches; `publish` uploads only on a release.
 
 name: Conda package (Anaconda.org)
 
@@ -74,3 +75,35 @@ jobs:
           recipe-path: ${{ runner.temp }}/recipe.yaml
           build-args: --channel conda-forge
           artifact-name: conda-${{ matrix.platform }}
+
+  publish:
+    name: publish (Anaconda.org)
+    needs: build
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install anaconda-client
+        run: pip install "anaconda-client==1.15.0"
+
+      - name: Download the built packages
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: conda-*
+          path: dist
+          merge-multiple: true
+
+      - name: Upload to Anaconda.org
+        env:
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
+        run: python3 scripts/upload_conda_packages.py dist --user joshburt
