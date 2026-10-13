@@ -295,6 +295,22 @@ class TestStackUpdate:
         call_kwargs = clients.cfn.create_change_set.call_args.kwargs
         assert "CAPABILITY_NAMED_IAM" in call_kwargs["Capabilities"]
 
+    def test_update_passes_the_rendered_template_body(self) -> None:
+        """update() must send the rendered template with the change set.
+
+        The live CreateChangeSet API rejects a call carrying neither
+        TemplateBody, TemplateURL, nor UsePreviousTemplate ("Either Template
+        URL or Template Body must be specified").
+        """
+        clients = _make_clients()
+        mock_waiter = MagicMock()
+        clients.cfn.get_waiter.return_value = mock_waiter
+
+        stack = _make_stack(clients)
+        stack.update(params={"InstanceType": "g6e.xlarge", "_template_body": "<t>"})
+        call_kwargs = clients.cfn.create_change_set.call_args.kwargs
+        assert call_kwargs["TemplateBody"] == "<t>"
+
 
 # ---------------------------------------------------------------------------
 # prepare_change_set()
@@ -325,6 +341,23 @@ class TestStackPrepareChangeSet:
         stack.prepare_change_set(params={"InstanceType": "g6e.xlarge"})
         call_kwargs = clients.cfn.create_change_set.call_args.kwargs
         assert "CAPABILITY_NAMED_IAM" in call_kwargs["Capabilities"]
+
+    def test_prepare_change_set_passes_the_rendered_template_body(self) -> None:
+        """prepare_change_set() must send the rendered template too.
+
+        Same live-API constraint as update(): a change set with no template
+        fails with "Either Template URL or Template Body must be specified".
+        """
+        clients = _make_clients()
+        mock_waiter = MagicMock()
+        clients.cfn.get_waiter.return_value = mock_waiter
+
+        stack = _make_stack(clients)
+        stack.prepare_change_set(
+            params={"InstanceType": "g6e.xlarge", "_template_body": "<t>"}
+        )
+        call_kwargs = clients.cfn.create_change_set.call_args.kwargs
+        assert call_kwargs["TemplateBody"] == "<t>"
 
     def test_prepare_change_set_returns_none_when_empty(self) -> None:
         """prepare_change_set() returns None when the change set is empty."""

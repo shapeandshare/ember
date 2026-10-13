@@ -1277,3 +1277,78 @@ class TestDeploySpotCapacity:
         assert delete_devices_called, (
             "spot to on-demand change must delete tailnet devices (replacement path)"
         )
+
+
+def test_deploy_update_passes_the_rendered_template_body() -> None:
+    """The live CreateChangeSet API needs the rendered template.
+
+    Regression: the version/idle update path built its change set with no
+    template and no UsePreviousTemplate, so the API rejected it with
+    "Either Template URL or Template Body must be specified".
+    """
+    from ember_aws.capacity import Capacity
+    from ember_aws.deployment import Deployment
+    from ember_aws.lifecycle import Lifecycle
+
+    clients = _make_clients(
+        stack_exists=True,
+        ssm_params={"/ember/default/server-token": "tok-abc"},
+    )
+    clients.cfn.describe_stacks.return_value = {
+        "Stacks": [
+            {
+                "StackName": "ember-default",
+                "StackStatus": "UPDATE_COMPLETE",
+                "Outputs": [
+                    {"OutputKey": "InstanceId", "OutputValue": "i-0001"},
+                    {"OutputKey": "RoleArn", "OutputValue": "arn:aws:iam::123:role/r"},
+                ],
+                "Parameters": [
+                    {"ParameterKey": "DeploymentName", "ParameterValue": "default"},
+                    {"ParameterKey": "VpcId", "ParameterValue": "vpc-bbb"},
+                    {"ParameterKey": "ImageId", "ParameterValue": "ami-0abc1234"},
+                    {
+                        "ParameterKey": "CacheBucket",
+                        "ParameterValue": "ember-model-cache-x",
+                    },
+                    {"ParameterKey": "SubnetId", "ParameterValue": "subnet-aaa"},
+                    {"ParameterKey": "Capacity", "ParameterValue": "on-demand"},
+                    {"ParameterKey": "TailscaleTag", "ParameterValue": "tag:ember"},
+                ],
+            }
+        ]
+    }
+    ts = _make_tailscale()
+    mc = _make_model_cache()
+    pf = _make_preflight()
+
+    deployment = Deployment(name="default", model="flash", capacity=Capacity.ON_DEMAND)
+    lc = Lifecycle(clients=clients, tailscale=ts, model_cache=mc, preflight=pf)
+
+    with (
+        patch("ember_aws.lifecycle.Stack") as mock_stack_cls,
+        patch("ember_aws.lifecycle_update.Stack") as mock_update_stack_cls,
+        patch("ember_aws.lifecycle_update.wait_healthy") as mock_health,
+    ):
+        mock_stack = _make_mock_stack()
+        mock_stack.exists.return_value = True
+        mock_stack_cls.return_value = mock_stack
+
+        mock_update_stack = _make_mock_stack()
+        mock_update_stack.exists.return_value = True
+        mock_update_stack.update_has_replacement.return_value = False
+        mock_update_stack.update.return_value = True
+        mock_update_stack_cls.return_value = mock_update_stack
+
+        mock_health.return_value = {
+            "engine": {"device": "cuda"},
+            "version": "0.15.0",
+        }
+        lc.deploy(deployment)
+
+    params = mock_update_stack.update.call_args.args[0]
+    assert params["_template_body"], (
+        "the change set must carry the rendered template body"
+    )
+    for key in ("DeploymentName", "VpcId", "ImageId", "CacheBucket", "SubnetId"):
+        assert params[key], f"the change set must carry the current {key}"

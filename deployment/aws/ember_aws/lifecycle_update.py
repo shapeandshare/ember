@@ -73,9 +73,21 @@ class LifecycleUpdate(LifecycleState):
         url = f"https://{names.hostname}.{tailnet_suffix}"
 
         stack = Stack(clients=self._clients, names=names)
+        from .user_data import UserData  # import-placement:allow
+
+        template_body = UserData.template_body(
+            UserData.render(
+                names=names,
+                region=deployment.region,
+                config=desired_config,
+                tailscale_tag=deployment.tailscale_tag,
+            )
+        )
         stack_params: dict[str, str] = {
+            **stack_parameters.read(self._clients, names.stack_name),
             "InstanceType": entry.instance_type,
             "ModelPrefix": f"models/{deployment.model}/{revision}/",
+            "_template_body": template_body,
         }
 
         config_changed = stored_config is None or not self._configs_equal(
@@ -193,9 +205,27 @@ class LifecycleUpdate(LifecycleState):
 
         stack = Stack(clients=self._clients, names=names)
         ami_id = stack.resolve_image_id(deployment.region)
+        from .user_data import UserData  # import-placement:allow
+
+        render_config = InstanceConfig(
+            ember_version=deployment.ember_version,
+            model_s3_uri=s3_uri,
+            max_request_length=entry.request_cap,
+            idle_minutes=deployment.idle_minutes,
+            generation=self._read_current_generation(names),
+        )
         stack_params: dict[str, str] = {
+            **stack_parameters.read(self._clients, names.stack_name),
             "InstanceType": entry.instance_type,
             "ImageId": ami_id,
+            "_template_body": UserData.template_body(
+                UserData.render(
+                    names=names,
+                    region=deployment.region,
+                    config=render_config,
+                    tailscale_tag=deployment.tailscale_tag,
+                )
+            ),
         }
 
         # Prepare first: a no-op change set must not disturb the working

@@ -272,6 +272,7 @@ class Stack:
             self._clients.cfn.create_change_set(
                 StackName=self._names.stack_name,
                 ChangeSetName=change_set_name,
+                TemplateBody=self._template_body(params),
                 Parameters=cfn_params,
                 Capabilities=["CAPABILITY_NAMED_IAM"],
             )
@@ -313,6 +314,7 @@ class Stack:
             self._clients.cfn.create_change_set(
                 StackName=self._names.stack_name,
                 ChangeSetName=change_set_name,
+                TemplateBody=self._template_body(params),
                 Parameters=cfn_params,
                 Capabilities=["CAPABILITY_NAMED_IAM"],
             )
