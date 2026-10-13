@@ -1,4 +1,4 @@
-"""Render a per-release conda recipe for the interim prefix.dev channel.
+"""Render a per-release conda recipe for the interim Anaconda.org channel.
 
 `conda/recipe.yaml` is a frozen submission snapshot for conda-forge. The interim
 self-hosted channel publishes every release, so CI renders a copy of that recipe with
