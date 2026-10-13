@@ -126,7 +126,7 @@ Repository root is the working directory. Tooling lives under `evals/`, CLI wiri
 - [x] T035 [P] Docs sweep (FR-006): replace "coding recipes only" / coding-only headline wording in `README.md` and `AGENTS.md` (and any echo in `scripts/build_site_benchmark.py` / `site/` prose and `specs/004-benchmark-categories/spec.md`) with the every-decision-family rule.
 - [x] T036 [P] Vault: decision note `vault/decisions/2026-10-12-mined-vault-miner.md` (miner design + the five clarifications) and a session log; link both from `vault/ember.md`; `make vault-audit` clean.
 - [x] T037 Full local gates: `make pr-ready` and `make test` (model-backed) pass; `make test-cov` holds the 94 floor; no new failures.
-- [ ] T038 Open the PR for `007-mined-vault-recipes` once the maintainer confirms (merging to `main` triggers the release workflow; commit scopes per AGENTS.md — `evals`/`ember`).
+- [x] T038 Open the PR for `007-mined-vault-recipes` once the maintainer confirms (merging to `main` triggers the release workflow; commit scopes per AGENTS.md — `evals`/`ember`). — [PR #125](https://github.com/shapeandshare/ember/pull/125), all checks green
 
 ---
 
