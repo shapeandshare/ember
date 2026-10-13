@@ -1,0 +1,85 @@
+# No-model conda release smoke (specs/008-conda-release).
+#
+# Verifies a released `ember-advise` installs from conda-forge on top of the
+# committed dependency lock and runs, **without ever starting the model**
+# (contract: specs/008-conda-release/contracts/smoke.md). Making a release starts
+# the model zero times; the one-time model-backed verification is manual.
+#
+# Triggers: on demand (a version, defaulting to the latest GitHub release) and
+# weekly against the latest release. conda-forge's version bot can lag a release,
+# so the smoke retries the install step before failing.
+
+name: Conda smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: ember-advise version to smoke test (default is the latest release)
+        required: false
+  schedule:
+    - cron: "0 7 * * 1"
+
+permissions: {}
+
+concurrency:
+  group: conda-smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: conda smoke (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: osx-arm64
+          - os: ubuntu-latest
+            platform: linux-64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Provide micromamba, conda-lock, and PyYAML
+        uses: mamba-org/setup-micromamba@f457c30a868e4760d3a6fcea5f25dc655b8edf39 # v3.2.1
+        with:
+          environment-name: ci-tools
+          create-args: >-
+            python=3.12
+            conda-lock
+            pyyaml
+
+      - name: Resolve the release version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${INPUT_VERSION}"
+          if [ -z "$version" ]; then
+            version="$(gh release view --json tagName --jq .tagName | sed 's/^v//')"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify the committed lock
+        run: make PY=python conda-lock-check
+
+      - name: Smoke the release (retry while conda-forge catches up)
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if make PY=python conda-smoke VERSION="$VERSION"; then
+              exit 0
+            fi
+            echo "attempt ${attempt} failed; retrying in 120s" >&2
+            sleep 120
+          done
+          echo "conda smoke failed after 6 attempts" >&2
+          exit 1

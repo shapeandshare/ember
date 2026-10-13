@@ -9,9 +9,9 @@
 #   All targets live in shared/*.mk domain modules:
 #     shared/helper.mk   — help target, ANSI colors, .DEFAULT_GOAL
 #     shared/python.mk   — sync, compile, lint, format, typecheck, security, pr-ready
-#     shared/testing.mk  — test, test-fast, test-strict, test-cov, mcp-check, smoke
+#     shared/testing.mk  — test, test-fast, test-strict, test-cov, mcp-check, smoke, conda-smoke
 #     shared/server.mk   — serve, start, stop, restart, status, logs, mcp, mcp-list, doctor
-#     shared/release.mk  — download, init, opencode, setup, bootstrap, check, ci, clean, clean-model, deployment-requirements, deploy, undeploy
+#     shared/release.mk  — download, init, opencode, setup, bootstrap, check, ci, clean, clean-model, deployment-requirements, conda-lock, conda-lock-check, deploy, undeploy
 #     shared/vault.mk    — vault-audit
 #     shared/site.mk     — site, site-serve (Jekyll GitHub Pages)
 #     shared/aws.mk      — aws-preflight, aws-cache, aws-up, aws-status, aws-stop, aws-start, aws-replace, aws-logs, aws-ssh, aws-token, aws-rotate-token, aws-down, aws-verify, aws-tools, aws-tools-rm

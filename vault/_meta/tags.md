@@ -5,7 +5,7 @@ tags:
   - type/reference
   - domain/governance
 created: 2026-10-02
-updated: 2026-10-05
+updated: 2026-10-12
 ---
 
 # Tag vocabulary
@@ -50,3 +50,4 @@ stable. The `type/*` tag matches the note's `type` field.
 | `domain/brand` | The Ember mascot, banners, palette, and other brand assets |
 | `domain/provenance` | `provenance.json`, licensing evidence, and pins |
 | `domain/tooling` | Makefile, CI, hooks, uv, ruff, mypy, bandit, spec-kit |
+| `domain/distribution` | conda-forge and other packaging, release artifacts, committed locks |
