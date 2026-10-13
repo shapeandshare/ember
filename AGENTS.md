@@ -738,7 +738,12 @@ spacing values, or component styles outside the design system.
   create and approve pull requests" must be on — the workflow creates its PR with
   `GITHUB_TOKEN`, never a stored personal token. Bump commit subjects (`release v…`)
   are filtered out of the commit scan, and only files under ember's own paths trigger
-  the workflow, so a bump never triggers another bump. To cut a release by hand, run
+  the workflow, so a bump never triggers another bump. **PR titles MUST be
+  conventional** — the squash commit is what the release scan reads, and a
+  non-conventional squash (e.g. `Benchmark Phase 2: … (#125)`) silently skips
+  the release; recover with the bump-PR resume path (`cz bump --increment
+  MINOR`, `make deployment-requirements`, then dispatch `make release-ember`).
+  To cut a release by hand, run
   `make release-ember` (workflow dispatch); `make release-dry` previews the next
   version. The opencode plugin (`packages/opencode-plugin/`) is no longer released
   separately: it was never published to npm, and `ember init --opencode` writes the

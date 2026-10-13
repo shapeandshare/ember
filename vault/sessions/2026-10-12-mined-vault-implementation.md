@@ -52,3 +52,16 @@ crashed when the newest committed bundle was a category-scoped run
 headline now comes from the newest complete run (falling back to the newest
 headline-capable run, and to no headline when none exists), with tests
 covering a partial newest and a partial-only tree.
+
+## After the release (2026-10-13)
+
+v0.15.0 shipped — the first release trigger skipped on a non-conventional
+squash title, and the bump PR used the release workflow's resume path (the
+lesson is recorded in AGENTS.md). The site redeployed with the new recipes.
+The AWS upgrade surfaced four real update-path failures plus the
+stranded-node preview/execution mismatch
+([[2026-10-13-deployment-update-path-failures]]); recovery was
+`aws-down`+`aws-up`, and the CUDA legs then re-ran clean (tag_assignment
+65/65 at 80.5%, note_placement 30/30 at 56.7%, zero refusals) —
+[[2026-10-12-cuda-deployment-request-cap-drift]] is resolved. PR #127
+merged; T039/T041 done, T042 open.
