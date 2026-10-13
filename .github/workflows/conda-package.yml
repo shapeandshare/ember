@@ -1,17 +1,16 @@
-# Interim self-hosted conda channel (prefix.dev) — specs/008-conda-release.
+# Build per-release conda packages for the interim Anaconda.org channel.
 #
-# conda-forge is the long-term door and its feedstock is under review; until it lands,
-# each release is also published to the `shapeandshare` channel on prefix.dev.
+# conda-forge is the long-term door (its feedstock is under review). Until it lands, releases
+# are also published to the `joshburt` channel on Anaconda.org. Anaconda.org has no OIDC,
+# so publishing is a deliberate manual step with a locally-held token — no credential is stored
+# in this repository. Download a run's `conda-<platform>` artifacts, then:
 #
-# Publishing uses OIDC trusted publishing — no stored secrets — exactly like PyPI. The
-# channel's "Trusted Publishers" settings must list this repository (shapeandshare/ember)
-# and this workflow file (conda-channel.yml).
+#     anaconda upload --user joshburt ember-advise-<version>-<build>.conda
 #
-# `conda/recipe.yaml` is a frozen conda-forge submission snapshot; each run renders it
-# for the released version (scripts/render_conda_recipe.py) before building, so the
-# snapshot is never edited by a release.
+# `conda/recipe.yaml` is a frozen conda-forge snapshot; each run renders it for the released
+# version (scripts/render_conda_recipe.py) before building.
 
-name: Conda channel (prefix.dev)
+name: Conda package (Anaconda.org)
 
 on:
   release:
@@ -19,27 +18,22 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: ember-advise version to publish (default is the triggering release)
+        description: ember-advise version to build (default is the triggering release)
         required: false
 
 permissions: {}
 
 concurrency:
-  group: conda-channel
+  group: conda-package
   cancel-in-progress: false
 
-env:
-  # The channel's canonical reference on prefix.dev (edit if the channel is not primary).
-  PREFIX_CHANNEL: shapeandshare
-
 jobs:
-  publish:
-    name: publish (${{ matrix.platform }})
+  build:
+    name: build (${{ matrix.platform }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     permissions:
       contents: read
-      id-token: write        # OIDC token for prefix.dev trusted publishing
     strategy:
       fail-fast: false
       matrix:
@@ -74,16 +68,9 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: python3 scripts/render_conda_recipe.py "$VERSION" "$RUNNER_TEMP/recipe.yaml"
 
-      - name: Build the conda package
+      - name: Build the conda package (artifact: conda-${{ matrix.platform }})
         uses: prefix-dev/rattler-build-action@1ca5f45832f419a46d1326ccc5861d7e14d67c44 # v0.2.39
         with:
           recipe-path: ${{ runner.temp }}/recipe.yaml
           build-args: --channel conda-forge
-
-      - name: Upload to prefix.dev (OIDC, no token)
-        shell: bash
-        run: |
-          shopt -s nullglob
-          for pkg in output/**/*.conda; do
-            rattler-build upload prefix -c "$PREFIX_CHANNEL" "$pkg"
-          done
+          artifact-name: conda-${{ matrix.platform }}
