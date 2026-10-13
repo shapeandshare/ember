@@ -1,3 +1,13 @@
+## v0.15.0 (2026-10-12)
+
+Benchmark dataset: e0bbb468e213772a77b565ca36a333ea46264e5f71dc3c1c4b1a1b4967f380bc
+
+### Feat
+
+- **evals**: benchmark Phase 2 — mined vault recipes (tag_assignment, note_placement) with the full vault miner and register provenance (#125)
+- **evals**: publish the panel-drafted label stability and the phase gate (#125)
+- **ember**: the vault tag_assignment and note_placement kit recipes; the headline covers every decision family (#125)
+
 ## v0.14.0 (2026-10-12)
 
 Benchmark dataset: 1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367
