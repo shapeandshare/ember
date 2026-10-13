@@ -5,7 +5,7 @@ tags:
   - type/moc
   - domain/governance
 created: 2026-10-02
-updated: 2026-10-12
+updated: 2026-10-13
 ---
 
 # ember vault
