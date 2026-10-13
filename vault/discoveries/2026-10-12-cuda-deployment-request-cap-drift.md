@@ -49,6 +49,15 @@ generally: deployment configuration drifts invisibly until a long request
 arrives — compare a deployment's `ember doctor` limits and version against
 the released wheel after any release bump.
 
+## Resolution (2026-10-13)
+
+The deployment was upgraded to `ember-advise==0.15.0` (via `aws-down` +
+`aws-up`, after the update path's own failures — see
+[[2026-10-13-deployment-update-path-failures]]) and the CUDA legs re-ran
+clean: tag_assignment 65/65 at 80.5% and note_placement 30/30 at 56.7%,
+**zero refusals**, matching MPS. The refreshed bundles supersede the
+error-carrying halves.
+
 ## References
 
 - Run `17f0b0ad…_20261012T215829Z` (`results/`, `benchmark/`)

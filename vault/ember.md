@@ -92,6 +92,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-12-oldgrowth-vault-real-shapes]]
 - [[2026-10-12-staleness-and-worthiness-have-no-source]]
 - [[2026-10-12-cuda-deployment-request-cap-drift]]
+- [[2026-10-13-deployment-update-path-failures]]
 
 ### Sessions
 
