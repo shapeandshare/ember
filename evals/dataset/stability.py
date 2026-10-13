@@ -34,8 +34,9 @@ _METHOD = "original labels withheld"
 _ROUND_ID_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 
 SINGLE_RATER = (
-    "Single rater: stability is one person's blinded re-label after a cooling-off "
-    "period, not inter-rater agreement; the model never labels."
+    "Gold is single-rater human. Label stability was drafted by a blinded LLM "
+    "panel (independent labels, the gold never shown); disagreements queue for "
+    "the maintainer's adjudication. The model under test never labels."
 )
 
 

@@ -1,0 +1,1520 @@
+{
+  "round_id": "2026-10-11-risk-effort-panel-a",
+  "cooling_off": "7d",
+  "method": "LLM panel draft (panel-a, blinded to gold)",
+  "labelled_on": "2026-10-11",
+  "entries": [
+    {
+      "id": "risk_001",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_002",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_003",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_004",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_005",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_006",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_007",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_008",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_009",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_010",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_011",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 0,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_012",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 0,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_013",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_014",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_015",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_016",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_017",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_018",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_019",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_020",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_021",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_022",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_023",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_024",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_001",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_002",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_003",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_004",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_005",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 2,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_006",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 2,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_007",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_008",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 3,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_009",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 3,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_010",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_011",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_012",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_013",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_014",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_015",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_016",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 3,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_017",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 2,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_018",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 3,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_019",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 3,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_020",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_025",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_026",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_027",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_028",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_029",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_030",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_031",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_032",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_033",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_034",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_035",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 0,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_036",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 0,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_037",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_038",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_039",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_040",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_041",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_042",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_043",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_044",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_045",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_046",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_047",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_048",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_021",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_022",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_023",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_024",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_025",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_026",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 2,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_027",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 3,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_028",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_029",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 2,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_030",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_031",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 3,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_032",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_033",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 3,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_034",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 2,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_035",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_036",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_037",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_038",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_039",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_040",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_049",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_050",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_051",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_052",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_053",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_054",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_055",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_056",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_057",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_058",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_059",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_060",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_061",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_062",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 0,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_063",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_064",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 0,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_065",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 0,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_066",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_067",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_068",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 3,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_069",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 0,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_070",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 1,
+      "relabel": 0,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_071",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_072",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_073",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_074",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_075",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_076",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_077",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_078",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_079",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_080",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_081",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 2,
+      "relabel": 0,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_082",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_083",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 2,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_084",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_085",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_086",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_087",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_088",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_089",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_090",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_091",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 2,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "risk_092",
+      "category": "change_risk",
+      "question": "risk",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_041",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_042",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_043",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_044",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_045",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_046",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_047",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_048",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_049",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_050",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 2,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_051",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 3,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_052",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_053",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_054",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_055",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 2,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_056",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 3,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_057",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_058",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_059",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_060",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_061",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 2,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_062",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 2,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_063",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_064",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 3,
+      "relabel": 2,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_065",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 3,
+      "relabel": 3,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_066",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 2,
+      "relabel": 3,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_067",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 2,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_068",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_069",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 0,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_070",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_071",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 3,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_072",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_073",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 1,
+      "agrees": true,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_074",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 0,
+      "relabel": 1,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_075",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 3,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    },
+    {
+      "id": "effort_076",
+      "category": "effort_approach",
+      "question": "effort",
+      "original": 1,
+      "relabel": 3,
+      "agrees": false,
+      "labelled_on": "2026-10-11"
+    }
+  ]
+}

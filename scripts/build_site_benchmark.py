@@ -91,14 +91,29 @@ def _complete(model: dict[str, Any]) -> bool:
     return categories is None or headline_categories() <= set(categories)
 
 
-def _headline_model(models: list[dict[str, Any]]) -> dict[str, Any]:
+def _headline_capable(model: dict[str, Any]) -> bool:
+    """Whether a run carries the kind blocks the headline is computed from."""
+    summary = model["summary"]
+    return all(
+        summary.get(kind) is not None for kind in ("overall", "choice", "noul", "score")
+    )
+
+
+def _headline_model(models: list[dict[str, Any]]) -> dict[str, Any] | None:
     """Pick the run the landing page quotes: the newest complete one.
 
     A partial re-run (one recipe) refreshes its leaderboard column but cannot
-    stand in for the whole headline, so the landing page skips it.
+    stand in for the whole headline, so the landing page skips it; a run
+    without the kind blocks cannot produce a headline at all. When no run is
+    complete, the newest capable run stands in; when none is capable, ``None``
+    means the landing ships without a headline.
     """
-    complete = [m for m in models if _complete(m)] or models
-    return max(complete, key=lambda m: str(m["meta"].get("run_at", "")))
+    capable = [m for m in models if _headline_capable(m)]
+    complete = [m for m in capable if _complete(m)]
+    pool = complete or capable
+    if not pool:
+        return None
+    return max(pool, key=lambda m: str(m["meta"].get("run_at", "")))
 
 
 def headline(model: dict[str, Any]) -> dict[str, Any]:
@@ -408,8 +423,8 @@ def build() -> int:
             {
                 "leaderboard": {"versions": board["versions"], "rows": rows},
                 "runs": runs,
-                "headline": headline(newest),
-                "hero": hero_questions(newest, _hero_entries()),
+                "headline": headline(newest) if newest else None,
+                "hero": hero_questions(newest, _hero_entries()) if newest else [],
             },
             indent=2,
         )

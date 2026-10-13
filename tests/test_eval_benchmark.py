@@ -90,10 +90,28 @@ def test_every_question_has_a_valid_gold_label_and_rationale() -> None:
             assert gold in _labels(spec), (item["id"], qid, gold)
 
 
+def _mined_categories() -> set[str]:
+    from evals.dataset.recipes import RECIPES
+    from evals.dataset.records.family import Family
+
+    return {
+        category
+        for category, spec in RECIPES.items()
+        if spec.family is Family.mined_vault
+    }
+
+
 def test_each_recipe_asks_one_fixed_question_set() -> None:
-    """Questions are weighed jointly, so a recipe's question set must not vary."""
+    """Questions are weighed jointly, so an authored recipe's set must not vary.
+
+    Mined recipes carry per-item deterministic candidate sets (specs/007
+    FR-010): fixed for each item, not across the recipe.
+    """
+    mined = _mined_categories()
     variants = defaultdict(set)
     for item in ITEMS:
+        if item["category"] in mined:
+            continue
         variants[item["category"]].add(json.dumps(item["questions"], sort_keys=True))
     assert {category: len(v) for category, v in variants.items()} == dict.fromkeys(
         variants, 1
@@ -102,9 +120,17 @@ def test_each_recipe_asks_one_fixed_question_set() -> None:
 
 @pytest.mark.parametrize("split", ["dev", "test"])
 def test_every_label_appears_in_each_split(split: str) -> None:
+    """Authored recipes must cover every label in both splits.
+
+    Mined recipes' labels are per-note tags (sparse by design, specs/007):
+    the lint reports that coverage instead.
+    """
+    mined = _mined_categories()
     seen = defaultdict(set)
     expected = {}
     for item in ITEMS:
+        if item["category"] in mined:
+            continue
         for qid, gold in item["gold_labels"].items():
             expected[qid] = _labels(item["questions"][qid])
             if item["split"] == split:

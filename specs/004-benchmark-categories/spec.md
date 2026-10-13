@@ -238,6 +238,12 @@ hand authoring: the vault's notes already carry their labels (type, domain, stat
 history records where each note was placed and when a reference went stale. The first mined
 category appears on the leaderboard and can be regenerated from a recorded commit.
 
+**Status (2026-10-12)**: `tag_assignment` and `note_placement` shipped (dataset versions
+`4049ac55a1fa` and `e0bbb468e213`; both on the leaderboard and in the kit). `staleness` and
+`memory_worthiness` are deferred — the pinned source carries no stale markers and no
+did-not-become fragments
+(`vault/discoveries/2026-10-12-staleness-and-worthiness-have-no-source.md`).
+
 **Why this priority**: Cheapest high-quality source; it exercises the phase-0 tooling and
 proves the miner before hand-authored recipes consume labelling effort.
 
@@ -969,7 +975,7 @@ against the no-ember condition is reported per scenario family.
   and dataset hash are unchanged (otherwise it is a new run). A leaderboard row MAY be
   assembled per recipe from runs that share the model, deployment, and settings and whose
   per-recipe hash matches the current dataset version; each recipe column MUST name the
-  run that produced it, and the row's headline is computed only when every coding recipe
+  run that produced it, and the row's headline is computed only when every decision recipe
   column matches the current dataset version — otherwise the row shows its columns and is
   marked incomplete.
 
@@ -1014,7 +1020,7 @@ against the no-ember condition is reported per scenario family.
 - **Dataset card**: The generated per-recipe summary (counts, per-label per-split counts,
   kind and source shares, external sources with licences, stability and agreement, rater
   count, queue size, hash) that the lint and readers rely on.
-- **Leaderboard row**: One model on one deployment: headline accuracy (coding recipes only),
+- **Leaderboard row**: One model on one deployment: headline accuracy (every decision family; vision and integration excluded),
   per-recipe figures, dangerous recall and missed-danger counts for risk recipes, label
   stability where measured, a single-rater mark, the probe's cap, first-drop length and
   worst depth (or "unmeasured"), the dataset version it belongs to, its per-recipe hashes,

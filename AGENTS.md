@@ -157,7 +157,8 @@ evals/                # benchmark: dataset tooling, harness, metrics, report mod
   clef-flash.jsonl    #   the dataset (structured `source` per item; versioned by its content hash)
   dataset/            #   records/ (one Pydantic class per file), scales, recipes, io, hashes, register,
                       #   splitting (+ splits.lock), dedup, leakage, lint, secret_guard, card, tiers, check,
-                      #   protocol (+ versions.lock: the append-only record of dataset versions)
+                      #   protocol (+ versions.lock: the append-only record of dataset versions),
+                      #   mined/ (the vault miner: `ember eval mine`)
   atomic.py           #   write_atomic / copy_atomic (leaf; no evals imports)
   eval/               #   run_evals (harness), client (server I/O), resume (manifest), snapshot_evals,
                       #   report_evals (+ report_compare, report_markdown), export
@@ -420,6 +421,7 @@ base URL and MCP stdio parameters for integration tests.
 | `tests/test_data_source_register.py` | Data-source register: row records, verdict rules, the committed `register.json`, the audit script |
 | `tests/test_risk_metrics.py` / `test_metrics_aggregate.py` | Dangerous-option recall; `aggregate` headline-only overall, capability, tokens, consistency, by-source-kind, tiers |
 | `tests/test_cli_eval_dataset.py` | `ember eval dataset {lint,card,hash,check,tier}` wiring and `--dataset` |
+| `tests/test_mined_miner.py` / `test_mined_provenance.py` / `test_cli_eval_mine.py` | The vault miner (`ember eval mine`, `tests/fixture_vault.py`): snapshot/exclusion/selection/extraction determinism, the permissionless mined-source mapping, and the CLI wiring |
 | `tests/test_run_evals.py` / `test_run_evals_phase0.py` | Harness client and trace scrubbing / token-split requirement, manifest, `--resume` (bare resume inherits the manifest's filters), per-row annotations |
 | `tests/test_benchmark_bundles.py` | Committed `benchmark/` bundles: newest matches the current content hash, hashes and `settings` recorded |
 | `tests/test_leaderboard.py` / `test_leaderboard_versions.py` | Leaderboard grouping keys and rows / dataset versions, per-recipe assembly, incomplete rows |
@@ -844,11 +846,15 @@ MUST pass the constitution check.
   runs across versions, and the release workflow writes the hash into the changelog.
 - **`evals/dataset/splits.lock` is append-only**: an item never changes split. New items get a
   deterministic split from `splitting.assign_new`; delete nothing from the lock.
-- **The headline is coding recipes only** (`RECIPES[...].headline`). Vision recipes report as
+- **The headline is every decision family** (`RECIPES[...].headline`; vision and integration stay separate panels). Vision recipes report as
   the capability panel; do not fold them into `summary.overall` or a leaderboard headline.
 - **Never import an external record without a `used` register row**
   (`evals/dataset/register.json`): licence reading, snapshot, mirror, and verdict first;
   `ember eval dataset check` fails otherwise. `make audit-sources` re-checks rows online.
+- **Mined items land only through the register and the grant.** `ember eval mine` snapshots
+  the pinned source commit read-only and refuses without the written permission
+  (`../oldgrowth/LICENSES.md`, FR-012); mined items resolve to a `used` register row and the
+  card renders their licence, permission, and hashes (`specs/007-mined-vault-recipes/`).
 - **`no-live-secret` is never relaxed.** The only lint rule that fails `make check`; add
   vendor-documented example values to `evals/dataset/example_secrets.json` with their URL
   rather than loosening the pattern.
@@ -863,6 +869,21 @@ MUST pass the constitution check.
 
 ## Recent Changes
 
+- 2026-10-12: benchmark Phase 2 — mined vault recipes (`specs/007-mined-vault-recipes/`):
+  `ember eval mine` mines the maintainer's Old Growth vault (pinned at `692f4bb5`, under the
+  grant recorded in its `LICENSES.md`) into the `mined_vault` family — `tag_assignment`
+  (65 items; gold = the note's own tags; one `noul` per candidate tag; states carry the
+  as-read vocabulary) and `note_placement` (30 items; gold = the note's folder) — both on
+  the leaderboard and in the `ember-advise` kit with run-measured thresholds. The miner
+  snapshots the pin through read-only git, excludes Specs artefacts, hubs, drift, secrets,
+  and 12,000-word-plus notes by declared rules, is byte-idempotent, and refuses without the
+  written grant; `Source.mined` requires a `register_row`, `RegisterRow` gained `permission`,
+  and the card renders the mined sources. `staleness` and `memory_worthiness` are deferred
+  with evidence (no stale markers; no did-not-become fragments at the pin). The headline is
+  every decision family (README/AGENTS wording updated). Phase 1's panel-drafted label
+  stability also landed; dataset versions `4049ac55a1fa` and `e0bbb468e213`; newest full MPS
+  bundle 80.8% over 1,565 questions. See `vault/decisions/2026-10-12-mined-vault-miner.md`
+  and the 2026-10-12 discoveries.
 - 2026-10-11: AWS GPU deployment region: `REGION` defaults to `us-west-2` (was `us-east-1`).
   One `DEFAULT_REGION` constant (`deployment/aws/ember_aws/defaults.py`) feeds the CLI parsers,
   the `Deployment` model, the control handlers, and the cost fallback;

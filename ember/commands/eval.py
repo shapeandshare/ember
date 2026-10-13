@@ -194,6 +194,27 @@ def cmd_eval_capture(args: argparse.Namespace) -> int:
     return capture_main(list(args.capture_args))
 
 
+def cmd_eval_mine(args: argparse.Namespace) -> int:
+    """Mine a pinned vault snapshot into candidate items.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; ``args.mine_args`` pass through to
+        ``evals/dataset/mined/mine.py`` unchanged.
+
+    Returns
+    -------
+    int
+        Exit code from ``mine.main``.
+    """
+    try:
+        from evals.dataset.mined.mine import main as mine_main
+    except ImportError as exc:
+        raise RuntimeError(_EVAL_CHECKOUT_ERROR) from exc
+    return mine_main(list(args.mine_args))
+
+
 def cmd_eval_dataset(args: argparse.Namespace) -> int:
     """Run a dataset tooling command (``ember eval dataset <subcommand>``).
 

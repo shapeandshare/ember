@@ -126,6 +126,7 @@ module = [
     "accelerate.*",
     "safetensors.*",
     "mcp.*",
+    "yaml.*",
 ]
 ignore_missing_imports = true
 

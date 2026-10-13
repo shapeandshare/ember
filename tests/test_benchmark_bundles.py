@@ -37,12 +37,17 @@ def test_bundle_summary_is_reproducible_from_its_trace(bundle: Path) -> None:
 
 @pytest.mark.parametrize("bundle", BUNDLES, ids=lambda p: p.name)
 def test_bundle_capability_holds_only_vision_recipes(bundle: Path) -> None:
+    """Vision recipes never leak into ``overall``.
+
+    A category-scoped bundle (a single-recipe re-run) may carry no capability
+    panel at all; when it does, every listed category is a vision recipe.
+    """
     summary = json.loads((bundle / "results.json").read_text(encoding="utf-8"))[
         "summary"
     ]
     capability = summary["capability"]
-    assert capability is not None
-    assert all(c.startswith("vision_") for c in capability["categories"])
+    if capability is not None:
+        assert all(c.startswith("vision_") for c in capability["categories"])
     assert not any(
         c.startswith("vision_") for c in summary["overall"] if isinstance(c, str)
     )

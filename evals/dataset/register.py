@@ -66,7 +66,7 @@ def validate(rows: Sequence[RegisterRow], items: Sequence[Item]) -> list[str]:
     referenced: dict[str, int] = dict.fromkeys(by_id, 0)
     problems: list[str] = []
     for item in items:
-        if item.source.kind is not SourceKind.imported:
+        if item.source.kind not in (SourceKind.imported, SourceKind.mined):
             continue
         row_id = item.source.register_row or ""
         row = by_id.get(row_id)

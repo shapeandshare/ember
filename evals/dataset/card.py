@@ -59,13 +59,31 @@ def _recipe_card(
     used_rows = {
         item.source.register_row
         for item in rows
-        if item.source.kind is SourceKind.imported and item.source.register_row
+        if item.source.kind in (SourceKind.imported, SourceKind.mined)
+        and item.source.register_row
     }
     external = [
         {
             "id": row.id,
+            "name": row.name,
             "licence": row.licence.reading,
+            "licence_class": row.licence.class_.value,
+            "permission": row.permission,
             "attribution": row.attribution,
+            "snapshot": (
+                {"version": row.snapshot.version, "sha256": row.snapshot.sha256}
+                if row.snapshot
+                else None
+            ),
+            "mirror": (
+                {
+                    "location": row.mirror.location,
+                    "sha256": row.mirror.sha256,
+                    "public": row.mirror.public,
+                }
+                if row.mirror
+                else None
+            ),
         }
         for row in register
         if row.id in used_rows
@@ -230,7 +248,26 @@ def render_markdown(card: dict[str, Any]) -> str:
         if recipe["external_sources"]:
             lines.append("External sources:")
             for source in recipe["external_sources"]:
-                lines.append(f"- `{source['id']}` — {source['licence']}")
+                lines.append(
+                    f"- `{source['id']}` — {source['name']}; licence "
+                    f"`{source['licence_class']}`: {source['licence']}"
+                )
+                if source.get("permission"):
+                    lines.append(f"  - Permission: {source['permission']}")
+                if source.get("snapshot"):
+                    snapshot = source["snapshot"]
+                    lines.append(
+                        f"  - Snapshot `{snapshot['version']}` "
+                        f"sha256 `{snapshot['sha256']}`"
+                    )
+                if source.get("mirror"):
+                    mirror = source["mirror"]
+                    lines.append(
+                        f"  - Mirror `{mirror['location']}` "
+                        f"sha256 `{mirror['sha256']}` (public: {mirror['public']})"
+                    )
+                if source.get("attribution"):
+                    lines.append(f"  - Attribution: {source['attribution']}")
             lines.append("")
         if recipe["exemptions"]:
             lines.append("Exemptions:")

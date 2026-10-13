@@ -12,6 +12,7 @@ from evals.dataset.records.verdict import Verdict
 from pydantic import ValidationError
 
 HASH64 = "e" * 64
+SHA40 = "a" * 40
 
 
 def _row(**overrides: object) -> dict[str, object]:
@@ -111,6 +112,15 @@ def test_share_alike_used_rows_need_attribution() -> None:
     )
 
 
+def test_custom_permissive_used_rows_need_permission() -> None:
+    licence = {**_row()["licence"], "class": "custom_permissive"}  # type: ignore[dict-item]
+    with pytest.raises(ValidationError, match="permission"):
+        RegisterRow.model_validate(_used(licence=licence))
+    RegisterRow.model_validate(
+        _used(licence=licence, permission="LICENSES.md §Exception (commit 422648d9)")
+    )
+
+
 def _item(item_id: str, source: dict[str, object]) -> Item:
     return Item.model_validate(
         {
@@ -146,6 +156,32 @@ def test_validate_cross_checks_items_against_rows() -> None:
     assert any("items_imported is 1 but 0" in p for p in register.validate([used], []))
 
 
+def test_validate_cross_checks_mined_items_against_rows() -> None:
+    used = RegisterRow.model_validate(_used())
+    mined = _item(
+        "m1",
+        {
+            "kind": "mined",
+            "artefact": "docs/vault/Decisions/a.md",
+            "commit": SHA40,
+            "register_row": "example-source",
+        },
+    )
+    assert register.validate([used], [mined]) == []
+    stray = _item(
+        "m2",
+        {
+            "kind": "mined",
+            "artefact": "docs/vault/Decisions/b.md",
+            "commit": SHA40,
+            "register_row": "other",
+        },
+    )
+    problems = register.validate([used], [stray])
+    assert any("does not exist" in p for p in problems)
+    assert any("items_imported is 1 but 0" in p for p in problems)
+
+
 # ###########################################################################
 # The committed register (first survey)
 # ###########################################################################
@@ -176,12 +212,20 @@ EXCLUDED_IDS = {
 }
 
 
-def test_committed_register_validates_and_has_no_used_rows() -> None:
+def test_committed_register_validates_with_the_expected_used_row() -> None:
+    from evals.dataset import io
+
     rows = register.load()
     ids = {row.id for row in rows}
     assert CANDIDATE_IDS <= ids, CANDIDATE_IDS - ids
     assert EXCLUDED_IDS <= ids, EXCLUDED_IDS - ids
-    assert all(row.verdict is not Verdict.used for row in rows)
+    used = {row.id for row in rows if row.verdict is Verdict.used}
+    assert used == {"oldgrowth-vault"}
+    row = next(candidate for candidate in rows if candidate.id == "oldgrowth-vault")
+    assert row.permission
+    assert row.snapshot is not None
+    assert row.mirror is not None
+    assert row.mirror.sha256 == row.snapshot.sha256
     assert all(
         row.verdict is Verdict.excluded for row in rows if row.id in EXCLUDED_IDS
     )
@@ -189,7 +233,7 @@ def test_committed_register_validates_and_has_no_used_rows() -> None:
         row.verdict is not Verdict.excluded for row in rows if row.id in CANDIDATE_IDS
     )
     assert len(rows) >= 60
-    assert register.validate(rows, []) == []
+    assert register.validate(rows, io.read_items(io.DATASET_PATH)) == []
 
 
 def test_committed_register_has_a_schema_version_and_date() -> None:

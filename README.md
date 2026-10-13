@@ -598,7 +598,8 @@ approval per Article XI §11.2.
 ### Benchmark
 
 `evals/clef-flash.jsonl` is the benchmark. It covers the five agent-kit recipes (intent
-and readiness, failure triage, change risk, routing, effort and approach) plus four vision
+and readiness, failure triage, change risk, routing, effort and approach), two mined
+recipes from the maintainer's vault (`tag_assignment`, `note_placement`), plus four vision
 recipes (`vision_noul`, `vision_choice`, `vision_score`, `vision_video`), with every item in
 a `dev` or `test` split; the [benchmark report](https://shapeandshare.github.io/ember/results/)
 gives the current item and question counts. Vision items carry an `images` or `videos` field
@@ -634,7 +635,7 @@ question, or a split does. The file hash covers the bytes, for provenance. Every
 both, plus a hash per recipe, and the leaderboard shows one table per content hash, newest
 first; results on different versions are never compared. Within a table, one row per model,
 deployment, and engine settings, with one column per recipe: a re-run of a single recipe
-(`--category`) refreshes just that column, and the headline appears once every coding recipe
+(`--category`) refreshes just that column, and the headline appears once every decision recipe
 has been scored on that version. Vision recipes are reported separately as a **capability**
 panel, never in the headline. `splits.lock` pins every item's split for good, `versions.lock`
 records every dataset version ever published (and each protocol rule and scale names the

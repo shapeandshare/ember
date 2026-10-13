@@ -1,0 +1,246 @@
+{
+  "config": {
+    "run_id": "17f0b0ad64efb65d273590632833508766b2aae6_20261012T231049Z",
+    "timestamp": "20261012T231049Z",
+    "git_hash": "e79dd60",
+    "model": "17f0b0ad64efb65d273590632833508766b2aae6",
+    "model_spec": {
+      "name": "flash",
+      "repo": "Cloudflare/clef-flash",
+      "params": "9B",
+      "revision": "17f0b0ad64efb65d273590632833508766b2aae6"
+    },
+    "engine": {
+      "device": "cuda",
+      "dtype": "float16",
+      "max_length": 262144,
+      "max_length_source": "model",
+      "max_request_length": 24576,
+      "max_request_length_source": "operator"
+    },
+    "settings": {
+      "dtype": "float16",
+      "max_length": 262144,
+      "max_request_length": 24576
+    },
+    "server_version": "0.12.0",
+    "host": {
+      "platform": "macOS-26.6.2-arm64-arm-64bit",
+      "cpu": "Apple M4 Max",
+      "python": "3.12.11",
+      "packages": {
+        "ember-advise": "0.14.0",
+        "torch": "2.14.1",
+        "transformers": "5.18.0",
+        "mcp": "2.3.0"
+      }
+    },
+    "deployment_label": "Remote hosted (GPU, CUDA)",
+    "dataset": "clef-flash.jsonl",
+    "dataset_file": "17f0b0ad64efb65d273590632833508766b2aae6_20261012T231049Z_dataset.jsonl",
+    "dataset_sha256": "4389bc9100e8526427a0ef8a8459fd420b80c8b9f14d57121ca8ce1edaad0353",
+    "dataset_content_sha256": "e0bbb468e213772a77b565ca36a333ea46264e5f71dc3c1c4b1a1b4967f380bc",
+    "recipe_sha256": {
+      "change_risk": "b823fd45c6fb677212369cb1a653b0715e6cc83858242e85bf469f33a91817aa",
+      "effort_approach": "7ed261fdb23ffb06f06945d5dab9e4b1d3ee265ee3ee51656087ed7bd9827f03",
+      "failure_triage": "a7a2e5338e16eecacafcc43243a7f1f8fd385a198952413e8187e09d2999bb92",
+      "intent_readiness": "a2dd9b315aac79eb50507cdabb376cef9e4d9eded2018952ec62916cf734f881",
+      "note_placement": "7e977cdeec1bf9d49f56cf56b530f7bbdf2acc90aa52c2c393ab212b9ec0429f",
+      "routing": "2780852796c906a723fa054952e4f66d74fc4a3bb3b28a36d0971cf5f306680a",
+      "tag_assignment": "58ed114d1cd49f3acaf08566c7102938698e100155c4258cc22cbedd29e28f36",
+      "vision_choice": "8b24fdbeb93f1795d571ca9b46352fbc5373daf0b375a2fb0937b4a8eb224643",
+      "vision_noul": "56e355b9dcb50a60702f6d95ba5bb9febebfe0f03f0125e2d46d23cf4c3ccb40",
+      "vision_score": "08569eb7b6bf02afcf3c5b70e1a08d09a2f9f0cc84bbe54bc103ef352f6d1592",
+      "vision_video": "97526cc5e35f62d09d52e3cf645399f01ab969db217356041440df64114c2531"
+    },
+    "register_sha256": "2d7cf930cd93a1663a25e93c64243ac840f16082070b31a71b453570be443e98",
+    "trace": "17f0b0ad64efb65d273590632833508766b2aae6_20261012T231049Z_trace.jsonl",
+    "split": null,
+    "category": "note_placement",
+    "policy": {},
+    "resumed": false,
+    "n_items": 30,
+    "n_errors": 14,
+    "latency_ms": {
+      "mean": 990.4,
+      "p50": 703.5,
+      "p95": 3072.3,
+      "max": 3464.5
+    }
+  },
+  "summary": {
+    "overall": {
+      "items": 16,
+      "questions": 16,
+      "accuracy": 0.625,
+      "accuracy_ci": [
+        0.375,
+        0.875
+      ],
+      "item_accuracy": 0.625
+    },
+    "capability": null,
+    "choice": {
+      "n": 16,
+      "accuracy": 0.625,
+      "accuracy_ci": [
+        0.375,
+        0.875
+      ],
+      "macro_f1": 0.6005,
+      "ece": 0.1655,
+      "mce": 0.4386,
+      "brier": 0.6115,
+      "acting": {
+        "n": 1,
+        "coverage": 0.0625,
+        "accuracy": 0.0
+      },
+      "reliability": [
+        {
+          "low": 0.3,
+          "high": 0.4,
+          "n": 2,
+          "confidence": 0.3542,
+          "accuracy": 0.5
+        },
+        {
+          "low": 0.4,
+          "high": 0.5,
+          "n": 2,
+          "confidence": 0.4369,
+          "accuracy": 0.5
+        },
+        {
+          "low": 0.5,
+          "high": 0.6,
+          "n": 1,
+          "confidence": 0.5614,
+          "accuracy": 1.0
+        },
+        {
+          "low": 0.6,
+          "high": 0.7,
+          "n": 6,
+          "confidence": 0.638,
+          "accuracy": 0.6667
+        },
+        {
+          "low": 0.7,
+          "high": 0.8,
+          "n": 1,
+          "confidence": 0.7598,
+          "accuracy": 1.0
+        },
+        {
+          "low": 0.8,
+          "high": 0.9,
+          "n": 4,
+          "confidence": 0.8447,
+          "accuracy": 0.5
+        }
+      ]
+    },
+    "noul": null,
+    "score": null,
+    "questions": {
+      "placement": {
+        "type": "choice",
+        "category": "note_placement",
+        "n": 16,
+        "accuracy": 0.625,
+        "macro_f1": 0.6005,
+        "brier": 0.6115
+      }
+    },
+    "categories": {
+      "note_placement": {
+        "items": 16,
+        "item_accuracy": 0.625,
+        "accuracy": 0.625
+      }
+    },
+    "risk": {},
+    "tokens": {
+      "median_state": 977.5,
+      "max_state": 7147,
+      "state_bins": [
+        {
+          "low": 256,
+          "high": 512,
+          "n": 4,
+          "accuracy": 0.5,
+          "brier": 0.8884
+        },
+        {
+          "low": 512,
+          "high": 1024,
+          "n": 5,
+          "accuracy": 1.0,
+          "brier": 0.1546
+        },
+        {
+          "low": 1024,
+          "high": 2048,
+          "n": 6,
+          "accuracy": 0.5,
+          "brier": 0.6829
+        },
+        {
+          "low": 4096,
+          "high": 8192,
+          "n": 1,
+          "accuracy": 0.0,
+          "brier": 1.3601
+        }
+      ]
+    },
+    "consistency": {},
+    "by_source_kind": {},
+    "tiers": null,
+    "misses": [
+      {
+        "id": "note_placement-art-palettes",
+        "question": "placement",
+        "gold": "Art",
+        "predicted": "Design",
+        "signal": 0.3768
+      },
+      {
+        "id": "note_placement-reference-code-todos",
+        "question": "placement",
+        "gold": "Reference",
+        "predicted": "Code",
+        "signal": 0.8835
+      },
+      {
+        "id": "note_placement-systems-audio-radio-stations",
+        "question": "placement",
+        "gold": "Systems",
+        "predicted": "Design",
+        "signal": 0.6247
+      },
+      {
+        "id": "note_placement-art-rock-scatter-design",
+        "question": "placement",
+        "gold": "Art",
+        "predicted": "Design",
+        "signal": 0.6121
+      },
+      {
+        "id": "note_placement-discoveries-mode-gated-key-sharing-pattern",
+        "question": "placement",
+        "gold": "Discoveries",
+        "predicted": "Code",
+        "signal": 0.4399
+      },
+      {
+        "id": "note_placement-governance-tech-stack-review",
+        "question": "placement",
+        "gold": "Governance",
+        "predicted": "Decisions",
+        "signal": 0.8229
+      }
+    ]
+  }
+}

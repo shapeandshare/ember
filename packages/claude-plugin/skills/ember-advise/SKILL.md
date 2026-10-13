@@ -220,6 +220,57 @@ Run it before committing, pushing, or merging.
 The routing and effort recipes are templates: replace their option sets with ones that describe
 your project, measure them, and keep each set fixed once your checks depend on it.
 
+### Vault tag assignment
+
+Run it when a note needs its controlled tags in a governed vault (ember's own, or a sibling
+like the benchmark's source): ask which tags the note deserves against the vault's own
+vocabulary. This is how the `tag_assignment` mined recipe is posed: one `noul` per candidate
+tag, with the candidate set (the note's tags plus distractors, capped — the benchmark uses
+16) fixed and reproducible per note, and the vocabulary carried in `state` with its one-line
+descriptions.
+
+```json
+{"state": {"title": "<note title>", "note": "<the note body>",
+           "vocabulary": ["type/decision — ...", "domain/tooling — ..."]},
+ "questions": {
+   "type/decision": {"type": "noul", "instructions": "Does this note deserve the tag `type/decision`?"},
+   "domain/tooling": {"type": "noul", "instructions": "Does this note deserve the tag `domain/tooling`?"}}}
+```
+
+| Note | Observed | Action |
+| --- | --- | --- |
+| `Design/World Model` | `type/design` 0.97, `domain/world` 0.91 | apply both |
+| `Reference/…/Slack App Kill Switch Runbook` | `type/reference` 0.04 (a gold tag) | the confident "no" was wrong — re-read the note before dropping a tag |
+
+Across the mined set (65 real vault notes, 724 answers, MPS): 80.5% of tag answers were
+right. Answers at **≥ 0.80** confidence — 75% of all — were **89.7%** right; at **≥ 0.90**
+(60%) **92.7%**; the 0.20–0.80 middle band was a coin flip (**53%**). Full-set agreement is
+rare (4 of 65 notes had every tag right): read tags one at a time, trust the confident ones,
+and gather evidence for the middle band.
+
+### Vault note placement
+
+Run it when a note could live in more than one folder (ember's vault or a sibling's): ask
+where the note belongs against the vault's own folder list. This is how the `note_placement`
+mined recipe is posed — one `choice` whose options are the folders, fixed for the whole check.
+
+```json
+{"state": {"title": "<note title>", "note": "<the note body>"},
+ "questions": {
+   "placement": {"type": "choice", "instructions": "Which folder does this vault note belong in?",
+     "criteria": {"Art": "Place the note under Art/", "Decisions": "Place the note under Decisions/",
+                  "...": "one entry per folder in the vault"}}}}
+```
+
+| Note | Observed | Action |
+| --- | --- | --- |
+| `Decisions/Switched Weather Audio to ElevenLabs` | `placement` `Decisions` 0.52 | right, but barely — confirm against neighbouring notes |
+| `Art/Palettes` | `placement` `Design` 0.38 (it lives in `Art/`) | a weak prior; the folders' conventions decide |
+
+Across the mined set (30 real vault notes, MPS): 57% of placements were right and confidence
+stayed low — only 4 of 30 answers cleared 0.85, and those split 50/50. Treat `placement` as a
+weak signal: use it to shortlist, then check the folder conventions and the note's neighbours.
+
 ### Visual evidence
 
 Run it when the evidence is a screenshot, diagram, chart, or video clip rather than text.

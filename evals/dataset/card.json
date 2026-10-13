@@ -1,8 +1,8 @@
 {
   "generated_from": "clef-flash.jsonl",
-  "dataset_content_sha256": "1e1bb88d47f0833b55e0195357dab30586c2a7a9b5c3d58524cbe48c622cc367",
-  "register_sha256": "4779906a64bd211e2d4c9a39edc14567446db0fd297c460a79ffdb1d75ea1ec5",
-  "items": 475,
+  "dataset_content_sha256": "e0bbb468e213772a77b565ca36a333ea46264e5f71dc3c1c4b1a1b4967f380bc",
+  "register_sha256": "2d7cf930cd93a1663a25e93c64243ac840f16082070b31a71b453570be443e98",
+  "items": 570,
   "protocol": [
     {
       "text": "Labels were judged from `state` and the option descriptions alone, and were fixed before any model run.",
@@ -72,7 +72,56 @@
       },
       "easy_items": 48,
       "external_sources": [],
-      "label_stability": null,
+      "label_stability": {
+        "agreement": 0.7934782608695652,
+        "by_label": {
+          "0": 0.9130434782608695,
+          "1": 0.5,
+          "2": 0.9130434782608695,
+          "3": 0.8478260869565217
+        },
+        "unstable": [
+          "risk_005",
+          "risk_011",
+          "risk_012",
+          "risk_023",
+          "risk_027",
+          "risk_035",
+          "risk_036",
+          "risk_051",
+          "risk_054",
+          "risk_062",
+          "risk_064",
+          "risk_065",
+          "risk_068",
+          "risk_069",
+          "risk_070",
+          "risk_078",
+          "risk_081",
+          "risk_083",
+          "risk_091",
+          "risk_009",
+          "risk_011",
+          "risk_012",
+          "risk_034",
+          "risk_035",
+          "risk_036",
+          "risk_061",
+          "risk_062",
+          "risk_064",
+          "risk_065",
+          "risk_068",
+          "risk_069",
+          "risk_070",
+          "risk_076",
+          "risk_081",
+          "risk_083",
+          "risk_087",
+          "risk_089",
+          "risk_091"
+        ],
+        "rater_count": 1
+      },
       "inter_source_agreement": null,
       "rater_count": 1,
       "second_review_pending": 0,
@@ -154,7 +203,84 @@
       },
       "easy_items": 25,
       "external_sources": [],
-      "label_stability": null,
+      "label_stability": {
+        "agreement": 0.5657894736842105,
+        "by_label": {
+          "0": 0.6388888888888888,
+          "1": 0.5166666666666667,
+          "2": 0.6111111111111112,
+          "3": 0.5
+        },
+        "unstable": [
+          "effort_001",
+          "effort_003",
+          "effort_005",
+          "effort_006",
+          "effort_008",
+          "effort_009",
+          "effort_016",
+          "effort_017",
+          "effort_018",
+          "effort_019",
+          "effort_023",
+          "effort_026",
+          "effort_027",
+          "effort_029",
+          "effort_030",
+          "effort_031",
+          "effort_033",
+          "effort_034",
+          "effort_036",
+          "effort_038",
+          "effort_040",
+          "effort_046",
+          "effort_049",
+          "effort_050",
+          "effort_051",
+          "effort_055",
+          "effort_056",
+          "effort_059",
+          "effort_062",
+          "effort_063",
+          "effort_064",
+          "effort_066",
+          "effort_067",
+          "effort_071",
+          "effort_072",
+          "effort_074",
+          "effort_075",
+          "effort_076",
+          "effort_003",
+          "effort_006",
+          "effort_009",
+          "effort_012",
+          "effort_013",
+          "effort_015",
+          "effort_016",
+          "effort_017",
+          "effort_018",
+          "effort_019",
+          "effort_020",
+          "effort_021",
+          "effort_026",
+          "effort_027",
+          "effort_029",
+          "effort_031",
+          "effort_032",
+          "effort_035",
+          "effort_037",
+          "effort_039",
+          "effort_050",
+          "effort_052",
+          "effort_053",
+          "effort_054",
+          "effort_055",
+          "effort_064",
+          "effort_065",
+          "effort_076"
+        ],
+        "rater_count": 1
+      },
       "inter_source_agreement": null,
       "rater_count": 1,
       "second_review_pending": 0,
@@ -328,6 +454,112 @@
       "risk": false,
       "rubric_since": {}
     },
+    "note_placement": {
+      "items": 30,
+      "dev": 11,
+      "test": 19,
+      "per_label_per_split": {
+        "placement": {
+          "\"Art\"": {
+            "dev": 2,
+            "test": 2
+          },
+          "\"Code\"": {
+            "dev": 2,
+            "test": 2
+          },
+          "\"Decisions\"": {
+            "dev": 1,
+            "test": 2
+          },
+          "\"Design\"": {
+            "dev": 1,
+            "test": 2
+          },
+          "\"Discoveries\"": {
+            "dev": 1,
+            "test": 2
+          },
+          "\"Governance\"": {
+            "dev": 1,
+            "test": 2
+          },
+          "\"Narrative\"": {
+            "dev": 0,
+            "test": 1
+          },
+          "\"Reference\"": {
+            "dev": 1,
+            "test": 2
+          },
+          "\"Sessions\"": {
+            "dev": 1,
+            "test": 2
+          },
+          "\"Systems\"": {
+            "dev": 1,
+            "test": 2
+          }
+        }
+      },
+      "kind_shares": {
+        "untagged": 30
+      },
+      "source_shares": {
+        "mined": 30
+      },
+      "easy_items": 17,
+      "external_sources": [
+        {
+          "id": "oldgrowth-vault",
+          "name": "Old Growth vault",
+          "licence": "All rights reserved; written permission granted for the ember benchmark dataset",
+          "licence_class": "custom_permissive",
+          "permission": "LICENSES.md §Exception — ember benchmark reproduction (commit 422648d9)",
+          "attribution": "Old Growth — distributed in the ember benchmark dataset with written permission.",
+          "snapshot": {
+            "version": "692f4bb58b7f62105aeb73fba8dfee12bfdecd53",
+            "sha256": "ace02f6f539ce55e4cf241fee82788ff999be2661ddce94e4a333918310d2bcf"
+          },
+          "mirror": {
+            "location": "shapeandshare/oldgrowth @ 692f4bb5",
+            "sha256": "ace02f6f539ce55e4cf241fee82788ff999be2661ddce94e4a333918310d2bcf",
+            "public": false
+          }
+        }
+      ],
+      "label_stability": null,
+      "inter_source_agreement": null,
+      "rater_count": 1,
+      "second_review_pending": 0,
+      "acted_differs_share": null,
+      "recipe_sha256": "7e977cdeec1bf9d49f56cf56b530f7bbdf2acc90aa52c2c393ab212b9ec0429f",
+      "gaps": [
+        "note_placement: 30 items, target 300",
+        "note_placement: placement=\"Art\" has 2 test items, minimum 40",
+        "note_placement: placement=\"Code\" has 2 test items, minimum 40",
+        "note_placement: placement=\"Decisions\" has 2 test items, minimum 40",
+        "note_placement: placement=\"Design\" has 2 test items, minimum 40",
+        "note_placement: placement=\"Discoveries\" has 2 test items, minimum 40",
+        "note_placement: placement=\"Governance\" has 2 test items, minimum 40",
+        "note_placement: placement=\"Narrative\" is missing from a split",
+        "note_placement: placement=\"Reference\" has 2 test items, minimum 40",
+        "note_placement: placement=\"Sessions\" has 2 test items, minimum 40",
+        "note_placement: placement=\"Systems\" has 2 test items, minimum 40",
+        "note_placement: 30 of 30 items have no kind",
+        "note_placement: negative is 0% of 30, minimum 20%",
+        "note_placement: control is 0% of 30, minimum 10%",
+        "note_placement: hard_negative is 0% of 30, minimum 15%",
+        "note_placement: adversarial is 0% of 30, minimum 5%",
+        "note_placement: insufficient_context is 0% of 30, minimum 5%",
+        "note_placement: variant is 0% of 30, minimum 10%"
+      ],
+      "exemptions": {},
+      "lint": "report",
+      "family": "mined_vault",
+      "risk": false,
+      "rubric_since": {}
+    },
     "routing": {
       "items": 75,
       "dev": 38,
@@ -388,6 +620,331 @@
       "exemptions": {},
       "lint": "report",
       "family": "coding",
+      "risk": false,
+      "rubric_since": {}
+    },
+    "tag_assignment": {
+      "items": 65,
+      "dev": 27,
+      "test": 38,
+      "per_label_per_split": {
+        "concept/contamination": {
+          "true": {
+            "dev": 0,
+            "test": 1
+          }
+        },
+        "concept/diegetic": {
+          "true": {
+            "dev": 1,
+            "test": 2
+          }
+        },
+        "concept/disturbance": {
+          "true": {
+            "dev": 1,
+            "test": 1
+          }
+        },
+        "concept/ephemeral-world": {
+          "true": {
+            "dev": 1,
+            "test": 1
+          }
+        },
+        "concept/governance": {
+          "true": {
+            "dev": 0,
+            "test": 1
+          }
+        },
+        "concept/horror": {
+          "true": {
+            "dev": 1,
+            "test": 2
+          }
+        },
+        "concept/procedural": {
+          "true": {
+            "dev": 1,
+            "test": 1
+          }
+        },
+        "domain/anomalies": {
+          "true": {
+            "dev": 0,
+            "test": 1
+          }
+        },
+        "domain/art": {
+          "true": {
+            "dev": 1,
+            "test": 4
+          }
+        },
+        "domain/audio": {
+          "true": {
+            "dev": 4,
+            "test": 5
+          }
+        },
+        "domain/governance": {
+          "true": {
+            "dev": 7,
+            "test": 8
+          }
+        },
+        "domain/narrative": {
+          "true": {
+            "dev": 2,
+            "test": 2
+          }
+        },
+        "domain/player": {
+          "true": {
+            "dev": 2,
+            "test": 3
+          }
+        },
+        "domain/tooling": {
+          "true": {
+            "dev": 11,
+            "test": 16
+          }
+        },
+        "domain/vehicle": {
+          "true": {
+            "dev": 2,
+            "test": 8
+          }
+        },
+        "domain/world": {
+          "true": {
+            "dev": 5,
+            "test": 4
+          }
+        },
+        "layer/gdscript": {
+          "true": {
+            "dev": 2,
+            "test": 6
+          }
+        },
+        "layer/infra": {
+          "true": {
+            "dev": 3,
+            "test": 3
+          }
+        },
+        "layer/python": {
+          "true": {
+            "dev": 0,
+            "test": 1
+          }
+        },
+        "layer/rust-core": {
+          "true": {
+            "dev": 0,
+            "test": 1
+          }
+        },
+        "status/draft": {
+          "true": {
+            "dev": 3,
+            "test": 5
+          }
+        },
+        "status/reviewed": {
+          "true": {
+            "dev": 8,
+            "test": 8
+          }
+        },
+        "type/code": {
+          "true": {
+            "dev": 2,
+            "test": 7
+          },
+          "false": {
+            "dev": 21,
+            "test": 25
+          }
+        },
+        "type/decision": {
+          "false": {
+            "dev": 20,
+            "test": 30
+          },
+          "true": {
+            "dev": 5,
+            "test": 4
+          }
+        },
+        "type/design": {
+          "false": {
+            "dev": 12,
+            "test": 28
+          },
+          "true": {
+            "dev": 4,
+            "test": 5
+          }
+        },
+        "type/discovery": {
+          "false": {
+            "dev": 20,
+            "test": 25
+          },
+          "true": {
+            "dev": 4,
+            "test": 5
+          }
+        },
+        "type/moc": {
+          "false": {
+            "dev": 21,
+            "test": 28
+          }
+        },
+        "type/principle": {
+          "false": {
+            "dev": 22,
+            "test": 32
+          },
+          "true": {
+            "dev": 1,
+            "test": 1
+          }
+        },
+        "type/reference": {
+          "false": {
+            "dev": 21,
+            "test": 22
+          },
+          "true": {
+            "dev": 3,
+            "test": 6
+          }
+        },
+        "type/session-log": {
+          "false": {
+            "dev": 16,
+            "test": 29
+          },
+          "true": {
+            "dev": 4,
+            "test": 5
+          }
+        },
+        "type/spec": {
+          "false": {
+            "dev": 23,
+            "test": 32
+          }
+        },
+        "type/system": {
+          "false": {
+            "dev": 18,
+            "test": 22
+          },
+          "true": {
+            "dev": 4,
+            "test": 5
+          }
+        },
+        "type/vision": {
+          "false": {
+            "dev": 22,
+            "test": 31
+          }
+        }
+      },
+      "kind_shares": {
+        "untagged": 65
+      },
+      "source_shares": {
+        "mined": 65
+      },
+      "easy_items": 4,
+      "external_sources": [
+        {
+          "id": "oldgrowth-vault",
+          "name": "Old Growth vault",
+          "licence": "All rights reserved; written permission granted for the ember benchmark dataset",
+          "licence_class": "custom_permissive",
+          "permission": "LICENSES.md §Exception — ember benchmark reproduction (commit 422648d9)",
+          "attribution": "Old Growth — distributed in the ember benchmark dataset with written permission.",
+          "snapshot": {
+            "version": "692f4bb58b7f62105aeb73fba8dfee12bfdecd53",
+            "sha256": "ace02f6f539ce55e4cf241fee82788ff999be2661ddce94e4a333918310d2bcf"
+          },
+          "mirror": {
+            "location": "shapeandshare/oldgrowth @ 692f4bb5",
+            "sha256": "ace02f6f539ce55e4cf241fee82788ff999be2661ddce94e4a333918310d2bcf",
+            "public": false
+          }
+        }
+      ],
+      "label_stability": null,
+      "inter_source_agreement": null,
+      "rater_count": 1,
+      "second_review_pending": 0,
+      "acted_differs_share": null,
+      "recipe_sha256": "58ed114d1cd49f3acaf08566c7102938698e100155c4258cc22cbedd29e28f36",
+      "gaps": [
+        "tag_assignment: 65 items, target 300",
+        "tag_assignment: concept/contamination=true is missing from a split",
+        "tag_assignment: concept/diegetic=true has 2 test items, minimum 40",
+        "tag_assignment: concept/disturbance=true has 1 test items, minimum 40",
+        "tag_assignment: concept/ephemeral-world=true has 1 test items, minimum 40",
+        "tag_assignment: concept/governance=true is missing from a split",
+        "tag_assignment: concept/horror=true has 2 test items, minimum 40",
+        "tag_assignment: concept/procedural=true has 1 test items, minimum 40",
+        "tag_assignment: domain/anomalies=true is missing from a split",
+        "tag_assignment: domain/art=true has 4 test items, minimum 40",
+        "tag_assignment: domain/audio=true has 5 test items, minimum 40",
+        "tag_assignment: domain/governance=true has 8 test items, minimum 40",
+        "tag_assignment: domain/narrative=true has 2 test items, minimum 40",
+        "tag_assignment: domain/player=true has 3 test items, minimum 40",
+        "tag_assignment: domain/tooling=true has 16 test items, minimum 40",
+        "tag_assignment: domain/vehicle=true has 8 test items, minimum 40",
+        "tag_assignment: domain/world=true has 4 test items, minimum 40",
+        "tag_assignment: layer/gdscript=true has 6 test items, minimum 40",
+        "tag_assignment: layer/infra=true has 3 test items, minimum 40",
+        "tag_assignment: layer/python=true is missing from a split",
+        "tag_assignment: layer/rust-core=true is missing from a split",
+        "tag_assignment: status/draft=true has 5 test items, minimum 40",
+        "tag_assignment: status/reviewed=true has 8 test items, minimum 40",
+        "tag_assignment: type/code=false has 25 test items, minimum 40",
+        "tag_assignment: type/code=true has 7 test items, minimum 40",
+        "tag_assignment: type/decision=false has 30 test items, minimum 40",
+        "tag_assignment: type/decision=true has 4 test items, minimum 40",
+        "tag_assignment: type/design=false has 28 test items, minimum 40",
+        "tag_assignment: type/design=true has 5 test items, minimum 40",
+        "tag_assignment: type/discovery=false has 25 test items, minimum 40",
+        "tag_assignment: type/discovery=true has 5 test items, minimum 40",
+        "tag_assignment: type/moc=false has 28 test items, minimum 40",
+        "tag_assignment: type/principle=false has 32 test items, minimum 40",
+        "tag_assignment: type/principle=true has 1 test items, minimum 40",
+        "tag_assignment: type/reference=false has 22 test items, minimum 40",
+        "tag_assignment: type/reference=true has 6 test items, minimum 40",
+        "tag_assignment: type/session-log=false has 29 test items, minimum 40",
+        "tag_assignment: type/session-log=true has 5 test items, minimum 40",
+        "tag_assignment: type/spec=false has 32 test items, minimum 40",
+        "tag_assignment: type/system=false has 22 test items, minimum 40",
+        "tag_assignment: type/system=true has 5 test items, minimum 40",
+        "tag_assignment: type/vision=false has 31 test items, minimum 40",
+        "tag_assignment: 65 of 65 items have no kind",
+        "tag_assignment: negative is 0% of 65, minimum 20%",
+        "tag_assignment: control is 0% of 65, minimum 10%",
+        "tag_assignment: hard_negative is 0% of 65, minimum 15%",
+        "tag_assignment: adversarial is 0% of 65, minimum 5%",
+        "tag_assignment: insufficient_context is 0% of 65, minimum 5%",
+        "tag_assignment: variant is 0% of 65, minimum 10%"
+      ],
+      "exemptions": {},
+      "lint": "report",
+      "family": "mined_vault",
       "risk": false,
       "rubric_since": {}
     },

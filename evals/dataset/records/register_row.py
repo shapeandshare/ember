@@ -29,6 +29,8 @@ class RegisterRow(BaseModel):
         The licence as read.
     verdict, reason : Verdict, str
         Whether it may be used, and why.
+    permission : str | None
+        The written permission a ``custom_permissive`` used row rests on.
     snapshot, mirror, transformation
         Required once the row is ``used``.
     feeds : list[str]
@@ -51,6 +53,7 @@ class RegisterRow(BaseModel):
     licence: LicenceReading
     verdict: Verdict
     reason: str = Field(min_length=1)
+    permission: str | None = None
     snapshot: SnapshotRef | None = None
     mirror: MirrorRef | None = None
     transformation: str | None = None
@@ -71,6 +74,14 @@ class RegisterRow(BaseModel):
                 raise ValueError(f"{self.id}: mirror hash differs from snapshot hash")
             if self.licence.class_ is LicenceClass.share_alike and not self.attribution:
                 raise ValueError(f"{self.id}: a share-alike source needs attribution")
+            if (
+                self.licence.class_ is LicenceClass.custom_permissive
+                and not self.permission
+            ):
+                raise ValueError(
+                    f"{self.id}: a custom-permissive used row needs the permission "
+                    "it rests on"
+                )
         elif self.items_imported:
             raise ValueError(f"{self.id}: only a used row may have imported items")
         excluded = self.verdict is Verdict.excluded

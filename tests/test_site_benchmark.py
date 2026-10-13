@@ -215,7 +215,17 @@ def test_leaderboard_index_uses_the_full_width_layout_not_the_sidebar_one(
     assert "layout: leaderboard" in text
 
 
-def test_build_writes_the_headline_from_the_newest_run(sandbox: Path) -> None:
+def test_build_writes_the_headline_from_the_newest_complete_run(
+    sandbox: Path,
+) -> None:
+    """The landing headline comes from the newest run that can stand in for it.
+
+    A partial re-run refreshes a leaderboard column; it cannot supply the
+    headline figures (its kind blocks are absent), so the landing page keeps
+    the newest complete run.
+    """
+    from evals.dataset.recipes import headline_categories
+
     assert bench.build() == 0
     data = json.loads(
         (sandbox / "_data" / "benchmark.json").read_text(encoding="utf-8")
@@ -224,8 +234,22 @@ def test_build_writes_the_headline_from_the_newest_run(sandbox: Path) -> None:
         json.loads(path.read_text(encoding="utf-8"))
         for path in (sandbox.parent / "benchmark").glob("*/model.json")
     ]
-    newest = max(models, key=lambda m: m["meta"]["run_at"])
-    assert data["headline"] == bench.headline(newest)
+    capable = [
+        m
+        for m in models
+        if all(
+            m["summary"].get(kind) is not None
+            for kind in ("overall", "choice", "noul", "score")
+        )
+    ]
+    complete = [
+        m
+        for m in capable
+        if m["summary"].get("categories") is None
+        or headline_categories() <= set(m["summary"]["categories"])
+    ]
+    expected = max(complete or capable, key=lambda m: m["meta"]["run_at"])
+    assert data["headline"] == bench.headline(expected)
 
 
 def test_build_with_no_tracked_runs_fails_cleanly(
@@ -239,6 +263,64 @@ def test_build_with_no_tracked_runs_fails_cleanly(
     monkeypatch.setattr(bench, "SITE", sandbox_site)
     monkeypatch.setattr(bench, "OUT", sandbox_site / "results")
     assert bench.build() == 1
+
+
+def test_build_survives_a_partial_newest_bundle(sandbox: Path) -> None:
+    """A category-scoped newest bundle must not crash the landing build."""
+    newest_complete = max(
+        (
+            json.loads(p.read_text(encoding="utf-8"))
+            for p in (sandbox.parent / "benchmark").glob("*/model.json")
+            if json.loads(p.read_text(encoding="utf-8"))["summary"].get("choice")
+            is not None
+        ),
+        key=lambda m: m["meta"]["run_at"],
+    )
+    partial = json.loads(json.dumps(newest_complete))
+    partial["meta"]["run_id"] = "partial_20261013T000000Z"
+    partial["meta"]["run_at"] = "2026-10-13 00:00 UTC"
+    for kind in ("choice", "noul", "score"):
+        partial["summary"][kind] = None
+    partial["summary"]["categories"] = {"note_placement": {}}
+    target = sandbox.parent / "benchmark" / "partial_20261013T000000Z"
+    target.mkdir()
+    (target / "model.json").write_text(json.dumps(partial), encoding="utf-8")
+    assert bench.build() == 0
+    data = json.loads(
+        (sandbox / "_data" / "benchmark.json").read_text(encoding="utf-8")
+    )
+    assert data["headline"] == bench.headline(newest_complete)
+
+
+def test_build_with_only_a_partial_run_writes_no_headline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """When no run can stand in for the headline, the landing ships without one."""
+    partial = max(
+        (
+            json.loads(p.read_text(encoding="utf-8"))
+            for p in REAL_BENCHMARK.glob("*/model.json")
+            if json.loads(p.read_text(encoding="utf-8"))["summary"].get("choice")
+            is None
+        ),
+        key=lambda m: m["meta"]["run_at"],
+    )
+    partial["meta"]["run_id"] = "partial_20261013T000000Z"
+    partial["meta"]["run_at"] = "2026-10-13 00:00 UTC"
+    sandbox_benchmark = tmp_path / "benchmark" / "partial_20261013T000000Z"
+    sandbox_benchmark.mkdir(parents=True)
+    (sandbox_benchmark / "model.json").write_text(json.dumps(partial), encoding="utf-8")
+    sandbox_site = tmp_path / "site"
+    (sandbox_site / "_data").mkdir(parents=True)
+    monkeypatch.setattr(bench, "BENCHMARK", tmp_path / "benchmark")
+    monkeypatch.setattr(bench, "SITE", sandbox_site)
+    monkeypatch.setattr(bench, "OUT", sandbox_site / "results")
+    assert bench.build() == 0
+    data = json.loads(
+        (sandbox_site / "_data" / "benchmark.json").read_text(encoding="utf-8")
+    )
+    assert data["headline"] is None
+    assert data["hero"] == []
 
 
 # Hero questions: a curated pool whose numbers come from the newest run

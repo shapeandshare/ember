@@ -14,7 +14,7 @@ _HEX40 = re.compile(r"^[0-9a-f]{40}$")
 
 REQUIRED: Mapping[SourceKind, frozenset[str]] = {
     SourceKind.authored: frozenset({"dataset_version"}),
-    SourceKind.mined: frozenset({"artefact", "commit"}),
+    SourceKind.mined: frozenset({"artefact", "commit", "register_row"}),
     SourceKind.captured: frozenset({"session_id", "redaction_sha256"}),
     SourceKind.perturbed: frozenset({"parent_id", "perturbation"}),
     SourceKind.templated: frozenset({"family", "template_version"}),
@@ -42,8 +42,9 @@ class Source(BaseModel):
     dataset_version, note : str | None
         ``authored``: the content hash of the dataset version that introduced the
         item, and an optional note.
-    artefact, commit : str | None
-        ``mined``: the repository path and the 40-hex commit it was read at.
+    artefact, commit, register_row : str | None
+        ``mined``: the repository path, the 40-hex commit it was read at, and the
+        register row that records the source's provenance.
     session_id, redaction_sha256 : str | None
         ``captured``: the session and the hash of its redaction record.
     parent_id, perturbation : str | None

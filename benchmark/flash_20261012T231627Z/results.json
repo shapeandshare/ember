@@ -1,0 +1,2859 @@
+{
+  "config": {
+    "run_id": "flash_20261012T231627Z",
+    "timestamp": "20261012T231627Z",
+    "git_hash": "e79dd60",
+    "model": "flash",
+    "model_spec": {},
+    "engine": {
+      "device": "mps",
+      "dtype": "float16",
+      "max_length": 262144,
+      "max_length_source": "model",
+      "max_request_length": 24576,
+      "max_request_length_source": "fallback"
+    },
+    "settings": {
+      "dtype": "float16",
+      "max_length": 262144,
+      "max_request_length": 24576
+    },
+    "server_version": "0.14.0",
+    "host": {
+      "platform": "macOS-26.6.2-arm64-arm-64bit",
+      "cpu": "Apple M4 Max",
+      "python": "3.12.11",
+      "packages": {
+        "ember-advise": "0.14.0",
+        "torch": "2.14.1",
+        "transformers": "5.18.0",
+        "mcp": "2.3.0"
+      }
+    },
+    "deployment_label": "Local (Apple Silicon, MPS)",
+    "dataset": "clef-flash.jsonl",
+    "dataset_file": "flash_20261012T231627Z_dataset.jsonl",
+    "dataset_sha256": "4389bc9100e8526427a0ef8a8459fd420b80c8b9f14d57121ca8ce1edaad0353",
+    "dataset_content_sha256": "e0bbb468e213772a77b565ca36a333ea46264e5f71dc3c1c4b1a1b4967f380bc",
+    "recipe_sha256": {
+      "change_risk": "b823fd45c6fb677212369cb1a653b0715e6cc83858242e85bf469f33a91817aa",
+      "effort_approach": "7ed261fdb23ffb06f06945d5dab9e4b1d3ee265ee3ee51656087ed7bd9827f03",
+      "failure_triage": "a7a2e5338e16eecacafcc43243a7f1f8fd385a198952413e8187e09d2999bb92",
+      "intent_readiness": "a2dd9b315aac79eb50507cdabb376cef9e4d9eded2018952ec62916cf734f881",
+      "note_placement": "7e977cdeec1bf9d49f56cf56b530f7bbdf2acc90aa52c2c393ab212b9ec0429f",
+      "routing": "2780852796c906a723fa054952e4f66d74fc4a3bb3b28a36d0971cf5f306680a",
+      "tag_assignment": "58ed114d1cd49f3acaf08566c7102938698e100155c4258cc22cbedd29e28f36",
+      "vision_choice": "8b24fdbeb93f1795d571ca9b46352fbc5373daf0b375a2fb0937b4a8eb224643",
+      "vision_noul": "56e355b9dcb50a60702f6d95ba5bb9febebfe0f03f0125e2d46d23cf4c3ccb40",
+      "vision_score": "08569eb7b6bf02afcf3c5b70e1a08d09a2f9f0cc84bbe54bc103ef352f6d1592",
+      "vision_video": "97526cc5e35f62d09d52e3cf645399f01ab969db217356041440df64114c2531"
+    },
+    "register_sha256": "2d7cf930cd93a1663a25e93c64243ac840f16082070b31a71b453570be443e98",
+    "trace": "flash_20261012T231627Z_trace.jsonl",
+    "split": null,
+    "category": null,
+    "policy": {},
+    "resumed": false,
+    "n_items": 570,
+    "n_errors": 0,
+    "latency_ms": {
+      "mean": 2970.8,
+      "p50": 916.6,
+      "p95": 12386.8,
+      "max": 61111.0
+    }
+  },
+  "summary": {
+    "overall": {
+      "items": 538,
+      "questions": 1565,
+      "accuracy": 0.8083,
+      "accuracy_ci": [
+        0.7879,
+        0.8275
+      ],
+      "item_accuracy": 0.6357
+    },
+    "capability": {
+      "items": 32,
+      "questions": 32,
+      "accuracy": 1.0,
+      "accuracy_ci": [
+        1.0,
+        1.0
+      ],
+      "item_accuracy": 1.0,
+      "categories": {
+        "vision_choice": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        },
+        "vision_noul": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        },
+        "vision_score": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        },
+        "vision_video": {
+          "items": 8,
+          "questions": 8,
+          "accuracy": 1.0,
+          "accuracy_ci": [
+            1.0,
+            1.0
+          ],
+          "item_accuracy": 1.0
+        }
+      }
+    },
+    "choice": {
+      "n": 389,
+      "accuracy": 0.8946,
+      "accuracy_ci": [
+        0.8663,
+        0.9229
+      ],
+      "macro_f1": 0.8161,
+      "ece": 0.0728,
+      "mce": 0.1742,
+      "brier": 0.1745,
+      "acting": {
+        "n": 229,
+        "coverage": 0.5887,
+        "accuracy": 0.9782
+      },
+      "reliability": [
+        {
+          "low": 0.3,
+          "high": 0.4,
+          "n": 10,
+          "confidence": 0.3706,
+          "accuracy": 0.4
+        },
+        {
+          "low": 0.4,
+          "high": 0.5,
+          "n": 18,
+          "confidence": 0.454,
+          "accuracy": 0.6111
+        },
+        {
+          "low": 0.5,
+          "high": 0.6,
+          "n": 26,
+          "confidence": 0.5547,
+          "accuracy": 0.6923
+        },
+        {
+          "low": 0.6,
+          "high": 0.7,
+          "n": 27,
+          "confidence": 0.6513,
+          "accuracy": 0.7037
+        },
+        {
+          "low": 0.7,
+          "high": 0.8,
+          "n": 41,
+          "confidence": 0.7527,
+          "accuracy": 0.9268
+        },
+        {
+          "low": 0.8,
+          "high": 0.9,
+          "n": 85,
+          "confidence": 0.8548,
+          "accuracy": 0.9059
+        },
+        {
+          "low": 0.9,
+          "high": 1.0,
+          "n": 182,
+          "confidence": 0.9467,
+          "accuracy": 0.9945
+        }
+      ]
+    },
+    "noul": {
+      "n": 1032,
+      "accuracy": 0.8343,
+      "accuracy_ci": [
+        0.8101,
+        0.8556
+      ],
+      "ece": 0.0278,
+      "mce": 0.0722,
+      "brier": 0.1154,
+      "acting": {
+        "n": 738,
+        "coverage": 0.7151,
+        "accuracy": 0.9214
+      },
+      "reliability": [
+        {
+          "low": 0.5,
+          "high": 0.6,
+          "n": 80,
+          "confidence": 0.5472,
+          "accuracy": 0.475
+        },
+        {
+          "low": 0.6,
+          "high": 0.7,
+          "n": 85,
+          "confidence": 0.6535,
+          "accuracy": 0.5882
+        },
+        {
+          "low": 0.7,
+          "high": 0.8,
+          "n": 129,
+          "confidence": 0.7503,
+          "accuracy": 0.7209
+        },
+        {
+          "low": 0.8,
+          "high": 0.9,
+          "n": 196,
+          "confidence": 0.8533,
+          "accuracy": 0.8673
+        },
+        {
+          "low": 0.9,
+          "high": 1.0,
+          "n": 542,
+          "confidence": 0.9609,
+          "accuracy": 0.941
+        }
+      ]
+    },
+    "score": {
+      "n": 176,
+      "accuracy": 0.5,
+      "accuracy_ci": [
+        0.4261,
+        0.5739
+      ],
+      "within_one": 0.858,
+      "mae": 0.5351,
+      "mae_ci": [
+        0.4717,
+        0.5946
+      ],
+      "rmse": 0.6864,
+      "rps": 0.109
+    },
+    "questions": {
+      "intent": {
+        "type": "choice",
+        "category": "intent_readiness",
+        "n": 108,
+        "accuracy": 0.9815,
+        "macro_f1": 0.9815,
+        "brier": 0.0282
+      },
+      "specific_enough": {
+        "type": "noul",
+        "category": "intent_readiness",
+        "n": 108,
+        "accuracy": 0.8333,
+        "brier": 0.1122
+      },
+      "failure_kind": {
+        "type": "choice",
+        "category": "failure_triage",
+        "n": 92,
+        "accuracy": 0.9565,
+        "macro_f1": 0.956,
+        "brier": 0.1016
+      },
+      "retry": {
+        "type": "noul",
+        "category": "failure_triage",
+        "n": 92,
+        "accuracy": 0.9891,
+        "brier": 0.0286
+      },
+      "risk": {
+        "type": "score",
+        "category": "change_risk",
+        "n": 92,
+        "accuracy": 0.5217,
+        "mae": 0.5287,
+        "rps": 0.1053
+      },
+      "needs_review": {
+        "type": "noul",
+        "category": "change_risk",
+        "n": 92,
+        "accuracy": 0.8804,
+        "brier": 0.0838
+      },
+      "owner": {
+        "type": "choice",
+        "category": "routing",
+        "n": 75,
+        "accuracy": 0.9733,
+        "macro_f1": 0.9732,
+        "brier": 0.0848
+      },
+      "effort": {
+        "type": "score",
+        "category": "effort_approach",
+        "n": 76,
+        "accuracy": 0.4211,
+        "mae": 0.5887,
+        "rps": 0.1238
+      },
+      "approach": {
+        "type": "choice",
+        "category": "effort_approach",
+        "n": 76,
+        "accuracy": 0.7368,
+        "macro_f1": 0.7315,
+        "brier": 0.4039
+      },
+      "dominant_red": {
+        "type": "noul",
+        "category": "vision_noul",
+        "n": 8,
+        "accuracy": 1.0,
+        "brier": 0.0071
+      },
+      "dominant_colour": {
+        "type": "choice",
+        "category": "vision_choice",
+        "n": 8,
+        "accuracy": 1.0,
+        "macro_f1": 1.0,
+        "brier": 0.0061
+      },
+      "alert_level": {
+        "type": "score",
+        "category": "vision_score",
+        "n": 8,
+        "accuracy": 1.0,
+        "mae": 0.0995,
+        "rps": 0.0103
+      },
+      "colour_changed": {
+        "type": "noul",
+        "category": "vision_video",
+        "n": 8,
+        "accuracy": 1.0,
+        "brier": 0.0113
+      },
+      "domain/tooling": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 27,
+        "accuracy": 0.4074,
+        "brier": 0.4007
+      },
+      "layer/infra": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 6,
+        "accuracy": 0.3333,
+        "brier": 0.5349
+      },
+      "type/code": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 55,
+        "accuracy": 0.7091,
+        "brier": 0.1894
+      },
+      "type/decision": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 59,
+        "accuracy": 0.9322,
+        "brier": 0.0628
+      },
+      "type/design": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 49,
+        "accuracy": 0.8163,
+        "brier": 0.0961
+      },
+      "type/discovery": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 54,
+        "accuracy": 0.8704,
+        "brier": 0.0756
+      },
+      "type/moc": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 49,
+        "accuracy": 0.9796,
+        "brier": 0.0228
+      },
+      "type/reference": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 52,
+        "accuracy": 0.8462,
+        "brier": 0.1183
+      },
+      "type/session-log": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 54,
+        "accuracy": 0.9259,
+        "brier": 0.0426
+      },
+      "type/spec": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 55,
+        "accuracy": 0.8,
+        "brier": 0.1227
+      },
+      "type/system": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 49,
+        "accuracy": 0.8571,
+        "brier": 0.099
+      },
+      "concept/horror": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 3,
+        "accuracy": 0.6667,
+        "brier": 0.1965
+      },
+      "domain/narrative": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 4,
+        "accuracy": 0.75,
+        "brier": 0.262
+      },
+      "type/principle": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 56,
+        "accuracy": 0.9286,
+        "brier": 0.0666
+      },
+      "domain/governance": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 15,
+        "accuracy": 0.2,
+        "brier": 0.4909
+      },
+      "type/vision": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 53,
+        "accuracy": 1.0,
+        "brier": 0.0023
+      },
+      "domain/world": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 9,
+        "accuracy": 0.4444,
+        "brier": 0.3407
+      },
+      "layer/gdscript": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 8,
+        "accuracy": 0.375,
+        "brier": 0.4301
+      },
+      "status/reviewed": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 16,
+        "accuracy": 0.4375,
+        "brier": 0.3781
+      },
+      "concept/disturbance": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 2,
+        "accuracy": 1.0,
+        "brier": 0.028
+      },
+      "domain/player": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 5,
+        "accuracy": 0.4,
+        "brier": 0.3487
+      },
+      "domain/audio": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 9,
+        "accuracy": 1.0,
+        "brier": 0.0144
+      },
+      "concept/ephemeral-world": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 2,
+        "accuracy": 1.0,
+        "brier": 0.1616
+      },
+      "status/draft": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 8,
+        "accuracy": 0.0,
+        "brier": 0.8254
+      },
+      "layer/python": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 1,
+        "accuracy": 1.0,
+        "brier": 0.0288
+      },
+      "domain/vehicle": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 10,
+        "accuracy": 0.7,
+        "brier": 0.1663
+      },
+      "concept/procedural": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 2,
+        "accuracy": 0.5,
+        "brier": 0.3108
+      },
+      "domain/anomalies": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 1,
+        "accuracy": 1.0,
+        "brier": 0.0021
+      },
+      "concept/diegetic": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 3,
+        "accuracy": 1.0,
+        "brier": 0.0224
+      },
+      "concept/governance": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 1,
+        "accuracy": 0.0,
+        "brier": 0.8181
+      },
+      "concept/contamination": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 1,
+        "accuracy": 1.0,
+        "brier": 0.0553
+      },
+      "domain/art": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 5,
+        "accuracy": 0.8,
+        "brier": 0.1819
+      },
+      "layer/rust-core": {
+        "type": "noul",
+        "category": "tag_assignment",
+        "n": 1,
+        "accuracy": 1.0,
+        "brier": 0.0026
+      },
+      "placement": {
+        "type": "choice",
+        "category": "note_placement",
+        "n": 30,
+        "accuracy": 0.5667,
+        "macro_f1": 0.5757,
+        "brier": 0.6136
+      }
+    },
+    "categories": {
+      "intent_readiness": {
+        "items": 108,
+        "item_accuracy": 0.8148,
+        "accuracy": 0.9074
+      },
+      "failure_triage": {
+        "items": 92,
+        "item_accuracy": 0.9457,
+        "accuracy": 0.9728
+      },
+      "change_risk": {
+        "items": 92,
+        "item_accuracy": 0.5217,
+        "accuracy": 0.7011
+      },
+      "routing": {
+        "items": 75,
+        "item_accuracy": 0.9733,
+        "accuracy": 0.9733
+      },
+      "effort_approach": {
+        "items": 76,
+        "item_accuracy": 0.3289,
+        "accuracy": 0.5789
+      },
+      "vision_noul": {
+        "items": 8,
+        "item_accuracy": 1.0,
+        "accuracy": 1.0
+      },
+      "vision_choice": {
+        "items": 8,
+        "item_accuracy": 1.0,
+        "accuracy": 1.0
+      },
+      "vision_score": {
+        "items": 8,
+        "item_accuracy": 1.0,
+        "accuracy": 1.0
+      },
+      "vision_video": {
+        "items": 8,
+        "item_accuracy": 1.0,
+        "accuracy": 1.0
+      },
+      "tag_assignment": {
+        "items": 65,
+        "item_accuracy": 0.0615,
+        "accuracy": 0.8052
+      },
+      "note_placement": {
+        "items": 30,
+        "item_accuracy": 0.5667,
+        "accuracy": 0.5667
+      }
+    },
+    "risk": {},
+    "tokens": {
+      "median_state": 35.0,
+      "max_state": 19104,
+      "state_bins": [
+        {
+          "low": 0,
+          "high": 32,
+          "n": 244,
+          "accuracy": 0.8251,
+          "brier": 0.1076
+        },
+        {
+          "low": 32,
+          "high": 64,
+          "n": 221,
+          "accuracy": 0.8225,
+          "brier": 0.1109
+        },
+        {
+          "low": 64,
+          "high": 128,
+          "n": 10,
+          "accuracy": 0.95,
+          "brier": 0.0733
+        },
+        {
+          "low": 256,
+          "high": 512,
+          "n": 5,
+          "accuracy": 0.6,
+          "brier": 0.7554
+        },
+        {
+          "low": 512,
+          "high": 1024,
+          "n": 8,
+          "accuracy": 0.75,
+          "brier": 0.3419
+        },
+        {
+          "low": 1024,
+          "high": 2048,
+          "n": 27,
+          "accuracy": 0.8065,
+          "brier": 0.1479
+        },
+        {
+          "low": 2048,
+          "high": 4096,
+          "n": 33,
+          "accuracy": 0.7824,
+          "brier": 0.1479
+        },
+        {
+          "low": 4096,
+          "high": 8192,
+          "n": 10,
+          "accuracy": 0.8315,
+          "brier": 0.1223
+        },
+        {
+          "low": 8192,
+          "high": 16384,
+          "n": 10,
+          "accuracy": 0.7805,
+          "brier": 0.1713
+        },
+        {
+          "low": 16384,
+          "high": 32768,
+          "n": 2,
+          "accuracy": 0.9231,
+          "brier": 0.0857
+        }
+      ]
+    },
+    "consistency": {},
+    "by_source_kind": {},
+    "tiers": {
+      "easy_items": 357,
+      "easy_questions": 643,
+      "non_easy": {
+        "items": 213,
+        "questions": 954,
+        "accuracy": 0.6855,
+        "accuracy_ci": [
+          0.6551,
+          0.7149
+        ],
+        "item_accuracy": 0.0798
+      }
+    },
+    "misses": [
+      {
+        "id": "intent_001",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.21
+      },
+      {
+        "id": "intent_003",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4492
+      },
+      {
+        "id": "intent_004",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4771
+      },
+      {
+        "id": "intent_005",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2896
+      },
+      {
+        "id": "intent_013",
+        "question": "intent",
+        "gold": "implement",
+        "predicted": "fix",
+        "signal": 0.4767
+      },
+      {
+        "id": "intent_021",
+        "question": "specific_enough",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5103
+      },
+      {
+        "id": "failure_010",
+        "question": "failure_kind",
+        "gold": "environment",
+        "predicted": "flaky",
+        "signal": 0.4559
+      },
+      {
+        "id": "failure_012",
+        "question": "failure_kind",
+        "gold": "environment",
+        "predicted": "flaky",
+        "signal": 0.3967
+      },
+      {
+        "id": "failure_023",
+        "question": "failure_kind",
+        "gold": "test_bug",
+        "predicted": "logic_bug",
+        "signal": 0.4582
+      },
+      {
+        "id": "risk_001",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6795
+      },
+      {
+        "id": "risk_002",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5274
+      },
+      {
+        "id": "risk_003",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.505
+      },
+      {
+        "id": "risk_004",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6778
+      },
+      {
+        "id": "risk_005",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6039
+      },
+      {
+        "id": "risk_016",
+        "question": "risk",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.2963
+      },
+      {
+        "id": "risk_016",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2894
+      },
+      {
+        "id": "risk_018",
+        "question": "risk",
+        "gold": 2,
+        "predicted": 3,
+        "signal": 2.5412
+      },
+      {
+        "id": "risk_019",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.0053
+      },
+      {
+        "id": "risk_022",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.6729
+      },
+      {
+        "id": "risk_022",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4489
+      },
+      {
+        "id": "risk_023",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.9744
+      },
+      {
+        "id": "risk_024",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.4138
+      },
+      {
+        "id": "effort_002",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5077
+      },
+      {
+        "id": "effort_003",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5632
+      },
+      {
+        "id": "effort_006",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.5034
+      },
+      {
+        "id": "effort_009",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 3,
+        "signal": 2.7832
+      },
+      {
+        "id": "effort_013",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.0137
+      },
+      {
+        "id": "effort_015",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.8455
+      },
+      {
+        "id": "effort_016",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 1.2879
+      },
+      {
+        "id": "effort_017",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.6057
+      },
+      {
+        "id": "effort_018",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 2.3753
+      },
+      {
+        "id": "effort_019",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.7496
+      },
+      {
+        "id": "effort_020",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.576
+      },
+      {
+        "id": "effort_020",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.3813
+      },
+      {
+        "id": "intent_029",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2951
+      },
+      {
+        "id": "intent_031",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2268
+      },
+      {
+        "id": "intent_032",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4937
+      },
+      {
+        "id": "intent_048",
+        "question": "specific_enough",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5024
+      },
+      {
+        "id": "risk_025",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6363
+      },
+      {
+        "id": "risk_026",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5781
+      },
+      {
+        "id": "risk_027",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.652
+      },
+      {
+        "id": "risk_028",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6299
+      },
+      {
+        "id": "risk_030",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.7283
+      },
+      {
+        "id": "risk_043",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.0075
+      },
+      {
+        "id": "risk_044",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.1912
+      },
+      {
+        "id": "risk_045",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.3729
+      },
+      {
+        "id": "risk_045",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3522
+      },
+      {
+        "id": "risk_046",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.4588
+      },
+      {
+        "id": "risk_047",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.4532
+      },
+      {
+        "id": "risk_047",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3415
+      },
+      {
+        "id": "risk_048",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.9822
+      },
+      {
+        "id": "risk_048",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4009
+      },
+      {
+        "id": "effort_022",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.7123
+      },
+      {
+        "id": "effort_023",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 1.0327
+      },
+      {
+        "id": "effort_027",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 3,
+        "signal": 2.7649
+      },
+      {
+        "id": "effort_029",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.7744
+      },
+      {
+        "id": "effort_031",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.356
+      },
+      {
+        "id": "effort_032",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.1929
+      },
+      {
+        "id": "effort_032",
+        "question": "approach",
+        "gold": "new_component",
+        "predicted": "minimal_patch",
+        "signal": 0.6594
+      },
+      {
+        "id": "effort_033",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.496
+      },
+      {
+        "id": "effort_033",
+        "question": "approach",
+        "gold": "new_component",
+        "predicted": "minimal_patch",
+        "signal": 0.5199
+      },
+      {
+        "id": "effort_034",
+        "question": "approach",
+        "gold": "new_component",
+        "predicted": "minimal_patch",
+        "signal": 0.5048
+      },
+      {
+        "id": "effort_035",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.2267
+      },
+      {
+        "id": "effort_036",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.748
+      },
+      {
+        "id": "effort_036",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.8104
+      },
+      {
+        "id": "effort_038",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.645
+      },
+      {
+        "id": "effort_038",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.7892
+      },
+      {
+        "id": "effort_039",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.4905
+      },
+      {
+        "id": "effort_039",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "new_component",
+        "signal": 0.4093
+      },
+      {
+        "id": "effort_040",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 1.0679
+      },
+      {
+        "id": "effort_040",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.6666
+      },
+      {
+        "id": "intent_057",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3636
+      },
+      {
+        "id": "intent_059",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4971
+      },
+      {
+        "id": "intent_061",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4662
+      },
+      {
+        "id": "intent_063",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.41
+      },
+      {
+        "id": "intent_064",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4586
+      },
+      {
+        "id": "intent_085",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4776
+      },
+      {
+        "id": "intent_086",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3976
+      },
+      {
+        "id": "intent_089",
+        "question": "specific_enough",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3733
+      },
+      {
+        "id": "intent_091",
+        "question": "specific_enough",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5285
+      },
+      {
+        "id": "intent_102",
+        "question": "intent",
+        "gold": "fix",
+        "predicted": "implement",
+        "signal": 0.578
+      },
+      {
+        "id": "failure_062",
+        "question": "failure_kind",
+        "gold": "environment",
+        "predicted": "test_bug",
+        "signal": 0.5678
+      },
+      {
+        "id": "failure_076",
+        "question": "retry",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4443
+      },
+      {
+        "id": "risk_049",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5823
+      },
+      {
+        "id": "risk_050",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5758
+      },
+      {
+        "id": "risk_051",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.7291
+      },
+      {
+        "id": "risk_052",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6355
+      },
+      {
+        "id": "risk_053",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5497
+      },
+      {
+        "id": "risk_054",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.7037
+      },
+      {
+        "id": "risk_055",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5625
+      },
+      {
+        "id": "risk_056",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5682
+      },
+      {
+        "id": "risk_057",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.8069
+      },
+      {
+        "id": "risk_058",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5331
+      },
+      {
+        "id": "risk_059",
+        "question": "risk",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.5556
+      },
+      {
+        "id": "risk_073",
+        "question": "risk",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.4071
+      },
+      {
+        "id": "risk_073",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3465
+      },
+      {
+        "id": "risk_076",
+        "question": "risk",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 0.9211
+      },
+      {
+        "id": "risk_076",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1666
+      },
+      {
+        "id": "risk_081",
+        "question": "risk",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.4172
+      },
+      {
+        "id": "risk_081",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3158
+      },
+      {
+        "id": "risk_082",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.7807
+      },
+      {
+        "id": "risk_083",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.0612
+      },
+      {
+        "id": "risk_083",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2233
+      },
+      {
+        "id": "risk_084",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 0.9281
+      },
+      {
+        "id": "risk_084",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1272
+      },
+      {
+        "id": "risk_087",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.8451
+      },
+      {
+        "id": "risk_088",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 1,
+        "signal": 1.004
+      },
+      {
+        "id": "risk_088",
+        "question": "needs_review",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.217
+      },
+      {
+        "id": "risk_089",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.9302
+      },
+      {
+        "id": "risk_090",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.0172
+      },
+      {
+        "id": "risk_092",
+        "question": "risk",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.4515
+      },
+      {
+        "id": "routing_072",
+        "question": "owner",
+        "gold": "unclear",
+        "predicted": "infra",
+        "signal": 0.6304
+      },
+      {
+        "id": "routing_074",
+        "question": "owner",
+        "gold": "unclear",
+        "predicted": "infra",
+        "signal": 0.8434
+      },
+      {
+        "id": "effort_041",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.7848
+      },
+      {
+        "id": "effort_044",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.634
+      },
+      {
+        "id": "effort_046",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 1.02
+      },
+      {
+        "id": "effort_048",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.7747
+      },
+      {
+        "id": "effort_050",
+        "question": "approach",
+        "gold": "refactor",
+        "predicted": "new_component",
+        "signal": 0.4307
+      },
+      {
+        "id": "effort_052",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.6121
+      },
+      {
+        "id": "effort_053",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.7502
+      },
+      {
+        "id": "effort_054",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.7689
+      },
+      {
+        "id": "effort_055",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 2.0758
+      },
+      {
+        "id": "effort_055",
+        "question": "approach",
+        "gold": "refactor",
+        "predicted": "minimal_patch",
+        "signal": 0.4307
+      },
+      {
+        "id": "effort_056",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.4723
+      },
+      {
+        "id": "effort_058",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.9693
+      },
+      {
+        "id": "effort_059",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.3922
+      },
+      {
+        "id": "effort_059",
+        "question": "approach",
+        "gold": "new_component",
+        "predicted": "minimal_patch",
+        "signal": 0.684
+      },
+      {
+        "id": "effort_060",
+        "question": "approach",
+        "gold": "new_component",
+        "predicted": "minimal_patch",
+        "signal": 0.601
+      },
+      {
+        "id": "effort_062",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.5441
+      },
+      {
+        "id": "effort_064",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 1.9555
+      },
+      {
+        "id": "effort_065",
+        "question": "effort",
+        "gold": 3,
+        "predicted": 2,
+        "signal": 2.1043
+      },
+      {
+        "id": "effort_066",
+        "question": "effort",
+        "gold": 2,
+        "predicted": 1,
+        "signal": 1.4172
+      },
+      {
+        "id": "effort_067",
+        "question": "approach",
+        "gold": "new_component",
+        "predicted": "minimal_patch",
+        "signal": 0.5623
+      },
+      {
+        "id": "effort_068",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.9596
+      },
+      {
+        "id": "effort_068",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.8405
+      },
+      {
+        "id": "effort_069",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.9372
+      },
+      {
+        "id": "effort_069",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.8521
+      },
+      {
+        "id": "effort_070",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.6972
+      },
+      {
+        "id": "effort_071",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.5153
+      },
+      {
+        "id": "effort_072",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6387
+      },
+      {
+        "id": "effort_072",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.934
+      },
+      {
+        "id": "effort_073",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.7848
+      },
+      {
+        "id": "effort_074",
+        "question": "effort",
+        "gold": 0,
+        "predicted": 1,
+        "signal": 0.6086
+      },
+      {
+        "id": "effort_074",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.8604
+      },
+      {
+        "id": "effort_075",
+        "question": "approach",
+        "gold": "ask_user",
+        "predicted": "minimal_patch",
+        "signal": 0.7303
+      },
+      {
+        "id": "effort_076",
+        "question": "effort",
+        "gold": 1,
+        "predicted": 2,
+        "signal": 1.7187
+      },
+      {
+        "id": "tag_assignment-code-tools-mcpvault",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2891
+      },
+      {
+        "id": "tag_assignment-code-tools-mcpvault",
+        "question": "layer/infra",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0619
+      },
+      {
+        "id": "tag_assignment-code-tools-mcpvault",
+        "question": "type/code",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1529
+      },
+      {
+        "id": "tag_assignment-design-horror-register",
+        "question": "type/design",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.437
+      },
+      {
+        "id": "tag_assignment-governance-tech-stack-review",
+        "question": "domain/governance",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.301
+      },
+      {
+        "id": "tag_assignment-governance-tech-stack-review",
+        "question": "type/principle",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.051
+      },
+      {
+        "id": "tag_assignment-governance-tech-stack-review",
+        "question": "type/reference",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.6482
+      },
+      {
+        "id": "tag_assignment-decisions-noisehelper-utility-class-design",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.159
+      },
+      {
+        "id": "tag_assignment-decisions-noisehelper-utility-class-design",
+        "question": "domain/world",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3483
+      },
+      {
+        "id": "tag_assignment-decisions-noisehelper-utility-class-design",
+        "question": "type/code",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.9658
+      },
+      {
+        "id": "tag_assignment-decisions-noisehelper-utility-class-design",
+        "question": "type/decision",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2691
+      },
+      {
+        "id": "tag_assignment-design-disturbance-system",
+        "question": "domain/world",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1857
+      },
+      {
+        "id": "tag_assignment-design-disturbance-system",
+        "question": "type/code",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.6316
+      },
+      {
+        "id": "tag_assignment-design-disturbance-system",
+        "question": "type/design",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4666
+      },
+      {
+        "id": "tag_assignment-design-disturbance-system",
+        "question": "type/spec",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5461
+      },
+      {
+        "id": "tag_assignment-decisions-implementation-choices-and-architecture-decisions",
+        "question": "type/code",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.6067
+      },
+      {
+        "id": "tag_assignment-decisions-implementation-choices-and-architecture-decisions",
+        "question": "type/decision",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0948
+      },
+      {
+        "id": "tag_assignment-decisions-implementation-choices-and-architecture-decisions",
+        "question": "type/principle",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.7425
+      },
+      {
+        "id": "tag_assignment-governance-phased-spec",
+        "question": "type/principle",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1204
+      },
+      {
+        "id": "tag_assignment-design-controls",
+        "question": "type/design",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4647
+      },
+      {
+        "id": "tag_assignment-sessions-spec-099-sfx-pipeline-implementation-apr-25-2026",
+        "question": "status/reviewed",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2474
+      },
+      {
+        "id": "tag_assignment-systems-audio-buses",
+        "question": "layer/gdscript",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1495
+      },
+      {
+        "id": "tag_assignment-systems-audio-buses",
+        "question": "status/reviewed",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3499
+      },
+      {
+        "id": "tag_assignment-systems-audio-buses",
+        "question": "type/system",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4239
+      },
+      {
+        "id": "tag_assignment-code-tools-development-workbench",
+        "question": "domain/governance",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2998
+      },
+      {
+        "id": "tag_assignment-code-tools-development-workbench",
+        "question": "type/code",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1626
+      },
+      {
+        "id": "tag_assignment-design-the-temporal-fracture",
+        "question": "concept/horror",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2952
+      },
+      {
+        "id": "tag_assignment-decisions-splash-screen-signal-scope",
+        "question": "domain/governance",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3402
+      },
+      {
+        "id": "tag_assignment-decisions-splash-screen-signal-scope",
+        "question": "layer/gdscript",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2708
+      },
+      {
+        "id": "tag_assignment-decisions-splash-screen-signal-scope",
+        "question": "status/reviewed",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4748
+      },
+      {
+        "id": "tag_assignment-decisions-splash-screen-signal-scope",
+        "question": "type/code",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.9618
+      },
+      {
+        "id": "tag_assignment-narrative-ktlk-gary-character-case-study",
+        "question": "type/design",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.215
+      },
+      {
+        "id": "tag_assignment-discoveries-sub-file-spec-status-drift-in-completed-specs",
+        "question": "domain/governance",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3471
+      },
+      {
+        "id": "tag_assignment-discoveries-sub-file-spec-status-drift-in-completed-specs",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3017
+      },
+      {
+        "id": "tag_assignment-discoveries-sub-file-spec-status-drift-in-completed-specs",
+        "question": "layer/infra",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0318
+      },
+      {
+        "id": "tag_assignment-discoveries-sub-file-spec-status-drift-in-completed-specs",
+        "question": "status/reviewed",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0382
+      },
+      {
+        "id": "tag_assignment-discoveries-sub-file-spec-status-drift-in-completed-specs",
+        "question": "type/discovery",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3344
+      },
+      {
+        "id": "tag_assignment-reference-autonomous-company-slack-app-kill-switch-runbook",
+        "question": "type/reference",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0432
+      },
+      {
+        "id": "tag_assignment-sessions-spec-149-implementation-session-may-22-2026",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0901
+      },
+      {
+        "id": "tag_assignment-sessions-spec-149-implementation-session-may-22-2026",
+        "question": "status/draft",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0578
+      },
+      {
+        "id": "tag_assignment-sessions-spec-149-implementation-session-may-22-2026",
+        "question": "type/session-log",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2728
+      },
+      {
+        "id": "tag_assignment-decisions-windows-msi-as-primary-distribution-format",
+        "question": "type/decision",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2068
+      },
+      {
+        "id": "tag_assignment-discoveries-interior-camera-spatial-reference-points",
+        "question": "domain/vehicle",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4517
+      },
+      {
+        "id": "tag_assignment-discoveries-interior-camera-spatial-reference-points",
+        "question": "status/draft",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1803
+      },
+      {
+        "id": "tag_assignment-reference-autonomous-company-drift-detection-and-audit-mechanics",
+        "question": "domain/governance",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4483
+      },
+      {
+        "id": "tag_assignment-reference-autonomous-company-drift-detection-and-audit-mechanics",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.495
+      },
+      {
+        "id": "tag_assignment-reference-autonomous-company-drift-detection-and-audit-mechanics",
+        "question": "status/draft",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1659
+      },
+      {
+        "id": "tag_assignment-reference-autonomous-company-drift-detection-and-audit-mechanics",
+        "question": "type/reference",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3129
+      },
+      {
+        "id": "tag_assignment-sessions-spec-088-implementation-session",
+        "question": "domain/governance",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1845
+      },
+      {
+        "id": "tag_assignment-sessions-spec-088-implementation-session",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4508
+      },
+      {
+        "id": "tag_assignment-sessions-spec-088-implementation-session",
+        "question": "layer/infra",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1567
+      },
+      {
+        "id": "tag_assignment-sessions-spec-088-implementation-session",
+        "question": "status/reviewed",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1555
+      },
+      {
+        "id": "tag_assignment-sessions-spec-088-implementation-session",
+        "question": "type/session-log",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4388
+      },
+      {
+        "id": "tag_assignment-code-generation-subsystem-pairs",
+        "question": "concept/procedural",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2245
+      },
+      {
+        "id": "tag_assignment-code-generation-subsystem-pairs",
+        "question": "domain/world",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3358
+      },
+      {
+        "id": "tag_assignment-design-anomalies",
+        "question": "type/design",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4288
+      },
+      {
+        "id": "tag_assignment-discoveries-pre-commit-hook-unpublished-asset-block-is-full-tree-not-staged-file",
+        "question": "status/draft",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0821
+      },
+      {
+        "id": "tag_assignment-governance-component-semver-policy",
+        "question": "type/principle",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.6613
+      },
+      {
+        "id": "tag_assignment-governance-component-semver-policy",
+        "question": "type/reference",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0189
+      },
+      {
+        "id": "tag_assignment-sessions-spawn-collision-mirror-mesh-visibility-and-glb-node-discovery-jun-06-2026",
+        "question": "type/code",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.7135
+      },
+      {
+        "id": "tag_assignment-sessions-spawn-collision-mirror-mesh-visibility-and-glb-node-discovery-jun-06-2026",
+        "question": "type/session-log",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0614
+      },
+      {
+        "id": "tag_assignment-systems-audio-world-audio",
+        "question": "type/spec",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.7182
+      },
+      {
+        "id": "tag_assignment-code-code-conventions",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3509
+      },
+      {
+        "id": "tag_assignment-decisions-interior-interaction-detection-shapecast3d",
+        "question": "domain/player",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.24
+      },
+      {
+        "id": "tag_assignment-decisions-interior-interaction-detection-shapecast3d",
+        "question": "type/discovery",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.6874
+      },
+      {
+        "id": "tag_assignment-discoveries-high-center-root-cause",
+        "question": "type/discovery",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4974
+      },
+      {
+        "id": "tag_assignment-reference-autonomous-company-autonomous-company-operations-reference",
+        "question": "type/reference",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2224
+      },
+      {
+        "id": "tag_assignment-reference-autonomous-company-autonomous-company-operations-reference",
+        "question": "type/spec",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5245
+      },
+      {
+        "id": "tag_assignment-systems-audio-car-radio",
+        "question": "domain/vehicle",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2413
+      },
+      {
+        "id": "tag_assignment-systems-audio-car-radio",
+        "question": "type/spec",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.7896
+      },
+      {
+        "id": "tag_assignment-code-tools-vault-audit",
+        "question": "concept/governance",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0955
+      },
+      {
+        "id": "tag_assignment-code-tools-vault-audit",
+        "question": "domain/governance",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2374
+      },
+      {
+        "id": "tag_assignment-code-tools-vault-audit",
+        "question": "layer/infra",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3283
+      },
+      {
+        "id": "tag_assignment-code-tools-vault-audit",
+        "question": "status/reviewed",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1045
+      },
+      {
+        "id": "tag_assignment-code-tools-vault-audit",
+        "question": "type/code",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.46
+      },
+      {
+        "id": "tag_assignment-decisions-autonomous-company-agent-runtime-selection",
+        "question": "domain/governance",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0664
+      },
+      {
+        "id": "tag_assignment-decisions-autonomous-company-agent-runtime-selection",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1429
+      },
+      {
+        "id": "tag_assignment-discoveries-vault-graph-health-auto-fix-indentation-and-inline-related-constraint",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4583
+      },
+      {
+        "id": "tag_assignment-discoveries-vault-graph-health-auto-fix-indentation-and-inline-related-constraint",
+        "question": "status/reviewed",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1051
+      },
+      {
+        "id": "tag_assignment-systems-vehicle-destruction",
+        "question": "type/code",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5205
+      },
+      {
+        "id": "tag_assignment-systems-vehicle-destruction",
+        "question": "type/system",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2791
+      },
+      {
+        "id": "tag_assignment-code-build-system",
+        "question": "type/code",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3094
+      },
+      {
+        "id": "tag_assignment-decisions-reciprocal-exemption-for-bidirectional-ratio",
+        "question": "status/draft",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0827
+      },
+      {
+        "id": "tag_assignment-decisions-reciprocal-exemption-for-bidirectional-ratio",
+        "question": "type/decision",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0613
+      },
+      {
+        "id": "tag_assignment-discoveries-appimage-action-deprecation-and-ci-portability-fixes",
+        "question": "status/draft",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0291
+      },
+      {
+        "id": "tag_assignment-discoveries-appimage-action-deprecation-and-ci-portability-fixes",
+        "question": "type/discovery",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0454
+      },
+      {
+        "id": "tag_assignment-art-vehicle-samba-interior",
+        "question": "type/reference",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0408
+      },
+      {
+        "id": "tag_assignment-sessions-persona-thread-echo-and-vault-mcp-debugging-may-31-2026",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1331
+      },
+      {
+        "id": "tag_assignment-sessions-persona-thread-echo-and-vault-mcp-debugging-may-31-2026",
+        "question": "type/code",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5603
+      },
+      {
+        "id": "tag_assignment-systems-audio-overview",
+        "question": "type/moc",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.6446
+      },
+      {
+        "id": "tag_assignment-systems-audio-overview",
+        "question": "type/system",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1345
+      },
+      {
+        "id": "tag_assignment-code-rust-core",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1077
+      },
+      {
+        "id": "tag_assignment-discoveries-host-tools-mcp-server-launchd-lifecycle",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2029
+      },
+      {
+        "id": "tag_assignment-discoveries-host-tools-mcp-server-launchd-lifecycle",
+        "question": "status/draft",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1006
+      },
+      {
+        "id": "tag_assignment-discoveries-host-tools-mcp-server-launchd-lifecycle",
+        "question": "type/code",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.741
+      },
+      {
+        "id": "tag_assignment-discoveries-host-tools-mcp-server-launchd-lifecycle",
+        "question": "type/discovery",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2498
+      },
+      {
+        "id": "tag_assignment-art-vehicle-samba-exterior",
+        "question": "type/reference",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0331
+      },
+      {
+        "id": "tag_assignment-art-vehicle-samba-exterior",
+        "question": "type/spec",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.6635
+      },
+      {
+        "id": "tag_assignment-sessions-spec-098-weather-effects-implementation-apr-25-2026",
+        "question": "layer/gdscript",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2349
+      },
+      {
+        "id": "tag_assignment-sessions-spec-098-weather-effects-implementation-apr-25-2026",
+        "question": "status/reviewed",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4812
+      },
+      {
+        "id": "tag_assignment-systems-vehicle-dashboard",
+        "question": "type/design",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.6145
+      },
+      {
+        "id": "tag_assignment-systems-vehicle-dashboard",
+        "question": "type/system",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2536
+      },
+      {
+        "id": "tag_assignment-design-core-mechanics",
+        "question": "domain/world",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0717
+      },
+      {
+        "id": "tag_assignment-design-core-mechanics",
+        "question": "type/design",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3714
+      },
+      {
+        "id": "tag_assignment-design-core-mechanics",
+        "question": "type/spec",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.6167
+      },
+      {
+        "id": "tag_assignment-discoveries-spec-156-ci-tooling-gotchas",
+        "question": "domain/governance",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0357
+      },
+      {
+        "id": "tag_assignment-discoveries-spec-156-ci-tooling-gotchas",
+        "question": "type/discovery",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4773
+      },
+      {
+        "id": "tag_assignment-reference-decision-log",
+        "question": "domain/governance",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4888
+      },
+      {
+        "id": "tag_assignment-systems-storm",
+        "question": "domain/world",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3572
+      },
+      {
+        "id": "tag_assignment-systems-storm",
+        "question": "type/spec",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5288
+      },
+      {
+        "id": "tag_assignment-systems-storm",
+        "question": "type/system",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2711
+      },
+      {
+        "id": "tag_assignment-code-tools-agent-skills-mcp",
+        "question": "domain/governance",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0883
+      },
+      {
+        "id": "tag_assignment-code-tools-agent-skills-mcp",
+        "question": "type/code",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4003
+      },
+      {
+        "id": "tag_assignment-decisions-garage-map-shows-previous-run",
+        "question": "domain/player",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1406
+      },
+      {
+        "id": "tag_assignment-decisions-garage-map-shows-previous-run",
+        "question": "layer/gdscript",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0465
+      },
+      {
+        "id": "tag_assignment-decisions-garage-map-shows-previous-run",
+        "question": "status/reviewed",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1904
+      },
+      {
+        "id": "tag_assignment-art-visual-direction",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2418
+      },
+      {
+        "id": "tag_assignment-art-visual-direction",
+        "question": "type/design",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.1852
+      },
+      {
+        "id": "tag_assignment-art-visual-direction",
+        "question": "type/spec",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.7136
+      },
+      {
+        "id": "tag_assignment-discoveries-spec-157-two-damage-paths-to-tires",
+        "question": "layer/gdscript",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3237
+      },
+      {
+        "id": "tag_assignment-discoveries-spec-157-two-damage-paths-to-tires",
+        "question": "type/code",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5664
+      },
+      {
+        "id": "tag_assignment-discoveries-spec-157-two-damage-paths-to-tires",
+        "question": "type/spec",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.8273
+      },
+      {
+        "id": "tag_assignment-art-pacific-drive-reference",
+        "question": "type/reference",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2954
+      },
+      {
+        "id": "tag_assignment-sessions-dashboard-telemetry-and-model-routing-may-22-2026",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0766
+      },
+      {
+        "id": "tag_assignment-sessions-dashboard-telemetry-and-model-routing-may-22-2026",
+        "question": "type/code",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.6916
+      },
+      {
+        "id": "tag_assignment-sessions-dashboard-telemetry-and-model-routing-may-22-2026",
+        "question": "type/discovery",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5458
+      },
+      {
+        "id": "tag_assignment-sessions-spec-authoring-session-083-096-apr-23-2026",
+        "question": "domain/art",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0536
+      },
+      {
+        "id": "tag_assignment-sessions-spec-authoring-session-083-096-apr-23-2026",
+        "question": "domain/governance",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.039
+      },
+      {
+        "id": "tag_assignment-sessions-spec-authoring-session-083-096-apr-23-2026",
+        "question": "domain/narrative",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0908
+      },
+      {
+        "id": "tag_assignment-sessions-spec-authoring-session-083-096-apr-23-2026",
+        "question": "domain/player",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.4105
+      },
+      {
+        "id": "tag_assignment-sessions-spec-authoring-session-083-096-apr-23-2026",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0864
+      },
+      {
+        "id": "tag_assignment-sessions-spec-authoring-session-083-096-apr-23-2026",
+        "question": "domain/vehicle",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.2749
+      },
+      {
+        "id": "tag_assignment-systems-audio-forest-transmissions",
+        "question": "type/design",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.8601
+      },
+      {
+        "id": "tag_assignment-systems-audio-forest-transmissions",
+        "question": "type/spec",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5986
+      },
+      {
+        "id": "tag_assignment-systems-audio-forest-transmissions",
+        "question": "type/system",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3283
+      },
+      {
+        "id": "tag_assignment-sessions-spec-143-implementation-session-may-15-2026",
+        "question": "domain/tooling",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.0484
+      },
+      {
+        "id": "tag_assignment-sessions-spec-143-implementation-session-may-15-2026",
+        "question": "status/draft",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.045
+      },
+      {
+        "id": "tag_assignment-sessions-spec-143-implementation-session-may-15-2026",
+        "question": "type/session-log",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.3965
+      },
+      {
+        "id": "tag_assignment-sessions-spec-143-implementation-session-may-15-2026",
+        "question": "type/spec",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.6411
+      },
+      {
+        "id": "tag_assignment-systems-world-procedural-generation",
+        "question": "type/code",
+        "gold": false,
+        "predicted": true,
+        "signal": 0.5944
+      },
+      {
+        "id": "tag_assignment-systems-world-procedural-generation",
+        "question": "type/system",
+        "gold": true,
+        "predicted": false,
+        "signal": 0.147
+      },
+      {
+        "id": "note_placement-art-palettes",
+        "question": "placement",
+        "gold": "Art",
+        "predicted": "Design",
+        "signal": 0.3772
+      },
+      {
+        "id": "note_placement-code-tools-music-pipeline",
+        "question": "placement",
+        "gold": "Code",
+        "predicted": "Design",
+        "signal": 0.3757
+      },
+      {
+        "id": "note_placement-discoveries-pre-commit-hook-semver-check-blind-spot",
+        "question": "placement",
+        "gold": "Discoveries",
+        "predicted": "Code",
+        "signal": 0.5781
+      },
+      {
+        "id": "note_placement-governance-component-semver-policy",
+        "question": "placement",
+        "gold": "Governance",
+        "predicted": "Code",
+        "signal": 0.3755
+      },
+      {
+        "id": "note_placement-reference-autonomous-company-ngrok-tunnel-setup",
+        "question": "placement",
+        "gold": "Reference",
+        "predicted": "Systems",
+        "signal": 0.5676
+      },
+      {
+        "id": "note_placement-art-pacific-drive-reference",
+        "question": "placement",
+        "gold": "Art",
+        "predicted": "Reference",
+        "signal": 0.855
+      },
+      {
+        "id": "note_placement-reference-code-todos",
+        "question": "placement",
+        "gold": "Reference",
+        "predicted": "Code",
+        "signal": 0.8837
+      },
+      {
+        "id": "note_placement-systems-audio-radio-stations",
+        "question": "placement",
+        "gold": "Systems",
+        "predicted": "Design",
+        "signal": 0.6246
+      },
+      {
+        "id": "note_placement-art-rock-scatter-design",
+        "question": "placement",
+        "gold": "Art",
+        "predicted": "Design",
+        "signal": 0.6132
+      },
+      {
+        "id": "note_placement-code-release-and-distribution",
+        "question": "placement",
+        "gold": "Code",
+        "predicted": "Systems",
+        "signal": 0.5959
+      },
+      {
+        "id": "note_placement-discoveries-mode-gated-key-sharing-pattern",
+        "question": "placement",
+        "gold": "Discoveries",
+        "predicted": "Code",
+        "signal": 0.4408
+      },
+      {
+        "id": "note_placement-governance-tech-stack-review",
+        "question": "placement",
+        "gold": "Governance",
+        "predicted": "Decisions",
+        "signal": 0.8222
+      },
+      {
+        "id": "note_placement-art-visual-direction",
+        "question": "placement",
+        "gold": "Art",
+        "predicted": "Systems",
+        "signal": 0.3303
+      }
+    ]
+  }
+}

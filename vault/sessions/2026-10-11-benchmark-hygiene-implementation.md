@@ -15,7 +15,7 @@ updated: 2026-10-11
 ---
 # Session: benchmark-hygiene implementation (Phase 1, partial)
 
-Part of [[ember]]. Executed `/speckit.implement` on `specs/006-benchmark-hygiene/` — Phase 1 of the benchmark programme. **52 of 57 tasks landed, all committed and green** (the 55-task plan plus two convergence tasks; T056 is done). The open tasks are the labeling-shaped passes, the hours-long probe snapshot, and the gated T057.
+Part of [[ember]]. Executed `/speckit.implement` on `specs/006-benchmark-hygiene/` — Phase 1 of the benchmark programme. **54 of 57 tasks landed, all committed and green.** T012 + T057 closed via the accelerated label-review method ([[2026-10-11-accelerated-label-review-llm-panel-drafts]]): two independently-run LLM judges drafted the 168-item stability pass; agreement published (change_risk 79%, effort_approach 57%); a 76-item queue awaits the maintainer's adjudication. **Phase 1's gate is green**, so Phase 2 is unblocked. The three open tasks are the kind tagging (T028/T029) and the probe snapshot (T040).
 
 ## What shipped
 
