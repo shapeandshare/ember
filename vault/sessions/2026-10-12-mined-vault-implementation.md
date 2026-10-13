@@ -46,7 +46,9 @@ source has no stale markers and no did-not-become fragments (see
 [[2026-10-12-staleness-and-worthiness-have-no-source]]). Also open: the
 deployment refresh plus a clean CUDA re-run; PR and release
 (maintainer's call — merging to main triggers the release workflow). One
-latent bug found on the way: the site build crashes when the newest committed
-bundle is a category-scoped run (`scripts/build_site_benchmark.py` assumes
-the kind blocks exist), so a future `--category` re-run needs build-side
-handling for partial bundles.
+latent bug found on the way and fixed in the same session: the site build
+crashed when the newest committed bundle was a category-scoped run
+(`scripts/build_site_benchmark.py` assumed the kind blocks exist); the
+headline now comes from the newest complete run (falling back to the newest
+headline-capable run, and to no headline when none exists), with tests
+covering a partial newest and a partial-only tree.

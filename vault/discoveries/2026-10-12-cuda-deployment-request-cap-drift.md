@@ -29,21 +29,25 @@ at or below that size passed.
 
 ## Finding
 
-The instance's configuration predates the per-model request caps
-([[2026-10-10-per-model-request-caps]]): its effective cap sits near
-~8k tokens, so the biggest notes are refused remotely and scored locally. The
-committed comparison pair remains legitimate — both bundles record identical
-settings (`float16`, `max_length 262144`, `max_request_length 24576` from the
-harness) — but the CUDA half's figures are depressed by the cap, and the
-error count is recorded in the bundle.
+Checked the deployment's SSM config directly (2026-10-12): it already carries
+`max_request_length: 24576` — the culprit is the **wheel**. The instance runs
+`ember-advise==0.12.0`, which predates the per-model request caps
+([[2026-10-10-per-model-request-caps]]) and the token-split refusal
+semantics; the observed boundary (states up to 4,909 words passing, larger
+ones refused) reflects that older server. The committed comparison pair
+remains legitimate — both bundles record identical settings (`float16`,
+`max_length 262144`, `max_request_length 24576` from the harness) — but the
+CUDA halves' figures are depressed, and the error counts are recorded in the
+bundles.
 
 ## Relevance
 
-Refresh the deployment (`make aws-up` with the current ember version/config)
-and re-run the leg before quoting CUDA numbers beyond the gate. More
+Upgrade the deployment to a current release
+(`make aws-up EMBER_VERSION=<next>` reboots in place and converge installs
+it) and re-run the legs — no configuration change is needed. More
 generally: deployment configuration drifts invisibly until a long request
-arrives — the per-request cap is worth checking in `ember doctor` output
-against a deployment after any release bump.
+arrives — compare a deployment's `ember doctor` limits and version against
+the released wheel after any release bump.
 
 ## References
 
