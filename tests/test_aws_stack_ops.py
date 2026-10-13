@@ -370,6 +370,33 @@ class TestStackPrepareChangeSet:
         result = stack.prepare_change_set(params={})
         assert result is None
 
+    def test_prepare_change_set_returns_none_when_the_waiter_reports_no_changes(
+        self,
+    ) -> None:
+        """The waiter path surfaces emptiness only in StatusReason.
+
+        A no-op change set is created in the FAILED state; the waiter's own
+        message ("terminal failure state") does not say why — the reason lives
+        in describe_change_set ("The submitted information didn't contain
+        changes"), and prepare_change_set must treat that as empty and clean
+        the failed change set up.
+        """
+        clients = _make_clients()
+        mock_waiter = MagicMock()
+        mock_waiter.wait.side_effect = Exception(
+            "Waiter encountered a terminal failure state: For expression "
+            '"Status" we matched expected path: "FAILED"'
+        )
+        clients.cfn.get_waiter.return_value = mock_waiter
+        clients.cfn.describe_change_set.return_value = {
+            "Status": "FAILED",
+            "StatusReason": "The submitted information didn't contain changes.",
+        }
+
+        stack = _make_stack(clients)
+        assert stack.prepare_change_set(params={"InstanceType": "g6e.xlarge"}) is None
+        clients.cfn.delete_change_set.assert_called_once()
+
     def test_prepare_change_set_reraises_non_empty_exceptions(self) -> None:
         """prepare_change_set() re-raises non-empty-change-set exceptions."""
         import pytest

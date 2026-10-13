@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from .names import DeploymentName
@@ -325,9 +326,31 @@ class Stack:
             )
             return change_set_name
         except Exception as exc:
-            if "empty" in str(exc).lower() or "no changes" in str(exc).lower():
+            reason = self._change_set_status_reason(change_set_name) or str(exc)
+            lowered = reason.lower()
+            if (
+                "empty" in lowered
+                or "no changes" in lowered
+                or "didn't contain changes" in lowered
+            ):
+                with contextlib.suppress(Exception):
+                    self._clients.cfn.delete_change_set(
+                        StackName=self._names.stack_name,
+                        ChangeSetName=change_set_name,
+                    )
                 return None
             raise
+
+    def _change_set_status_reason(self, change_set_name: str) -> str:
+        """Return a change set's ``StatusReason``, or ``""`` when unavailable."""
+        try:
+            resp = self._clients.cfn.describe_change_set(
+                StackName=self._names.stack_name,
+                ChangeSetName=change_set_name,
+            )
+        except Exception:
+            return ""
+        return str(resp.get("StatusReason", ""))
 
     def change_set_has_replacement(self, change_set_name: str) -> bool:
         """Return True if any resource change in the change set requires replacement.
