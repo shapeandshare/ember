@@ -1,4 +1,59 @@
 <!--
+SYNC IMPACT REPORT — Conda Artifact Co-Installability Exception (Deepened Divergence)
+Version change: 3.3.0 → 3.4.0 (MINOR: Article V's channel-artifact exception is extended to
+  cover co-installability — an older series or a below-floor pin — under the same conditions)
+Date: 2026-10-12
+Reason: Solving `specs/008-conda-release` against live conda-forge repodata showed the declared
+  ranges are unsatisfiable as a *set* for Python 3.12: conda-forge's `transformers` chain forces
+  `huggingface_hub 1.32.0` (below ember's `>=1.33` floor), and `torchvision` co-installs only
+  with `pytorch <2.14` (best pairs: `2.13.0`+`0.28.0` on linux-64; `2.12.0`+`0.27.1` on
+  osx-arm64). The maintainer approved (2026-10-12) extending the v3.3.0 exception: a channel
+  artifact MAY pin the newest *co-installable* combination the channel offers, even when that
+  is an older series than declared or below a declared floor, under the same conditions
+  (recorded in the feature spec/plan and a vault decision; validated by a model-backed run on
+  real hardware; retired when the channel catches up).
+Modified principles:
+  - Article V — the narrow channel-artifact exception is generalized from "newest series the
+    channel offers" to "newest co-installable combination the channel offers". The declared
+    ranges (`pyproject.toml`), `uv.lock`, and `uv sync --locked` remain unchanged and remain
+    the source of truth for every other artifact.
+Added sections: none
+Removed sections: none
+Templates / docs propagated:
+  - ✅ specs/008-conda-release/ (spec FR-004 and assumptions, research R3, plan, contracts,
+    vault decision + discovery records)
+Follow-up TODOs: retire the exception when conda-forge ships a `torchvision` for `pytorch 2.14`
+  and a `huggingface_hub` in `[1.33,2)` — converge the pins and repeat the model-backed runs.
+-->
+<!--
+SYNC IMPACT REPORT — Conda Artifact Dependency-Series Exception
+Version change: 3.2.1 → 3.3.0 (MINOR: a new, narrow exception is added to Article V; the
+  principle — ranges anchored to tested versions, no silent widening — is unchanged)
+Date: 2026-10-12
+Reason: The conda-forge release of `ember-advise` (specs/008-conda-release) cannot satisfy
+  `torchvision>=0.29,<0.30`: conda-forge's newest series is 0.28.x (no 0.29.x build; the
+  feedstock decouples torch↔torchvision from PyPI). The maintainer approved a governed
+  divergence (2026-10-12): the conda recipe pins the newest channel-available series
+  (`torchvision >=0.28,<0.29`), validated by the first-publication model-backed run on both
+  platforms, recorded in the feature spec (FR-004 exception), research, plan, and a vault
+  decision, and retired (pin converged back to `>=0.29,<0.30`) when conda-forge ships 0.29.x.
+Modified principles:
+  - Article V — adds one narrow, record-and-validate exception for distribution-channel
+    artifacts: when a channel cannot satisfy a declared range, the channel's recipe MAY pin
+    the newest series that channel offers, but ONLY when (a) the divergence is recorded
+    (feature spec/plan and a vault decision), (b) the artifact's locked environment passes a
+    model-backed verification run on real hardware, and (c) the pin converges back to the
+    declared range once the channel ships it. The package's own ranges (`pyproject.toml`),
+    `uv.lock`, and `uv sync --locked` are unchanged.
+Added sections: none
+Removed sections: none
+Templates / docs propagated:
+  - ➖ pending with implementation (specs/008-conda-release): the AGENTS.md watch-out and the
+    COMPATIBILITY.md conda verification record land in that feature's change.
+Follow-up TODOs: retire the exception — converge the conda pin to `>=0.29,<0.30` with a fresh
+  model-backed run — when conda-forge ships torchvision 0.29.x.
+-->
+<!--
 SYNC IMPACT REPORT — evals/ Size Debt Paid Down (Benchmark Foundations)
 Version change: 3.2.0 → 3.2.1 (PATCH: five migration-debt entries are resolved; no principle
   changes)
@@ -667,6 +722,16 @@ unchanged; only the model-weight hash-verification requirement is removed. Bumpi
 `revision` or widening a dependency range MUST be accompanied by green model-backed tests and
 re-measured agent-kit numbers (§3.3) whenever the change could affect behavior.
 
+One narrow exception is recorded for **distribution-channel artifacts**: when a channel cannot
+satisfy a declared range — in isolation, or as a co-installable set (as conda-forge cannot for
+`torchvision` and `huggingface_hub` in `specs/008-conda-release`) — the channel's recipe MAY pin
+the newest **co-installable** combination that channel offers, even when that is an older series
+than declared or below a declared floor, but ONLY when (a) the divergence is recorded in the
+feature's spec and plan and in a vault decision, (b) the artifact's locked environment passes a
+model-backed verification run on real hardware, and (c) the pins converge back to the declared
+ranges once the channel ships them. The package's declared ranges remain the source of truth
+for every other artifact.
+
 ### Article VI — Apple Silicon and CUDA
 
 Three devices are supported: MPS (macOS on Apple Silicon, float16 — the local-first default),
@@ -1089,4 +1154,4 @@ required by the current work.
 - Reviews MUST check changes against the Articles, with special attention to Article III
   (agent contract) and Article V (model loading).
 
-**Version**: 3.2.1 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-10
+**Version**: 3.4.0 | **Ratified**: 2026-10-02 | **Last Amended**: 2026-10-12

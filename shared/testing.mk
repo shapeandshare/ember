@@ -1,7 +1,7 @@
 # shared/testing.mk — test suite and protocol check targets
 # Assumes PY, EMBER, and EMBER_* vars are defined in the root Makefile.
 
-.PHONY: test test-fast test-strict test-cov test-evals eval-run eval-report eval-export eval-snapshot eval-context eval-context-smoke eval-agent eval-agent-smoke dataset-lint dataset-card audit-sources mcp-check smoke
+.PHONY: test test-fast test-strict test-cov test-evals eval-run eval-report eval-export eval-snapshot eval-context eval-context-smoke eval-agent eval-agent-smoke dataset-lint dataset-card audit-sources mcp-check smoke conda-smoke
 
 test: $(EMBER) ## Full test suite (loads model once, ~30s)
 	$(PY) -m pytest
@@ -56,3 +56,27 @@ mcp-check: $(EMBER) ## MCP protocol end-to-end check
 
 smoke: $(EMBER) ## Direct MPS inference smoke test
 	$(PY) -u scripts/smoke_mps.py
+
+MAMBA ?= micromamba
+CONDA_ENV ?= ember-smoke
+
+UNAME_S := $(shell uname -s)
+UNAME_M := $(shell uname -m)
+ifeq ($(UNAME_S)-$(UNAME_M),Darwin-arm64)
+CONDA_PLATFORM ?= osx-arm64
+else ifeq ($(UNAME_S)-$(UNAME_M),Linux-x86_64)
+CONDA_PLATFORM ?= linux-64
+else
+CONDA_PLATFORM ?= unsupported
+endif
+
+conda-smoke: ## No-model conda smoke for VERSION=<v>: explicit lock env via micromamba + ember-advise + CLI/doctor/torch-free import
+	@test "$(CONDA_PLATFORM)" != "unsupported" || { printf "error: set CONDA_PLATFORM to osx-arm64 or linux-64\n"; exit 1; }
+	$(MAMBA) create -y -n $(CONDA_ENV) -f conda-$(CONDA_PLATFORM).lock
+	$(MAMBA) install -y -n $(CONDA_ENV) -c conda-forge "ember-advise==$(VERSION)"
+	$(MAMBA) run -n $(CONDA_ENV) ember --help
+	$(MAMBA) run -n $(CONDA_ENV) gut --help
+	$(MAMBA) run -n $(CONDA_ENV) ember-advise --help
+	$(MAMBA) run -n $(CONDA_ENV) python -c "import shutil, sys; missing = [c for c in ('ember', 'gut', 'ember-advise', 'ember-mcp') if not shutil.which(c)]; sys.exit(f'missing entry points: {missing}') if missing else None"
+	$(MAMBA) run -n $(CONDA_ENV) ember doctor
+	$(MAMBA) run -n $(CONDA_ENV) python -c "import sys, ember.mcp.mcp_server; assert 'torch' not in sys.modules"

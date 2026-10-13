@@ -1,7 +1,7 @@
 # shared/release.mk — setup, bootstrap, release, and cleanup targets
 # Assumes UV, PY, EMBER, MODEL_DIR, and EMBER_* vars are defined in the root Makefile.
 
-.PHONY: download init opencode setup bootstrap check ci clean clean-model release-dry release-ember deployment-requirements deploy undeploy
+.PHONY: download init opencode setup bootstrap check ci clean clean-model release-dry release-ember deployment-requirements conda-lock conda-lock-check deploy undeploy
 
 download: $(EMBER) ## Download pinned Clef-Flash weights (~18 GB) to .models/
 	$(PY) -c "from huggingface_hub import snapshot_download; from ember.models import get; spec = get('flash'); snapshot_download(spec.repo, revision=spec.revision, local_dir='$(MODEL_DIR)')"
@@ -46,6 +46,12 @@ release-ember: ## Trigger the ember release workflow on main (bump PR → GitHub
 deployment-requirements: $(EMBER) ## Regenerate deployment/requirements.txt from uv.lock (run before every Outerbounds deploy)
 	$(UV) export --format requirements.txt --no-dev --no-editable --no-hashes --no-emit-project -o deployment/requirements.txt
 	$(PY) scripts/freeze_deployment_requirements.py
+
+conda-lock: $(EMBER) ## Regenerate conda/ember-deps.conda-lock.yml from conda/lock-environment.yml (needs conda-lock on PATH)
+	$(PY) scripts/freeze_conda_lock.py
+
+conda-lock-check: $(EMBER) ## Verify the committed conda lock matches its source spec (exit 1 when stale)
+	$(PY) scripts/freeze_conda_lock.py --check
 
 # EMBER_DEPLOY_MODEL selects which of deployment/{flash,full}.yaml to deploy
 # (default flash, the pre-existing live deployment) — e.g.
