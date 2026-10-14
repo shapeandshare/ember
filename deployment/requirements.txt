@@ -108,7 +108,7 @@ mcp-types==2.3.0
     # via mcp
 mdurl==0.1.2
     # via markdown-it-py
-mpmath==1.3.0
+mpmath==1.4.1
     # via sympy
 networkx==3.7
     # via torch
