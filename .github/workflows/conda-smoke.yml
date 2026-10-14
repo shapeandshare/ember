@@ -8,6 +8,10 @@
 # Triggers: on demand (a version, defaulting to the latest GitHub release) and
 # weekly against the latest release. conda-forge's version bot can lag a release,
 # so the smoke retries the install step before failing.
+#
+# micromamba, conda-lock, and PyYAML are installed directly (pinned, sha256-verified) instead of
+# through mamba-org/setup-micromamba: the repository's Actions allow-list permits only
+# GitHub-owned actions and four named publishers, and that action is not among them.
 
 name: Conda smoke
 
@@ -39,21 +43,37 @@ jobs:
         include:
           - os: macos-latest
             platform: osx-arm64
+            mamba_asset: micromamba-osx-arm64
+            mamba_sha256: ec2a072f028e1a7cf20f3e2e74d5a8127cf5a5f27636375b5359811565f4e5be
           - os: ubuntu-latest
             platform: linux-64
+            mamba_asset: micromamba-linux-64
+            mamba_sha256: 366cd9cd8be14df1ab8ed50352a82111082a36686b2d389fdb79a92c3fafb3e3
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Provide micromamba, conda-lock, and PyYAML
-        uses: mamba-org/setup-micromamba@f457c30a868e4760d3a6fcea5f25dc655b8edf39 # v3.2.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          environment-name: ci-tools
-          create-args: >-
-            python=3.12
-            conda-lock
-            pyyaml
+          python-version: "3.12"
+
+      - name: Provide conda-lock, PyYAML, and micromamba (all pinned)
+        env:
+          MAMBA_VERSION: 2.9.0-0
+          MAMBA_ASSET: ${{ matrix.mamba_asset }}
+          MAMBA_SHA256: ${{ matrix.mamba_sha256 }}
+        run: |
+          pip install conda-lock pyyaml
+          curl -fsSL -o "$RUNNER_TEMP/micromamba" \
+            "https://github.com/mamba-org/micromamba-releases/releases/download/${MAMBA_VERSION}/${MAMBA_ASSET}"
+          if command -v sha256sum >/dev/null 2>&1; then
+            echo "${MAMBA_SHA256}  $RUNNER_TEMP/micromamba" | sha256sum -c -
+          else
+            echo "${MAMBA_SHA256}  $RUNNER_TEMP/micromamba" | shasum -a 256 -c -
+          fi
+          chmod +x "$RUNNER_TEMP/micromamba"
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
 
       - name: Resolve the release version
         id: version

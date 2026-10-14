@@ -96,6 +96,7 @@ Non-obvious constraints, gaps, and conflicts that cost discovery time.
 - [[2026-10-12-conda-forge-dependency-and-tooling-gaps]]
 - [[2026-10-13-deployment-update-path-failures]]
 - [[2026-10-13-github-token-release-events-are-suppressed]]
+- [[2026-10-13-actions-allow-list-blocks-third-party-actions]]
 
 ### Sessions
 
