@@ -22,6 +22,9 @@
 #   6. publish-mcp-registry then lists that version in the official MCP
 #      Registry as io.github.shapeandshare/ember (server.json), signing in
 #      with the job's GitHub OIDC token. Registry versions are immutable.
+#   7. publish-conda dispatches conda-package.yml (a workflow_dispatch, which
+#      is exempt from the GITHUB_TOKEN event suppression) to upload the same
+#      release to the interim Anaconda.org channel, once PyPI has the sdist.
 #
 # Resume path: if a run finds that main already carries a version newer
 # than the last tag (a previous bump PR merged but its release failed), it
@@ -41,7 +44,8 @@
 #   - permissions: {} at workflow level; each job grants only what it needs.
 #     Only publish-pypi and publish-mcp-registry get id-token: write; the
 #     PyPI job never checks out code, and the registry job runs a
-#     version- and SHA-256-pinned mcp-publisher.
+#     version- and SHA-256-pinned mcp-publisher. publish-conda gets
+#     actions: write, only to dispatch the conda workflow.
 #   - checkout uses persist-credentials: false throughout.
 #   - No pull_request_target, workflow_run, or self-hosted runners.
 #   - No stored secrets beyond GITHUB_TOKEN (auto-provisioned per run).
@@ -414,3 +418,24 @@ jobs:
             sleep 20
           done
           exit 1
+
+  publish-conda:
+    name: ember — publish to Anaconda.org
+    needs: [release-ember, publish-pypi]
+    if: needs.release-ember.outputs.tag != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # workflow_dispatch is exempt from the GITHUB_TOKEN event suppression, so this is how the
+    # conda channel publishes: a bot-created release does not fire conda-package.yml's
+    # `release` trigger. `actions: write` is what lets this token dispatch a workflow.
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Dispatch the conda package workflow for this release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.release-ember.outputs.tag }}
+        run: |
+          gh workflow run conda-package.yml --repo "$GITHUB_REPOSITORY" --ref main \
+            -f version="${RELEASE_TAG#v}" -f publish=true
