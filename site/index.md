@@ -291,7 +291,7 @@ free disk; to use a server, you only need its address.
    To pin a specific release tag from GitHub instead:
 
    ```bash
-   uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.15.0"
+   uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandshare/ember@v0.16.0"
    ```
 
 2. **Choose where it runs.** To run it on your Mac, download the model. It's about 18 GB,
