@@ -47,8 +47,11 @@ and device rules are unchanged. Planning decisions were taken through `/speckit.
   so reruns are safe). `release-ember.yml`'s `publish-conda` job dispatches `conda-package.yml`
   (`workflow_dispatch`, exempt from the GITHUB_TOKEN suppression that stops a bot-made `release`
   event from firing it) once PyPI has the sdist — see
-  [[2026-10-13-github-token-release-events-are-suppressed]]. (`prefix.dev` — OIDC, no stored
-  secret — was rejected: a URL channel too undiscoverable for a public tool.)
+  [[2026-10-13-github-token-release-events-are-suppressed]]. `rattler-build` is fetched from a
+  pinned, sha256-verified release asset rather than via the official action, which the repo's
+  Actions allow-list blocks — see [[2026-10-13-actions-allow-list-blocks-third-party-actions]].
+  (`prefix.dev` — OIDC, no stored secret — was rejected: a URL channel too undiscoverable for a
+  public tool.)
   `scripts/render_conda_recipe.py` renders the recipe per release. Retire this job when the
   conda-forge feedstock lands and its bot publishes versions.
 - **Locks**: the dependency environment (never `ember-advise` itself) is pinned by `conda-lock`;

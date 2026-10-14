@@ -12,6 +12,10 @@
 # trigger stays for a release a person makes in the UI. `build` always runs; `publish` uploads
 # only on a release event or when `publish` is requested.
 #
+# rattler-build is fetched directly (pinned release asset + sha256) instead of through
+# prefix-dev/rattler-build-action: the repository's Actions allow-list permits only GitHub-owned
+# actions and four named publishers, and that action is not among them.
+#
 # `conda/recipe.yaml` is a frozen conda-forge snapshot; each run renders it for the released
 # version (scripts/render_conda_recipe.py) before building.
 
@@ -49,8 +53,12 @@ jobs:
         include:
           - os: macos-latest
             platform: osx-arm64
+            rattler_asset: rattler-build-aarch64-apple-darwin
+            rattler_sha256: 7648599c714465a806b87b79bd472242ac5143ae4df3796fdb8dc712d9e040f4
           - os: ubuntu-latest
             platform: linux-64
+            rattler_asset: rattler-build-x86_64-unknown-linux-musl
+            rattler_sha256: 09182ae841bd803435c8ed34017811522d18a709bb727bb8e31241119562ca60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -77,12 +85,31 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: python3 scripts/render_conda_recipe.py "$VERSION" "$RUNNER_TEMP/recipe.yaml"
 
-      - name: "Build the conda package (artifact: conda-${{ matrix.platform }})"
-        uses: prefix-dev/rattler-build-action@1ca5f45832f419a46d1326ccc5861d7e14d67c44 # v0.2.39
+      - name: Install rattler-build (pinned release asset, sha256-verified)
+        env:
+          VERSION: v0.68.0
+          ASSET: ${{ matrix.rattler_asset }}
+          SHA256: ${{ matrix.rattler_sha256 }}
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/rattler-build" \
+            "https://github.com/prefix-dev/rattler-build/releases/download/${VERSION}/${ASSET}"
+          if command -v sha256sum >/dev/null 2>&1; then
+            echo "${SHA256}  $RUNNER_TEMP/rattler-build" | sha256sum -c -
+          else
+            echo "${SHA256}  $RUNNER_TEMP/rattler-build" | shasum -a 256 -c -
+          fi
+          chmod +x "$RUNNER_TEMP/rattler-build"
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+
+      - name: Build the conda package
+        run: rattler-build build --recipe "$RUNNER_TEMP/recipe.yaml" --channel conda-forge
+
+      - name: Upload the built package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          recipe-path: ${{ runner.temp }}/recipe.yaml
-          build-args: --channel conda-forge
-          artifact-name: conda-${{ matrix.platform }}
+          name: conda-${{ matrix.platform }}
+          path: output/**/*.conda
+          if-no-files-found: error
 
   publish:
     name: publish (Anaconda.org)
