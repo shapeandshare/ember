@@ -169,3 +169,21 @@ def test_conda_lock_covers_both_platforms_with_hashes() -> None:
     content_hash = lock["metadata"]["content_hash"]
     for platform in sorted(platforms):
         assert re.fullmatch(r"[0-9a-f]{64}", content_hash[platform])
+
+
+def test_release_dispatches_the_conda_publish() -> None:
+    # A bot-created release does not fire conda-package.yml's `release` trigger (GitHub
+    # suppresses GITHUB_TOKEN events), so release-ember dispatches it instead, and the
+    # dispatch is what turns the upload on.
+    release = _yaml(ROOT / ".github" / "workflows" / "release-ember.yml")
+    conda = _yaml(ROOT / ".github" / "workflows" / "conda-package.yml")
+
+    runs = [
+        step["run"]
+        for step in release["jobs"]["publish-conda"]["steps"]
+        if "run" in step
+    ]
+    assert any("gh workflow run conda-package.yml" in run for run in runs)
+    assert any("publish=true" in run for run in runs)
+
+    assert "inputs.publish" in conda["jobs"]["publish"]["if"]

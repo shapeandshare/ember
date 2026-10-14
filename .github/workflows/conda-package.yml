@@ -3,14 +3,17 @@
 # conda-forge is the long-term door (its feedstock is under review). Until it lands, releases
 # are also published to the `joshburt` channel on Anaconda.org. Anaconda.org has no OIDC, so
 # publishing needs a stored credential: the org-level `ANACONDA_TOKEN` secret (exposed to this
-# repo), read only by the `publish` job on a release and handed to anaconda-client as its native
-# `ANACONDA_API_TOKEN`. (`prefix.dev` — OIDC, no stored secret — was rejected: a
-# URL channel too undiscoverable for a public tool.) Retire this workflow when the conda-forge
-# feedstock lands and its bot publishes versions.
+# repo), read only by the `publish` job and handed to anaconda-client as its native
+# `ANACONDA_API_TOKEN`. (`prefix.dev` — OIDC, no stored secret — was rejected: a URL channel too
+# undiscoverable for a public tool.) Retire this workflow when the conda-forge feedstock lands.
+#
+# Trigger: `release-ember.yml` dispatches this workflow (version + publish) after PyPI, because
+# a release created with GITHUB_TOKEN does not fire the `release` event here; the `release`
+# trigger stays for a release a person makes in the UI. `build` always runs; `publish` uploads
+# only on a release event or when `publish` is requested.
 #
 # `conda/recipe.yaml` is a frozen conda-forge snapshot; each run renders it for the released
-# version (scripts/render_conda_recipe.py) before building. `build` runs for releases and manual
-# dispatches; `publish` uploads only on a release.
+# version (scripts/render_conda_recipe.py) before building.
 
 name: Conda package (Anaconda.org)
 
@@ -22,6 +25,10 @@ on:
       version:
         description: ember-advise version to build (default is the triggering release)
         required: false
+      publish:
+        description: Upload the built packages to Anaconda.org
+        type: boolean
+        default: false
 
 permissions: {}
 
@@ -80,7 +87,7 @@ jobs:
   publish:
     name: publish (Anaconda.org)
     needs: build
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' || inputs.publish
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
