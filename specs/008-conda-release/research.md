@@ -14,7 +14,7 @@ decision (R3/G1) — **maintainer-approved 2026-10-12**; everything is settled.
 | R3 | Dependency availability on conda-forge | The declared set is unsatisfiable for Python 3.12; the newest co-installable stack (`pytorch >=2.12,<2.14`, `torchvision >=0.27,<0.29`, `huggingface_hub >=1.32,<2`) is the **approved deep divergence** (2026-10-12, constitution v3.4.0) |
 | R4 | MPS in conda-forge's osx-arm64 pytorch | Built with `USE_MPS=ON`; expected to work on Apple Silicon; **must be empirically verified post-install** before osx-arm64 ships |
 | R5 | Lock tooling | **`conda-lock`** (not pixi); one committed unified lock for `osx-arm64` + `linux-64`, dependency-only (excludes `ember-advise`) |
-| R6 | CI smoke mechanics | `mamba-org/setup-micromamba` reads the lock; then install `ember-advise==<release>` from conda-forge; run CLI/`doctor`/torch-free MCP import; matrix `macos-latest` + `ubuntu-latest` |
+| R6 | CI smoke mechanics | a pinned micromamba install reads the lock; then install `ember-advise==<release>` from conda-forge; run CLI/`doctor`/torch-free MCP import; matrix `macos-latest` + `ubuntu-latest` |
 | R7 | Repo integration seams | Extend `tests/test_distribution.py`; lock regeneration mirrors the `deployment-requirements` triad; smoke target in `shared/testing.mk` + a workflow; README/COMPATIBILITY edits need no site-manifest change |
 
 ## R1 — Recipe format and submission process
@@ -147,8 +147,9 @@ request); raw `conda list --explicit` files (single-platform, less reviewable).
 ## R6 — CI smoke mechanics
 
 **Decision**: A matrixed job (`macos-latest` → osx-arm64, `ubuntu-latest` → linux-64) that:
-1. `mamba-org/setup-micromamba` (SHA-pinned + `# vX.Y.Z`) provides micromamba; the
-   `make conda-smoke` target creates the env from `conda-<platform>.lock`;
+1. micromamba is installed directly from a pinned, sha256-verified release asset (the repo's
+   Actions allow-list blocks `mamba-org/setup-micromamba`); the `make conda-smoke` target
+   creates the env from `conda-<platform>.lock`;
 2. installs `ember-advise==<release>` from `-c conda-forge` on top;
 3. runs `ember --help` (all aliases), `ember doctor`, and a `python -c` import of
    `ember.mcp.mcp_server` asserting `torch` is **not** in `sys.modules`.

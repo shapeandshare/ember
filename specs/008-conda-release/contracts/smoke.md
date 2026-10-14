@@ -10,8 +10,9 @@ conda door.
 
 1. **Create the environment from the committed explicit lock** (dependencies only):
    `micromamba create -n <env> -f conda-<platform>.lock` — the `make conda-smoke` target does
-   this (platform auto-detected, overridable with `CONDA_PLATFORM`), and CI provides micromamba
-   via `mamba-org/setup-micromamba`. The unified YAML is not installable by micromamba/conda.
+   this (platform auto-detected, overridable with `CONDA_PLATFORM`), and CI installs micromamba
+   directly from a pinned, sha256-verified release asset (the repository's Actions allow-list
+   blocks `mamba-org/setup-micromamba`). The unified YAML is not installable by micromamba/conda.
 2. **Install the release from conda-forge on top**:
    `micromamba install -n <env> -c conda-forge "ember-advise==<version>"`.
    (This is also the live version-sync check — it fails if the channel lacks that version.)
