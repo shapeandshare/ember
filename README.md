@@ -117,6 +117,13 @@ uv tool install --python 3.12 "ember-advise @ git+https://github.com/shapeandsha
 The repository is public, so the git install needs no credentials. To use SSH instead,
 install from `git+ssh://git@github.com/shapeandshare/ember@v0.16.0`.
 
+If you manage Python with conda, mamba, or pixi, install the same tool from the interim
+`joshburt` channel on Anaconda.org (it moves to conda-forge once that feedstock lands):
+
+```bash
+conda install -c joshburt -c conda-forge ember-advise   # mamba and pixi take the same flags
+```
+
 Installed ember before the rename, as `gut`? Run `uv tool uninstall gut` first: both
 distributions provide the same commands.
 
