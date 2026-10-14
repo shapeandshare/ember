@@ -41,8 +41,9 @@ and device rules are unchanged. Planning decisions were taken through `/speckit.
 - **Interim self-hosted channel (2026-10-13)**: while the feedstock is under review, releases
   are also published to the `joshburt` channel on **Anaconda.org** — the named channel users
   recognise. Anaconda.org has no OIDC, so publishing is automated with a stored credential: the
-  `ANACONDA_API_TOKEN` repository secret, read only by the `publish` job in
-  `.github/workflows/conda-package.yml` on a release, which uploads via
+  org-level `ANACONDA_TOKEN` secret (exposed to this repo), read only by the `publish` job in
+  `.github/workflows/conda-package.yml` on a release and passed to anaconda-client as its native
+  `ANACONDA_API_TOKEN`, which uploads via
   `scripts/upload_conda_packages.py` (`--skip-existing`, so reruns are safe). (`prefix.dev` —
   OIDC, no stored secret — was rejected: a URL channel too undiscoverable for a public tool.)
   `scripts/render_conda_recipe.py` renders the recipe per release. Retire this job when the

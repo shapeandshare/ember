@@ -2,8 +2,9 @@
 #
 # conda-forge is the long-term door (its feedstock is under review). Until it lands, releases
 # are also published to the `joshburt` channel on Anaconda.org. Anaconda.org has no OIDC, so
-# publishing needs a stored credential: the `ANACONDA_API_TOKEN` repository secret, read only
-# by the `publish` job on a release. (`prefix.dev` — OIDC, no stored secret — was rejected: a
+# publishing needs a stored credential: the org-level `ANACONDA_TOKEN` secret (exposed to this
+# repo), read only by the `publish` job on a release and handed to anaconda-client as its native
+# `ANACONDA_API_TOKEN`. (`prefix.dev` — OIDC, no stored secret — was rejected: a
 # URL channel too undiscoverable for a public tool.) Retire this workflow when the conda-forge
 # feedstock lands and its bot publishes versions.
 #
@@ -105,5 +106,5 @@ jobs:
 
       - name: Upload to Anaconda.org
         env:
-          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: python3 scripts/upload_conda_packages.py dist --user joshburt
