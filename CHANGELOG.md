@@ -1,3 +1,15 @@
+## v0.16.0 (2026-10-14)
+
+Benchmark dataset: e0bbb468e213772a77b565ca36a333ea46264e5f71dc3c1c4b1a1b4967f380bc
+
+### Feat
+
+- add the conda release (conda-forge + interim prefix.dev channel) (#134)
+
+### Fix
+
+- **aws**: make stack updates carry the template and current parameters (#127)
+
 ## v0.15.0 (2026-10-12)
 
 Benchmark dataset: e0bbb468e213772a77b565ca36a333ea46264e5f71dc3c1c4b1a1b4967f380bc
