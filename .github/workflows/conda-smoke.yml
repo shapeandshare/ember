@@ -87,8 +87,11 @@ jobs:
           fi
           echo "version=${version}" >> "$GITHUB_OUTPUT"
 
+      # Not `make conda-lock-check`: that target pulls the project venv in via `uv sync`, which
+      # this job (no uv, and it tests the conda install rather than the checkout) neither has nor
+      # needs. The script is the same single implementation the target wraps.
       - name: Verify the committed lock
-        run: make PY=python conda-lock-check
+        run: python scripts/freeze_conda_lock.py --check
 
       - name: Smoke the release (retry while conda-forge catches up)
         env:
