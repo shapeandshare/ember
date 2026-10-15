@@ -13,9 +13,12 @@ conda door.
    this (platform auto-detected, overridable with `CONDA_PLATFORM`), and CI installs micromamba
    directly from a pinned, sha256-verified release asset (the repository's Actions allow-list
    blocks `mamba-org/setup-micromamba`). The unified YAML is not installable by micromamba/conda.
-2. **Install the release from conda-forge on top**:
-   `micromamba install -n <env> -c conda-forge "ember-advise==<version>"`.
-   (This is also the live version-sync check — it fails if the channel lacks that version.)
+2. **Install the release on top, preferring conda-forge**:
+   `micromamba install -n <env> -c conda-forge -c joshburt "ember-advise==<version>"`.
+   conda-forge is canonical, so it wins once the feedstock publishes; until then the interim
+   `joshburt` channel supplies the package, which keeps the smoke live instead of red. (This is
+   also the live version-sync check — it fails only if neither channel has that version. Drop
+   `-c joshburt` at conda-forge onboarding.)
 3. **Run the CLI aliases**: `ember --help`, `gut --help`, `ember-advise --help` succeed;
    `ember-mcp` is present.
 4. **Run `ember doctor`**: reports platform/dependencies/model/server readiness without loading

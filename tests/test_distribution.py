@@ -187,3 +187,12 @@ def test_release_dispatches_the_conda_publish() -> None:
     assert any("publish=true" in run for run in runs)
 
     assert "inputs.publish" in conda["jobs"]["publish"]["if"]
+
+
+def test_conda_smoke_prefers_conda_forge_with_the_interim_fallback() -> None:
+    # Order matters: conda-forge must come first so it wins once the feedstock
+    # publishes, with joshburt only supplying the package until then — which is
+    # what lets the smoke run today and self-transition at onboarding.
+    testing_mk = (ROOT / "shared" / "testing.mk").read_text(encoding="utf-8")
+    (install,) = [line for line in testing_mk.splitlines() if "ember-advise==" in line]
+    assert install.index("-c conda-forge") < install.index("-c joshburt")
