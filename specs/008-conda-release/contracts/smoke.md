@@ -22,7 +22,8 @@ conda door.
 3. **Run the CLI aliases**: `ember --help`, `gut --help`, `ember-advise --help` succeed;
    `ember-mcp` is present.
 4. **Run `ember doctor`**: reports platform/dependencies/model/server readiness without loading
-   the model.
+   the model. The model is deliberately absent, so doctor reports it as a FAIL and exits
+   non-zero; the smoke asserts that it ran and reported (`[ok] torch`), not its exit code.
 5. **Torch-free MCP import**:
    `python -c "import sys, ember.mcp.mcp_server; assert 'torch' not in sys.modules"`.
 
