@@ -72,7 +72,9 @@ endif
 
 # The install prefers conda-forge (canonical) and falls back to the interim joshburt channel
 # until the feedstock publishes ember-advise; conda-forge then wins on channel priority with no
-# change here. Drop `-c joshburt` at conda-forge onboarding.
+# change here. Drop `-c joshburt` at conda-forge onboarding. The doctor step asserts output
+# rather than an exit code: the model is deliberately absent, so doctor reports it with a FAIL
+# and exits non-zero.
 conda-smoke: ## No-model conda smoke for VERSION=<v>: explicit lock env via micromamba + ember-advise + CLI/doctor/torch-free import
 	@test "$(CONDA_PLATFORM)" != "unsupported" || { printf "error: set CONDA_PLATFORM to osx-arm64 or linux-64\n"; exit 1; }
 	$(MAMBA) create -y -n $(CONDA_ENV) -f conda-$(CONDA_PLATFORM).lock
@@ -81,5 +83,5 @@ conda-smoke: ## No-model conda smoke for VERSION=<v>: explicit lock env via micr
 	$(MAMBA) run -n $(CONDA_ENV) gut --help
 	$(MAMBA) run -n $(CONDA_ENV) ember-advise --help
 	$(MAMBA) run -n $(CONDA_ENV) python -c "import shutil, sys; missing = [c for c in ('ember', 'gut', 'ember-advise', 'ember-mcp') if not shutil.which(c)]; sys.exit(f'missing entry points: {missing}') if missing else None"
-	$(MAMBA) run -n $(CONDA_ENV) ember doctor
+	$(MAMBA) run -n $(CONDA_ENV) ember doctor 2>&1 | grep -q '\[ok\] torch'
 	$(MAMBA) run -n $(CONDA_ENV) python -c "import sys, ember.mcp.mcp_server; assert 'torch' not in sys.modules"
