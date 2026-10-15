@@ -150,7 +150,8 @@ request); raw `conda list --explicit` files (single-platform, less reviewable).
 1. micromamba is installed directly from a pinned, sha256-verified release asset (the repo's
    Actions allow-list blocks `mamba-org/setup-micromamba`); the `make conda-smoke` target
    creates the env from `conda-<platform>.lock`;
-2. installs `ember-advise==<release>` from `-c conda-forge` on top;
+2. installs `ember-advise==<release>` from `-c conda-forge -c joshburt` on top (canonical channel
+   first, interim channel as fallback);
 3. runs `ember --help` (all aliases), `ember doctor`, and a `python -c` import of
    `ember.mcp.mcp_server` asserting `torch` is **not** in `sys.modules`.
 

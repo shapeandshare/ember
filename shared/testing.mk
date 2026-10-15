@@ -70,10 +70,13 @@ else
 CONDA_PLATFORM ?= unsupported
 endif
 
+# The install prefers conda-forge (canonical) and falls back to the interim joshburt channel
+# until the feedstock publishes ember-advise; conda-forge then wins on channel priority with no
+# change here. Drop `-c joshburt` at conda-forge onboarding.
 conda-smoke: ## No-model conda smoke for VERSION=<v>: explicit lock env via micromamba + ember-advise + CLI/doctor/torch-free import
 	@test "$(CONDA_PLATFORM)" != "unsupported" || { printf "error: set CONDA_PLATFORM to osx-arm64 or linux-64\n"; exit 1; }
 	$(MAMBA) create -y -n $(CONDA_ENV) -f conda-$(CONDA_PLATFORM).lock
-	$(MAMBA) install -y -n $(CONDA_ENV) -c conda-forge "ember-advise==$(VERSION)"
+	$(MAMBA) install -y -n $(CONDA_ENV) -c conda-forge -c joshburt "ember-advise==$(VERSION)"
 	$(MAMBA) run -n $(CONDA_ENV) ember --help
 	$(MAMBA) run -n $(CONDA_ENV) gut --help
 	$(MAMBA) run -n $(CONDA_ENV) ember-advise --help
