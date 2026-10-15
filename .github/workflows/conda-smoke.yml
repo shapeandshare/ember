@@ -87,10 +87,11 @@ jobs:
           fi
           echo "version=${version}" >> "$GITHUB_OUTPUT"
 
-      # Not `make conda-lock-check`: that target pulls the project venv in via `uv sync`, which
-      # this job (no uv, and it tests the conda install rather than the checkout) neither has nor
-      # needs. The script is the same single implementation the target wraps.
+      # Run once: the committed lock is platform-agnostic, and macOS conda-lock re-solves here
+      # instead of short-circuiting on the input hash (~40 min, never finished). Not `make
+      # conda-lock-check` either — its venv sentinel would `uv sync`, and this job has no uv.
       - name: Verify the committed lock
+        if: matrix.platform == 'linux-64'
         run: python scripts/freeze_conda_lock.py --check
 
       - name: Smoke the release (retry while conda-forge catches up)
