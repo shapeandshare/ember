@@ -47,7 +47,7 @@ cuda-pathfinder==1.8.3
     # via cuda-bindings
 cuda-toolkit==13.0.3.0
     # via torch
-fastapi==0.142.2
+fastapi==0.143.0
     # via ember-advise
 filelock==4.0.9
     # via
@@ -177,13 +177,13 @@ psutil==7.2.2
     # via accelerate
 pycparser==3.0
     # via cffi
-pydantic==2.13.5
+pydantic==2.14.1
     # via
     #   ember-advise
     #   fastapi
     #   mcp
     #   mcp-types
-pydantic-core==2.46.5
+pydantic-core==2.50.1
     # via pydantic
 pygments==2.21.0
     # via rich
