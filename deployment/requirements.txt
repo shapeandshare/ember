@@ -49,7 +49,7 @@ cuda-toolkit==13.0.3.0
     # via torch
 fastapi==0.142.2
     # via ember-advise
-filelock==4.0.9
+filelock==4.2.1
     # via
     #   huggingface-hub
     #   torch
