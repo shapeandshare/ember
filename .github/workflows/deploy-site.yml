@@ -58,7 +58,7 @@ jobs:
       - name: Render the benchmark report
         run: uv run --no-project --python 3.12 --with pydantic==2.13.5 python scripts/build_site_benchmark.py
 
-      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+      - uses: ruby/setup-ruby@824c0e29fdfc7d689c191c27acc969d2d04b7dd8 # v1.331.0
         with:
           ruby-version: "3.3"
           bundler-cache: false # a Pages deploy must not restore cache state
